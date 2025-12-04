@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.edscorp.eds.rainfall.controller.login.LOGINMapper">
+    
+    <select id="selectLOGINCnt" resultType="int" parameterType="hashMap">
+        SELECT /* selectLOGINCnt */
+            COUNT(*)
+        FROM TB_BASE_USER_LIST
+        WHERE empId = #{id}
+    </select>
+
+    <select id="selectLOGINInfo"  resultType="com.edscorp.eds.rainfall.vo.base.baseUserListVO">
+        SELECT /* selectLOGINInfo */
+            corpCd
+            ,empCd
+            ,empNm
+            ,empId
+            ,CAST(AES_DECRYPT(UNHEX(resiNo), #{secretKey}) AS CHAR) AS resiNo
+            ,CAST(AES_DECRYPT(UNHEX(telNo), #{secretKey}) AS CHAR) AS telNo
+            ,CAST(AES_DECRYPT(UNHEX(phnNo), #{secretKey}) AS CHAR) AS phnNo
+            ,CAST(AES_DECRYPT(UNHEX(addr), #{secretKey}) AS CHAR) AS addr
+            ,CAST(AES_DECRYPT(UNHEX(email), #{secretKey}) AS CHAR) AS email
+            ,CAST(AES_DECRYPT(UNHEX(bankCd), #{secretKey}) AS CHAR) AS bankCd
+            ,CAST(AES_DECRYPT(UNHEX(accoNo), #{secretKey}) AS CHAR) AS accoNo
+            ,CAST(AES_DECRYPT(UNHEX(accoNm), #{secretKey}) AS CHAR) AS accoNm
+            ,busiCd
+            ,(SELECT busiNm FROM TB_BASE_BUSI_LIST T0 WHERE T0.corpCd=T1.corpCd AND T0.busiCd=T1.busiCd) AS busiNm
+            ,depaCd
+            ,(SELECT depaNm FROM TB_BASE_DEPA_LIST T0 WHERE T0.corpCd=T1.corpCd AND T0.depaCd=T1.depaCd) AS depaNm
+            ,ecoDt
+            ,respDivi
+            ,(SELECT T0.commCdNm FROM TB_SYSTEM_SHA_LIST T INNER JOIN TB_SYSTEM_SHA_DET T0 ON T.groupNo=T0.groupNo WHERE T.groupCd='SYS003' AND T0.commCd=T1.respDivi) AS respDiviNm
+            ,posiDivi
+            ,(SELECT T0.commCdNm FROM TB_SYSTEM_SHA_LIST T INNER JOIN TB_SYSTEM_SHA_DET T0 ON T.groupNo=T0.groupNo WHERE T.groupCd='SYS004' AND T0.commCd=T1.posiDivi) AS posiDiviNm
+            ,rcoDt
+            ,rcoDet
+            ,remark
+            ,empState
+            ,accDivi
+            ,(SELECT authDivi FROM TB_SYSTEM_GP_USER T0 WHERE T0.corpCd=T1.corpCd AND T0.empCd=T1.empCd) AS authDivi
+            ,pwdUpdDt
+            ,saveNm
+            ,CAST(AES_DECRYPT(UNHEX(origNm), #{secretKey}) AS CHAR) AS origNm
+            ,CAST(AES_DECRYPT(UNHEX(ext), #{secretKey}) AS CHAR) AS ext
+            ,size
+            ,(SELECT groupId FROM TB_SYSTEM_GP_USER T0 WHERE T0.corpCd=T1.corpCd AND T0.empCd=T1.empCd) AS groupId
+        FROM TB_BASE_USER_LIST T1
+        WHERE empId = #{id}
+    </select>
+
+    <insert id="insertLOGINLOG" parameterType="hashMap">
+        INSERT INTO /* insertLOGINLOG */
+        TB_LOG_USER_LIST(
+            empCd
+            ,accState
+            ,accIp
+            ,accDttm
+        )
+        SELECT
+            #{empCd}
+            ,#{accState}
+            ,#{accIp}
+            ,now()
+    </insert>
+
+    <update id="updatePASSWORD" parameterType="hashMap">
+        UPDATE /* updatePASSWORD */
+        TB_BASE_USER_LIST SET
+            pwd = SHA2(#{pwd},256)
+            ,pwdUpdDt = DATE_FORMAT(now(), '%Y%m%d')
+        WHERE empId = #{empId}
+    </update>
+
+    <update id="updatePASSWORDNext" parameterType="hashMap">
+        UPDATE /* updatePASSWORDNext */
+        TB_BASE_USER_LIST SET
+           pwdUpdDt = DATE_FORMAT(now(), '%Y%m%d')
+        WHERE empId = #{empId}
+    </update>
+
+    <select id="selectCommute" resultType="int" parameterType="hashMap">
+        SELECT /* selectCommute */
+            COUNT(*)
+        FROM tb_commute_log_list
+        WHERE corpCd = #{corpCd}
+          AND empCd = #{empCd}
+          AND stDt LIKE #{stDt}
+    </select>
+
+    <select id="checkPASSWORD" resultType="com.edscorp.eds.rainfall.vo.base.baseUserListVO">
+        SELECT /* checkPASSWORD */
+            COUNT(T1.corpCd) AS cnt
+        FROM tb_base_user_list T1
+        WHERE T1.empId = #{empId}
+          AND T1.pwd = SHA2(#{pwd},256)
+    </select>
+</mapper>

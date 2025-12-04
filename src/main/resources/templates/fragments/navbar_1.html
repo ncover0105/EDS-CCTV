@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+    <!-- <nav th:fragment="navbarFragment" class="sb-topnav navbar navbar-expand navbar-dark bg-dark"> -->
+    <nav th:fragment="navbarFragment" class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
+        
+        <!-- Navbar Brand-->
+        <a class="navbar-brand ps-3 fs-6">영상인식 안전관리 시스템</a>
+        <!-- <a class="navbar-brand ps-3 fs-6">
+            <img src="/images/edslogo.png" alt="영상인식 안전관리 시스템" class="edslogo">
+        </a> -->
+        <!-- Sidebar Toggle-->
+        <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" href="#!"><i class="fas fa-bars"></i></button>
+        
+        <!-- 날씨 정보 -->
+        <div class="d-flex align-items-center text-white small px-3 flex-wrap d-none d-md-flex">
+            <div class="d-flex align-items-center me-4 mb-2">
+                <i class="fas fa-cloud me-2"></i> <span th:text="${weather != null ? weather : '-'}">맑음</span>
+            </div>
+            <div class="d-flex align-items-center me-4 mb-2">
+                <i class="fas fa-temperature-high me-2"></i> <span th:text="${temperature != null ? temperature : '-'}">12℃</span>
+            </div>
+            <div class="d-flex align-items-center me-4 mb-2">
+                <i class="fas fa-umbrella me-2"></i> <span th:text="${precipitation != null ? precipitation : '-'}">0mm</span>
+            </div>
+            <div class="d-flex align-items-center me-4 mb-2">
+                <i class="fas fa-wind me-2"></i> <span th:text="${windSpeed != null ? windSpeed : '-'}">2.5m/s</span>
+            </div>
+            <div class="d-flex align-items-center mb-2">
+                <i class="fas fa-droplet me-2"></i> <span th:text="${humidity != null ? humidity : '-'}">55%</span>
+            </div>
+        </div>
+
+        <!-- 중앙 위험 알림 -->
+        <div class="d-flex align-items-center text-warning flex-grow-1 justify-content-center d-none d-md-flex danger-alert-container">
+            <div class="danger-alert">
+                <i class="fas fa-triangle-exclamation me-2"></i>
+                <span class="alert-title">특보</span>
+                <div class="alert-content">
+                    <span class="alert-text" th:text="${alert != null ? alert : '발행시각:  2025년 02월 05일 16시 27분 24초 | 발생지역: 옥계사랑방펜션 | 재난명: 옥계사랑방펜션 위험 지역 출입 검출'}"></span>
+                </div>
+            </div>
+        </div>
+        
+
+        <!-- Navbar-->
+        <!-- <ul class="d-none d-md-inline-block navbar-nav ms-auto me-0 me-md-3 my-2 my-md-0"> -->
+        <ul class="navbar-nav ms-auto ms-md-0 me-3 me-lg-4">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-user-large fa-fw"></i></a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                    <li><a class="dropdown-item" th:href="@{/logout}">Logout</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+</html>

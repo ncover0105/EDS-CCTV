@@ -1,0 +1,97 @@
+<div th:fragment="broadcast_modal"
+    class="modal fade"
+    id="broadcast_modal"
+    tabindex="-1"
+    aria-labelledby="notiModalLabel"
+    aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-semibold" id="notiModalLabel">수동발령</h5>
+                    <!-- <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> -->
+                    <!-- <button type="button" class="btn-apple icon" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                    </button> -->
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12 col-lg-6 mb-4">
+                            <div class="card transparent-card d-flex flex-column h-100">
+                                <div class="section-title mb-3">
+                                    <h6 class="fw-semibold mb-0 text-muted">설정</h6>
+                                </div>
+                                <div class="flex-column d-flex w-100 h-100 p-3">
+                                    <div class="col w-100">
+                                        <h4 class="text-muted fs-7 mb-3">Mode</h4>
+                                        <div class="button-group d-flex gap-3">
+                                            <button class="btn-apple-toggle flex-fill" data-group="mode">실제방송</button>
+                                            <button class="btn-apple-toggle flex-fill" data-group="mode">시험방송</button>
+                                        </div>
+                                    </div>
+            
+                                    <div class="col w-100">
+                                        <h4 class="text-muted fs-7 mb-3">매체</h4>
+                                        <div class="button-group d-flex gap-3">
+                                            <button class="btn-apple-toggle flex-fill" data-group="media">유선</button>
+                                            <button class="btn-apple-toggle flex-fill" data-group="media">DMB</button>
+                                        </div>
+                                    </div>
+            
+                                    <div class="col w-100">
+                                        <h4 class="text-muted fs-7 mb-3">방송종류</h4>
+                                        <div class="button-group d-flex gap-3">
+                                            <button class="btn-apple-toggle" style="flex: 1 1 0;" data-group="type">TTS</button>
+                                            <button class="btn-apple-toggle" style="flex: 1 1 0;" data-group="type">저장메세지</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6 mb-4">
+                            <div class="card transparent-card">
+                                <div class="section-title mb-3">
+                                    <h6 class="fw-semibold mb-0 text-muted">문안 선택</h6>
+                                </div>
+                                <div class="search-container">
+                                    <input type="text" class="search-input w-100" placeholder="Search messages...">
+                                    <button class="search-btn dark">
+                                        <i class="bi bi-search"></i>
+                                    </button>
+                                </div>
+                                <div class="message-list" id="broadcastMessageList"></div>
+                                <div>
+                                    <h6 class="text-muted mb-3">Custom Message</h6>
+                                    <textarea id="messageInput" class="message-textarea" maxlength="1000" placeholder="텍스트를 입력하세요."></textarea>
+                                    <div class="char-counter">
+                                        <span id="charCount">0 / 1000 characters</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card transparent-card">
+                                <div class="section-title mb-3">
+                                    <h6 class="fw-semibold mb-0 text-muted">발령 대상</h6>
+                                </div>
+                                <div class="target-list" id="broadcastTargetList"></div>
+                                <div class="selection-summary">
+                                    선택된 스피커: <span id="selectedCount">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- <div class="container-fluid">
+
+                    </div> -->
+                    
+                </div>
+                <div class="modal-footer flex-nowrap">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" id="confirmAlert" class="btn btn-primary">확인</button>
+                </div>
+            </div>
+        </div>
+    <!-- </div> -->
+</div>

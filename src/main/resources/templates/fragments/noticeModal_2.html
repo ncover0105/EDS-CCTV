@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>아이폰 스타일 다크 모달</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --ios-bg-primary: #1c1c1e;
+            --ios-bg-secondary: #2c2c2e;
+            --ios-bg-tertiary: #3a3a3c;
+            --ios-text-primary: #ffffff;
+            --ios-text-secondary: #8e8e93;
+            --ios-blue: #007aff;
+            --ios-red: #ff3b30;
+            --ios-green: #30d158;
+            --ios-orange: #ff9500;
+            --ios-border: #38383a;
+            --ios-separator: #48484a;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1c1c1e 0%, #2c2c2e 100%);
+            color: var(--ios-text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+        }
+
+        /* 모달 백드롭 커스터마이징 */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(20px);
+        }
+
+        /* 메인 모달 스타일링 */
+        .modal-content {
+            background: var(--ios-bg-primary);
+            border: 1px solid var(--ios-border);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(40px);
+        }
+
+        .modal-header {
+            background: var(--ios-bg-secondary);
+            border-bottom: 1px solid var(--ios-separator);
+            border-radius: 20px 20px 0 0;
+            padding: 20px 24px;
+        }
+
+        .modal-title {
+            color: var(--ios-text-primary);
+            font-weight: 600;
+            font-size: 1.3rem;
+        }
+
+        .btn-close {
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--ios-text-secondary);
+            opacity: 1;
+            filter: invert(1);
+        }
+
+        .btn-close:hover {
+            filter: invert(0.8);
+        }
+
+        .modal-body {
+            padding: 24px;
+            background: var(--ios-bg-primary);
+        }
+
+        /* 스텝 인디케이터 */
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 20px;
+        }
+
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+
+        .step-item.active {
+            opacity: 1;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--ios-bg-tertiary);
+            border: 2px solid var(--ios-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--ios-text-secondary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .step-item.active .step-number {
+            background: var(--ios-blue);
+            border-color: var(--ios-blue);
+            color: white;
+        }
+
+        .step-label {
+            font-size: 0.75rem;
+            color: var(--ios-text-secondary);
+            font-weight: 500;
+        }
+
+        .step-item.active .step-label {
+            color: var(--ios-text-primary);
+        }
+
+        .step-line {
+            flex: 1;
+            height: 2px;
+            background: var(--ios-border);
+            margin: 0 16px;
+            position: relative;
+            top: -16px;
+        }
+
+        /* 컨텐츠 그리드 */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .target-card {
+            grid-column: 1 / -1;
+        }
+
+        /* 카드 스타일 */
+        .setting-card, .message-card, .target-card {
+            background: var(--ios-bg-secondary);
+            border: 1px solid var(--ios-border);
+            border-radius: 16px;
+            padding: 0;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--ios-bg-tertiary) 0%, var(--ios-bg-secondary) 100%);
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--ios-separator);
+            display: flex;
+            align-items: center;
+        }
+
+        .card-icon {
+            font-size: 1.5rem;
+            margin-right: 12px;
+        }
+
+        .card-header h5 {
+            margin: 0;
+            color: var(--ios-text-primary);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        /* 설정 그룹 */
+        .setting-group {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--ios-separator);
+        }
+
+        .setting-group:last-child {
+            border-bottom: none;
+        }
+
+        .setting-label {
+            display: block;
+            color: var(--ios-text-primary);
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .setting-btn {
+            flex: 1;
+            background: var(--ios-bg-tertiary);
+            border: 1px solid var(--ios-border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .setting-btn:hover {
+            background: var(--ios-border);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .setting-btn.active {
+            background: var(--ios-blue);
+            border-color: var(--ios-blue);
+            color: white;
+            box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+        }
+
+        .btn-icon {
+            font-size: 1.5rem;
+            margin-right: 12px;
+        }
+
+        .btn-text {
+            text-align: left;
+        }
+
+        .btn-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--ios-text-primary);
+            margin-bottom: 2px;
+        }
+
+        .setting-btn.active .btn-title {
+            color: white;
+        }
+
+        .btn-subtitle {
+            font-size: 0.8rem;
+            color: var(--ios-text-secondary);
+            font-weight: 400;
+        }
+
+        .setting-btn.active .btn-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* 메시지 검색 */
+        .message-search {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--ios-separator);
+        }
+
+        .search-container {
+            position: relative;
+            display: flex;
+        }
+
+        .search-input {
+            flex: 1;
+            background: var(--ios-bg-tertiary);
+            border: 1px solid var(--ios-border);
+            color: var(--ios-text-primary);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 0.95rem;
+        }
+
+        .search-input:focus {
+            background: var(--ios-bg-tertiary);
+            border-color: var(--ios-blue);
+            color: var(--ios-text-primary);
+            box-shadow: 0 0 0 0.2rem rgba(0, 122, 255, 0.25);
+            outline: none;
+        }
+
+        .search-input::placeholder {
+            color: var(--ios-text-secondary);
+        }
+
+        .search-btn {
+            background: var(--ios-blue);
+            border: 1px solid var(--ios-blue);
+            color: white;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-left: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .search-btn:hover {
+            background: #0056d6;
+            transform: translateY(-1px);
+        }
+
+        /* 메시지 템플릿 */
+        .message-templates {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 12px 24px;
+            border-bottom: 1px solid var(--ios-separator);
+        }
+
+        .message-templates::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .message-templates::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .message-templates::-webkit-scrollbar-thumb {
+            background: var(--ios-text-secondary);
+            border-radius: 2px;
+        }
+
+        .template-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .template-item:hover {
+            background: var(--ios-bg-tertiary);
+            border-color: var(--ios-border);
+        }
+
+        .template-item.selected {
+            background: var(--ios-blue);
+            border-color: var(--ios-blue);
+            color: white;
+        }
+
+        .template-icon {
+            font-size: 1.2rem;
+            margin-right: 12px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .template-content {
+            flex: 1;
+        }
+
+        .template-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--ios-text-primary);
+            margin-bottom: 2px;
+        }
+
+        .template-item.selected .template-title {
+            color: white;
+        }
+
+        .template-preview {
+            font-size: 0.8rem;
+            color: var(--ios-text-secondary);
+            line-height: 1.3;
+        }
+
+        .template-item.selected .template-preview {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* 메시지 에디터 */
+        .message-editor {
+            padding: 20px 24px;
+        }
+
+        .editor-label {
+            display: block;
+            color: var(--ios-text-primary);
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+        }
+
+        .message-textarea {
+            width: 100%;
+            background: var(--ios-bg-tertiary);
+            border: 1px solid var(--ios-border);
+            color: var(--ios-text-primary);
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .message-textarea:focus {
+            background: var(--ios-bg-tertiary);
+            border-color: var(--ios-blue);
+            color: var(--ios-text-primary);
+            box-shadow: 0 0 0 0.2rem rgba(0, 122, 255, 0.25);
+            outline: none;
+        }
+
+        .message-textarea::placeholder {
+            color: var(--ios-text-secondary);
+        }
+
+        .editor-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+        }
+
+        .char-counter {
+            color: var(--ios-text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .char-counter span {
+            color: var(--ios-blue);
+            font-weight: 500;
+        }
+
+        .message-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            background: var(--ios-bg-tertiary);
+            border: 1px solid var(--ios-border);
+            color: var(--ios-text-primary);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: var(--ios-border);
+            transform: translateY(-1px);
+        }
+
+        /* 대상 지역 컨트롤 */
+        .target-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--ios-separator);
+        }
+
+        .control-btn {
+            background: var(--ios-bg-tertiary);
+            border: 1px solid var(--ios-border);
+            color: var(--ios-text-primary);
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .control-btn:hover {
+            background: var(--ios-border);
+            transform: translateY(-1px);
+        }
+
+        .selection-status {
+            color: var(--ios-blue);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .selection-status span {
+            color: var(--ios-text-primary);
+        }
+
+        /* 대상 그리드 */
+        .target-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+            padding: 20px 24px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .target-grid::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .target-grid::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .target-grid::-webkit-scrollbar-thumb {
+            background: var(--ios-text-secondary);
+            border-radius: 2px;
+        }
+
+        .target-item {
+            position: relative;
+        }
+
+        .target-check {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .target-label {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background: var(--ios-bg-tertiary);
+            border: 2px solid var(--ios-border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .target-label:hover {
+            background: var(--ios-border);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .target-check:checked + .target-label {
+            background: var(--ios-blue);
+            border-color: var(--ios-blue);
+            color: white;
+            box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+        }
+
+        .target-icon {
+            font-size: 1.5rem;
+            margin-right: 12px;
+            width: 32px;
+            text-align: center;
+        }
+
+        .target-info {
+            flex: 1;
+        }
+
+        .target-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--ios-text-primary);
+            margin-bottom: 4px;
+        }
+
+        .target-check:checked + .target-label .target-name {
+            color: white;
+        }
+
+        .target-details {
+            font-size: 0.8rem;
+            color: var(--ios-text-secondary);
+            line-height: 1.3;
+        }
+
+        .target-check:checked + .target-label .target-details {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* 모달 푸터 재디자인 */
+        .modal-footer {
+            background: var(--ios-bg-secondary);
+            border-top: 1px solid var(--ios-separator);
+            border-radius: 0 0 20px 20px;
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--ios-text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--ios-text-secondary);
+        }
+
+        .status-dot.ready {
+            background: var(--ios-green);
+            box-shadow: 0 0 8px rgba(48, 209, 88, 0.4);
+        }
+
+        .timestamp {
+            font-size: 0.8rem;
+            color: var(--ios-text-secondary);
+            font-family: 'SF Mono', Monaco, monospace;
+        }
+
+        .footer-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-cancel, .btn-confirm {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 12px;
+            padding: 12px 20px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-cancel {
+            background: var(--ios-bg-tertiary);
+            border: 1px solid var(--ios-border);
+            color: var(--ios-text-primary);
+        }
+
+        .btn-cancel:hover {
+            background: var(--ios-border);
+            color: var(--ios-text-primary);
+            transform: translateY(-1px);
+        }
+
+        .btn-confirm {
+            background: var(--ios-red);
+            border: 1px solid var(--ios-red);
+            color: white;
+            box-shadow: 0 4px 16px rgba(255, 59, 48, 0.3);
+        }
+
+        .btn-confirm:hover {
+            background: #e32929;
+            border-color: #e32929;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(255, 59, 48, 0.4);
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 992px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .target-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .modal-dialog {
+                margin: 10px;
+                max-width: calc(100% - 20px);
+            }
+            
+            .modal-body {
+                padding: 16px;
+            }
+            
+            .content-grid {
+                gap: 16px;
+            }
+            
+            .card-header {
+                padding: 16px 20px;
+            }
+            
+            .setting-group, .message-search, .message-editor, .target-controls {
+                padding: 16px 20px;
+            }
+            
+            .target-grid {
+                padding: 16px 20px;
+            }
+            
+            .footer-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            
+            .footer-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn-cancel, .btn-confirm {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* 검색 입력 필드 */
+        .ios-input {
+            background: var(--ios-bg-tertiary);
+            border: 1px solid var(--ios-border);
+            color: var(--ios-text-primary);
+            border-radius: 12px;
+            padding: 12px 16px;
+        }
+
+        .ios-input:focus {
+            background: var(--ios-bg-tertiary);
+            border-color: var(--ios-blue);
+            color: var(--ios-text-primary);
+            box-shadow: 0 0 0 0.2rem rgba(0, 122, 255, 0.25);
+        }
+
+        .ios-input::placeholder {
+            color: var(--ios-text-secondary);
+        }
+
+        /* 스크롤 가능한 리스트 */
+        .ios-list {
+            background: var(--ios-bg-tertiary);
+            border: 1px solid var(--ios-border);
+            border-radius: 12px;
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .ios-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .ios-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .ios-list::-webkit-scrollbar-thumb {
+            background: var(--ios-text-secondary);
+            border-radius: 2px;
+        }
+
+        /* 체크박스와 라디오 버튼 */
+        .form-check {
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            transition: background-color 0.2s ease;
+        }
+
+        .form-check:hover {
+            background: var(--ios-bg-primary);
+        }
+
+        .form-check-input {
+            background-color: var(--ios-bg-primary);
+            border: 2px solid var(--ios-border);
+            margin-top: 0.1rem;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--ios-blue);
+            border-color: var(--ios-blue);
+        }
+
+        .form-check-input:focus {
+            box-shadow: 0 0 0 0.2rem rgba(0, 122, 255, 0.25);
+        }
+
+        .form-check-label {
+            color: var(--ios-text-primary);
+            font-weight: 400;
+        }
+
+        /* 텍스트 영역 */
+        textarea.ios-input {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* 문자 카운터 */
+        .char-counter {
+            color: var(--ios-text-secondary);
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+
+        /* 선택된 개수 표시 */
+        .selection-count {
+            color: var(--ios-blue);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        /* 모달 푸터 */
+        .modal-footer {
+            background: var(--ios-bg-secondary);
+            border-top: 1px solid var(--ios-separator);
+            border-radius: 0 0 20px 20px;
+            padding: 20px 24px;
+        }
+
+        /* 액션 버튼들 */
+        .btn-cancel {
+            background: var(--ios-bg-tertiary);
+            border: 1px solid var(--ios-border);
+            color: var(--ios-text-primary);
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 500;
+        }
+
+        .btn-cancel:hover {
+            background: var(--ios-border);
+            color: var(--ios-text-primary);
+        }
+
+        .btn-confirm {
+            background: var(--ios-red);
+            border: 1px solid var(--ios-red);
+            color: white;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 600;
+            box-shadow: 0 4px 16px rgba(255, 59, 48, 0.3);
+        }
+
+        .btn-confirm:hover {
+            background: #e32929;
+            border-color: #e32929;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        /* 커스텀 알럿 모달 */
+        .custom-alert .modal-content {
+            background: var(--ios-bg-secondary);
+            border-radius: 16px;
+            max-width: 320px;
+            margin: 0 auto;
+        }
+
+        .custom-alert .modal-header {
+            background: transparent;
+            border: none;
+            padding: 24px 24px 12px;
+            text-align: center;
+        }
+
+        .custom-alert .modal-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--ios-text-primary);
+        }
+
+        .custom-alert .modal-body {
+            padding: 0 24px 20px;
+            background: transparent;
+            text-align: center;
+        }
+
+        .custom-alert .modal-body p {
+            color: var(--ios-text-primary);
+            font-size: 0.95rem;
+            margin: 0;
+        }
+
+        .custom-alert .modal-footer {
+            background: transparent;
+            border: none;
+            padding: 0 24px 24px;
+            gap: 12px;
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 768px) {
+            .modal-dialog {
+                margin: 20px;
+            }
+            
+            .modal-body {
+                padding: 16px;
+            }
+            
+            .ios-box {
+                padding: 16px;
+            }
+        }
+
+        .demo-btn {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--ios-blue);
+            border: none;
+            color: white;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-weight: 600;
+            box-shadow: 0 8px 24px rgba(0, 122, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- 데모 실행 버튼 -->
+    <button class="demo-btn" data-bs-toggle="modal" data-bs-target="#notiModal">
+        수동 발령 모달 열기
+    </button>
+
+    <!-- 메인 모달 -->
+    <div th:fragment="notiModal">
+        <div class="modal fade text-light" id="notiModal" tabindex="-1" aria-labelledby="notiModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="d-flex align-items-center">
+                            <div class="header-icon me-3">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 2L13.09 8.26L22 9L13.09 9.74L12 16L10.91 9.74L2 9L10.91 8.26L12 2Z" fill="#ff3b30"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="modal-title mb-0" id="notiModalLabel">긴급 재난 방송</h4>
+                                <small class="text-secondary">Emergency Broadcasting System</small>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <!-- 스텝 인디케이터 -->
+                        <div class="step-indicator mb-4">
+                            <div class="step-item active">
+                                <div class="step-number">1</div>
+                                <div class="step-label">설정</div>
+                            </div>
+                            <div class="step-line"></div>
+                            <div class="step-item">
+                                <div class="step-number">2</div>
+                                <div class="step-label">메시지</div>
+                            </div>
+                            <div class="step-line"></div>
+                            <div class="step-item">
+                                <div class="step-number">3</div>
+                                <div class="step-label">대상</div>
+                            </div>
+                            <div class="step-line"></div>
+                            <div class="step-item">
+                                <div class="step-number">4</div>
+                                <div class="step-label">발령</div>
+                            </div>
+                        </div>
+
+                        <!-- 메인 컨텐츠 그리드 -->
+                        <div class="content-grid">
+                            <!-- 설정 카드 -->
+                            <div class="setting-card">
+                                <div class="card-header">
+                                    <div class="card-icon">⚙️</div>
+                                    <h5>방송 설정</h5>
+                                </div>
+                                
+                                <div class="setting-group">
+                                    <label class="setting-label">발령 모드</label>
+                                    <div class="button-group">
+                                        <button class="setting-btn mode-btn" data-value="actual">
+                                            <div class="btn-icon">🚨</div>
+                                            <div class="btn-text">
+                                                <div class="btn-title">실제발령</div>
+                                                <div class="btn-subtitle">Real Alert</div>
+                                            </div>
+                                        </button>
+                                        <button class="setting-btn mode-btn" data-value="test">
+                                            <div class="btn-icon">🧪</div>
+                                            <div class="btn-text">
+                                                <div class="btn-title">시험발령</div>
+                                                <div class="btn-subtitle">Test Alert</div>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="setting-group">
+                                    <label class="setting-label">전송 매체</label>
+                                    <div class="button-group">
+                                        <button class="setting-btn media-btn" data-value="cable">
+                                            <div class="btn-icon">📡</div>
+                                            <div class="btn-text">
+                                                <div class="btn-title">유선방송</div>
+                                                <div class="btn-subtitle">Cable TV</div>
+                                            </div>
+                                        </button>
+                                        <button class="setting-btn media-btn" data-value="dmb">
+                                            <div class="btn-icon">📺</div>
+                                            <div class="btn-text">
+                                                <div class="btn-title">DMB</div>
+                                                <div class="btn-subtitle">Digital Media</div>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="setting-group">
+                                    <label class="setting-label">방송 형태</label>
+                                    <div class="button-group">
+                                        <button class="setting-btn broadcast-btn" data-value="tts">
+                                            <div class="btn-icon">🔊</div>
+                                            <div class="btn-text">
+                                                <div class="btn-title">음성 변환</div>
+                                                <div class="btn-subtitle">Text-to-Speech</div>
+                                            </div>
+                                        </button>
+                                        <button class="setting-btn broadcast-btn" data-value="saved">
+                                            <div class="btn-icon">💾</div>
+                                            <div class="btn-text">
+                                                <div class="btn-title">저장 메시지</div>
+                                                <div class="btn-subtitle">Pre-recorded</div>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 메시지 카드 -->
+                            <div class="message-card">
+                                <div class="card-header">
+                                    <div class="card-icon">💬</div>
+                                    <h5>메시지 작성</h5>
+                                </div>
+
+                                <div class="message-search">
+                                    <div class="search-container">
+                                        <input type="text" class="search-input" placeholder="템플릿 검색...">
+                                        <button class="search-btn">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                                <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+                                                <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="message-templates">
+                                    <div class="template-item" data-message="지진 발생으로 인한 긴급 대피 안내">
+                                        <div class="template-icon">🏠</div>
+                                        <div class="template-content">
+                                            <div class="template-title">지진 대피 안내</div>
+                                            <div class="template-preview">지진 발생으로 인한 긴급 대피...</div>
+                                        </div>
+                                    </div>
+                                    <div class="template-item" data-message="태풍 경보 발령에 따른 주의사항">
+                                        <div class="template-icon">🌪️</div>
+                                        <div class="template-content">
+                                            <div class="template-title">태풍 경보</div>
+                                            <div class="template-preview">태풍 경보 발령에 따른...</div>
+                                        </div>
+                                    </div>
+                                    <div class="template-item" data-message="홍수 위험 지역 대피 요청">
+                                        <div class="template-icon">🌊</div>
+                                        <div class="template-content">
+                                            <div class="template-title">홍수 경보</div>
+                                            <div class="template-preview">홍수 위험 지역 대피...</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="message-editor">
+                                    <label class="editor-label">메시지 내용</label>
+                                    <textarea id="messageInput" class="message-textarea" rows="6" maxlength="1000" placeholder="긴급 재난 방송 메시지를 입력하세요..."></textarea>
+                                    <div class="editor-footer">
+                                        <div class="char-counter">
+                                            <span id="charCount">0</span> / 1000자
+                                        </div>
+                                        <div class="message-actions">
+                                            <button class="action-btn">미리보기</button>
+                                            <button class="action-btn">음성 테스트</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 대상 지역 카드 -->
+                            <div class="target-card">
+                                <div class="card-header">
+                                    <div class="card-icon">🎯</div>
+                                    <h5>발령 대상</h5>
+                                </div>
+
+                                <div class="target-controls">
+                                    <button class="control-btn" id="selectAll">전체 선택</button>
+                                    <button class="control-btn" id="clearAll">선택 해제</button>
+                                    <div class="selection-status">
+                                        <span id="selectedCount">0</span>개 지역 선택됨
+                                    </div>
+                                </div>
+
+                                <div class="target-grid">
+                                    <div class="target-item">
+                                        <input type="checkbox" class="target-check" id="target1" value="region-a">
+                                        <label for="target1" class="target-label">
+                                            <div class="target-icon">🏙️</div>
+                                            <div class="target-info">
+                                                <div class="target-name">서울특별시</div>
+                                                <div class="target-details">인구 9.7M • 25개 구</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="target-item">
+                                        <input type="checkbox" class="target-check" id="target2" value="region-b">
+                                        <label for="target2" class="target-label">
+                                            <div class="target-icon">🌊</div>
+                                            <div class="target-info">
+                                                <div class="target-name">부산광역시</div>
+                                                <div class="target-details">인구 3.4M • 16개 구군</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="target-item">
+                                        <input type="checkbox" class="target-check" id="target3" value="region-c">
+                                        <label for="target3" class="target-label">
+                                            <div class="target-icon">🏭</div>
+                                            <div class="target-info">
+                                                <div class="target-name">인천광역시</div>
+                                                <div class="target-details">인구 2.9M • 10개 구군</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="target-item">
+                                        <input type="checkbox" class="target-check" id="target4" value="region-d">
+                                        <label for="target4" class="target-label">
+                                            <div class="target-icon">🌆</div>
+                                            <div class="target-info">
+                                                <div class="target-name">대구광역시</div>
+                                                <div class="target-details">인구 2.4M • 8개 구군</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="target-item">
+                                        <input type="checkbox" class="target-check" id="target5" value="region-e">
+                                        <label for="target5" class="target-label">
+                                            <div class="target-icon">🏞️</div>
+                                            <div class="target-info">
+                                                <div class="target-name">광주광역시</div>
+                                                <div class="target-details">인구 1.5M • 5개 구</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="target-item">
+                                        <input type="checkbox" class="target-check" id="target6" value="region-f">
+                                        <label for="target6" class="target-label">
+                                            <div class="target-icon">🌲</div>
+                                            <div class="target-info">
+                                                <div class="target-name">대전광역시</div>
+                                                <div class="target-details">인구 1.5M • 5개 구</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <div class="footer-info">
+                            <div class="status-indicator">
+                                <div class="status-dot ready"></div>
+                                <span>시스템 준비됨</span>
+                            </div>
+                            <div class="timestamp">
+                                <span id="currentTime">2024-05-22 14:30:25</span>
+                            </div>
+                        </div>
+                        <div class="footer-actions">
+                            <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2"/>
+                                </svg>
+                                취소
+                            </button>
+                            <button type="button" id="confirmAlert" class="btn btn-confirm">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                    <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2"/>
+                                </svg>
+                                긴급 발령
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 커스텀 알럿 모달 -->
+    <div class="modal fade" id="customAlertModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content custom-alert shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title">⚠️ 발령 확인</h5>
+                </div>
+                <div class="modal-body text-center">
+                    <p class="fw-bold">정말로 발령하시겠습니까?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-cancel" data-bs-dismiss="modal">취소</button>
+                    <button class="btn btn-confirm">확인</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 현재 시간 업데이트
+            function updateTime() {
+                const now = new Date();
+                const timeString = now.toLocaleString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                const timeElement = document.getElementById('currentTime');
+                if (timeElement) {
+                    timeElement.textContent = timeString;
+                }
+            }
+            
+            updateTime();
+            setInterval(updateTime, 1000);
+
+            // 설정 버튼 선택 기능
+            function setupButtonSelection(selector) {
+                document.querySelectorAll(selector).forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll(selector).forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                    });
+                });
+            }
+
+            setupButtonSelection('.mode-btn');
+            setupButtonSelection('.media-btn');
+            setupButtonSelection('.broadcast-btn');
+
+            // 템플릿 선택 기능
+            document.querySelectorAll('.template-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    document.querySelectorAll('.template-item').forEach(t => t.classList.remove('selected'));
+                    this.classList.add('selected');
+                    
+                    const message = this.getAttribute('data-message');
+                    const messageInput = document.getElementById('messageInput');
+                    if (messageInput && message) {
+                        messageInput.value = message;
+                        messageInput.dispatchEvent(new Event('input'));
+                    }
+                });
+            });
+
+            // 문자 수 카운터
+            const messageInput = document.getElementById('messageInput');
+            const charCount = document.getElementById('charCount');
+            
+            if (messageInput && charCount) {
+                messageInput.addEventListener('input', function() {
+                    const count = this.value.length;
+                    charCount.textContent = count;
+                    
+                    if (count > 800) {
+                        charCount.style.color = 'var(--ios-red)';
+                    } else if (count > 600) {
+                        charCount.style.color = 'var(--ios-orange)';
+                    } else {
+                        charCount.style.color = 'var(--ios-blue)';
+                    }
+                });
+            }
+
+            // 대상 지역 선택 기능
+            const targetChecks = document.querySelectorAll('.target-check');
+            const selectedCount = document.getElementById('selectedCount');
+            const selectAllBtn = document.getElementById('selectAll');
+            const clearAllBtn = document.getElementById('clearAll');
+            
+            function updateSelectedCount() {
+                const count = document.querySelectorAll('.target-check:checked').length;
+                if (selectedCount) {
+                    selectedCount.textContent = count;
+                }
+            }
+
+            if (targetChecks.length) {
+                targetChecks.forEach(check => {
+                    check.addEventListener('change', updateSelectedCount);
+                });
+            }
+
+            if (selectAllBtn) {
+                selectAllBtn.addEventListener('click', function() {
+                    targetChecks.forEach(check => {
+                        check.checked = true;
+                    });
+                    updateSelectedCount();
+                });
+            }
+
+            if (clearAllBtn) {
+                clearAllBtn.addEventListener('click', function() {
+                    targetChecks.forEach(check => {
+                        check.checked = false;
+                    });
+                    updateSelectedCount();
+                });
+            }
+
+            // 승인 버튼 클릭 시 확인 모달 표시
+            const confirmAlert = document.getElementById('confirmAlert');
+            if (confirmAlert) {
+                confirmAlert.addEventListener('click', function() {
+                    const customAlertModal = new bootstrap.Modal(document.getElementById('customAlertModal'));
+                    customAlertModal.show();
+                });
+            }
+
+            // 검색 기능
+            const searchInput = document.querySelector('.search-input');
+            const searchBtn = document.querySelector('.search-btn');
+            
+            if (searchInput && searchBtn) {
+                searchBtn.addEventListener('click', function() {
+                    const searchTerm = searchInput.value.toLowerCase();
+                    document.querySelectorAll('.template-item').forEach(item => {
+                        const title = item.querySelector('.template-title').textContent.toLowerCase();
+                        const preview = item.querySelector('.template-preview').textContent.toLowerCase();
+                        
+                        if (title.includes(searchTerm) || preview.includes(searchTerm)) {
+                            item.style.display = 'flex';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                });
+                
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        searchBtn.click();
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

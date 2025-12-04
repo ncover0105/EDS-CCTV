@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+    <nav th:fragment="headerFragment" class="sb-topnav navbar navbar-dark navbar-expand-md position-fixed top-0 py-0 w-100 bg-main-dark">
+        <div class="container-fluid">
+            <!-- <strong class="navbar-brand d-flex align-items-center">영상인식 안전관리 시스템</strong> -->
+            <div class="d-flex align-items-center">
+                <a href="#" class="navbar-brand">
+                    <!-- <strong>EDS</strong> -->
+                    <div class="logo">EDS</div>
+                </a>
+            </div>
+
+            <div class="d-lg-flex justify-content-start align-items-center d-none d-lg-flex me-auto ms-5">
+                <ul class="navbar-nav gap-4">
+                    <!-- 종합상황판 -->
+                    <li class="nav-item">
+                        <a class="nav-link text-nowrap"
+                            th:classappend="${currentPage == 'main' ? 'active' : ''}"
+                            role="button" th:href="@{/main}">종합상황판</a>
+                    </li>
+
+                    <li class="nav-item d-none">
+                        <a class="nav-link text-nowrap" 
+                            th:classappend="${currentPage == 'dashboard' ? 'active' : ''}"
+                            role="button" th:href="@{/menu/dashboard}">대시보드</a>
+                    </li>
+                    
+                    <!-- 장비관리 -->
+                    <li class="nav-item">
+                        <a class="nav-link text-nowrap"
+                            th:classappend="${currentPage == 'equipment' and view == 'speaker' ? 'active' : ''}"
+                            th:href="@{/menu/equipment(view='speaker')}">
+                            스피커
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link text-nowrap"
+                            th:classappend="${currentPage == 'cctv' ? 'active' : ''}"
+                            th:href="@{/menu/cctv}">
+                        CCTV관리
+                        </a>
+                    </li>
+
+                    <!-- 이력조회 -->
+                    <li class="nav-item dropdown dropdown-center">
+                        <a class="nav-link dropdown-toggle text-nowrap" 
+                            th:classappend="${currentPage == 'situation' ? 'active' : ''}"
+                            role="button" data-bs-toggle="dropdown">이력조회</a>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a class="dropdown-item text-nowrap"
+                                th:classappend="${view == 'situation' ? 'active' : ''}"
+                                th:href="@{/menu/situation?view=situation}">상황발생이력</a></li>
+                            <li><a class="dropdown-item text-nowrap"
+                                th:classappend="${view == 'broadcast' ? 'active' : ''}"
+                                th:href="@{/menu/situation?view=broadcast}">발령이력</a></li>
+                            <li><a class="dropdown-item text-nowrap"
+                                th:classappend="${view == 'special' ? 'active' : ''}"
+                                th:href="@{/menu/situation?view=special}">특보이력</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- 설정 -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-nowrap"
+                            th:classappend="${currentPage == 'settings' ? 'active' : ''}"
+                            role="button" data-bs-toggle="dropdown">설정</a>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a class="dropdown-item text-nowrap"
+                                th:classappend="${view == 'user' ? 'active' : ''}"
+                                th:href="@{/menu/settings?view=user}">사용자설정</a></li>
+                            <li><a class="dropdown-item text-nowrap"
+                                th:classappend="${view == 'ment' ? 'active' : ''}"
+                                th:href="@{/menu/settings?view=ment}">문안설정</a></li>
+                            <!-- <div class="dropdown-divider"></div> -->
+                            <li><a class="dropdown-item text-nowrap"
+                                th:classappend="${view == 'sms' ? 'active' : ''}"
+                                th:href="@{/menu/settings?view=sms}">SMS알림설정</a></li>
+                            <li><a class="dropdown-item text-nowrap"
+                                th:classappend="${view == 'bgm' ? 'active' : ''}"
+                                th:href="@{/menu/settings?view=bgm}">방송 스케줄</a></li>
+                            <!-- <div class="dropdown-divider"></div> -->
+                            <li><a class="dropdown-item text-nowrap"
+                                th:classappend="${view == 'setting' ? 'active' : ''}"
+                                th:href="@{/menu/settings?view=setting}">환경설정</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Navbar-->
+            <div class="d-flex align-items-center gap-2 flex-nowrap">
+                <!-- d-none d-lg-flex -->
+                <!-- <div class="current-time py-1 px-3 text-center text-nowrap">
+                    <span id="currentDate"></span>    
+                </div> -->
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user-large fa-fw"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" th:href="@{/logout}">Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <button class="bg-transparent border-0 order-1 order-lg-0 d-block d-lg-none" id="sidebarToggle">
+                    <i class="fas fa-bars" id="toggleIcon"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+</html>

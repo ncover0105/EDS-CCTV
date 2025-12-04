@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<fontFamilies>
+	<fontFamily name="맑은 고딕">
+		<normal>fonts/malgun.ttf</normal>
+		<bold>fonts/malgunbd.ttf</bold>
+		<Semilight>fonts/malgunsl.ttf</Semilight>
+		<pdfEncoding>Identity-H</pdfEncoding>
+		<pdfEmbedded>true</pdfEmbedded>
+		<!--
+		<exportFonts>
+			<export key="net.sf.jasperreports.html">'Lobster Two', 'Times New Roman', Times, serif</export>
+		</exportFonts>
+		-->
+	</fontFamily>
+</fontFamilies>

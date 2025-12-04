@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+    <nav th:fragment="navbarFragment" class="sb-topnav navbar navbar-expand navbar-dark bg-dark shadow position-fixed top-0 w-100">
+        <div class="container-fluid">
+            <!-- Navbar Brand-->
+            <a class="navbar-brand ps-3 fs-6">영상인식 안전관리 시스템</a>
+            <!-- <a class="navbar-brand ps-3 fs-6">
+                <img src="/images/edslogo.png" alt="영상인식 안전관리 시스템" class="edslogo">
+            </a> -->
+            <!-- Sidebar Toggle-->
+            <button class="btn btn-link btn-sm d-lg-none order-1 order-lg-0 me-lg-0" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <!-- 네비게이션 메뉴 -->
+            <div class="d-none d-lg-flex flex-grow-1">
+                <ul class="navbar-nav gap-4">
+                    <!-- 종합상황판 -->
+                    <li class="nav-item">
+                        <a class="nav-link text-muted" role="button" th:href="@{/main}">종합상황판</a>
+                    </li>
+
+                    <!-- 장비관리 -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-muted" role="button" data-bs-toggle="dropdown">장비관리</a>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a class="dropdown-item py-2" th:href="@{/equipment?view=speaker}">스피커관리</a></li>
+                            <li><a class="dropdown-item py-2" th:href="@{/equipment?view=cctv}">CCTV관리</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- 이력조회 -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-muted" role="button" data-bs-toggle="dropdown">이력조회</a>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a class="dropdown-item py-2" th:href="@{/situation?view=situation}">상황발생이력</a></li>
+                            <li><a class="dropdown-item py-2" th:href="@{/situation?view=broadcast}">발령이력</a></li>
+                            <li><a class="dropdown-item py-2" th:href="@{/situation?view=special}">특보이력</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- 설정 -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-muted" role="button" data-bs-toggle="dropdown">설정</a>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a class="dropdown-item py-2" th:href="@{/settings/user}">사용자설정</a></li>
+                            <li><a class="dropdown-item py-2" th:href="@{/settings/message}">문안설정</a></li>
+                            <li><a class="dropdown-item py-2" th:href="@{/settings/sms}">SMS알림설정</a></li>
+                            <li><a class="dropdown-item py-2" th:href="@{/settings/bgm}">BGM스케줄</a></li>
+                            <li><a class="dropdown-item py-2" th:href="@{/settings/environment}">환경설정</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Navbar-->
+            <div class="d-flex align-items-center ms-auto">
+                <div class="d-none d-lg-flex align-items-center me-4 text-white"><strong id="currentDate"></strong></div>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-user-large fa-fw"></i></a>
+                        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" th:href="@{/logout}">Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</html>

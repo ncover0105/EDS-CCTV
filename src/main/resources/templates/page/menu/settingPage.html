@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="ko"
+    xmlns:th="http://www.thymeleaf.org"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+    xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layout/layout}"
+    >
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="${title}">EDS</title>
+    <script src="/js/page/setting.js?v=1"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast/dist/css/iziToast.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/izitoast/dist/js/iziToast.min.js"></script>
+    <script th:inline="javascript">
+        const currentView = /*[[${view}]]*/ 'none'; // fallback
+        const scheduleListData = /*[[${scheduleList}]]*/ [];
+    
+        // 같은 스케줄끼리 그룹핑
+        const groupedSchedules = Object.values(
+            scheduleListData.reduce((acc, schedule) => {
+                const id = schedule.scheduleId;
+                
+                const formatDateTime = (dt) => {
+                    if (!dt) return '-';
+                    return dt.substring(0, 16).replace('T', ' ');
+                };
+
+                if (!acc[id]) {
+                    acc[id] = {
+                        id: schedule.scheduleId,
+                        name: schedule.scheduleName,
+                        startTime: String(schedule.startTime),
+                        endTime: String(schedule.endTime),
+                        playType: schedule.playType,
+                        bgmFolder: schedule.folderName,
+                        isRepeat: schedule.repeatEnabled || false,
+                        weekSchedule: schedule.weekSchedule,
+                        createdDate: formatDateTime(schedule.recvTime),
+                        createdAt: formatDateTime(schedule.createdAt),
+                        speakers: []  // 스피커 리스트
+                    };
+                }
+                
+                // 스피커 정보 추가
+                if (schedule.speakerCode) {
+                    acc[id].speakers.push({
+                        speakerCode: schedule.speakerCode,
+                        speakerName: schedule.speakerName || '-',
+                        installAddress: schedule.installAddress || '-',
+                        phone: schedule.phone || '-',
+                        connStat: schedule.connStat || '00',
+                        recvTime: formatDateTime(schedule.recvTime),
+                        createdAt: formatDateTime(schedule.createdAt)
+                    });
+                }
+                
+                return acc;
+            }, {})
+        );
+
+        const scheduleList = groupedSchedules;
+    </script>
+</head>
+<body>
+    <div class="container-fluid p-3 text-nowrap" layout:fragment="content">
+        <!-- USER -->
+        <div th:if="${view == 'user'}" class="d-flex flex-column h-100">
+            <div class="container">
+                <div class="bg-white rounded shadow-sm p-4 mb-3">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                        <div>
+                            <h4 class="fw-bold text-dark mb-3">사용자 설정 및 관리</h4>
+                            <p class="text-secondary mb-0 small" id="userCount"
+                                th:text="'등록된 사용자 총 ' + ${userCount} + '명 | 사용자 정보를 관리하세요'">등록된 사용자 총 0명 | 사용자 정보를 관리하세요</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button id="btn-register" class="btn btn-primary" onclick="userInsert()">
+                                <i class="bi bi-person-plus"></i>
+                                <span class="d-none d-md-inline ms-1">등록</span>
+                            </button>
+                            <button id="btn-edit" class="btn btn-primary">
+                                <i class="bi bi-person-fill-add"></i>
+                                <span class="d-none d-md-inline ms-1">수정</span>
+                            </button>
+                            <button id="btn-disable" class="btn btn-secondary">
+                                <i class="bi bi-person-x-fill"></i>
+                                <span class="d-none d-md-inline ms-1">사용중지</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded shadow-sm mb-3" style="min-height: 77vh; max-height: 77vh; overflow-x: auto; overflow-y: hidden;">
+                    <div style="display: flex; flex-direction: column; min-width: 800px; height: 77vh;">
+                        <div style="flex-shrink: 0;">
+                            <table class="table table-hover mb-0" style="table-layout: fixed; width: 100%;">
+                                <colgroup>
+                                    <col style="width: 5%;">
+                                    <col style="width: 5%;">
+                                    <col style="width: 15%;">
+                                    <col style="width: 25%;">
+                                    <col style="width: 25%;">
+                                    <col style="width: 25%;">
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <th>선택</th>
+                                        <th>번호</th>
+                                        <th>ID</th>
+                                        <th>이름</th>
+                                        <th>전화번호</th>
+                                        <th>권한</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <div style="overflow-y: auto; flex: 1; min-height: 0;">
+                            <table class="table table-hover mb-0" style="table-layout: fixed; width: 100%;">
+                                <colgroup>
+                                    <col style="width: 5%;">
+                                    <col style="width: 5%;">
+                                    <col style="width: 15%;">
+                                    <col style="width: 25%;">
+                                    <col style="width: 25%;">
+                                    <col style="width: 25%;">
+                                </colgroup>
+                                <tbody id="userList">
+                                    <tr th:if="${#lists.isEmpty(userList)}" class="text-center">
+                                        <td colspan="7" style="height: 60vh;">
+                                            <div class="d-flex align-items-center justify-content-center h-100">
+                                                <span class="text-muted">
+                                                    <i class="bi bi-inbox me-2"></i>
+                                                    등록된 사용자가 없습니다.
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr th:each="user, iterStat : ${userList}">
+                                        <td><input type="checkbox" name="selectedIds" value="${iterStat.count}"></td>
+                                        <td th:text="${iterStat.count}"></td>
+                                        <td th:text="${user.id}"></td>
+                                        <td th:text="${user.name}"></td>
+                                        <td th:text="${user.phnNo}"></td>
+                                        <td>
+                                            <span class="status-badge status-info" th:if="${user.role == 'USER'}">
+                                                <i class="bi bi-person"></i>
+                                                <span>사용자</span>
+                                            </span>
+                                            <span class="status-badge status-danger" th:if="${user.role == 'MANAGER'}">
+                                                <i class="bi bi-shield-check"></i>
+                                                <span>관리자</span>
+                                            </span>
+                                            <span th:if="${#strings.isEmpty(user.role)}">-</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!-- <div class="row flex-wrap h-100 g-3">
+                    <div class="col-12 d-flex align-items-center">
+                        <div class="section-title">
+                            <h5 class="fw-semibold">사용자 설정</h5>
+                        </div>
+                    </div>
+                    <div class="col-12 pb-3">
+                        <div class="bg-dark text-light p-3 rounded mb-3">
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3 w-100">
+                                <div class="section-title">
+                                    <span class="fw-semibold mb-0">등록된 사용자 목록</span>
+                                    <span class="status-badge status-primary ms-2">
+                                        <span id="userCount" th:text="'총 ' + ${userCount} + '건'">0건</span>
+                                    </span>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-primary" onclick="settingInsert()">등록</button>
+                                    <button class="btn btn-primary" onclick="settingUpdate()">수정</button>
+                                    <button class="btn btn-danger" onclick="settingDeprecated()">사용중지</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                        class="bg-dark rounded"
+                        style="min-height: 70vh; max-height: 70vh; overflow-x: auto; overflow-y: auto;">
+                            <table class="table table-dark table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>선택</th>
+                                        <th>번호</th>
+                                        <th>ID</th>
+                                        <th>이름</th>
+                                        <th>전화번호</th>
+                                        <th>권한</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="userList">
+                                    <tr th:if="${#lists.isEmpty(userList)}" class="text-center">
+                                        <td colspan="7" style="height: 60vh;">
+                                            <div class="d-flex align-items-center justify-content-center h-100">
+                                                <span class="text-muted">
+                                                    <i class="bi bi-inbox me-2"></i>
+                                                    등록된 사용자가 없습니다.
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr th:each="user, iterStat : ${userList}">
+                                        <td><input type="checkbox" name="selectedIds" value="${iterStat.count}"></td>
+                                        <td th:text="${iterStat.count}"></td>
+                                        <td th:text="${user.id}"></td>
+                                        <td th:text="${user.name}"></td>
+                                        <td th:text="${user.phnNo}"></td>
+                                        <td>
+                                            <span class="status-badge status-info" th:if="${user.role == 'USER'}">
+                                                <i class="bi bi-person"></i>
+                                                <span>사용자</span>
+                                            </span>
+                                            <span class="status-badge status-warning" th:if="${user.role == 'MANAGER'}">
+                                                <i class="bi bi-shield-check"></i>
+                                                <span>관리자</span>
+                                            </span>
+                                            <span th:if="${#strings.isEmpty(user.role)}">-</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div> -->
+            </div>
+            <!-- 사용자 수정 모달 -->
+            <div class="modal fade" id="userEditModal" tabindex="-1" aria-labelledby="userEditModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header border-bottom">
+                            <h5 class="modal-title fw-semibold" id="userEditModalLabel">사용자 정보 수정</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body py-4">
+                            <form id="editUserForm">
+                                <div class="row mb-3">
+                                    <label for="editUserId" class="col-sm-3 col-form-label">ID</label>
+                                    <div class="col-sm-9">
+                                        <input type="text" class="form-control" id="editUserId" readonly>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <label for="editUserName" class="col-sm-3 col-form-label">이름</label>
+                                    <div class="col-sm-9">
+                                        <input type="text" class="form-control" id="editUserName" placeholder="사용자 이름 입력">
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <label for="editUserPhone" class="col-sm-3 col-form-label">전화번호</label>
+                                    <div class="col-sm-9">
+                                        <input type="text" class="form-control" id="editUserPhone" placeholder="010-0000-0000">
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <label for="editUserRole" class="col-sm-3 col-form-label">권한</label>
+                                    <div class="col-sm-9">
+                                        <select class="form-select" id="editUserRole">
+                                            <option value="USER">사용자</option>
+                                            <option value="MANAGER">관리자</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer bg-light">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                            <button type="button" class="btn btn-primary" id="saveUserBtn">저장</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    
+        <!-- ment -->
+        <div th:if="${view == 'ment'}" class="d-flex flex-column h-100">
+            <div class="container">
+                <div class="bg-white rounded shadow-sm p-4 mb-3">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                        <div>
+                            <h4 class="fw-bold text-dark mb-3">문안설정 및 관리</h4>
+                            <p class="text-secondary mb-0 small" id="mentCount"
+                            th:text="'총 ' + ${broadcastCount} + '개의 문안 | 문안 내용과 문안 정보를 관리하세요'">총 0개의 문안 | 문안 내용과 문안 정보를 관리하세요</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button id="btn-register" class="btn btn-primary" onclick="mentInsert()">
+                                <i class="bi bi-plus"></i>
+                                <span class="d-none d-md-inline ms-1">추가</span>
+                            </button>
+                            <button id="btn-edit" class="btn btn-primary" onclick="mentUpdate()">
+                                <i class="bi bi-pencil-square"></i>
+                                <span class="d-none d-md-inline ms-1">수정</span>
+                            </button>
+                            <button id="btn-disable" class="btn btn-danger" onclick="mentDeprecated()">
+                                <i class="bi bi-trash"></i>
+                                <span class="d-none d-md-inline ms-1">삭제</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded shadow-sm mb-3" style="min-height: 77vh; max-height: 77vh; overflow-x: auto; overflow-y: hidden;">
+                    <div style="display: flex; flex-direction: column; min-width: 800px; height: 77vh;">
+                        <div style="flex-shrink: 0;">
+                            <table class="table table-hover mb-0" style="table-layout: fixed; width: 100%;">
+                                <colgroup>
+                                    <col style="width: 5%;">
+                                    <col style="width: 8%;">
+                                    <col style="width: 15%;">
+                                    <col style="width: 50%;">
+                                    <col style="width: 22%;">
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <th>선택</th>
+                                        <th>번호</th>
+                                        <th>문안 이름</th>
+                                        <th>문안 내용</th>
+                                        <th>문안 사용여부</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <div style="overflow-y: auto; flex: 1; min-height: 0;">
+                            <table class="table table-hover mb-0" style="table-layout: fixed; width: 100%;">
+                                <colgroup>
+                                    <col style="width: 5%;">
+                                    <col style="width: 8%;">
+                                    <col style="width: 15%;">
+                                    <col style="width: 50%;">
+                                    <col style="width: 22%;">
+                                </colgroup>
+                                <tbody id="mentList">
+                                    <tr th:each="broadcast, iterStat : ${broadcastList}">
+                                        <td><input type="checkbox" name="selectedIds" value="${iterStat.count}"></td>
+                                        <td th:text="${iterStat.count}"></td>
+                                        <td th:text="${broadcast.title}"></td>
+                                        <td th:text="${broadcast.text}" class="text-wrap"></td>
+                                        <td>
+                                            <span class="status-badge" 
+                                            th:classappend="${broadcast.useInfo == 1 ? 'status-success' : 'status-primary'}" 
+                                            th:text="${broadcast.useInfo == 1 ? '사용중' : '미사용'}">
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="mentUpdateModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header border-bottom">
+                            <h5 class="modal-title fw-semibold">멘트 수정</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body py-4">
+                            <form id="mentUpdateForm">
+                                <div class="row mb-3">
+                                    <label for="mentUpdateName" class="col-sm-1 col-form-label text-start text-sm-center">이름</label>
+                                    <div class="col-sm-11">
+                                        <input type="text" class="form-control" id="mentUpdateName" placeholder="멘트 이름 입력" required>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <label for="mentUpdateContent" class="col-sm-1 col-form-label text-start text-sm-center">내용</label>
+                                    <div class="col-sm-11">
+                                        <textarea class="form-control" id="mentUpdateContent" rows="4" placeholder="멘트 내용 입력" required></textarea>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <label for="mentUpdateStatus" class="col-sm-1 col-form-label text-start text-sm-center">상태</label>
+                                    <div class="col-sm-11">
+                                        <select class="form-select" id="mentUpdateStatus">
+                                            <option value="사용">사용</option>
+                                            <option value="미사용">미사용</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="mentUpdateId">
+                            </form>
+                        </div>
+                        <div class="modal-footer bg-light">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                            <button type="button" class="btn btn-primary" id="mentSaveUpdateBtn">저장</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            
+
+        </div>
+
+        <!-- SMS -->
+        <div th:if="${view == 'sms'}" class="d-flex flex-column h-100">
+            <div class="container">
+                <div class="bg-white rounded shadow-sm p-4 mb-3">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                        <div>
+                            <h4 class="fw-bold text-dark mb-3">SMS 알림설정 및 관리</h4>
+                            <p class="text-secondary mb-0 small" id="smsCount"
+                            th:text="'등록된 사용자 총 ' + ${userCount} + '명 | SMS 알림을 관리하세요'">등록된 사용자 총 0명 | SMS 알림을 관리하세요</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button id="btn-register" class="btn btn-primary">
+                                <i class="bi bi-person-plus"></i>
+                                <span class="d-none d-md-inline ms-1">등록</span>
+                            </button>
+                            <button id="btn-edit" class="btn btn-primary">
+                                <i class="bi bi-pencil-square"></i>
+                                <span class="d-none d-md-inline ms-1">수정</span>
+                            </button>
+                            <button id="btn-disable" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i>
+                                <span class="d-none d-md-inline ms-1">미사용</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded shadow-sm mb-3" style="min-height: 77vh; max-height: 77vh; overflow-x: auto; overflow-y: hidden;">
+                    <div class="d-flex flex-column" style="min-width: 800px; height: 77vh;">
+                        <div style="flex-shrink: 0;">
+                            <table class="table table-hover mb-0" style="table-layout: fixed; width: 100%;">
+                                <colgroup>
+                                    <col style="width: 7%;">
+                                    <col style="width: 8%;">
+                                    <col style="width: 15%;">
+                                    <col style="width: 18%;">
+                                    <col style="width: 17%;">
+                                    <col style="width: 17%;">
+                                    <col style="width: 18%;">
+                                </colgroup>
+                                <thead class="table-light position-sticky top-0" style="z-index: 10;">
+                                    <tr>
+                                        <th class="text-center">선택</th>
+                                        <th class="text-center">번호</th>
+                                        <th>이름</th>
+                                        <th>휴대폰 번호</th>
+                                        <th class="text-center">상황 발생 알림</th>
+                                        <th class="text-center">경보 발령 알림</th>
+                                        <th class="text-center">알림 사용여부</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <div style="overflow-y: auto; flex: 1; min-height: 0;">
+                            <table class="table table-hover mb-0" style="table-layout: fixed; width: 100%;">
+                                <colgroup>
+                                    <col style="width: 7%;">
+                                    <col style="width: 8%;">
+                                    <col style="width: 15%;">
+                                    <col style="width: 18%;">
+                                    <col style="width: 17%;">
+                                    <col style="width: 17%;">
+                                    <col style="width: 18%;">
+                                </colgroup>
+                                <tbody id="smsUserList">
+                                    <tr th:each="user, iterStat : ${userList}" th:data-user-id="${user.id}">
+                                        <td class="text-center">
+                                            <input type="checkbox" class="alert-toggle">
+                                        </td>
+                                
+                                        <!-- 번호 -->
+                                        <td class="text-center" th:text="${iterStat.count}"></td>
+                                
+                                        <!-- 이름 -->
+                                        <td th:text="${user.name}"></td>
+                                
+                                        <!-- 휴대폰 번호 -->
+                                        <td th:text="${user.phnNo}"></td>
+                                
+                                        <!-- 상황 발생 알림 -->
+                                        <td class="text-center">
+                                            <span th:if="${user.eventAlertYn == 'Y'}" class="status-badge status-success">
+                                                <i class="bi bi-check-circle-fill"></i> 사용
+                                            </span>
+                                            <span th:if="${user.eventAlertYn != 'Y'}" class="status-badge status-primary">
+                                                <i class="bi bi-x-circle-fill"></i> 미사용
+                                            </span>
+                                        </td>
+                                
+                                        <!-- 경보 발령 알림 -->
+                                        <td class="text-center">
+                                            <span th:if="${user.warnAlertYn == 'Y'}" class="status-badge status-success">
+                                                <i class="bi bi-check-circle-fill"></i> 사용
+                                            </span>
+                                            <span th:if="${user.warnAlertYn != 'Y'}" class="status-badge status-primary">
+                                                <i class="bi bi-x-circle-fill"></i> 미사용
+                                            </span>
+                                        </td>
+                                
+                                        <!-- 알림 사용여부 -->
+                                        <td class="text-center">
+                                            <span th:if="${user.alertEnabledYn == 'Y'}" class="status-badge status-success">
+                                                <i class="bi bi-check-circle-fill"></i> 사용
+                                            </span>
+                                            <span th:if="${user.alertEnabledYn != 'Y'}" class="status-badge status-primary">
+                                                <i class="bi bi-x-circle-fill"></i> 미사용
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="smsEditModal" tabindex="-1" aria-labelledby="smsEditModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title fw-semibold" id="smsEditModalLabel">SMS 알림 수정</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="smsEditForm">
+                                <input type="hidden" id="modalUserId">
+                                <div class="mb-3">
+                                    <label for="modalUserName" class="form-label">이름</label>
+                                    <input type="text" id="modalUserName" class="form-control" readonly>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="modalUserPhn" class="form-label">휴대폰 번호</label>
+                                    <input type="text" id="modalUserPhn" class="form-control" readonly>
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="modalEventAlert">
+                                    <label class="form-check-label" for="modalEventAlert">상황 발생 알림</label>
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="modalWarnAlert">
+                                    <label class="form-check-label" for="modalWarnAlert">경보 발령 알림</label>
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="modalAlertEnabled">
+                                    <label class="form-check-label" for="modalAlertEnabled">알림 사용 여부</label>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" id="modalSaveBtn" class="btn btn-primary">저장</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BGM -->
+        <div th:if="${view == 'bgm'}" class="d-flex flex-column h-100">
+            <div class="container">
+                <!-- 헤더 -->
+                <div class="bg-white rounded shadow-sm p-4 mb-3">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                        <div>
+                            <h4 class="fw-bold text-dark mb-3">스케줄 관리</h4>
+                            <p class="text-secondary mb-0 small" id="schedule-count">총 0개의 스케줄 | 재생 스케줄과 단말 정보를 관리하세요</p>
+                        </div>
+                        <button id="add-schedule-btn" class="btn btn-primary">
+                            <i class="bi bi-plus-lg"></i>
+                            <span class="d-none d-md-inline ms-1">새 스케줄 추가</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 스케줄 목록 -->
+                <div class="flex-grow-1 overflow-auto">
+                    <div id="schedule-list"></div>
+                    
+                    <!-- 등록된 스케줄 없음 메시지 -->
+                    <div class="bg-white p-5 text-center rounded shadow-sm d-none" id="no-schedule-msg">
+                        <p class="text-secondary fs-5 mb-2 fw-semibold">등록된 스케줄이 없습니다</p>
+                        <p class="text-muted mb-0">새 스케줄을 추가해보세요</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 스케줄 모달 -->
+        <div class="modal fade" id="scheduleModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+                <form id="schedule-form" class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="scheduleModalLabel">새 스케줄 추가</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-3">
+                    <!-- 시간 설정 -->
+                    <div class="row mb-3">
+                        <div class="col-6">
+                        <label class="form-label fw-medium">시작 시간 <span class="text-danger">*</span></label>
+                        <input type="time" class="form-control" name="startTime" required>
+                        </div>
+                        <div class="col-6">
+                        <label class="form-label fw-medium">종료 시간 <span class="text-danger">*</span></label>
+                        <input type="time" class="form-control" name="endTime" required>
+                        </div>
+                    </div>
+            
+                    <!-- 재생 종류 -->
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">재생 종류 <span class="text-danger">*</span></label>
+                        <div class="radio-group">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="playType" id="typeBgm" value="BGM" checked>
+                            <label class="form-check-label" for="typeBgm">BGM</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="playType" id="typeRadio" value="라디오">
+                            <label class="form-check-label" for="typeRadio">라디오</label>
+                        </div>
+                        </div>
+                    </div>
+            
+                    <!-- BGM 폴더명 -->
+                    <div class="mb-3" id="bgm-section">
+                        <label class="form-label fw-medium">BGM 폴더명 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="bgmFolder" placeholder="예: 매장음악/클래식">
+                    </div>
+            
+                    <!-- 라디오 정보 -->
+                    <div class="row mb-3 d-none" id="radio-section">
+                        <div class="col-6">
+                        <label class="form-label fw-medium">라디오 채널 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="radioChannel" placeholder="예: KBS 1FM">
+                        </div>
+                        <div class="col-6">
+                        <label class="form-label fw-medium">지역 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="radioRegion" placeholder="예: 서울">
+                        </div>
+                    </div>
+            
+                    <!-- 요일 선택 -->
+                    <div class="mb-3">
+                        <label class="form-label fw-medium d-block">요일 선택 <span class="text-danger">*</span></label>
+                        <div class="d-flex gap-2 w-100" role="group" id="weekdays">
+                            <!-- JS로 생성됨 -->
+                        </div>
+                    </div>
+            
+                    <!-- 반복재생 -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="isRepeat" id="isRepeat">
+                        <label class="form-check-label fw-medium" for="isRepeat">반복 재생</label>
+                        </div>
+                    </div>
+            
+                    <!-- 단말 추가 -->
+                    <hr class="my-4">
+                    <h6 class="fw-bold mb-3">단말 정보 추가</h6>
+                    <div class="row g-2 mb-2">
+                        <div class="col-4">
+                        <input type="text" class="form-control form-control-sm" id="deviceName" placeholder="단말기명">
+                        </div>
+                        <div class="col-4">
+                        <input type="text" class="form-control form-control-sm" id="deviceAuthIp" placeholder="인증 IP">
+                        </div>
+                        <div class="col-4">
+                        <input type="text" class="form-control form-control-sm" id="deviceType" placeholder="구분">
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-4">
+                        <input type="text" class="form-control form-control-sm" id="deviceManufacturer" placeholder="제조사">
+                        </div>
+                        <div class="col-4">
+                        <input type="text" class="form-control form-control-sm" id="deviceLte" placeholder="LTE번호">
+                        </div>
+                        <div class="col-4">
+                        <input type="text" class="form-control form-control-sm" id="deviceLocation" placeholder="설치위치">
+                        </div>
+                    </div>
+                    <div class="d-grid mb-3">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="addDeviceBtn">
+                        <i class="bi bi-plus-lg me-1"></i> 단말 추가
+                        </button>
+                    </div>
+            
+                    <!-- 등록된 단말 목록 -->
+                    <div id="deviceTableWrapper" style="display:none;">
+                        <p class="small fw-medium text-secondary mb-2">등록된 단말 (<span id="deviceCount">0</span>)</p>
+                        <div class="table-responsive" style="max-height: 300px;">
+                        <table class="table table-sm table-bordered table-hover align-middle mb-0">
+                            <thead class="table-light sticky-top">
+                            <tr>
+                                <th>단말기명</th>
+                                <th>IP</th>
+                                <th>구분</th>
+                                <th>제조사</th>
+                                <th>LTE</th>
+                                <th>위치</th>
+                                <th width="50"></th>
+                            </tr>
+                            </thead>
+                            <tbody id="deviceTable"></tbody>
+                        </table>
+                        </div>
+                    </div>
+                    </div>
+            
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary flex-fill" id="submitBtn">추가하기</button>
+                        <button type="button" class="btn btn-secondary flex-fill" data-bs-dismiss="modal">취소</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- SETTING -->
+        <div th:if="${view == 'setting'}" class="d-flex flex-column h-100">
+            <div class="container">
+                <div class="bg-white rounded shadow-sm p-4 mb-3">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                        <div>
+                            <h4 class="fw-bold text-dark mb-3">시스템 설정</h4>
+                            <p class="text-secondary mb-0 small" id="schedule-count">안전 관리 프로그램 시스템 설정 및 관리</p>
+                        </div>
+                        <button id="add-schedule-btn" class="btn btn-primary" onclick="saveSetting()">
+                            <i class="bi bi-check"></i>
+                            <span class="d-none d-md-inline ms-1">저장</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex-grow-1 overflow-auto pb-3">
+                    <div class="col-12 d-flex flex-grow-1 flex-column gap-3">
+                        <div class="card flex-grow-1 d-flex flex-column">
+                            <div class="card-header">
+                                <div class="section-title">
+                                    <h5 class="fw-semibold text-dark">설정</h5>
+                                </div>
+                            </div>
+                            <div class="card-body d-flex flex-column min-h-0 p-4">
+                                <div class="setting-section setting-light">
+                                    <h6 class="section-title text-dark fw-semibold pb-3">
+                                        기본 설정
+                                    </h6>
+                                    <div class="setting-item">
+                                        <div class="d-flex justify-content-between align-items-start flex-wrap">
+                                            <div class="flex-grow-1 flex-column">
+                                                <div class="setting-label">자동 승인 사용</div>
+                                                <div class="setting-description">
+                                                    발령 정보를 자동으로 승인하는 기능을 활성화합니다
+                                                </div>
+                                            </div>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" role="switch" id="autoApproval">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+            
+                                <div class="setting-section setting-light">
+                                    <h6 class="section-title text-dark fw-semibold pb-3">
+                                        자동 승인 옵션
+                                    </h6>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-4 col-sm-6 mb-3">
+                                            <div class="setting-item">
+                                                <div class="setting-label">발령모드</div>
+                                                <div class="radio-group flex-column">
+                                                    <div class="form-check mb-3">
+                                                        <input class="form-check-input" type="radio" name="mode" id="modeReal" value="real">
+                                                        <label class="form-check-label" for="modeReal">실제발령</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="mode" id="modeTest" value="test">
+                                                        <label class="form-check-label" for="modeTest">시험발령</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+            
+                                        <div class="col-md-4 col-sm-6 mb-3">
+                                            <div class="setting-item">
+                                                <div class="setting-label">발령매체</div>
+                                                <div class="radio-group flex-column">
+                                                    <div class="form-check mb-3">
+                                                        <input class="form-check-input" type="radio" name="media" id="mediaCable" value="cable">
+                                                        <label class="form-check-label" for="mediaCable">유선</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="media" id="mediaDmb" value="dmb">
+                                                        <label class="form-check-label" for="mediaDmb">DMB</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+            
+                                        <div class="col-md-4 col-sm-6 mb-3">
+                                            <div class="setting-item">
+                                                <div class="setting-label">발령종류</div>
+                                                <div class="radio-group flex-column">
+                                                    <div class="form-check mb-3">
+                                                        <input class="form-check-input" type="radio" name="type" id="typeTts" value="tts">
+                                                        <label class="form-check-label" for="typeTts">TTS</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="type" id="typeSaved" value="saved">
+                                                        <label class="form-check-label" for="typeSaved">저장메시지</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+            
+                                <div class="setting-section setting-light text-wrap">
+                                    <h6 class="section-title text-dark fw-semibold pb-3">
+                                        시스템 연동 설정
+                                    </h6>
+                                    
+                                    <div class="setting-item">
+                                        <div class="setting-label">
+                                            지도 인증키 설정
+                                        </div>
+                                        <div class="setting-description">
+                                            지도 서비스 이용을 위한 API 인증키를 입력하세요
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control" id="mapApiKey" 
+                                                placeholder="예: AIzaSyDxvL7nMsF4tKlX9QrYzKpR3wE8...">
+                                            <div class="form-text">
+                                                Google Maps, Naver Maps 등의 지도 서비스 API 키를 입력하세요
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer py-3 d-flex justify-content-end align-items-center d-none">
+                                <button class="btn btn-primary" onclick="saveSetting()">
+                                    저장
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

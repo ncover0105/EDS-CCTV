@@ -1,0 +1,79 @@
+<div th:fragment="speaker_save_modal_fragment">
+    <div class="modal fade" id="speaker_save_modal" tabindex="-1" aria-labelledby="notiModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark">
+                <div class="modal-header d-flex justify-content-between align-items-center text-white bg-dark border-0">
+                    <div class="fs-4 text-left flex-grow-1" th:id="${modalTitleId}" th:text="${title}">스피커 신규추가</div>
+                    <div class="btn-container" id="modalButtonContainer">
+                        <button type="button" class="btn btn-secondary"
+                                th:classappend="${mode == 'edit'} ? '' : 'd-none'"
+                                th:onclick="|action('delete')|"
+                                id="deleteButton">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                        <button type="button" class="btn btn-secondary"
+                                th:classappend="${mode == 'add'} ? '' : 'd-none'"
+                                th:onclick="|action('save')|"
+                                id="saveButton">
+                            <i class="fa-regular fa-floppy-disk"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-body text-white bg-dark">
+                    <div class="row gy-3">
+                        <div class="col-6 d-none">
+                            <label for="locationCode" class="col-form-label">지역코드</label>
+                            <input type="text" th:value="${speaker.locationCode}" class="form-control bg-secondary text-white border-0" id="locationCode"/>
+                        </div>
+                        <div class="col-6 d-none">
+                            <label for="speakerKey" class="col-form-label">스피커코드</label>
+                            <input type="text" th:value="${speaker.speakerKey}" class="form-control bg-secondary text-white border-0" id="speakerKey"/>
+                        </div>
+                        <div class="col-12">
+                            <label for="locationName" class="col-form-label">지역명</label>
+                            <input type="text" th:value="${speaker.locationName}" readonly
+                                class="form-control bg-secondary text-white border-0"
+                                id="locationName"
+                                th:onclick="|popup('LOCATIONPOPUP','open')|"/>
+                        </div>
+                        <div class="col-12">
+                            <label for="speakerName" class="col-form-label">스피커명</label>
+                            <input type="text" th:value="${speaker.speakerName}"
+                                class="form-control bg-secondary text-white border-0"
+                                id="speakerName"/>
+                        </div>
+                        <div class="col-6">
+                            <label for="speakerId" class="col-form-label">스피커ID</label>
+                            <input type="text" th:value="${speaker.speakerId}"
+                                class="form-control bg-secondary text-white border-0"
+                                id="speakerId"/>
+                        </div>
+                        <div class="col-12">
+                            <label for="speakerAdr" class="col-form-label">URL</label>
+                            <input type="text" th:value="${speaker.speakerAdr}"
+                                class="form-control bg-secondary text-white border-0"
+                                id="speakerAdr"/>
+                        </div>
+                        <div class="col-6">
+                            <label for="speakerLatitude" class="col-form-label">위도</label>
+                            <input type="text" th:value="${speaker.speakerLatitude}"
+                                class="form-control bg-secondary text-white border-0"
+                                id="speakerLatitude"/>
+                        </div>
+                        <div class="col-6">
+                            <label for="speakerLongitude" class="col-form-label">경도</label>
+                            <input type="text" th:value="${speaker.speakerLongitude}"
+                                class="form-control bg-secondary text-white border-0"
+                                id="speakerLongitude"/>
+                        </div>
+                        <div class="col-12">
+                            <label for="description" class="col-form-label">설명</label>
+                            <textarea class="form-control bg-secondary text-white border-0"
+                                    th:text="${speaker.description}" id="description"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

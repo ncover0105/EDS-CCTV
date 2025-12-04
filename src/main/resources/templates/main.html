@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CCTV 모니터링 시스템</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3a86ff;
+            --warning: #ffbe0b;
+            --danger: #fb5607;
+            --success: #38b000;
+            --info: #00b4d8;
+            --dark: #1a1a2e;
+            --dark-light: #242438;
+            --dark-lighter: #2e2e48;
+            --text-light: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --border-color: rgba(255,255,255,0.1);
+        }
+        
+        body {
+            background-color: var(--dark);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .app-container {
+            height: 100vh;
+            transition: all 0.3s ease;
+        }
+        
+        .top-bar {
+            background-color: var(--dark-light);
+            padding: 0 1rem;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            z-index: 100;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: var(--text-light);
+            font-size: 1.1rem;
+        }
+        
+        .monitor-container {
+            padding: 1rem;
+            overflow: auto;
+            background-color: var(--dark);
+            position: relative;
+            height: calc(100vh - 48px);
+        }
+        
+        .sidebar {
+            background-color: var(--dark-light);
+            border-left: 1px solid var(--border-color);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 48px);
+        }
+        
+        .sidebar-collapsed {
+            width: 48px !important;
+        }
+        
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--dark-lighter);
+        }
+        
+        .sidebar-content {
+            flex: 1;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+        }
+        
+        .sidebar-panel {
+            background-color: var(--dark-lighter);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .panel-header {
+            padding: 0.75rem 1rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .panel-content {
+            padding: 1rem;
+        }
+        
+        .cctv-item {
+            position: relative;
+            aspect-ratio: 16/9;
+            background-color: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-bottom: 1rem;
+        }
+        
+        .cctv-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+        
+        .cctv-item.active {
+            border: 2px solid var(--primary);
+        }
+        
+        .cctv-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 0.5rem;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .cctv-title {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .cctv-status {
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background-color: var(--success);
+        }
+        
+        .status-alert {
+            background-color: var(--danger);
+        }
+        
+        .cctv-actions {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        
+        .cctv-item:hover .cctv-actions {
+            opacity: 1;
+        }
+        
+        .action-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-color: rgba(0,0,0,0.6);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .action-btn:hover {
+            background-color: var(--primary);
+        }
+        
+        .alerts-badge {
+            background-color: var(--danger);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+        
+        .timeline {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 300px;
+            height: 80px;
+            background-color: var(--dark-light);
+            border-top: 1px solid var(--border-color);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            transform: translateY(80px);
+            transition: transform 0.3s ease;
+            z-index: 90;
+        }
+        
+        .timeline.expanded {
+            transform: translateY(0);
+        }
+        
+        .timeline-toggle {
+            position: absolute;
+            top: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--dark-light);
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            padding: 4px 12px;
+            color: var(--text-light);
+            cursor: pointer;
+        }
+        
+        .time-ruler {
+            display: flex;
+            align-items: center;
+            height: 40px;
+            position: relative;
+            width: 100%;
+            background-color: var(--dark-lighter);
+            border-radius: 4px;
+        }
+        
+        .event-marker {
+            position: absolute;
+            width: 4px;
+            height: 16px;
+            background-color: var(--warning);
+            cursor: pointer;
+        }
+        
+        .event-marker.alert {
+            background-color: var(--danger);
+            height: 20px;
+        }
+        
+        .time-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .control-bar {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background-color: var(--dark-lighter);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .btn-custom {
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            background-color: var(--dark-light);
+            color: var(--text-light);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-custom:hover {
+            background-color: var(--dark-lighter);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background-color: #2a75ea;
+            border-color: #2a75ea;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            border-color: var(--danger);
+        }
+        
+        .btn-danger:hover {
+            background-color: #e24906;
+            border-color: #e24906;
+        }
+        
+        .badge {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: normal;
+        }
+        
+        .badge-warning {
+            background-color: var(--warning);
+            color: var(--dark);
+        }
+        
+        .badge-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .badge-success {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        .logs-container {
+            height: 160px;
+            overflow-y: auto;
+        }
+        
+        .log-item {
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.8rem;
+        }
+        
+        .log-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .weather-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .weather-icon {
+            width: 50px;
+            height: 50px;
+        }
+        
+        .weather-main {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+        
+        .weather-data {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            margin-top: 1rem;
+        }
+        
+        .weather-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        
+        .weather-map {
+            height: 180px;
+            width: 100%;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        
+        .weather-map img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .map-controls {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .map-btn {
+            background-color: var(--dark-light);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+        
+        .map-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        /* Fullscreen view */
+        .fullscreen-view {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.9);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .fullscreen-content {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        .close-fullscreen {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background-color: rgba(0,0,0,0.6);
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1100;
+        }
+        
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background-color: var(--dark-lighter);
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            max-width: 300px;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            transform: translateX(120%);
+            opacity: 0;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        
+        .notification-danger {
+            border-left-color: var(--danger);
+        }
+        
+        .notification-icon {
+            font-size: 1.5rem;
+            color: var(--danger);
+        }
+        
+        .notification-content {
+            flex: 1;
+        }
+        
+        .notification-title {
+            font-weight: 500;
+            margin-bottom: 0.3rem;
+        }
+        
+        .notification-message {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        
+        /* For sidebar collapse */
+        @media (min-width: 992px) {
+            .content-expanded {
+                margin-right: 48px !important;
+                transition: all 0.3s ease;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid p-0">
+        <!-- 상단 바 -->
+        <div class="row m-0 top-bar">
+            <div class="col-md-3 d-flex align-items-center">
+                <div class="logo">
+                    <i class="bi bi-camera-video-fill text-primary"></i>
+                    <span>CCTV 모니터링 시스템</span>
+                </div>
+            </div>
+            <div class="col-md-9 d-flex align-items-center justify-content-end gap-3">
+                <div class="d-flex align-items-center">
+                    <span class="me-2 small">마지막 발령:</span>
+                    <span id="lastAlertInfo" class="small text-warning">화재 감지 (3구역) - 14:32:05</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge badge-success">정상 12</span>
+                    <span class="badge badge-warning">주의 2</span>
+                    <span class="badge badge-danger">경보 1</span>
+                </div>
+                <button class="btn-custom btn-danger">
+                    <i class="bi bi-megaphone-fill"></i>
+                    <span>수동발령</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="row m-0">
+            <!-- 메인 모니터링 영역 -->
+            <div class="col-md-9 monitor-container p-3">
+                <!-- 컨트롤 바 -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="control-bar">
+                            <div class="dropdown">
+                                <button class="btn-custom dropdown-toggle" type="button" id="viewDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-grid-3x3-gap-fill"></i>
+                                    <span>레이아웃</span>
+                                </button>
+                                <ul class="dropdown-menu bg-dark-lighter" aria-labelledby="viewDropdown">
+                                    <li><a class="dropdown-item text-light" href="#" data-layout="4">2x2 그리드</a></li>
+                                    <li><a class="dropdown-item text-light" href="#" data-layout="8">3x3 그리드</a></li>
+                                    <li><a class="dropdown-item text-light" href="#" data-layout="16">4x4 그리드</a></li>
+                                </ul>
+                            </div>
+                            
+                            <div class="dropdown">
+                                <button class="btn-custom dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-funnel-fill"></i>
+                                    <span>필터</span>
+                                </button>
+                                <ul class="dropdown-menu bg-dark-lighter" aria-labelledby="filterDropdown">
+                                    <li><a class="dropdown-item text-light" href="#">모든 카메라</a></li>
+                                    <li><a class="dropdown-item text-light" href="#">경보 상태만</a></li>
+                                    <li><a class="dropdown-item text-light" href="#">실외 카메라</a></li>
+                                    <li><a class="dropdown-item text-light" href="#">실내 카메라</a></li>
+                                </ul>
+                            </div>
+                            
+                            <button class="btn-custom">
+                                <i class="bi bi-arrows-fullscreen"></i>
+                                <span>전체화면</span>
+                            </button>
+                            
+                            <button class="btn-custom">
+                                <i class="bi bi-record-circle-fill text-danger"></i>
+                                <span>모든 영상 녹화</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- CCTV 그리드 -->
+                <div class="row cctv-row g-3">
+                    <!-- CCTV 1 - 경보 상태 -->
+                    <div class="col-md-6 cctv-col">
+                        <div class="cctv-item active">
+                            <div style="width: 100%; height: 100%; background-color: #000; display: flex; align-items: center; justify-content: center;">
+                                <img src="/api/placeholder/320/180" alt="CCTV 영상" style="max-width: 100%; max-height: 100%;">
+                            </div>
+                            <div class="cctv-overlay">
+                                <div class="cctv-title">정문 입구 (A-01)</div>
+                                <div class="cctv-status status-alert">화재 감지</div>
+                            </div>
+                            <div class="cctv-actions">
+                                <button class="action-btn"><i class="bi bi-arrows-fullscreen"></i></button>
+                                <button class="action-btn"><i class="bi bi-record-circle"></i></button>
+                                <button class="action-btn"><i class="bi bi-three-dots-vertical"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- CCTV 2 - 정상 상태 -->
+                    <div class="col-md-6 cctv-col">
+                        <div class="cctv-item">
+                            <div style="width: 100%; height: 100%; background-color: #000; display: flex; align-items: center; justify-content: center;">
+                                <img src="/api/placeholder/320/180" alt="CCTV 영상" style="max-width: 100%; max-height: 100%;">
+                            </div>
+                            <div class="cctv-overlay">
+                                <div class="cctv-title">주차장 입구 (A-02)</div>
+                                <div class="cctv-status">정상</div>
+                            </div>
+                            <div class="cctv-actions">
+                                <button class="action-btn"><i class="bi bi-arrows-fullscreen"></i></button>
+                                <button class="action-btn"><i class="bi bi-record-circle"></i></button>
+                                <button class="action-btn"><i class="bi bi-three-dots-vertical"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- CCTV 3 - 정상 상태 -->
+                    <div class="col-md-6 cctv-col">
+                        <div class="cctv-item">
+                            <div style="width: 100%; height: 100%; background-color: #000; display: flex; align-items: center; justify-content: center;">
+                                <img src="/api/placeholder/320/180" alt="CCTV 영상" style="max-width: 100%; max-height: 100%;">
+                            </div>
+                            <div class="cctv-overlay">
+                                <div class="cctv-title">후문 (A-03)</div>
+                                <div class="cctv-status">정상</div>
+                            </div>
+                            <div class="cctv-actions">
+                                <button class="action-btn"><i class="bi bi-arrows-fullscreen"></i></button>
+                                <button class="action-btn"><i class="bi bi-record-circle"></i></button>
+                                <button class="action-btn"><i class="bi bi-three-dots-vertical"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- CCTV 4 - 주의 상태 -->
+                    <div class="col-md-6 cctv-col">
+                        <div class="cctv-item">
+                            <div style="width: 100%; height: 100%; background-color: #000; display: flex; align-items: center; justify-content: center;">
+                                <img src="/api/placeholder/320/180" alt="CCTV 영상" style="max-width: 100%; max-height: 100%;">
+                            </div>
+                            <div class="cctv-overlay">
+                                <div class="cctv-title">창고 (B-01)</div>
+                                <div class="cctv-status" style="background-color: #ffbe0b; color: #000;">움직임 감지</div>
+                            </div>
+                            <div class="cctv-actions">
+                                <button class="action-btn"><i class="bi bi-arrows-fullscreen"></i></button>
+                                <button class="action-btn"><i class="bi bi-record-circle"></i></button>
+                                <button class="action-btn"><i class="bi bi-three-dots-vertical"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 타임라인 -->
+                <div class="row mt-3 position-relative">
+                    <div class="col-12">
+                        <div class="timeline expanded">
+                            <div class="timeline-toggle">
+                                <i class="bi bi-clock"></i> 타임라인
+                            </div>
+                            <div class="time-ruler">
+                                <!-- 이벤트 마커들 -->
+                                <div class="event-marker" style="left: 10%;"></div>
+                                <div class="event-marker" style="left: 25%;"></div>
+                                <div class="event-marker alert" style="left: 45%;"></div>
+                                <div class="event-marker" style="left: 60%;"></div>
+                                <div class="event-marker alert" style="left: 80%;"></div>
+                            </div>
+                            <div class="time-labels">
+                                <span>12:00</span>
+                                <span>13:00</span>
+                                <span>14:00</span>
+                                <span>15:00</span>
+                                <span>16:00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 사이드바 -->
+            <div class="col-md-3 sidebar p-0">
+                <div class="sidebar-header">
+                    <span class="fw-bold small">정보 패널</span>
+                    <button class="action-btn sidebar-toggle">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+                <div class="sidebar-content">
+                    <!-- 출입 기록 패널 -->
+                    <div class="sidebar-panel">
+                        <div class="panel-header">
+                            <span>출입 기록</span>
+                            <span class="badge badge-primary">15건</span>
+                        </div>
+                        <div class="logs-container">
+                            <div class="log-item">
+                                <div>김영수 (직원) - 정문 입장</div>
+                                <div class="log-time">15:23:45</div>
+                            </div>
+                            <div class="log-item">
+                                <div>박지은 (방문객) - 정문 입장</div>
+                                <div class="log-time">15:12:08</div>
+                            </div>
+                            <div class="log-item">
+                                <div>이민호 (직원) - 후문 퇴장</div>
+                                <div class="log-time">14:56:32</div>
+                            </div>
+                            <div class="log-item">
+                                <div>홍길동 (직원) - 정문 입장</div>
+                                <div class="log-time">14:45:19</div>
+                            </div>
+                            <div class="log-item">
+                                <div>최서연 (직원) - 정문 퇴장</div>
+                                <div class="log-time">14:32:05</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 날씨 정보 패널 -->
+                    <div class="sidebar-panel">
+                        <div class="panel-header">
+                            <span>날씨 정보</span>
+                        </div>
+                        <div class="panel-content">
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="weather-container">
+                                        <img src="/api/placeholder/80/80" class="weather-icon" alt="Weather icon">
+                                        <div>
+                                            <div class="weather-main">24°C</div>
+                                            <div class="small">맑음</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row weather-data">
+                                <div class="col-6">
+                                    <div class="weather-item">
+                                        <i class="bi bi-umbrella me-1"></i>
+                                        <span>강수량: 0mm</span>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="weather-item">
+                                        <i class="bi bi-droplet me-1"></i>
+                                        <span>습도: 65%</span>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="weather-item">
+                                        <i class="bi bi-wind me-1"></i>
+                                        <span>풍속: 5m/s</span>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="weather-item">
+                                        <i class="fa-solid fa-location-arrow me-1"></i>
+                                        <span>풍향: 북동</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 날씨 지도 패널 -->
+                    <div class="sidebar-panel">
+                        <div class="panel-header">
+                            <span>날씨 지도</span>
+                            <div class="d-flex gap-1">
+                                <button class="map-btn active" data-map="radar">레이더</button>
+                                <button class="map-btn" data-map="satellite">위성</button>
+                            </div>
+                        </div>
+                        <div class="panel-content p-0">
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="weather-map" id="radar-map">
+                                        <img src="/api/placeholder/240/180" alt="레이더 지도">
+                                    </div>
+                                    <div class="weather-map d-none" id="satellite-map">
+                                        <img src="/api/placeholder/240/180" alt="위성 지도">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 알림 로그 패널 -->
+                    <div class="sidebar-panel">
+                        <div class="panel-header">
+                            <span>알림 로그</span>
+                            <span class="badge badge-danger">3건</span>
+                        </div>
+                        <div class="logs-container">
+                            <div class="log-item">
+                                <div class="text-danger">화재 감지 - 정문 입구 (A-01)</div>
+                                <div class="log-time">15:32:45</div>
+                            </div>
+                            <div class="log-item">
+                                <div class="text-warning">움직임 감지 - 창고 (B-01)</div>
+                                <div class="log-time">15:28:12</div>
+                            </div>
+                            <div class="log-item">
+                                <div class="text-warning">움직임 감지 - 주차장 입구 (A-02)</div>
+                                <div class="log-time">14:56:32</div>
+                            </div>
+                            <div class="log-item">
+                                <div>시스템 점검 완료</div>
+                                <div class="log-time">14:30:00</div>
+                            </div>
+                            <div class="log-item">
+                                <div>일일 보고서 생성</div>
+                                <div class="log-time">14:00:00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 전체화면 모드 (기본적으로 숨겨짐) -->
+    <div class="fullscreen-view d-none">
+        <button class="close-fullscreen">
+            <i class="bi bi-x-lg"></i>
+        </button>
+        <div class="fullscreen-content">
+            <img src="/api/placeholder/800/450" alt="CCTV 전체화면" style="width: 100%; height: 100%; object-fit: contain;">
+        </div>
+    </div>
+    
+    <!-- 알림 예시 (기본적으로 숨겨짐) -->
+    <div class="notification notification-danger">
+        <div class="notification-icon">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <div class="notification-content">
+            <div class="notification-title">화재 감지 경보</div>
+            <div class="notification-message">정문 입구(A-01)에서 화재가 감지되었습니다. 즉시 확인이 필요합니다.</div>
+        </div>
+    </div>
+    
+    <!-- 필요한 JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 사이드바 토글
+            const sidebarToggle = document.querySelector('.sidebar-toggle');
+            const appContainer = document.querySelector('.container-fluid');
+            const sidebar = document.querySelector('.sidebar');
+            
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                
+                if (sidebar.classList.contains('collapsed')) {
+                    sidebar.classList.remove('col-md-3');
+                    sidebar.classList.add('col-md-1');
+                    document.querySelector('.monitor-container').classList.remove('col-md-9');
+                    document.querySelector('.monitor-container').classList.add('col-md-11');
+                    
+                    // 아이콘 방향 변경
+                    this.querySelector('i').classList.remove('bi-chevron-right');
+                    this.querySelector('i').classList.add('bi-chevron-left');
+                } else {
+                    sidebar.classList.remove('col-md-1');
+                    sidebar.classList.add('col-md-3');
+                    document.querySelector('.monitor-container').classList.remove('col-md-11');
+                    document.querySelector('.monitor-container').classList.add('col-md-9');
+                    
+                    // 아이콘 방향 변경
+                    this.querySelector('i').classList.remove('bi-chevron-left');
+                    this.querySelector('i').classList.add('bi-chevron-right');
+                }
+            });
+            
+            // 타임라인 토글
+            const timelineToggle = document.querySelector('.timeline-toggle');
+            const timeline = document.querySelector('.timeline');
+            
+            timelineToggle.addEventListener('click', function() {
+                timeline.classList.toggle('expanded');
+            });
+            
+            // 레이아웃 변경 (2x2, 3x3, 4x4)
+            const layoutButtons = document.querySelectorAll('[data-layout]');
+            
+            layoutButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const layoutCount = parseInt(this.getAttribute('data-layout'));
+                    const cctvRow = document.querySelector('.cctv-row');
+                    const cctvCols = document.querySelectorAll('.cctv-col');
+                    
+                    // 기존 열 설정 제거
+                    cctvCols.forEach(col => {
+                        col.className = 'cctv-col';
+                        
+                        // 새 열 폭 설정
+                        if (layoutCount === 4) {
+                            col.classList.add('col-md-6');  // 2x2
+                        } else if (layoutCount === 8) {
+                            col.classList.add('col-md-4');  // 3x3 (근사값)
+                        } else if (layoutCount === 16) {
+                            col.classList.add('col-md-3');  // 4x4
+                        }
+                    });
+                });
+            });
+            
+            // 지도 타입 전환
+            const mapButtons = document.querySelectorAll('.map-btn');
+            
+            mapButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // 활성화 클래스 토글
+                    mapButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const mapType = this.getAttribute('data-map');
+                    
+                    // 지도 표시 전환
+                    document.querySelectorAll('.weather-map').forEach(map => {
+                        map.classList.add('d-none');
+                    });
+                    
+                    document.getElementById(`${mapType}-map`).classList.remove('d-none');
+                });
+            });
+            
+            // 전체화면 모드
+            const fullscreenButtons = document.querySelectorAll('.action-btn:has(.bi-arrows-fullscreen)');
+            const fullscreenView = document.querySelector('.fullscreen-view');
+            const closeFullscreenBtn = document.querySelector('.close-fullscreen');
+            
+            fullscreenButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    fullscreenView.classList.remove('d-none');
+                });
+            });
+            
+            closeFullscreenBtn.addEventListener('click', function() {
+                fullscreenView.classList.add('d-none');
+            });
+            
+            // 알림 테스트 (5초 후 알림 표시)
+            setTimeout(function() {
+                const notification = document.querySelector('.notification');
+                notification.classList.add('show');
+                
+                // 10초 후 알림 숨김
+                setTimeout(function() {
+                    notification.classList.remove('show');
+                }, 10000);
+            }, 5000);
+            
+            // CCTV 아이템 클릭 이벤트 (선택)
+            const cctvItems = document.querySelectorAll('.cctv-item');
+            
+            cctvItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    // 액션 버튼 클릭은 제외
+                    if (!e.target.closest('.action-btn')) {
+                        // 활성화 클래스 전환
+                        cctvItems.forEach(cctv => cctv.classList.remove('active'));
+                        this.classList.add('active');
+                    }
+                });
+            });
+            
+            // 가상 데이터 업데이트 (1초마다)
+            setInterval(function() {
+                // 랜덤 로그 추가
+                const logContainers = document.querySelectorAll('.logs-container');
+                
+                logContainers.forEach(container => {
+                    // 1/10 확률로 새 로그 추가
+                    if (Math.random() < 0.1) {
+                        const logTypes = [
+                            { text: '김지훈 (직원) - 후문 입장', class: '' },
+                            { text: '박민지 (방문객) - 정문 퇴장', class: '' },
+                            { text: '움직임 감지 - 창고 (B-01)', class: 'text-warning' },
+                            { text: '시스템 자동 백업 완료', class: '' }
+                        ];
+                        
+                        const randomLog = logTypes[Math.floor(Math.random() * logTypes.length)];
+                        const now = new Date();
+                        const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+                        
+                        const newLog = document.createElement('div');
+                        newLog.className = 'log-item';
+                        newLog.innerHTML = `
+                            <div class="${randomLog.class}">${randomLog.text}</div>
+                            <div class="log-time">${timeStr}</div>
+                        `;
+                        
+                        // 첫 번째 아이템 앞에 추가
+                        if (container.firstChild) {
+                            container.insertBefore(newLog, container.firstChild);
+                            
+                            // 로그가 너무 많아지면 마지막 항목 제거
+                            if (container.children.length > 20) {
+                                container.removeChild(container.lastChild);
+                            }
+                        } else {
+                            container.appendChild(newLog);
+                        }
+                    }
+                });
+                
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

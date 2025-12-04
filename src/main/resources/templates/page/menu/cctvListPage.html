@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko"
+    xmlns:th="http://www.thymeleaf.org"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+    xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layout/layout}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDS - CCTV Management</title>
+    <script src="/js/page/cctvlist.js"></script>
+</head>
+<body>
+    <div class="container-fluid p-3 text-nowrap" layout:fragment="content">
+        <div class="d-flex flex-column h-100">
+            <div class="container">
+                <div class="bg-white rounded shadow-sm p-4 mb-3 flex-shrink-0">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                        <div>
+                            <h4 class="fw-bold text-dark mb-3">CCTV 목록</h4>
+                            <p class="text-secondary mb-0 small" id="userCount"
+                                th:text="'등록된 CCTV 총 ' + ${#lists.size(cctvList)}  + '건 | 등록된 CCTV를 관리하세요'">등록된 CCTV 총 0명 | 등록된 CCTV를 관리하세요</p>
+                        </div>
+                        <div class="d-flex gap-2 d-none">
+                            <button id="btn-register" class="btn btn-primary">
+                                <i class="bi bi-person-plus"></i>
+                                <span class="d-none d-md-inline ms-1">등록</span>
+                            </button>
+                            <button id="btn-edit" class="btn btn-primary">
+                                <i class="bi bi-person-fill-add"></i>
+                                <span class="d-none d-md-inline ms-1">수정</span>
+                            </button>
+                            <button id="btn-disable" class="btn btn-secondary">
+                                <i class="bi bi-person-x-fill"></i>
+                                <span class="d-none d-md-inline ms-1">사용중지</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded shadow-sm mb-3" style="min-height: 77vh; max-height: 77vh; overflow-x: auto; overflow-y: hidden;">
+                    <div style="display: flex; flex-direction: column; min-width: 1000px; height: 77vh;">
+                        <div style="flex-shrink: 0;">
+                            <table class="table table-hover mb-0" style="table-layout: fixed; width: 100%;">
+                                <colgroup>
+                                    <col style="width: 5%;">
+                                    <col style="width: 5%;">
+                                    <col style="width: 15%;">
+                                    <col style="width: 30%;">
+                                    <col style="width: 15%;">
+                                    <col style="width: 15%;">
+                                    <col style="width: 15%;">
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <th>선택</th>
+                                        <th>번호</th>
+                                        <th>CCTV명</th>
+                                        <th>URL</th>
+                                        <th>상태</th>
+                                        <th>위도</th>
+                                        <th>경도</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <div style="overflow-y: auto; flex: 1; min-height: 0;">
+                            <table class="table table-hover mb-0" style="table-layout: fixed; width: 100%;">
+                                <colgroup>
+                                    <col style="width: 5%;">
+                                    <col style="width: 5%;">
+                                    <col style="width: 15%;">
+                                    <col style="width: 30%;">
+                                    <col style="width: 15%;">
+                                    <col style="width: 15%;">
+                                    <col style="width: 15%;">
+                                </colgroup>
+                                <tbody id="cctvTableBody">
+                                    <tr th:if="${#lists.isEmpty(cctvList)}" class="text-center">
+                                        <td colspan="7" style="height: 60vh;">
+                                            <div class="d-flex align-items-center justify-content-center h-100">
+                                                <span class="text-muted">
+                                                    <i class="bi bi-inbox me-2"></i>
+                                                    등록된 CCTV가 없습니다.
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr th:each="cctv, iterStat : ${cctvList}">
+                                        <td>
+                                            <input type="checkbox"
+                                                name="selectedCctv"
+                                                th:value="${cctv.cctvCode}"
+                                                class="form-check-input cctv-checkbox" />
+                                        </td>
+                                        <td th:text="${iterStat.count}"></td>
+                                        <td th:text="${cctv.cctvCode} ?: '-'"></td>
+                                        <td th:text="${cctv.rtspUrl} ?: '-'"></td>
+                                        <td>
+                                            <span class="status-badge status-success bg-transparent d-inline-flex align-items-center gap-1" 
+                                                th:if="${cctv.statusCam == '1'}">
+                                                <i class="bi bi-check-circle-fill"></i> 정상
+                                            </span>
+                                            
+                                            <span class="status-badge status-error bg-transparent d-inline-flex align-items-center gap-1" 
+                                                th:if="${cctv.statusCam == '0'}">
+                                                <i class="bi bi-x-circle-fill"></i> 신호없음
+                                            </span>
+                                            
+                                            <span th:if="${#strings.isEmpty(cctv.statusCam)}">-</span>
+                                        </td>
+                                        <td th:text="${cctv.latitude} ?: '-'"></td>
+                                        <td th:text="${cctv.longitude} ?: '-'"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!-- <div class="row flex-wrap h-100 g-3">
+        
+                    <div class="col-12 d-flex align-items-center">
+                        <div class="section-title">
+                            <h5 class="fw-semibold">CCTV 관리</h5>
+                        </div>
+                    </div>
+        
+                    <div class="col-12 pb-3">
+                        <div class="bg-dark text-light p-3 rounded mb-3">
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3 w-100 p-3">
+                                <div class="section-title">
+                                    <span class="fw-semibold mb-0">CCTV 목록</span>
+                                    <span class="status-badge status-primary ms-2">
+                                        <span id="cctvCount" th:text="${#lists.size(cctvList)} + '건'">0건</span>
+                                    </span>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-primary btn-sm d-flex align-items-center gap-2" onclick="settingInsert()">
+                                        <i class="bi bi-plus-circle"></i>
+                                        <span>추가</span>
+                                    </button>
+                                    <button class="btn btn-secondary btn-sm" onclick="settingUpdate()">선택 수정</button>
+                                    <button class="btn btn-danger btn-sm" onclick="settingUpdate()">선택 삭제</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-dark rounded"
+                            style="min-height: 70vh; max-height: 70vh; overflow-x: auto; overflow-y: auto;">
+                            <table class="table table-dark table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>선택</th>
+                                        <th>번호</th>
+                                        <th>CCTV명</th>
+                                        <th>URL</th>
+                                        <th>상태</th>
+                                        <th>위도</th>
+                                        <th>경도</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cctvTableBody">
+                                    <tr th:if="${#lists.isEmpty(cctvList)}" class="text-center">
+                                        <td colspan="7" style="height: 60vh;">
+                                            <div class="d-flex align-items-center justify-content-center h-100">
+                                                <span class="text-muted">
+                                                    <i class="bi bi-inbox me-2"></i>
+                                                    등록된 CCTV가 없습니다.
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr th:each="cctv, iterStat : ${cctvList}">
+                                        <td>
+                                            <input type="checkbox"
+                                                name="selectedCctv"
+                                                th:value="${cctv.cctvCode}"
+                                                class="form-check-input cctv-checkbox" />
+                                        </td>
+                                        <td th:text="${iterStat.count}"></td>
+                                        <td th:text="${cctv.cctvCode} ?: '-'"></td>
+                                        <td th:text="${cctv.rtspUrl} ?: '-'"></td>
+                                        <td>
+                                            <span class="status-badge status-success" th:if="${cctv.statusCam == '1'}">정상</span>
+                                            <span class="status-badge status-error" th:if="${cctv.statusCam == '0'}">신호없음</span>
+                                            <span th:if="${#strings.isEmpty(cctv.statusCam)}">-</span>
+                                        </td>
+                                        <td th:text="${cctv.latitude} ?: '-'"></td>
+                                        <td th:text="${cctv.longitude} ?: '-'"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <nav class="px-3 pt-3 d-none">
+                                <ul class="pagination justify-content-end align-items-center gap-2" id="pagination">
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+        
+                </div> -->
+            </div>
+        </div>
+        
+        <div class="modal fade" id="addCctvModal" tabindex="-1" aria-labelledby="addCctvModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                <h5 class="modal-title" id="addCctvModalLabel">CCTV 추가</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+                </div>
+                <div class="modal-body">
+                <form id="addCctvForm">
+                    <div class="mb-3">
+                    <label for="cctvCode" class="form-label">CCTV 코드</label>
+                    <input type="text" class="form-control" id="cctvCode" required>
+                    </div>
+                    <div class="mb-3">
+                    <label for="cctvName" class="form-label">CCTV 이름</label>
+                    <input type="text" class="form-control" id="cctvName" required>
+                    </div>
+                    <div class="mb-3">
+                    <label for="cctvUrl" class="form-label">RTSP URL</label>
+                    <input type="text" class="form-control" id="cctvUrl">
+                    </div>
+                    <div class="mb-3">
+                    <label for="cctvLat" class="form-label">위도</label>
+                    <input type="number" step="any" class="form-control" id="cctvLat">
+                    </div>
+                    <div class="mb-3">
+                    <label for="cctvLng" class="form-label">경도</label>
+                    <input type="number" step="any" class="form-control" id="cctvLng">
+                    </div>
+                </form>
+                </div>
+                <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" onclick="submitAddCctv()">추가</button>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

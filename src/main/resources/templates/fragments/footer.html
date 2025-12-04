@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Footer</title>
+</head>
+<body>
+    <div th:fragment="footerFragment">
+        <div class="breaking-news" id="breakingNewsSection">
+            <div class="container-fluid px-0">
+                <div class="breaking-news-content">
+                    <div class="breaking-icon-container">
+                        <i class="fas fa-bell breaking-icon"></i>
+                        <span class="breaking-title">특보</span>
+                    </div>
+                    <div class="breaking-text">
+                        <div class="breaking-scroll" id="breakingText">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

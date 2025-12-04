@@ -1,0 +1,27 @@
+<!-- fragments/eds_modal.html -->
+<div th:fragment="edsConfirmModal">
+    <div class="modal fade" id="edsConfirmModal" tabindex="-1" role="dialog" aria-labelledby="edsConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 520px;">
+            <div class="modal-content eds-modal-glass">
+    
+            <!-- Top Icon + Title Section -->
+                <div class="eds-modal-header">
+                    <div class="eds-icon-circle">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
+                    <h5 class="eds-modal-title" id="edsConfirmTitle">확인</h5>
+                </div>
+
+                <div class="eds-modal-body">
+                    <p id="edsConfirmMessage"></p>
+                </div>
+    
+                <div class="eds-modal-footer">
+                    <button id="edsConfirmCancel" class="eds-btn-cancel">취소</button>
+                    <button id="edsConfirmOk" class="eds-btn-ok">확인</button>
+                </div>
+    
+            </div>
+        </div>
+    </div>
+</div>

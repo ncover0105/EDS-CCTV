@@ -1,0 +1,74 @@
+/* Notifications - Dark Theme */
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    /* background: var(--elevated-bg);
+    border: 1px solid var(--border-color); */
+    background: rgba(28, 32, 38, 0.85);
+    border: 1px solid rgba(100, 100, 100, 0.25);
+    border-radius: 12px;
+    /* box-shadow: 0 8px 32px var(--shadow-heavy); */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(16px);
+    color: #e8eaed;
+    display: flex;
+    padding: 16px;
+    min-width: 300px;
+    max-width: 90vw;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 1001;
+}
+
+@media (max-width: 576px) {
+    .notification {
+        bottom: 10px;
+        right: 10px;
+        left: 10px;
+        min-width: auto;
+        padding: 12px;
+    }
+}
+
+.notification.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.notification-danger {
+    border-left: 4px solid var(--bs-danger);
+}
+
+.notification-icon {
+    margin-right: 16px;
+    display: flex;
+    align-items: center;
+    color: var(--bs-danger);
+    font-size: 24px;
+}
+
+@media (max-width: 576px) {
+    .notification-icon {
+        margin-right: 12px;
+        font-size: 20px;
+    }
+}
+
+.notification-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--text-primary);
+}
+
+.notification-message {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+@media (max-width: 576px) {
+    .notification-message {
+        font-size: 12px;
+    }
+}

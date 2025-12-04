@@ -1,0 +1,151 @@
+<div th:fragment="btype_action_modal">
+
+    <div class="modal fade" id="btype_action_modal" tabindex="-1"
+        aria-labelledby="btypeActionTestModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+
+                <!-- 헤더 -->
+                <div class="modal-header">
+                    <h3 class="modal-title" id="speakerTestModalLabel">
+                        스피커 테스트
+                    </h3>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <!-- 바디 -->
+                <div class="modal-body">
+
+                    <div class="row">
+
+                        <!-- ==============================
+                            🔹 LEFT: 수동발령 영역
+                        =============================== -->
+                        <div class="col-lg-6 p-3 border-end">
+                            <h4 class="mb-3">수동발령</h4>
+
+                            <div class="mb-3">
+                                <label class="form-label">실제/실험</label>
+                                <select id="alertMode" class="form-select">
+                                    <option value="0">실험</option>
+                                    <option value="1" selected>실제</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">경보 종류</label>
+                                <select id="DisasterCode" class="form-select">
+                                    <option value="0" selected>CFW</option>
+                                    <option value="1">ACL</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">방송 종류</label>
+                                <select id="alertKind" class="form-select">
+                                    <option value="1" selected>TTS</option>
+                                    <option value="2">저장 메시지</option>
+                                    <option value="3">기타</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">방송 범위</label>
+                                <select id="alertRange" class="form-select">
+                                    <option value="1">시도</option>
+                                    <option value="2">군</option>
+                                    <option value="3" selected>스피커</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">우선순위</label>
+                                <select id="alertPriority" class="form-select">
+                                    <option value="0">없음</option>
+                                    <option value="1">주의</option>
+                                    <option value="2">경계</option>
+                                    <option value="3" selected>위험</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">TTS 메시지</label>
+                                <textarea id="TTSMessage" class="form-control" rows="3"></textarea>
+                            </div>
+
+                            <button id="alert_btn" class="btn btn-primary w-100 mb-4">발령</button>
+
+                            <!-- BGM 제어 -->
+                            <h5>BGM 제어</h5>
+                            <div class="d-grid gap-2">
+                                <button id="bgm_on_btn" class="btn btn-success">BGM ON</button>
+                                <button id="bgm_off_btn" class="btn btn-danger">BGM OFF</button>
+                            </div>
+                        </div>
+
+                        <!-- ==============================
+                            🔹 RIGHT: B타입 스피커 제어 테스트 영역
+                        =============================== -->
+                        <div class="col-lg-6 p-3">
+                            <h4 class="mb-3">B타입 스피커 제어 테스트</h4>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">스피커 ID 입력</label>
+                                <input id="testSpeakerIds" class="form-control" placeholder="예: SPK001,SPK002">
+                            </div>
+
+                            <!-- 액션 선택 -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Action 선택</label>
+                                <select id="btypeActionSelect" class="form-select">
+                                    <option value="status" selected>status - 상태 요청</option>
+                                    <option value="time">time - 시간 동기</option>
+                                    <option value="reset">reset</option>
+                                    <option value="getSpeakerSettings">getSpeakerSettings</option>
+                                    <option value="getVolume">getVolume</option>
+                                    <option value="insBgmVolume">insBgmVolume</option>
+                                    <option value="insAlertVolume">insAlertVolume</option>
+                                </select>
+                            </div>
+
+                            <!-- extraParam -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">extraParam (선택)</label>
+                                <input type="text" id="btypeExtraParamInput" class="form-control"
+                                    placeholder="HEX 값 예: 32, 01, FF">
+                            </div>
+
+                            <!-- B타입 실행 버튼 -->
+                            <button id="btypeActionSendBtn" class="btn btn-secondary w-100 mb-3">
+                                B타입 액션 실행
+                            </button>
+
+                            <!-- 로그 출력 -->
+                            <h5 class="mt-4 d-flex justify-content-between align-items-center">
+                                동작 로그
+                                <button id="clearLogBtn" class="btn btn-sm btn-secondary">초기화</button>
+                            </h5>
+                            <div id="speakerTestLogArea"
+                                class="border rounded p-2"
+                                style="height: 400px; overflow-y:auto;
+                                    background:#111; color:#0f0;
+                                    font-family:monospace; font-size:12px;
+                                    white-space: pre-line;">
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 푸터 -->
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">
+                        닫기
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,20 @@
+<div th:fragment="confirm_modal">
+    <div id="confirm_modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content p-3">
+                <div class="modal-header border-0">
+                    <!-- <h6 class="modal-title" id="confirmModalLabel"></h6> -->
+                    <h5 class="modal-title fw-semibold" id="confirmModalLabel"></h5>
+                    <!-- <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button> -->
+                </div>
+                <div class="modal-body border-0">
+                    <h6 class="fw-semibold mb-0 text-muted" id="confirmModalMessage"></h6>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn footer-btn btn-secondary" id="confirmModalCancelBtn" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn footer-btn btn-primary" id="confirmModalConfirmBtn">확인</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

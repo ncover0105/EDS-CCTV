@@ -1,0 +1,36 @@
+<!-- <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cloud-rain-fill" viewBox="0 0 16 16">
+  <path fill= "white" d="M4.158 12.025a.5.5 0 0 1 .316.633l-.5 1.5a.5.5 0 1 1-.948-.316l.5-1.5a.5.5 0 0 1 .632-.317m3 0a.5.5 0 0 1 .316.633l-1 3a.5.5 0 1 1-.948-.316l1-3a.5.5 0 0 1 .632-.317m3 0a.5.5 0 0 1 .316.633l-.5 1.5a.5.5 0 1 1-.948-.316l.5-1.5a.5.5 0 0 1 .632-.317m3 0a.5.5 0 0 1 .316.633l-1 3a.5.5 0 1 1-.948-.316l1-3a.5.5 0 0 1 .632-.317m.247-6.998a5.001 5.001 0 0 0-9.499-1.004A3.5 3.5 0 1 0 3.5 11H13a3 3 0 0 0 .405-5.973"/>
+</svg> -->
+
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <defs>
+    <!-- 구름 그라데이션 -->
+    <linearGradient id="cloudGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <!-- <stop offset="0%" stop-color="#dcdcdc" />
+      <stop offset="100%" stop-color="#a9a9a9" /> -->
+      <stop offset="0%" stop-color="#cccccc"/>
+      <stop offset="100%" stop-color="#666666"/>
+    </linearGradient>
+
+    <!-- 비 그라데이션 -->
+    <linearGradient id="rainGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#b3d9ff" />
+      <stop offset="100%" stop-color="#3399ff" />
+    </linearGradient>
+  </defs>
+
+  <!-- 빗방울 1 -->
+  <path fill="url(#rainGradient)" d="M4.158 12.025a.5.5 0 0 1 .316.633l-.5 1.5a.5.5 0 1 1-.948-.316l.5-1.5a.5.5 0 0 1 .632-.317" />
+  
+  <!-- 빗방울 2 -->
+  <path fill="url(#rainGradient)" d="M7.158 12.025a.5.5 0 0 1 .316.633l-1 3a.5.5 0 1 1-.948-.316l1-3a.5.5 0 0 1 .632-.317" />
+  
+  <!-- 빗방울 3 -->
+  <path fill="url(#rainGradient)" d="M10.158 12.025a.5.5 0 0 1 .316.633l-.5 1.5a.5.5 0 1 1-.948-.316l.5-1.5a.5.5 0 0 1 .632-.317" />
+  
+  <!-- 빗방울 4 -->
+  <path fill="url(#rainGradient)" d="M13.158 12.025a.5.5 0 0 1 .316.633l-1 3a.5.5 0 1 1-.948-.316l1-3a.5.5 0 0 1 .632-.317" />
+  
+  <!-- 구름 -->
+  <path fill="url(#cloudGradient)" d="M13.405 5.027a5.001 5.001 0 0 0-9.499-1.004A3.5 3.5 0 1 0 3.5 11H13a3 3 0 0 0 .405-5.973"/>
+</svg>

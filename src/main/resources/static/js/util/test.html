@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wave Animation with Dynamic Height Control</title>
+    <style>
+        /* 스타일링 */
+        #waveSVGContainer {
+            margin-top: 20px;
+            display: block;
+            position: relative; /* 부모 요소 position 설정 */
+            width: 30%; /* SVG가 그려지는 공간의 너비 설정 */
+            height: 200px; /* SVG가 그려지는 공간의 높이 설정 */
+            background-image: url('https://rawris-am.ekr.or.kr/wrms/resources/wrms/gis/image/Layout_Reservoir_Background.gif');
+            background-size: cover; /* 배경 이미지를 커버하도록 설정 */
+        }
+
+        #waveSVG {
+            width: 100%; /* SVG의 너비를 부모 요소에 맞게 설정 */
+            height: 100%; /* SVG의 높이를 부모 요소에 맞게 설정 */
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        input {
+            margin-top: 10px;
+            padding: 5px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+<!-- SVG 요소 -->
+<div id="waveSVGContainer">
+    <svg id="waveSVG" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <!-- Water gradient -->
+            <linearGradient id="waterGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color: #3dd5d5; stop-opacity: 1"/>
+                <stop offset="70%" style="stop-color: #3dd5d5; stop-opacity: 0.3"/>
+                <stop offset="100%" style="stop-color: #3dd5d5; stop-opacity: 0.2"/>
+            </linearGradient>
+        </defs>
+        <!-- 물결 애니메이션을 위한 경로 정의 -->
+        <path id="wavePath" fill="url(#waterGradient)">
+            <animate
+                    id="waveAnimation"
+                    attributeName="d"
+                    dur="5s"
+                    repeatCount="indefinite"
+            />
+        </path>
+    </svg>
+</div>
+
+<!-- 입력란과 버튼 -->
+<div>
+    <label for="waveHeightInput">물결 애니메이션 높이 비율 (%) 입력:</label>
+    <input type="number" id="waveHeightInput" value="30" min="0" max="100" step="1">
+    <button onclick="setWaveHeight()">적용</button>
+</div>
+
+<!-- JavaScript -->
+<script>
+    // 초기 SVG 높이 설정
+    let svgHeight = 200; // 초기값
+
+    // 입력된 높이 비율에 따라 물결의 높이를 동적으로 조절하는 함수
+    function setWaveHeight() {
+        let svgContainer = document.getElementById('waveSVGContainer');
+        let svgWidth = svgContainer.clientWidth; // SVG 컨테이너의 너비 가져오기
+        let svgHeight = svgContainer.clientHeight; // SVG 컨테이너의 높이 가져오기
+        let percentage = document.getElementById('waveHeightInput').value;
+        if (percentage < 0) percentage = 0;
+        if (percentage > 100) percentage = 100;
+
+        // SVG 높이 계산
+        let waveHeight = svgHeight * (1 - percentage / 100);
+
+        // 경로를 새로 만들기
+        let newPath = `
+                M0,${waveHeight}
+                C${svgWidth * 0.1},${waveHeight - 10} ${svgWidth * 0.3},${waveHeight + 10} ${svgWidth * 0.5},${waveHeight}
+                S${svgWidth * 0.7},${waveHeight - 10} ${svgWidth},${waveHeight}
+                V${svgHeight}
+                H0
+                Z;
+
+                M0,${waveHeight - 10}
+                C${svgWidth * 0.1},${waveHeight} ${svgWidth * 0.3},${waveHeight - 20} ${svgWidth * 0.5},${waveHeight - 10}
+                S${svgWidth * 0.7},${waveHeight} ${svgWidth},${waveHeight - 10}
+                V${svgHeight}
+                H0
+                Z;
+
+                M0,${waveHeight}
+                C${svgWidth * 0.1},${waveHeight - 10} ${svgWidth * 0.3},${waveHeight + 10} ${svgWidth * 0.5},${waveHeight}
+                S${svgWidth * 0.7},${waveHeight - 10} ${svgWidth},${waveHeight}
+                V${svgHeight}
+                H0
+                Z
+            `;
+
+        // 애니메이션에 경로 설정
+        let waveAnimation = document.getElementById('waveAnimation');
+        waveAnimation.setAttribute('values', newPath);
+    }
+</script>
+</body>
+</html>

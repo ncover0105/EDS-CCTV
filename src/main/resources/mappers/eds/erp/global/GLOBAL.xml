@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.edscorp.eds.rainfall.controller.global.GLOBALMapper">
+
+	<select id="selectRainDataAcc" resultType="com.edscorp.eds.rainfall.vo.global.RAINDATALISTVO">
+        SELECT 
+            A1.UID,
+            (select name from tb_deviceinfo b1 where b1.uid=a1.uid) as name,
+            A1.EventTime,
+            A1.r_acc_now_51,
+            A1.r_abs_hour,
+            A1.r_abs_today,
+            A1.r_abs_yesterday,
+            A1.r_abs_year,
+            A1.min_sum_10
+        FROM tb_rainsum10 A1 
+        WHERE 
+        A1.EventTime=(SELECT A2.EventTime FROM tb_rainsum10 A2 WHERE A1.UID=A2.UID AND EventTime LIKE #{rainDate} '%' ORDER BY A2.UID,EVENTTIME DESC LIMIT 1) 
+        and EventTime LIKE #{rainDate} '%'
+        ORDER BY UID desc
+	</select>
+        <select id="selectRainMonth" resultType="com.edscorp.eds.rainfall.vo.global.RAINDATAMONTHLISTVO">
+        SELECT 
+            A1.UID,
+            (select name from tb_deviceinfo b1 where b1.uid=a1.uid) as name,
+            sum(A1.min_sum_10) as r_abs_month
+        FROM tb_rainsum10 A1 
+        WHERE 
+        A1.EventTime LIKE #{rainDate} '%'
+        GROUP BY A1.uid
+        ORDER BY A2.orderUID ASC;
+	</select>
+    <select id="selectDevice" resultType="com.edscorp.eds.rainfall.vo.global.RAINDEVICELISTVO">
+        SELECT 
+            A1.UID,
+            A1.NAME,
+            A1.device,
+            A1.colWay,
+            now() as startTimes
+        FROM tb_deviceinfo A1 
+        WHERE UseFlag='1' and Colway =#{colWay} and corpDivi='1'AND kind = '1'
+        ORDER BY a1.orderUID ASC;
+	</select>
+    <select id="selectWaterlevelDate" resultType="com.edscorp.eds.rainfall.vo.global.RAINWATERLEVELVO">
+        SELECT rd.uid, rd.eventtime, rd.waterLv, di.name
+        FROM tb_waterlvlastdata rd
+                 LEFT JOIN tb_deviceinfo di
+                           ON rd.uid = di.uid
+
+        WHERE
+        di.useflag = '01'
+        AND di.colWay = #{colWay}
+        AND di.device = '11'
+        AND di.kind = '2';
+    </select>
+<!--    <select id="selectWaterlevelDate" resultType="com.edscorp.eds.rainfall.vo.global.RAINWATERLEVELVO">-->
+<!--        WITH RankedData AS (-->
+<!--            SELECT uid, eventtime, waterLv,-->
+<!--                   ROW_NUMBER() OVER (PARTITION BY uid ORDER BY eventtime DESC) AS rn-->
+<!--            FROM tb_waterlvdata-->
+<!--        )-->
+<!--        SELECT rd.uid, rd.eventtime, rd.waterLv, di.name-->
+<!--        FROM RankedData rd-->
+<!--                 LEFT JOIN tb_deviceinfo di-->
+<!--                           ON rd.uid = di.uid-->
+
+<!--        WHERE rd.rn = 1-->
+<!--          AND di.useflag = '01'-->
+<!--          AND di.colWay = #{colWay}-->
+<!--          AND di.device = '12';-->
+<!--    </select>-->
+
+    <select id="selectRainData" resultType="com.edscorp.eds.rainfall.vo.global.RAINDATALISTVO">
+        SELECT
+            A2.UID,
+            A2.name,
+            A2.colway,
+            A1.RainDate,
+            ROUND(IFNULL(sum(case when A1.RainDate LIKE CONCAT(DATE_FORMAT(#{rainDate},'%Y%m%d'),'%') then ifnull(DAYSUM,0) END),0) / 10, 1) AS r_acc_now_51,
+            ROUND(IFNULL(SUM(CASE WHEN A1.RainDate BETWEEN DATE_FORMAT(DATE_SUB(#{rainDate}, INTERVAL 6 DAY),'%Y%m%d') AND DATE_FORMAT(#{rainDate},'%Y%m%d') THEN IFNULL(DAYSUM, 0) END), 0) / 10, 1) AS r_abs_week,
+            ROUND(IFNULL(sum(case when A1.RainDate LIKE CONCAT(DATE_FORMAT(#{rainDate},'%Y%m%d'),'%') then ${columnName} END),0) / 10, 1) AS r_abs_hour,
+            ROUND(IFNULL(sum(case when A1.RainDate LIKE CONCAT(DATE_FORMAT(#{rainDate},'%Y%m%d'),'%') then ifnull(A1.DAYSUM,0) END),0) / 10, 1) AS r_abs_today,
+            ROUND(IFNULL(sum(case when A1.RainDate LIKE CONCAT(DATE_FORMAT(DATE_SUB(#{rainDate},INTERVAL 1 DAY),'%Y%m%d'),'%') then ifnull(A1.Daysum,0) END),0) / 10, 1) AS r_abs_yesterday,
+            ROUND(IFNULL(sum(case when A1.RainDate LIKE CONCAT(DATE_FORMAT(#{rainDate},'%Y%m'),'%') then ifnull(A1.DAYSUM,0) END),0) / 10, 1) AS r_abs_month,
+            ROUND(IFNULL(sum(case when A1.RainDate LIKE CONCAT(DATE_FORMAT(#{rainDate},'%Y'),'%') then ifnull(A1.DAYSUM,0) END),0) / 10, 1) AS r_abs_year,
+            ROUND(IFNULL(sum(CASE WHEN A1.RainDate LIKE CONCAT(DATE_FORMAT(#{rainDate},'%Y%m%d'),'%') THEN
+                                      GREATEST(IFNULL(A1.H00, 0), IFNULL(A1.H01, 0), IFNULL(A1.H02, 0), IFNULL(A1.H03, 0),
+                                               IFNULL(A1.H04, 0), IFNULL(A1.H05, 0), IFNULL(A1.H06, 0), IFNULL(A1.H07, 0),
+                                               IFNULL(A1.H08, 0), IFNULL(A1.H09, 0), IFNULL(A1.H10, 0), IFNULL(A1.H11, 0),
+                                               IFNULL(A1.H12, 0), IFNULL(A1.H13, 0), IFNULL(A1.H14, 0), IFNULL(A1.H15, 0),
+                                               IFNULL(A1.H16, 0), IFNULL(A1.H17, 0), IFNULL(A1.H18, 0), IFNULL(A1.H19, 0),
+                                               IFNULL(A1.H20, 0), IFNULL(A1.H21, 0), IFNULL(A1.H22, 0), IFNULL(A1.H23, 0)) ELSE NULL END),0)/10,1) AS rainMax,
+            IFNULL(sum(CASE WHEN A1.RainDate LIKE CONCAT(DATE_FORMAT(#{rainDate},'%Y%m%d'),'%') THEN
+                                      CASE GREATEST(IFNULL(A1.H00, 0), IFNULL(A1.H01, 0), IFNULL(A1.H02, 0), IFNULL(A1.H03, 0),
+                                                    IFNULL(A1.H04, 0), IFNULL(A1.H05, 0), IFNULL(A1.H06, 0), IFNULL(A1.H07, 0),
+                                                    IFNULL(A1.H08, 0), IFNULL(A1.H09, 0), IFNULL(A1.H10, 0), IFNULL(A1.H11, 0),
+                                                    IFNULL(A1.H12, 0), IFNULL(A1.H13, 0), IFNULL(A1.H14, 0), IFNULL(A1.H15, 0),
+                                                    IFNULL(A1.H16, 0), IFNULL(A1.H17, 0), IFNULL(A1.H18, 0), IFNULL(A1.H19, 0),
+                                                    IFNULL(A1.H20, 0), IFNULL(A1.H21, 0), IFNULL(A1.H22, 0), IFNULL(A1.H23, 0))
+                                          WHEN IFNULL(A1.H00, 0) THEN '00'
+                                          WHEN IFNULL(A1.H01, 0) THEN '01'
+                                          WHEN IFNULL(A1.H02, 0) THEN '02'
+                                          WHEN IFNULL(A1.H03, 0) THEN '03'
+                                          WHEN IFNULL(A1.H04, 0) THEN '04'
+                                          WHEN IFNULL(A1.H05, 0) THEN '05'
+                                          WHEN IFNULL(A1.H06, 0) THEN '06'
+                                          WHEN IFNULL(A1.H07, 0) THEN '07'
+                                          WHEN IFNULL(A1.H08, 0) THEN '08'
+                                          WHEN IFNULL(A1.H09, 0) THEN '09'
+                                          WHEN IFNULL(A1.H10, 0) THEN '10'
+                                          WHEN IFNULL(A1.H11, 0) THEN '11'
+                                          WHEN IFNULL(A1.H12, 0) THEN '12'
+                                          WHEN IFNULL(A1.H13, 0) THEN '13'
+                                          WHEN IFNULL(A1.H14, 0) THEN '14'
+                                          WHEN IFNULL(A1.H15, 0) THEN '15'
+                                          WHEN IFNULL(A1.H16, 0) THEN '16'
+                                          WHEN IFNULL(A1.H17, 0) THEN '17'
+                                          WHEN IFNULL(A1.H18, 0) THEN '18'
+                                          WHEN IFNULL(A1.H19, 0) THEN '19'
+                                          WHEN IFNULL(A1.H20, 0) THEN '20'
+                                          WHEN IFNULL(A1.H21, 0) THEN '21'
+                                          WHEN IFNULL(A1.H22, 0) THEN '22'
+                                          WHEN IFNULL(A1.H23, 0) THEN '23'
+                                          END
+                                  ELSE NULL
+                END),0) AS rainMaxTime
+        FROM tb_deviceinfo A2
+                 LEFT JOIN tb_rainacc A1 ON A1.uid = A2.uid AND A1.RainDate LIKE CONCAT(DATE_FORMAT(#{rainDate},'%Y'),'%')
+        WHERE A2.colway = #{colWay}
+          AND A2.useFlag= '01'
+          AND A2.kind = '1'
+        GROUP BY A2.UID
+        ORDER BY A2.orderUID ASC;
+	</select>
+    <select id="selectLastWaterLv" resultType="com.edscorp.eds.rainfall.vo.global.waterLvDATALISTVO">
+        SELECT
+            A1.UID,
+            A2.name,
+            A2.colway,
+            A1.eventTime,
+            A1.waterLv,
+            A1.waterLv15Gap,
+            A1.waterLv60Gap,
+            A1.waterLvTdayGap,
+            A1.waterLvYdayGap,
+            A1.waterLvYdayMax,
+            A1.waterLvTdayMax,
+        FROM tb_waterlvlastdata A1
+                 LEFT JOIN tb_deviceinfo A2 ON A1.uid = A2.uidㄴㄴ
+        WHERE  A2.colway = #{colWay}
+        AND A2.kind = '2'
+        AND A2.useFlag= '01'
+        GROUP BY A1.UID
+        ORDER BY A2.orderUID ASC;
+    </select>
+    <select id="selectRainDataDay" resultType="com.edscorp.eds.rainfall.vo.global.RAINDAYVO">
+        SELECT
+            a2.name,
+            a1.rainDate,
+            IFNULL(ROUND(a1.H00/10,1), '-') AS H00,
+            IFNULL(ROUND(a1.H01/10,1), '-') AS H01,
+            IFNULL(ROUND(a1.H02/10,1), '-') AS H02,
+            IFNULL(ROUND(a1.H03/10,1), '-') AS H03,
+            IFNULL(ROUND(a1.H04/10,1), '-') AS H04,
+            IFNULL(ROUND(a1.H05/10,1), '-') AS H05,
+            IFNULL(ROUND(a1.H06/10,1), '-') AS H06,
+            IFNULL(ROUND(a1.H07/10,1), '-') AS H07,
+            IFNULL(ROUND(a1.H08/10,1), '-') AS H08,
+            IFNULL(ROUND(a1.H09/10,1), '-') AS H09,
+            IFNULL(ROUND(a1.H10/10,1), '-') AS H10,
+            IFNULL(ROUND(a1.H11/10,1), '-') AS H11,
+            IFNULL(ROUND(a1.H12/10,1), '-') AS H12,
+            IFNULL(ROUND(a1.H13/10,1), '-') AS H13,
+            IFNULL(ROUND(a1.H14/10,1), '-') AS H14,
+            IFNULL(ROUND(a1.H15/10,1), '-') AS H15,
+            IFNULL(ROUND(a1.H16/10,1), '-') AS H16,
+            IFNULL(ROUND(a1.H17/10,1), '-') AS H17,
+            IFNULL(ROUND(a1.H18/10,1), '-') AS H18,
+            IFNULL(ROUND(a1.H19/10,1), '-') AS H19,
+            IFNULL(ROUND(a1.H20/10,1), '-') AS H20,
+            IFNULL(ROUND(a1.H21/10,1), '-') AS H21,
+            IFNULL(ROUND(a1.H22/10,1), '-') AS H22,
+            IFNULL(ROUND(a1.H23/10,1), '-') AS H23,
+            IFNULL(ROUND(a1.daySum/10,1), '-') AS daysum
+        FROM
+            tb_rainacc a1
+                LEFT JOIN tb_deviceinfo a2 ON a1.uid = a2.uid
+        WHERE
+            a1.RainDate = #{stDt}
+          AND a2.colWay = #{colWay}
+          AND a2.useflag = '01'
+          AND A2.kind = '1'
+        ORDER BY a2.orderUID ASC;
+    </select>
+    <select id="selectRainDataMon" resultType="com.edscorp.eds.rainfall.vo.global.RAINMONVO">
+        SELECT
+            uid,
+            name,
+            orderUID,
+            MAX(CASE WHEN day = 1 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day1,
+            MAX(CASE WHEN day = 2 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day2,
+            MAX(CASE WHEN day = 3 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day3,
+            MAX(CASE WHEN day = 4 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day4,
+            MAX(CASE WHEN day = 5 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day5,
+            MAX(CASE WHEN day = 6 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day6,
+            MAX(CASE WHEN day = 7 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day7,
+            MAX(CASE WHEN day = 8 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day8,
+            MAX(CASE WHEN day = 9 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day9,
+            MAX(CASE WHEN day = 10 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day10,
+            MAX(CASE WHEN day = 11 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day11,
+            MAX(CASE WHEN day = 12 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day12,
+            MAX(CASE WHEN day = 13 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day13,
+            MAX(CASE WHEN day = 14 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day14,
+            MAX(CASE WHEN day = 15 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day15,
+            MAX(CASE WHEN day = 16 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day16,
+            MAX(CASE WHEN day = 17 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day17,
+            MAX(CASE WHEN day = 18 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day18,
+            MAX(CASE WHEN day = 19 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day19,
+            MAX(CASE WHEN day = 20 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day20,
+            MAX(CASE WHEN day = 21 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day21,
+            MAX(CASE WHEN day = 22 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day22,
+            MAX(CASE WHEN day = 23 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day23,
+            MAX(CASE WHEN day = 24 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day24,
+            MAX(CASE WHEN day = 25 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day25,
+            MAX(CASE WHEN day = 26 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day26,
+            MAX(CASE WHEN day = 27 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day27,
+            MAX(CASE WHEN day = 28 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day28,
+            MAX(CASE WHEN day = 29 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day29,
+            MAX(CASE WHEN day = 30 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day30,
+            MAX(CASE WHEN day = 31 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS day31,
+            ROUND(SUM(daySum) / 10, 1) AS totalSum
+        FROM (
+                 SELECT
+                     a1.uid,
+                     a2.orderUID,
+                     a2.name,
+                     DAY(STR_TO_DATE(a1.raindate, '%Y%m%d')) AS day,
+                     a1.daySum
+                 FROM
+                     tb_rainacc a1 LEFT JOIN tb_deviceinfo a2 ON a1.uid=a2.UID
+                 WHERE
+                     a2.ColWay=#{colWay}
+                   and  LEFT(raindate, 6) = #{stDt}
+                   AND A2.kind = '1'
+             ) AS subquery
+        GROUP BY
+            uid
+        ORDER BY orderUID ASC;
+    </select>
+    <select id="selectRainDataYear" resultType="com.edscorp.eds.rainfall.vo.global.RAINYEARVO">
+        SELECT
+            uid,
+            name,
+            orderUID,
+            MAX(CASE WHEN month = 1 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS MON1,
+            MAX(CASE WHEN month = 2 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS MON2,
+            MAX(CASE WHEN month = 3 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS MON3,
+            MAX(CASE WHEN month = 4 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS MON4,
+            MAX(CASE WHEN month = 5 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS MON5,
+            MAX(CASE WHEN month = 6 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS MON6,
+            MAX(CASE WHEN month = 7 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS MON7,
+            MAX(CASE WHEN month = 8 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS MON8,
+            MAX(CASE WHEN month = 9 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS MON9,
+            MAX(CASE WHEN month = 10 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS MON10,
+            MAX(CASE WHEN month = 11 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS MON11,
+            MAX(CASE WHEN month = 12 THEN ROUND(daySum / 10, 1) ELSE '-' END) AS MON12,
+            ROUND(SUM(daySum) / 10, 1) AS totalSum
+        FROM (
+                 SELECT
+                     a1.uid,
+                     a2.Name,
+                     MONTH(STR_TO_DATE(a1.raindate, '%Y%m%d')) AS month,
+                     SUM(a1.daySum) AS daySum,
+                     a2.orderUID
+                 FROM
+                     tb_rainacc a1 LEFT JOIN tb_deviceinfo a2 ON a1.uid=a2.UID
+                 WHERE
+                     a2.ColWay=#{colWay}
+                   and a1.raindate LIKE '2024%'
+                   AND A2.kind = '1'
+                 GROUP BY
+                     a1.uid, month
+             ) AS monthly_data
+        GROUP BY
+            uid
+        ORDER BY orderUID ASC;
+    </select>
+
+
+</mapper>

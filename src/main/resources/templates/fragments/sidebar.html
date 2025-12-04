@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <nav th:fragment="sidebarFragment" class="sb-sidenav sb-sidenav-dark rounded-end p-2" id="sidenavAccordion">
+        <div class="sb-sidenav-menu py-4">
+            <div class="nav">
+                <!-- Home -->
+                <a class="nav-link" th:href="@{/main}">
+                    <div class="sb-nav-link-icon shadow rounded-1 bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-house text-bg-dark"></i>
+                    </div>
+                    종합상황판
+                </a>
+
+                <!-- 장비관리 -->
+                <a class="nav-link collapsed" 
+                    th:classappend="${currentPage == 'equipment' or currentPage == 'cctv' ? '' : 'collapsed'}"
+                    data-bs-toggle="collapse" data-bs-target="#pagesCollapseEquipment" 
+                    aria-expanded="${currentPage == 'equipment' or currentPage == 'cctv' ? 'true' : 'false'}" 
+                    aria-controls="pagesCollapseEquipment">
+                    <div class="sb-nav-link-icon shadow rounded-1 bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-screwdriver-wrench text-bg-dark"></i>
+                    </div>
+                    장비관리
+                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                </a>
+                <div class="collapse" 
+                    th:classappend="${currentPage == 'equipment' or currentPage == 'cctv' ? 'show' : ''}"
+                    id="pagesCollapseEquipment" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordionPages">
+                    <nav class="sb-sidenav-menu-nested nav">
+                        <a class="nav-link" th:classappend="${currentPage == 'equipment' and view == 'speaker' ? 'active' : ''}" th:href="@{/menu/equipment(view='speaker')}">스피커관리</a>
+                        <a class="nav-link" th:classappend="${currentPage == 'cctv' ? 'active' : ''}" th:href="@{/menu/cctv}">CCTV관리</a>
+                    </nav>
+                </div>
+
+                <!-- 이력조회 -->
+                <a class="nav-link collapsed" 
+                    th:classappend="${currentPage == 'situation' ? '' : 'collapsed'}"
+                    data-bs-toggle="collapse" data-bs-target="#pagesCollapseRecord" 
+                    aria-expanded="${currentPage == 'situation' ? 'true' : 'false'}" 
+                    aria-controls="pagesCollapseRecord">
+                    <div class="sb-nav-link-icon shadow rounded-1 bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-file-lines text-bg-dark"></i>
+                    </div>
+                    이력조회
+                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                </a>
+                <div class="collapse" 
+                    th:classappend="${currentPage == 'situation' ? 'show' : ''}"
+                    id="pagesCollapseRecord" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordionPages">
+                    <nav class="sb-sidenav-menu-nested nav">
+                        <a class="nav-link" th:classappend="${view == 'situation' ? 'active' : ''}" th:href="@{/menu/situation(view='situation')}">상황발생이력</a>
+                        <a class="nav-link" th:classappend="${view == 'broadcast' ? 'active' : ''}" th:href="@{/menu/situation(view='broadcast')}">발령이력</a>
+                        <a class="nav-link" th:classappend="${view == 'special' ? 'active' : ''}" th:href="@{/menu/situation(view='special')}">특보이력</a>
+                    </nav>
+                </div>
+
+                <!-- 설정 -->
+                <a class="nav-link collapsed" 
+                    th:classappend="${currentPage == 'settings' ? '' : 'collapsed'}"
+                    data-bs-toggle="collapse" data-bs-target="#pagesCollapseSetting" 
+                    aria-expanded="${currentPage == 'settings' ? 'true' : 'false'}" 
+                    aria-controls="pagesCollapseSetting">
+                    <div class="sb-nav-link-icon shadow rounded-1 bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-sliders text-bg-dark"></i>
+                    </div>
+                    설정
+                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                </a>
+                <div class="collapse" 
+                    th:classappend="${currentPage == 'settings' ? 'show' : ''}"
+                    id="pagesCollapseSetting" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordionPages">
+                    <nav class="sb-sidenav-menu-nested nav">
+                        <a class="nav-link" th:classappend="${view == 'user' ? 'active' : ''}" th:href="@{/menu/settings(view='user')}">사용자설정</a>
+                        <a class="nav-link" th:classappend="${view == 'ment' ? 'active' : ''}" th:href="@{/menu/settings(view='ment')}">문안설정</a>
+                        <a class="nav-link" th:classappend="${view == 'sms' ? 'active' : ''}" th:href="@{/menu/settings(view='sms')}">SMS알림설정</a>
+                        <a class="nav-link" th:classappend="${view == 'bgm' ? 'active' : ''}" th:href="@{/menu/settings(view='bgm')}">방송 스케줄</a>
+                        <a class="nav-link" th:classappend="${view == 'setting' ? 'active' : ''}" th:href="@{/menu/settings(view='setting')}">환경설정</a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <div class="sb-sidenav-footer">
+            <a class="btn btn-danger mt-3 w-100" th:href="@{/logout}">Logout</a>
+        </div>
+    </nav>
+</html>

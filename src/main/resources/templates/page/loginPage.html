@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>EDS-Login</title>
+    <link rel="stylesheet" th:href="@{/css/login.css}">
+    <script src="/js/login.js" defer></script>
+</head>
+<body>
+    <!-- Animated particles -->
+    <div class="particles"></div>
+    <div class="container">
+        <div class="login-card">
+            <div class="logo-section">
+                <h1 class="system-title">안전 재난 시스템</h1>
+                <p class="subtitle">Emergency Disaster System</p>
+            </div>
+            <!-- Sign In Form -->
+            <form class="signin-form active" th:action="@{/loginProc}" method="post">
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <input type="text" id="id" name="id" class="form-input" placeholder="사용자 ID" required>
+                        <i class="bx bxs-user input-icon"></i>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <input type="password" id="pw" name="pw" class="form-input" placeholder="비밀번호" required>
+                        <i class="bx bxs-lock-alt input-icon"></i>
+                    </div>
+                </div>
+
+                <button type="submit" class="login-btn">로그인</button>
+
+                <div th:if="${param.error}" class="error-message">
+                    <div class="alert">
+                        사용자 ID 또는 Password를 확인해 주세요.
+                    </div>
+                </div>
+
+                <div class="toggle-section">
+                    <p class="toggle-text">계정이 없으신가요?</p>
+                    <a class="toggle-btn" onclick="toggleForms()">회원가입</a>
+                </div>
+            </form>
+
+            <!-- Sign Up Form -->
+            <div class="signup-form">
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <input type="text" class="form-input" placeholder="사용자명" required>
+                        <i class="bx bxs-user input-icon"></i>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <input type="password" class="form-input" placeholder="비밀번호" required>
+                        <i class="bx bxs-lock-alt input-icon"></i>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <input type="password" class="form-input" placeholder="비밀번호 확인" required>
+                        <i class="bx bxs-lock-alt input-icon"></i>
+                    </div>
+                </div>
+
+                <button type="button" class="login-btn">회원가입</button>
+
+                <div class="toggle-section">
+                    <p class="toggle-text">이미 계정이 있으신가요?</p>
+                    <a class="toggle-btn" onclick="toggleForms()">로그인</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
