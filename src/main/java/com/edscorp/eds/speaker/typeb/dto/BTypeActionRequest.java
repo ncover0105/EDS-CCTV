@@ -1,4 +1,4 @@
-package com.edscorp.eds.speaker.dto;
+package com.edscorp.eds.speaker.typeb.dto;
 
 import java.util.List;
 

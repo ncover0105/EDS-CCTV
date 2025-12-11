@@ -19,11 +19,12 @@ function safeStatus(connStat) {
     switch (connStat) {
         case "00": return "offline";
         case "01": return "online";
-        case "02": return "error";
-        default:   return "offline"; // 알 수 없는 값 → offline 처리
+        case "02": return "online";
+        default:   return "warrning"; // 알 수 없는 값 → offline 처리
     }
 }
 
+// 스피커 카드 생성
 function renderSpeakerCards() {
     const container = document.getElementById('speaker-card-container');
     if (!container) return;
@@ -56,14 +57,25 @@ function renderSpeakerCards() {
 
         card.innerHTML = `
             <div class="d-flex mb-3">
-                <div class="speaker-status ${statusClass}"></div>
+                <div class="dot dot-${statusClass}"></div>
             </div>
             <div class="d-flex flex-column justify-content-center flex-grow-1">
                 <h6 class="mt-2 mb-1">${name}</h6>
                 <small class="text-white-50 mb-1">${adr}</small>
                 <small><i class="bi bi-geo-alt"></i> ${lat}, ${lng}</small>
             </div>
-        `;
+        `;  
+
+        // card.innerHTML = `
+        //     <div class="d-flex mb-3">
+        //         <div class="speaker-status ${statusClass}"></div>
+        //     </div>
+        //     <div class="d-flex flex-column justify-content-center flex-grow-1">
+        //         <h6 class="mt-2 mb-1">${name}</h6>
+        //         <small class="text-white-50 mb-1">${adr}</small>
+        //         <small><i class="bi bi-geo-alt"></i> ${lat}, ${lng}</small>
+        //     </div>
+        // `;
 
         container.appendChild(card);
     });

@@ -369,14 +369,14 @@ async function renderSpeakerPanel() {
         speakerList = await res.json();
 
     } catch (err) {
-        console.error("❌ Speaker list load error:", err);
+        console.error("Speaker list load error:", err);
         container.classList.add("d-none");
         emptyMessage.classList.remove("d-none");
-        emptyMessage.innerText = "스피커 목록을 불러오지 못했습니다.";
+        // emptyMessage.innerText = "스피커 목록을 불러오지 못했습니다.";
         return;
     }
 
-    // ⛔ 데이터 초기화
+    // 데이터 초기화
     container.innerHTML = "";
 
     // 2) 스피커 없을 때
@@ -396,22 +396,35 @@ async function renderSpeakerPanel() {
             sp.connStat === "01" || sp.connStat === "1" || sp.status === "온라인";
 
         const html = `
-            <div class="log-item d-flex align-items-center justify-content-between">
-                <div>
-                    <div class="fw-semibold text-white">
-                        ${(sp.speakerName || sp.name || "").trim() || "알수 없음"}
+            <div class="speaker-item">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center;">
+                        <span class="dot ${isOnline ? "dot-online" : "dot-offline"}"></span>
+                        <span>${(sp.speakerName || sp.name || "").trim() || "알수 없음"}</span>
                     </div>
-                    <div class="small text-white opacity-75">
+                    <small style="opacity: 0.7; font-size: 0.75rem;">
                         ${(sp.speakerAdr || sp.ip || "").trim() || "알수 없음"}
-                    </div>
+                    </small>
                 </div>
-
-                <span class="status-badge rounded-4 ${isOnline ? "status-success " : "status-error"}">
-                    ${isOnline ? "온라인" : "오프라인"}
-                </span>
             </div>
         `;
-        // bg-transparent
+
+        // const html = `
+        //     <div class="log-item d-flex align-items-center justify-content-between">
+        //         <div>
+        //             <div class="fw-semibold text-white">
+        //                 ${(sp.speakerName || sp.name || "").trim() || "알수 없음"}
+        //             </div>
+        //             <div class="small text-white opacity-75">
+        //                 ${(sp.speakerAdr || sp.ip || "").trim() || "알수 없음"}
+        //             </div>
+        //         </div>
+
+        //         <span class="status-badge rounded-4 ${isOnline ? "status-success " : "status-error"}">
+        //             ${isOnline ? "온라인" : "오프라인"}
+        //         </span>
+        //     </div>
+        // `;
         container.insertAdjacentHTML("beforeend", html);
     });
 }

@@ -20,6 +20,8 @@ window.Weather = (function () {
         "매우 나쁨": "very-bad"
     };
 
+    let currentMapType = "radar";
+
     /* ============================================================================
         2) 초기화
     =========================================================================== */
@@ -27,9 +29,9 @@ window.Weather = (function () {
         loadAllWeather();
         setInterval(loadAllWeather, 120000);
 
-        document.querySelectorAll('input[name="map_type"]').forEach(btn => {
-            btn.addEventListener("change", toggleMapImage);
-        });
+        // document.querySelectorAll('input[name="map_type"]').forEach(btn => {
+        //     btn.addEventListener("change", toggleMapImage);
+        // });
 
         toggleMapImage();
     }
@@ -61,7 +63,7 @@ window.Weather = (function () {
         $("#humidity").text(data.humidity + "%");
 
         if (data.winddirection) {
-            $("#windDirection").text(data.winddirection);
+            $("#windText").text(data.winddirection);
             $("#windIcon").css("transform", `rotate(${windDirectionMap[data.winddirection] ?? 0}deg)`);
         }
     }
@@ -136,77 +138,106 @@ window.Weather = (function () {
             return;
         }
     
-        img.classList.add("d-none");
+        // img.classList.add("d-none");
         spinner.classList.remove("d-none");
     
-        const testImg = new Image();
+        const currentImg = new Image();
     
-        testImg.onload = () => {
+        currentImg.onload = () => {
             // 2) 로드 성공한 경우에만 교체
             img.src = newUrl;
             img.classList.remove("d-none");
             spinner.classList.add("d-none");
     
             // 토글 모드 유지
-            toggleMapImage();
+            // toggleMapImage();
         };
     
-        testImg.onerror = () => {
+        currentImg.onerror = () => {
             console.warn(`이미지 로드 실패: ${newUrl}`);
     
             // 3) 실패하면 기존 이미지 유지
-            img.src = currentUrl;
-            img.classList.remove("d-none");
+            // img.src = currentUrl;
+            // img.classList.remove("d-none");
             spinner.classList.add("d-none");
     
             // toggle 유지
-            toggleMapImage();
+            // toggleMapImage();
         };
     
         // 실제 이미지 로드 시도
-        testImg.src = newUrl;
+        currentImg.src = newUrl;
     }
     
     /* ============================================================================
         8) 레이더/위성 토글 UI
     =========================================================================== */
+    function switchRadarType(type, btn) {
+        // 버튼 active 토글
+        document.querySelectorAll(".toggle-btn").forEach(b => b.classList.remove("active"));
+        if (btn) btn.classList.add("active");
+    
+        // 현재 타입 상태 저장
+        currentMapType = type;
+    
+        // 화면 전환
+        toggleMapImage();
+    }
+    
+    // 탭 이벤트만 처리 수정
     function toggleMapImage() {
-        const isRadar = document.getElementById("radar")?.checked;
-
-        const radarImg = document.getElementById("radarImg");
-        const satelliteImg = document.getElementById("satelliteImg");
-
-        const loadingRadar = document.getElementById("loadingSpinnerRadar");
-        const loadingSatellite = document.getElementById("loadingSpinnerSatellite");
-
+        const isRadar = currentMapType === "radar";
+    
         const radarContent = document.getElementById("radar-map");
         const satelliteContent = document.getElementById("satellite-map");
-
+    
         if (isRadar) {
             radarContent.classList.remove("d-none");
             satelliteContent.classList.add("d-none");
-
-            if (radarImg.naturalWidth > 0) {
-                radarImg.classList.remove("d-none");
-                loadingRadar.classList.add("d-none");
-            } else {
-                radarImg.classList.add("d-none");
-                loadingRadar.classList.remove("d-none");
-            }
-
         } else {
             satelliteContent.classList.remove("d-none");
             radarContent.classList.add("d-none");
-
-            if (satelliteImg.naturalWidth > 0) {
-                satelliteImg.classList.remove("d-none");
-                loadingSatellite.classList.add("d-none");
-            } else {
-                satelliteImg.classList.add("d-none");
-                loadingSatellite.classList.remove("d-none");
-            }
         }
     }
+    
+    // function toggleMapImage() {
+    //     const isRadar = currentMapType === "radar";
+    
+    //     const radarImg = document.getElementById("radarImg");
+    //     const satelliteImg = document.getElementById("satelliteImg");
+    
+    //     const loadingRadar = document.getElementById("loadingSpinnerRadar");
+    //     const loadingSatellite = document.getElementById("loadingSpinnerSatellite");
+    
+    //     const radarContent = document.getElementById("radar-map");
+    //     const satelliteContent = document.getElementById("satellite-map");
+    
+    //     if (isRadar) {
+    //         radarContent.classList.remove("d-none");
+    //         satelliteContent.classList.add("d-none");
+    
+    //         if (radarImg.naturalWidth > 0) {
+    //             radarImg.classList.remove("d-none");
+    //             loadingRadar.classList.add("d-none");
+    //         } else {
+    //             radarImg.classList.add("d-none");
+    //             loadingRadar.classList.remove("d-none");
+    //         }
+    
+    //     } else {
+    //         satelliteContent.classList.remove("d-none");
+    //         radarContent.classList.add("d-none");
+    
+    //         if (satelliteImg.naturalWidth > 0) {
+    //             satelliteImg.classList.remove("d-none");
+    //             loadingSatellite.classList.add("d-none");
+    //         } else {
+    //             satelliteImg.classList.add("d-none");
+    //             loadingSatellite.classList.remove("d-none");
+    //         }
+    //     }
+    // }
+    
 
     /* ============================================================================
         9) 대기질 안전 처리
@@ -307,7 +338,8 @@ window.Weather = (function () {
     =========================================================================== */
     return {
         init,
-        loadAirQuality
+        loadAirQuality,
+        switchRadarType
     };
 
 })();

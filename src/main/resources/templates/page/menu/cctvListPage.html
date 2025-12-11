@@ -97,12 +97,21 @@
                                         <td th:text="${cctv.cctvCode} ?: '-'"></td>
                                         <td th:text="${cctv.rtspUrl} ?: '-'"></td>
                                         <td>
-                                            <span class="status-badge status-success bg-transparent d-inline-flex align-items-center gap-1" 
+                                            <!-- <span class="status-badge status-success bg-transparent d-inline-flex align-items-center gap-1" 
                                                 th:if="${cctv.statusCam == '1'}">
                                                 <i class="bi bi-check-circle-fill"></i> 정상
                                             </span>
                                             
                                             <span class="status-badge status-error bg-transparent d-inline-flex align-items-center gap-1" 
+                                                th:if="${cctv.statusCam == '0'}">
+                                                <i class="bi bi-x-circle-fill"></i> 신호없음
+                                            </span> -->
+                                            <span class="status-badge status-success d-inline-flex align-items-center gap-1" 
+                                                th:if="${cctv.statusCam == '1'}">
+                                                <i class="bi bi-check-circle-fill"></i> 정상
+                                            </span>
+                                            
+                                            <span class="status-badge status-error d-inline-flex align-items-center gap-1" 
                                                 th:if="${cctv.statusCam == '0'}">
                                                 <i class="bi bi-x-circle-fill"></i> 신호없음
                                             </span>

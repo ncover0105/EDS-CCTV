@@ -1,102 +1,487 @@
-html {
-    height: 100%;
+:root {
+    --bg-primary: #0a0a0a;
+    --bg-secondary: #1a1a1a;
+    --bg-tertiary: #2a2a2a;
+    --text-primary: #ffffff;
+    --text-secondary: #a1a1aa;
+    --accent-blue: #3b82f6;
+    --accent-blue-hover: #2563eb;
+    --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    --border-color: #404040;
+    --error-color: #ef4444;
+    --success-color: #10b981;
+    --glass-bg: rgba(26, 26, 26, 0.85);
+    --shadow: rgba(0, 0, 0, 0.8);
+    --glow-blue: rgba(59, 130, 246, 0.3);
 }
 
-.init_desc{
-    position: absolute;
-    background-color: rgba(0,0,0,.3);
-    width: 100%;
-    height: 100%;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Enhanced animated background */
+body::before {
+    content: '';
+    position: fixed;
     top: 0;
     left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(40, 40, 60, 0.5) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(80, 80, 100, 0.4) 0%, transparent 50%),
+        linear-gradient(135deg, #0a0a0a 0%, #141414 25%, #1f1f28 50%, #141414 75%, #0a0a0a 100%);
+    background-size: 300% 300%;
+    animation: gradientShift 25s ease infinite;
+    z-index: -2;
 }
 
-.login-box {
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Floating particles with improved animation */
+.particles {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.particle {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0;
+    animation: float 25s infinite linear;
+}
+
+.particle:nth-child(odd) {
+    background: var(--accent-blue);
+    width: 6px;
+    height: 6px;
+    animation-delay: calc(var(--i) * -2s);
+}
+
+.particle:nth-child(even) {
+    /* background: rgba(168, 85, 247, 0.6); */
+    background: rgba(213, 209, 216, 0.637);
+    width: 4px;
+    height: 4px;
+    animation-delay: calc(var(--i) * -3s);
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(100vh) translateX(0) rotate(0deg) scale(0);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.6;
+        transform: translateY(90vh) translateX(10px) rotate(45deg) scale(1);
+    }
+    90% {
+        opacity: 0.6;
+        transform: translateY(10vh) translateX(-10px) rotate(315deg) scale(1);
+    }
+    100% {
+        transform: translateY(-10vh) translateX(0) rotate(360deg) scale(0);
+        opacity: 0;
+    }
+}
+
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+    position: relative;
+}
+
+.login-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 
+        0 25px 50px -12px var(--shadow),
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+    animation: slideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.login-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 35px 60px -12px var(--shadow),
+        0 0 0 1px rgba(255, 255, 255, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(60px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.login-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--accent-gradient);
+    opacity: 0.8;
+    border-radius: 20px 20px 0 0;
+}
+
+.logo-section {
+    text-align: center;
+    margin-bottom: 40px;
+    position: relative;
+}
+
+.system-title {
+    font-size: 32px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-blue) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+    letter-spacing: -0.8px;
+    line-height: 1.2;
+}
+
+.subtitle {
+    font-size: 16px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.form-group {
+    margin-bottom: 24px;
+    position: relative;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 18px;
+    color: var(--text-secondary);
+    font-size: 20px;
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+.form-input {
+    width: 100%;
+    padding: 18px 18px 18px 52px;
+    background: var(--bg-secondary);
+    border: 1.5px solid var(--border-color);
+    border-radius: 14px;
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 500;
+    outline: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-appearance: none;
+}
+
+.form-input::placeholder {
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+.form-input:focus {
+    border-color: var(--accent-blue);
+    background: rgba(26, 26, 26, 0.9);
+    box-shadow: 
+        0 0 0 3px var(--glow-blue),
+        0 8px 25px -8px rgba(59, 130, 246, 0.2);
+    transform: translateY(-1px);
+}
+
+.form-input:focus + .input-icon {
+    color: var(--accent-blue);
+    transform: scale(1.1);
+}
+
+input.form-input:-webkit-autofill {
+    box-shadow: 0 0 0 1000px var(--bg-secondary) inset !important;
+    -webkit-box-shadow: 0 0 0 1000px var(--bg-secondary) inset !important;
+    -webkit-text-fill-color: var(--text-primary) !important;
+    transition: background-color 9999s ease-in-out 0s;
+}
+
+.login-btn {
+    width: 100%;
+    padding: 18px;
+    background: var(--accent-gradient);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-top: 12px;
+    font-family: inherit;
+    position: relative;
+    overflow: hidden;
+}
+
+.login-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.6s ease;
+}
+
+.login-btn:hover {
+    background: linear-gradient(135deg, var(--accent-blue-hover) 0%, #1e40af 100%);
+    transform: translateY(-2px);
+    box-shadow: 
+        0 12px 25px -8px var(--glow-blue),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.login-btn:hover::before {
+    left: 100%;
+}
+
+.login-btn:active {
+    transform: translateY(-1px);
+}
+
+.toggle-section {
+    text-align: center;
+    margin-top: 32px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border-color);
+    position: relative;
+}
+
+.toggle-section::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 2px;
+    background: var(--accent-gradient);
+    border-radius: 1px;
+}
+
+.toggle-text {
+    color: var(--text-secondary);
+    font-size: 15px;
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+
+.toggle-btn {
+    color: var(--accent-blue);
+    text-decoration: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 8px 16px;
+    border-radius: 8px;
+    display: inline-block;
+}
+
+.toggle-btn:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: #60a5fa;
+    transform: translateY(-1px);
+}
+
+.error-message {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-top: 20px;
+    text-align: center;
+    backdrop-filter: blur(8px);
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.alert {
+    color: var(--error-color);
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.alert::before {
+    /* content: '⚠️'; */
+    font-size: 16px;
+}
+
+/* Form transitions */
+.signup-form {
+    display: none;
+}
+
+.signup-form.active {
+    display: block;
+    animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.signin-form.active {
+    display: block;
+    animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.signin-form {
+    display: block;
+}
+
+@keyframes fadeInUp {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+/* Loading state */
+.login-btn.loading {
+    pointer-events: none;
+    position: relative;
+}
+
+.login-btn.loading::after {
+    content: '';
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 400px;
-    padding: 40px;
-    transform: translate(-50%, -50%);
-    background: rgb(255, 255, 255);
-    box-sizing: border-box;
-    box-shadow: 0 15px 25px rgba(0,0,0,.6);
-    border-radius: 10px;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid transparent;
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
 }
 
-.login-box h2 {
-    margin: 0 0 30px;
-    padding: 0;
-    color: black;
-    text-align: center;
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
-.login-box .user-box {
-    position: relative;
+/* Responsive improvements */
+@media (max-width: 480px) {
+    .login-card {
+        padding: 36px 28px;
+        margin: 16px;
+        border-radius: 16px;
+        max-width: 100%;
+    }
+    
+    .system-title {
+        font-size: 28px;
+        margin-bottom: 8px;
+    }
+
+    .subtitle {
+        font-size: 14px;
+    }
+
+    .form-input {
+        padding: 16px 16px 16px 48px;
+        font-size: 16px;
+    }
+
+    .login-btn {
+        padding: 16px;
+        font-size: 16px;
+    }
 }
 
-.login-box .user-box input {
-    width: 100%;
-    padding: 10px 0;
-    font-size: 16px;
-    color: gray;
-    margin-bottom: 30px;
-    border: none;
-    border-bottom:solid 1px #cacaca;
-    outline: none;
-    background: transparent;
-}
-.login-box .user-box label {
-    position: absolute;
-    top:0;
-    left: 0;
-    padding: 10px 0;
-    font-size: 16px;
-    color: gray;
-    pointer-events: none;
-    transition: .5s;
+@media (max-width: 360px) {
+    .container {
+        padding: 12px;
+    }
+    
+    .login-card {
+        padding: 28px 20px;
+    }
 }
 
-.login-box .user-box input:focus ~ label,
-.login-box .user-box input:valid ~ label {
-    top: -20px;
-    left: 0;
-    font-size: 12px;
+@media (min-width: 1440px) {
+    .login-card {
+        max-width: 480px;
+        padding: 56px 48px;
+    }
 }
 
-.login-box form a {
-    position: relative;
-    display: inline-block;
-    padding: 10px 20px;
-    font-size: 16px;
-    text-decoration: none;
-    text-transform: uppercase;
-    overflow: hidden;
-    transition: .5s;
-    margin-top: 40px;
-    letter-spacing: 4px
+@media (min-width: 1440px) {
+    .system-title {
+        font-size: 32px;
+    }
+    .subtitle {
+        font-size: 16px;
+    }
 }
 
-button {
-    width: 100%;
-    padding: 10px;
-    background-color: #191970;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+.system-title {
+    font-size: clamp(24px, 5vw, 32px);
 }
-
-/* 에러 메시지 스타일 */
-.error_message {
-    color: red;
-    background-color: #ffe6e6;
-    border: 1px solid red;
-    border-radius: 5px;
-    padding: 10px;
-    margin-top: 20px;
-    font-size: 14px;
-    font-weight: bold;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.subtitle {
+    font-size: clamp(12px, 3vw, 16px);
 }

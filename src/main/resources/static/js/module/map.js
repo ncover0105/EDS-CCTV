@@ -258,10 +258,10 @@ function addMarkers() {
 function markerStyleFunction(feature, resolution) {
     const data = feature.get("gpsData");
 
-    // ⭐ 현재 줌 레벨 구하기
+    // 현재 줌 레벨 구하기
     const zoom = vworldMap.getView().getZoom();
 
-    // 🔥 줌 레벨에 따라 아이콘 크기를 변경
+    // 줌 레벨에 따라 아이콘 크기를 변경
     // zoom 13 ~ 18 기준으로 scale 변화
     const baseScale = 0.03;     // 기존 아이콘 크기
     const scale = baseScale * (zoom / 15); 
@@ -269,7 +269,7 @@ function markerStyleFunction(feature, resolution) {
     // → zoom 18일 때 = 1.2x (조금 커짐)
     // → zoom 13일 때 = 0.86x (조금 작아짐)
 
-    // 🔥 텍스트 크기도 함께 확대
+    // 텍스트 크기도 함께 확대
     const fontSize = 11 + (zoom - 13) * 0.7;   // 13px ~ 15px 범위로 자연 증가
 
     let iconImg = data.type === "cctv"
@@ -457,6 +457,15 @@ window.refreshMap = function () {
 
     console.log("지도 초기 위치/줌으로 리셋 완료");
 };
+
+window.addEventListener('resize', () => {
+    if (vworldMap) {
+        // 레이아웃 변화를 반영하도록 약간 딜레이 후 업데이트
+        setTimeout(() => {
+            vworldMap.updateSize();
+        }, 200);
+    }
+});
 
 window.showMapView = showMapView;
 window.showCCTVView = showCCTVView;

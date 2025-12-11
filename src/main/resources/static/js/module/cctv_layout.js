@@ -190,11 +190,19 @@ window.CCTVLayout = (function () {
         const statusClass = cam.status === "1" ? "online" : "offline";
 
         label.innerHTML = `
-            <span class="cctv-name">${cam.name}</span>
-            <span class="cctv-status status-${statusClass}">
-                ${statusText}
-            </span>
+            <div style="font-weight: 600; margin-bottom: 0.25rem;">${cam.name}</div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span class="dot dot-${statusClass}"></span>
+                <span>${statusText}</span>
+            </div>
         `;
+
+        // label.innerHTML = `
+        //     <span class="cctv-name">${cam.name}</span>
+        //     <span class="cctv-status status-${statusClass}">
+        //         ${statusText}
+        //     </span>
+        // `;
         return label;
     }
 

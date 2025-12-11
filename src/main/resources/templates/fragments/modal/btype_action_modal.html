@@ -7,7 +7,7 @@
 
                 <!-- 헤더 -->
                 <div class="modal-header">
-                    <h3 class="modal-title" id="speakerTestModalLabel">
+                    <h3 class="modal-title fw-bold" id="speakerTestModalLabel">
                         스피커 테스트
                     </h3>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -98,13 +98,40 @@
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Action 선택</label>
                                 <select id="btypeActionSelect" class="form-select">
+                                    <!-- 조회 계열 -->
                                     <option value="status" selected>status - 상태 요청</option>
                                     <option value="time">time - 시간 동기</option>
-                                    <option value="reset">reset</option>
-                                    <option value="getSpeakerSettings">getSpeakerSettings</option>
-                                    <option value="getVolume">getVolume</option>
-                                    <option value="insBgmVolume">insBgmVolume</option>
-                                    <option value="insAlertVolume">insAlertVolume</option>
+                                    <option value="reset">reset - 스피커 재부팅</option>
+                                    <option value="getSpeakerSettings">getSpeakerSettings - 설정 조회</option>
+                                    <option value="getVolume">getVolume - 볼륨 조회</option>
+                                    <option value="getSpeakerUsage">getSpeakerUsage - 스피커 사용 상태 조회</option>
+                                    <option value="getSpeakerIP">getSpeakerIP - IP 조회</option>
+                                    <option value="getSpeakerID">getSpeakerID - 스피커 ID 조회</option>
+                                    <option value="getBGMFolder">getBGMFolder - BGM 폴더 설정 조회</option>
+                                    <option value="getBGMStatus">getBGMStatus - BGM 상태 조회</option>
+                                    <option value="getInputVolume">getInputVolume - 입력 볼륨 조회</option>
+                                    <option value="getTTSSpeed">getTTSSpeed - TTS 설정 조회</option>
+                                    <option value="getPollingTime">getPollingTime - 폴링 시간 조회</option>
+                                    <option value="getAudioMode">getAudioMode - 음원 모드 조회</option>
+                                    <option value="getFMSettings">getFMSettings - FM 설정 조회</option>
+                            
+                                    <!-- 설정 계열 (write) -->
+                                    <option value="insSpeakerSettings">insSpeakerSettings - 스피커 설정값 저장</option>
+                                    <option value="insBgmVolume">insBgmVolume - BGM 볼륨 설정</option>
+                                    <option value="insAlertVolume">insAlertVolume - 경보 볼륨 설정</option>
+                                    <option value="ins_channels">ins_channels - 스피커 사용 설정</option>
+                                    <option value="ins_ServerIP">ins_ServerIP - 서버 IP 설정</option>
+                                    <option value="ins_speakerid">ins_speakerid - 스피커 ID 설정</option>
+                                    <option value="ins_BGMFolderNo">ins_BGMFolderNo - BGM 폴더 설정</option>
+                                    <option value="insBGMStatus">insBGMStatus - BGM 상태 설정</option>
+                                    <option value="ins_BGM_IN_VOL">ins_BGM_IN_VOL - BGM 입력 볼륨 설정</option>
+                                    <option value="ins_STO_IN_VOL">ins_STO_IN_VOL - 저장음 입력 볼륨 설정</option>
+                                    <option value="ins_TTS_IN_VOL">ins_TTS_IN_VOL - TTS 입력 볼륨 설정</option>
+                                    <option value="ins_TTS_Pitch">ins_TTS_Pitch - TTS 피치 설정</option>
+                                    <option value="ins_TTS_Speed">ins_TTS_Speed - TTS 속도 설정</option>
+                                    <option value="ins_PollingCheckTime">ins_PollingCheckTime - 폴링 시간 설정</option>
+                                    <option value="insAudioMode">insAudioMode - 음원 모드 설정</option>
+                                    <option value="insFMSettings">insFMSettings - FM 설정</option>
                                 </select>
                             </div>
 

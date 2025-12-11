@@ -68,10 +68,18 @@ window.Logs = (function () {
             item.dataset.boundary = log.boundaryNum;
 
             item.innerHTML = `
-                <strong style="color: #FF0000;">[${log.cameraName}]</strong>
-                <div>${log.log}</div>
-                <div class="log-time text-muted">${log.inpDttm}</div>
+                <div class="d-flex justify-content-between">
+                    <strong class="mb-2">[${log.cameraName}]</strong>
+                    <small class="text-muted" style="opacity: 0.7;">${log.inpDttm}</small>
+                </div>
+                <div style="font-size: 0.75rem; opacity: 0.7;">${log.log}</div>
             `;
+
+            // item.innerHTML = `
+            //     <strong style="color: #FF0000;">[${log.cameraName}]</strong>
+            //     <div>${log.log}</div>
+            //     <div class="log-time text-muted">${log.inpDttm}</div>
+            // `;
 
             // item.onclick = () => {
             //     App.utils.confirm(

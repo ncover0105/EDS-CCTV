@@ -1,17 +1,19 @@
-package com.edscorp.eds.speaker.service;
+package com.edscorp.eds.speaker.typeb.service;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import com.edscorp.eds.speaker.domain.DisasterListEntity;
-import com.edscorp.eds.speaker.dto.BTypeActionRequest;
-import com.edscorp.eds.speaker.dto.BTypeAlertRequest;
-import com.edscorp.eds.speaker.repository.DisasterListRepository;
+import com.edscorp.eds.speaker.typeb.domain.DisasterListEntity;
+import com.edscorp.eds.speaker.typeb.dto.BTypeActionRequest;
+import com.edscorp.eds.speaker.typeb.dto.BTypeAlertRequest;
+import com.edscorp.eds.speaker.typeb.repository.DisasterListRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,6 +33,8 @@ public class BTypeCommandService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     // 데몬 서버 playradio 주소 (application.properties 에서 설정 가능)
+    // private static final String PLAYRADIO_URL =
+    // "http://192.168.0.42:3000/playradio";
     private static final String PLAYRADIO_URL = "http://localhost:3000/playradio";
 
     /**
@@ -44,6 +48,7 @@ public class BTypeCommandService {
         payload.put("ip", clientIp);
         payload.put("commandCode", commandCode);
         payload.put("argument", argument);
+        payload.put("password", "1234");
 
         log.info("[B-Type SEND] id={}, ip={}, commandCode={}, argument={}",
                 deviceId, clientIp, commandCode, argument);
@@ -52,10 +57,31 @@ public class BTypeCommandService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
 
-        ResponseEntity<String> response = restTemplate.postForEntity(PLAYRADIO_URL, entity, String.class);
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(
+                    PLAYRADIO_URL, entity, String.class);
 
-        log.info("[B-Type RESP] status={}, body={}",
-                response.getStatusCode(), response.getBody());
+            log.info("[B-Type RESP] status={}, body={}",
+                    response.getStatusCode(), response.getBody());
+
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+
+            // 데몬 서버의 상태 코드 + 응답 바디(JSON) 그대로 확인 가능
+            HttpStatusCode status = e.getStatusCode();
+            String body = e.getResponseBodyAsString();
+
+            log.error("[B-Type ERROR] 데몬 서버 오류 발생!");
+            log.error("[B-Type ERROR] status={} body={}", status, body);
+
+            // 필요한 경우 상위 서비스/컨트롤러로 그대로 던지기
+            throw e;
+
+        } catch (RestClientException e) {
+
+            // 네트워크 단절/타임아웃 등 비정상 오류
+            log.error("[B-Type ERROR] RestTemplate 통신 오류: {}", e.getMessage());
+            throw e;
+        }
     }
 
     // =========================
@@ -152,127 +178,127 @@ public class BTypeCommandService {
 
         // 각 버튼의 action에 맞는 commandCode와 argument 설정
         switch (action) {
-            case "time": // 시간 설정
+            case "time": // 시간 동기화 (발신)
                 commandCode = "4f";
                 argument = "00000000";
                 break;
-            case "status": // 상태 요청
+            case "status": // 상태 조회 (발신)
                 commandCode = "43";
                 argument = "";
                 break;
-            case "reset": // 스피커 리셋
+            case "reset": // 스피커 재부팅 (발신)
                 commandCode = "4d";
                 argument = "01";
                 break;
-            case "getSpeakerSettings": // 스피커 설정값 요청 전체
+            case "getSpeakerSettings": // 설정 조회 (발신)
                 commandCode = "45";
                 argument = "00";
                 break;
-            case "getVolume": // 스피커 볼륨값 요청
+            case "getVolume": // 볼륨 조회 (발신)
                 commandCode = "45";
                 argument = "01";
                 break;
-            case "getSpeakerUsage": // 스피커 사용 설정 요청
+            case "getSpeakerUsage": // 스피커 사용 상태 조회 (발신)
                 commandCode = "45";
                 argument = "02";
                 break;
-            case "getSpeakerIP": // 스피커 IP 설정 요청
+            case "getSpeakerIP": // IP 조회 (발신)
                 commandCode = "45";
                 argument = "04";
                 break;
-            case "getSpeakerID": // 스피커 ID 설정 요청
+            case "getSpeakerID": // 스피커 ID 조회 (발신)
                 commandCode = "45";
                 argument = "05";
                 break;
-            case "getBGMFolder": // BGM 폴더 설정 요청
+            case "getBGMFolder": // BGM 폴더 설정 조회 (발신)
                 commandCode = "45";
                 argument = "06";
                 break;
-            case "getBGMStatus": // BGM 상태 요청
+            case "getBGMStatus": // BGM 상태 조회 (발신)
                 commandCode = "45";
                 argument = "07";
                 break;
-            case "getInputVolume": // 입력 볼륨 요청
+            case "getInputVolume": // 입력 볼륨 조회 (발신)
                 commandCode = "45";
                 argument = "08";
                 break;
-            case "getTTSSpeed": // TTS 속도 및 스피치 요청
+            case "getTTSSpeed": // TTS 설정 조회 (발신)
                 commandCode = "45";
                 argument = "09";
                 break;
-            case "getPollingTime": // 폴링 시간 요청
+            case "getPollingTime": // 폴링 시간 조회 (발신)
                 commandCode = "45";
                 argument = "0a";
                 break;
-            case "getAudioMode": // 음원 모드 설정 요청
+            case "getAudioMode": // 음원 모드 조회 (발신)
                 commandCode = "45";
                 argument = "0b";
                 break;
-            case "getFMSettings": // FM 설정 요청
+            case "getFMSettings": // FM 설정 조회 (발신)
                 commandCode = "45";
                 argument = "0c";
                 break;
-            case "insSpeakerSettings": // 스피커 설정값 요청 전체
+            case "insSpeakerSettings": // 스피커 설정값 저장 (발신)
                 commandCode = "46";
                 argument = "00";
                 break;
-            case "insBgmVolume": // 스피커 볼륨값 요청
+            case "insBgmVolume": // 스피커 볼륨값 설정 (발신)
                 commandCode = "46";
                 argument = "0100" + extraParam;
                 break;
-            case "insAlertVolume": // 스피커 볼륨값 요청
+            case "insAlertVolume": // 스피커 볼륨값 설정 (발신)
                 commandCode = "46";
                 argument = "0101" + extraParam;
                 break;
-            case "ins_channels": // 스피커 사용 설정 요청
+            case "ins_channels": // 스피커 사용 설정 설정 (발신)
                 commandCode = "46";
                 argument = "02" + extraParam;
                 break;
-            case "ins_ServerIP": // 스피커 IP 설정 요청
+            case "ins_ServerIP": // 스피커 IP 설정 설정 (발신)
                 commandCode = "46";
                 argument = "04" + extraParam;
                 break;
-            case "ins_speakerid": // 스피커 ID 설정 요청
+            case "ins_speakerid": // 스피커 ID 설정 설정 (발신)
                 commandCode = "46";
                 argument = "05" + extraParam;
                 break;
-            case "ins_BGMFolderNo": // BGM 폴더 설정 요청
+            case "ins_BGMFolderNo": // BGM 폴더 설정 설정 (발신)
                 commandCode = "46";
                 argument = "06" + extraParam;
                 break;
-            case "insBGMStatus": // BGM 상태 입력
+            case "insBGMStatus": // BGM 상태 설정 (발신)
                 commandCode = "46";
                 argument = "07" + extraParam;
                 break;
-            case "ins_BGM_IN_VOL": // 입력 볼륨 요청
+            case "ins_BGM_IN_VOL": // 입력 볼륨 설정 (발신)
                 commandCode = "46";
                 argument = "0800" + extraParam;
                 break;
-            case "ins_STO_IN_VOL": // 입력 볼륨 요청
+            case "ins_STO_IN_VOL": // 입력 볼륨 설정 (발신)
                 commandCode = "46";
                 argument = "0801" + extraParam;
                 break;
-            case "ins_TTS_IN_VOL": // 입력 볼륨 요청
+            case "ins_TTS_IN_VOL": // 입력 볼륨 설정 (발신)
                 commandCode = "46";
                 argument = "0802" + extraParam;
                 break;
-            case "ins_TTS_Pitch": // TTS 속도 및 스피치 요청
+            case "ins_TTS_Pitch": // TTS 스피치 값 설정 (발신)
                 commandCode = "46";
                 argument = "0900" + extraParam;
                 break;
-            case "ins_TTS_Speed": // TTS 속도 및 스피치 요청
+            case "ins_TTS_Speed": // TTS 속도 값 설정 (발신)
                 commandCode = "46";
                 argument = "0901" + extraParam;
                 break;
-            case "ins_PollingCheckTime": // 폴링 시간 요청
+            case "ins_PollingCheckTime": // 폴링 시간 설정 (발신)
                 commandCode = "46";
                 argument = "0a" + extraParam;
                 break;
-            case "insAudioMode": // 음원 모드 설정 요청
+            case "insAudioMode": // 음원 모드 설정 (발신)
                 commandCode = "46";
                 argument = "0b" + extraParam;
                 break;
-            case "insFMSettings": // FM 설정 요청
+            case "insFMSettings": // FM 설정 (발신)
                 commandCode = "46";
                 argument = "0c" + extraParam;
                 break;

@@ -167,10 +167,10 @@ function initTargetSelector() {
                     listEl.insertAdjacentHTML("beforeend", item);
                 });
     
-            console.log("📩 Broadcast messages loaded:", messages.length);
+            console.log("Broadcast messages loaded:", messages.length);
     
         } catch (err) {
-            console.error("❌ Broadcast message load error:", err);
+            console.error("Broadcast message load error:", err);
         }
     }
 
@@ -207,13 +207,13 @@ function initTargetSelector() {
                     listEl.insertAdjacentHTML("beforeend", item);
                 });
     
-            console.log("📡 Speaker targets loaded:", speakers.length);
+            console.log("Speaker targets loaded:", speakers.length);
     
             // 선택 수 카운트 초기화
             initTargetSelector();
     
         } catch (err) {
-            console.error("❌ Speaker list load error:", err);
+            console.error("Speaker list load error:", err);
         }
     }
     
@@ -228,7 +228,7 @@ function initTargetSelector() {
         loadBroadcastMessages();
         loadSpeakerTargets();
 
-        console.log("📢 BroadcastModal.init() complete.");
+        console.log("BroadcastModal.init() complete.");
     }
 
     return { init };
