@@ -159,8 +159,8 @@ window.Weather = (function () {
             // 3) 실패하면 기존 이미지 유지
             // img.src = currentUrl;
             // img.classList.remove("d-none");
-            spinner.classList.add("d-none");
-    
+            img.classList.add("d-none");
+            spinner.classList.remove("d-none"); // ✅ 실패 시에도 계속 표시    
             // toggle 유지
             // toggleMapImage();
         };

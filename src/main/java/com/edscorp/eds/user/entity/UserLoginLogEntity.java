@@ -1,4 +1,4 @@
-package com.edscorp.eds.common.domain;
+package com.edscorp.eds.user.entity;
 
 import java.time.LocalDateTime;
 

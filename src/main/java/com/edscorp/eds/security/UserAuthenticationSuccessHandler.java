@@ -6,7 +6,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
-import com.edscorp.eds.common.domain.UserLoginLogEntity;
+import com.edscorp.eds.user.entity.UserLoginLogEntity;
 import com.edscorp.eds.user.repository.UserLoginLogRepository;
 
 import jakarta.servlet.ServletException;

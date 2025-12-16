@@ -148,19 +148,18 @@ function initTargetSelector() {
         if (!listEl) return;
     
         try {
-            const messages = await App.utils.fetchJson("/api/broadcast/list");
-    
+            // const messages = await App.utils.fetchJson("/api/broadcast/list");
+            const messages = await App.utils.fetchJson("/api/btype/query/disaster");
             listEl.innerHTML = ""; // 기존 비우기
     
             messages
-                .filter(m => m.useInfo === 1) // 사용중인 메시지만 표시
+                .filter(m => m.dstUseFlag === "Use") // 사용중인 메시지만 표시
                 .forEach(msg => {
-                    const id = `msg_${msg.code}`;
-    
+                    const id = `msg_${msg.dstCode}`;
                     const item = `
                         <div class="message-option">
-                            <input type="radio" name="message" id="${id}" value="${msg.code}">
-                            <label for="${id}">${msg.title}</label>
+                            <input type="radio" name="message" id="${id}" value="${msg.dstCode}">
+                            <label for="${id}">${msg.dstName}</label>
                         </div>
                     `;
     
