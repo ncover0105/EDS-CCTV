@@ -15824,3 +15824,114 @@ body {
 .swal2-actions .swal2-styled {
   margin: 0 0.35rem !important; /* 좌우 여백 */
 }
+
+/* 슬라이더 행 레이아웃 */
+.range-row{
+  display:flex;
+  align-items:center;
+  gap:.75rem;
+  padding:.35rem .6rem;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;
+  background:rgba(255,255,255,.04);
+}
+
+.range-label{
+  width:44px;
+  font-size:.85rem;
+  color:rgba(255,255,255,.85);
+  font-weight:600;
+}
+
+/* 값 배지 */
+.range-badge{
+  min-width:38px;
+  text-align:center;
+  font-size:.85rem;
+  padding:.2rem .45rem;
+  border-radius:999px;
+  background:rgba(255,255,255,.12);
+  color:#fff;
+  border:1px solid rgba(255,255,255,.18);
+}
+
+/* range 트랙/손잡이 커스텀 */
+.range-slim{
+  height: 1.25rem;
+  margin: 0;
+}
+.range-slim::-webkit-slider-runnable-track{
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.18);
+}
+.range-slim::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-top: -5px; /* 트랙 중앙 정렬 */
+  background: #ffffff;
+  border: 2px solid rgba(0,0,0,.25);
+  box-shadow: 0 2px 10px rgba(0,0,0,.35);
+}
+.range-slim::-moz-range-track{
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.18);
+}
+.range-slim::-moz-range-thumb{
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid rgba(0,0,0,.25);
+  box-shadow: 0 2px 10px rgba(0,0,0,.35);
+}
+
+/* ================================
+   Speaker Setting Modal Tabs
+================================ */
+#speaker_setting_modal .nav-pills {
+  gap: 0.5rem;
+}
+
+/* 기본 탭 */
+#speaker_setting_modal .nav-pills .nav-link {
+  color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;              /* 버튼 느낌 */
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+/* hover */
+#speaker_setting_modal .nav-pills .nav-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* 활성 탭 (파란색 제거) */
+#speaker_setting_modal .nav-pills .nav-link.active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+}
+
+/* 비활성(disabled) 탭 */
+#speaker_setting_modal .nav-pills .nav-link:disabled {
+  color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.1);
+  cursor: not-allowed;
+}
+
+#speaker_setting_modal #tab-config-o:not(:disabled)::before {
+  content: "●";
+  color: #4ade80; /* green */
+  margin-left: 6px;
+  font-size: 0.6rem;
+}

@@ -178,19 +178,19 @@ function initTargetSelector() {
         if (!listEl) return;
     
         try {
-            const speakers = await App.utils.fetchJson("/api/speaker/list");
-    
+            // const speakers = await App.utils.fetchJson("/api/speaker/list");
+            const speakers = await App.utils.fetchJson("/api/btype/query/config/list");
+
             listEl.innerHTML = ""; // 기존 내용 삭제
-    
+
             speakers
-                .filter(sp => sp.useInfo === 1) // 사용중인 스피커만 표시
                 .forEach(sp => {
-                    const id = `target_${sp.speakerCode}`;
-    
+                    const id = `target_${sp.speakerKey}`;
+
                     const name = (sp.speakerName || "알수 없음").trim();
                     const location = (sp.locationCode || "-");
                     const address = (sp.speakerAdr || "알수 없음").trim();
-    
+
                     const item = `
                         <div class="target-option">
                             <input type="checkbox" 
@@ -202,9 +202,33 @@ function initTargetSelector() {
                             </label>
                         </div>
                     `;
-    
+
                     listEl.insertAdjacentHTML("beforeend", item);
                 });
+    
+            // speakers
+            //     .filter(sp => sp.useInfo === 1) // 사용중인 스피커만 표시
+            //     .forEach(sp => {
+            //         const id = `target_${sp.speakerCode}`;
+    
+            //         const name = (sp.speakerName || "알수 없음").trim();
+            //         const location = (sp.locationCode || "-");
+            //         const address = (sp.speakerAdr || "알수 없음").trim();
+    
+            //         const item = `
+            //             <div class="target-option">
+            //                 <input type="checkbox" 
+            //                         class="target-check" 
+            //                         id="${id}" 
+            //                         value="${sp.speakerCode}">
+            //                 <label for="${id}">
+            //                     ${name} (${address})
+            //                 </label>
+            //             </div>
+            //         `;
+    
+            //         listEl.insertAdjacentHTML("beforeend", item);
+            //     });
     
             console.log("Speaker targets loaded:", speakers.length);
     

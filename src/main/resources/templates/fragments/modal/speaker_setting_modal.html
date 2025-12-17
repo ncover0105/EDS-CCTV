@@ -46,7 +46,7 @@
                             </div>
                         </div>
 
-                        <!-- ✅ 타입 뱃지(선택) -->
+                        <!-- 타입 뱃지(선택) -->
                         <div class="d-flex align-items-center gap-2">
                             <span class="badge bg-secondary" id="speakerTypeBadge">타입: -</span>
                             <span class="text-light opacity-75 small" id="speakerTypeHint">스피커를 선택하세요.</span>
@@ -55,587 +55,806 @@
                         <!-- =========================
                             A 타입 영역 (기존 탭 UI)
                         ========================== -->
-                        <div id="area_type_a" class="d-none">
+                        <div id="area_type_e" class="d-none">
 
-                        <ul class="nav nav-pills mb-2" role="tablist">
-                            <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="tab-info-a"
-                                    data-bs-toggle="pill" data-bs-target="#pane-info-a"
-                                    type="button" role="tab">선택 스피커 정보(A)</button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="tab-config-a"
-                                    data-bs-toggle="pill" data-bs-target="#pane-config-a"
-                                    type="button" role="tab" disabled>설정 변경(A)</button>
-                            </li>
-                        </ul>
+                            <ul class="nav nav-pills mb-2" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="tab-info-e"
+                                        data-bs-toggle="pill" data-bs-target="#pane-info-e"
+                                        type="button" role="tab">설정 정보</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="tab-config-e"
+                                        data-bs-toggle="pill" data-bs-target="#pane-config-e"
+                                        type="button" role="tab" disabled>설정 변경</button>
+                                </li>
+                            </ul>
 
-                        <div class="tab-content">
-                            <!-- A-정보 -->
-                            <div class="tab-pane fade show active" id="pane-info-a" role="tabpanel">
-                            <div class="setting-card overflow-auto tab-pane-card">
-                                <!-- ✅ 기존 상세 영역 그대로(네 파일의 id들 유지) -->
-                                <div class="setting-card h-auto">
-                                <div class="setting-title"><span class="fw-semibold text-white">선택 스피커 정보</span></div>
-                                <div class="row g-2">
-                                    <div class="col-12 col-md-4">
-                                    <label class="form-label">이름</label>
-                                    <small class="d-block" id="detail_name">-</small>
-                                    </div>
-                                    <div class="col-12 col-md-4">
-                                    <label class="form-label">ID</label>
-                                    <small class="d-block" id="detail_id">-</small>
-                                    </div>
-                                    <div class="col-12 col-md-4">
-                                    <label class="form-label">통제서버 IP</label>
-                                    <small class="d-block" id="detail_control_ip">-</small>
-                                    </div>
-                                </div>
-                                </div>
-
-                                <div class="setting-card h-auto">
-                                    <div class="setting-title"><span class="fw-semibold text-white">채널 볼륨 및 사용 여부</span></div>
-                                    <div class="table-responsive rounded-3">
-                                        <table class="table table-sm table-light table-striped text-center align-middle mb-0">
-                                        <thead>
-                                        <tr>
-                                            <th class="text-muted">구분</th>
-                                            <th>채널1</th><th>채널2</th><th>채널3</th><th>채널4</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                        <tr>
-                                            <td class="fw-semibold">BGM</td>
-                                            <td id="bgm_ch1">-</td><td id="bgm_ch2">-</td><td id="bgm_ch3">-</td><td id="bgm_ch4">-</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="fw-semibold">경보방송</td>
-                                            <td id="alert_ch1">-</td><td id="alert_ch2">-</td><td id="alert_ch3">-</td><td id="alert_ch4">-</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="fw-semibold">FM</td>
-                                            <td id="fm_ch1">-</td><td id="fm_ch2">-</td><td id="fm_ch3">-</td><td id="fm_ch4">-</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="fw-semibold">사용여부</td>
-                                            <td id="use_ch1">-</td><td id="use_ch2">-</td><td id="use_ch3">-</td><td id="use_ch4">-</td>
-                                        </tr>
-                                        </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-
-                                <div class="setting-card h-auto mb-0">
-                                    <div class="setting-title"><span class="fw-semibold text-white">상세 설정</span></div>
-                                    <div class="row g-3 text-nowrap">
-                                        <div class="col-6 col-md-4"><label class="form-label">BGM 폴더</label><small class="d-block" id="detail_bgm_folder">-</small></div>
-                                        <div class="col-6 col-md-4"><label class="form-label">BGM 상태</label><small class="d-block" id="detail_bgm_status">-</small></div>
-                                        <div class="col-6 col-md-4"><label class="form-label">BGM 입력볼륨</label><small class="d-block" id="detail_bgm_input_volume">-</small></div>
-
-                                        <div class="col-6 col-md-4"><label class="form-label">저장메시지</label><small class="d-block" id="detail_msg_volume">-</small></div>
-                                        <div class="col-6 col-md-4"><label class="form-label">TTS 볼륨</label><small class="d-block" id="detail_tts_volume">-</small></div>
-                                        <div class="col-6 col-md-4"><label class="form-label">FM 볼륨</label><small class="d-block" id="detail_fm_volume">-</small></div>
-
-                                        <div class="col-6 col-md-4"><label class="form-label">TTS Pitch</label><small class="d-block" id="detail_tts_pitch">-</small></div>
-                                        <div class="col-6 col-md-4"><label class="form-label">TTS Speed</label><small class="d-block" id="detail_tts_speed">-</small></div>
-                                        <div class="col-6 col-md-4"><label class="form-label">폴링 주기</label><small class="d-block" id="detail_polling_interval">-</small></div>
-
-                                        <div class="col-6 col-md-4"><label class="form-label">음원 모드</label><small class="d-block" id="detail_sound_mode">-</small></div>
-                                        <div class="col-6 col-md-4"><label class="form-label">주파수</label><small class="d-block" id="detail_frequency">-</small></div>
-                                        <div class="col-6 col-md-4"><label class="form-label">주파수 지역</label><small class="d-block" id="detail_frequency_region">-</small></div>
-                                    </div>
-                                </div>
-                            </div>
-                            </div>
-
-                            <!-- A-설정 -->
-                            <div class="tab-pane fade" id="pane-config-a" role="tabpanel">
-                            <form id="speakerSettingForm">
-                                <div class="setting-card overflow-auto tab-pane-card p-0">
-                                <div class="setting-grid">
-
-                                    <div class="setting-card">
-                                        <div class="setting-title">
-                                            <div class="d-flex align-items-center">
-                                                <i class="fas fa-volume-up text-warning me-2"></i>
-                                                <span class="fw-semibold">출력 볼륨 설정</span>
+                            <div class="tab-content">
+                                <!-- A-정보 -->
+                                <div class="tab-pane fade show active" id="pane-info-e" role="tabpanel">
+                                <div class="setting-card overflow-auto tab-pane-card">
+                                    <!-- 기존 상세 영역 그대로(네 파일의 id들 유지) -->
+                                    <div class="setting-card h-auto">
+                                        <div class="setting-title"><span class="fw-semibold text-white">선택 스피커 정보</span></div>
+                                        <div class="row g-2">
+                                            <div class="col-12 col-md-4">
+                                                <label class="form-label">이름</label>
+                                                <small class="d-block" id="detail_name">-</small>
                                             </div>
-                                            <div class="form-check form-switch m-0">
-                                                <input class="form-check-input" type="checkbox" id="volumeSettingToggle" checked>
-                                                <label class="form-check-label small" for="volumeSettingToggle">사용</label>
+                                            <div class="col-12 col-md-4">
+                                                <label class="form-label">ID</label>
+                                                <small class="d-block" id="detail_id">-</small>
                                             </div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="volumeType" class="form-label">볼륨 종류</label>
-                                            <select id="volumeType" class="form-select form-select-sm">
-                                                <option value="" selected disabled>선택</option>
-                                                <option value="bgm">BGM</option>
-                                                <option value="warning_broadcast">경보방송</option>
-                                                <option value="fm">FM</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="row g-3">
-                                            <div class="col-6">
-                                                <label class="form-label small">채널 1</label>
-                                                <input id="vol_ch1" type="number" class="form-control form-control-sm custom-form-control" min="0" max="100" value="0">
-                                            </div>
-                                            <div class="col-6">
-                                                <label class="form-label small">채널 2</label>
-                                                <input id="vol_ch2" type="number" class="form-control form-control-sm custom-form-control" min="0" max="100" value="0">
-                                            </div>
-                                            <div class="col-6">
-                                                <label class="form-label small">채널 3</label>
-                                                <input id="vol_ch3" type="number" class="form-control form-control-sm custom-form-control" min="0" max="100" value="0">
-                                            </div>
-                                            <div class="col-6">
-                                                <label class="form-label small">채널 4</label>
-                                                <input id="vol_ch4" type="number" class="form-control form-control-sm custom-form-control" min="0" max="100" value="0">
+                                            <div class="col-12 col-md-4">
+                                                <label class="form-label">통제서버 IP</label>
+                                                <small class="d-block" id="detail_control_ip">-</small>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div class="setting-card">
-                                        <div class="setting-title">
-                                            <div class="d-flex align-items-center">
-                                                <i class="fas fa-head-side-cough text-warning me-2"></i>
-                                                <span class="fw-semibold">TTS & 오디오 설정</span>
-                                            </div>
-                                            <div class="form-check form-switch m-0">
-                                                <input class="form-check-input" type="checkbox" id="ttsSettingToggle" checked>
-                                                <label class="form-check-label small" for="ttsSettingToggle">사용</label>
-                                            </div>
+                                    <div class="setting-card h-auto">
+                                        <div class="setting-title"><span class="fw-semibold text-white">채널 볼륨 및 사용 여부</span></div>
+                                        <div class="table-responsive rounded-3">
+                                            <table class="table table-sm table-light table-striped text-center align-middle mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="text-muted">구분</th>
+                                                        <th>채널1</th><th>채널2</th><th>채널3</th><th>채널4</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td class="fw-semibold">BGM</td>
+                                                        <td id="bgm_ch1">-</td><td id="bgm_ch2">-</td><td id="bgm_ch3">-</td><td id="bgm_ch4">-</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="fw-semibold">경보방송</td>
+                                                        <td id="alert_ch1">-</td><td id="alert_ch2">-</td><td id="alert_ch3">-</td><td id="alert_ch4">-</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="fw-semibold">FM</td>
+                                                        <td id="fm_ch1">-</td><td id="fm_ch2">-</td><td id="fm_ch3">-</td><td id="fm_ch4">-</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="fw-semibold">사용여부</td>
+                                                        <td id="use_ch1">-</td><td id="use_ch2">-</td><td id="use_ch3">-</td><td id="use_ch4">-</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
                                         </div>
+                                    </div>
 
-                                        <div class="row g-3">
-                                            <div class="col-6">
-                                                <label for="ttsSpeed" class="form-label">TTS Speed</label>
-                                                <input id="ttsSpeed" type="number" class="form-control form-control-sm" min="0" max="100" value="0">
-                                            </div>
-                                            <div class="col-6">
-                                                <label for="ttsPitch" class="form-label">TTS Pitch</label>
-                                                <input id="ttsPitch" type="number" class="form-control form-control-sm" min="0" max="100" value="0">
-                                            </div>
-                                            <div class="col-12">
-                                                <label for="audioType" class="form-label">볼륨 종류</label>
-                                                <select id="audioType" class="form-select form-select-sm mb-2">
-                                                    <option value="" selected disabled>선택</option>
-                                                    <option value="bgm">BGM 입력 볼륨</option>
-                                                    <option value="msg">저장메시지 입력 볼륨</option>
-                                                    <option value="tts">TTS 입력 볼륨</option>
-                                                    <option value="fm">FM 입력 볼륨</option>
-                                                </select>
-                                            </div>
+                                    <div class="setting-card h-auto mb-0">
+                                        <div class="setting-title"><span class="fw-semibold text-white">상세 설정</span></div>
+                                        <div class="row g-3 text-nowrap">
+                                            <div class="col-6 col-md-4"><label class="form-label">BGM 폴더</label><small class="d-block" id="detail_bgm_folder">-</small></div>
+                                            <div class="col-6 col-md-4"><label class="form-label">BGM 상태</label><small class="d-block" id="detail_bgm_status">-</small></div>
+                                            <div class="col-6 col-md-4"><label class="form-label">BGM 입력볼륨</label><small class="d-block" id="detail_bgm_input_volume">-</small></div>
 
-                                            <div class="col-12">
-                                                <label for="volumeRange" class="form-label mb-2">오디오 볼륨</label>
-                                                <div class="d-flex align-items-center">
-                                                    <input
-                                                        type="range"
-                                                        class="custom-range flex-grow-1 me-1"
-                                                        min="0"
-                                                        max="100"
-                                                        value="50"
-                                                        id="volumeRange"
-                                                    >
-                                                    <span class="text-white small flex-shrink-0" id="volumeValue" style="min-width: 3rem; text-align: right;">
-                                                        50%
-                                                    </span>
+                                            <div class="col-6 col-md-4"><label class="form-label">저장메시지</label><small class="d-block" id="detail_msg_volume">-</small></div>
+                                            <div class="col-6 col-md-4"><label class="form-label">TTS 볼륨</label><small class="d-block" id="detail_tts_volume">-</small></div>
+                                            <div class="col-6 col-md-4"><label class="form-label">FM 볼륨</label><small class="d-block" id="detail_fm_volume">-</small></div>
+
+                                            <div class="col-6 col-md-4"><label class="form-label">TTS Pitch</label><small class="d-block" id="detail_tts_pitch">-</small></div>
+                                            <div class="col-6 col-md-4"><label class="form-label">TTS Speed</label><small class="d-block" id="detail_tts_speed">-</small></div>
+                                            <div class="col-6 col-md-4"><label class="form-label">폴링 주기</label><small class="d-block" id="detail_polling_interval">-</small></div>
+
+                                            <div class="col-6 col-md-4"><label class="form-label">음원 모드</label><small class="d-block" id="detail_sound_mode">-</small></div>
+                                            <div class="col-6 col-md-4"><label class="form-label">주파수</label><small class="d-block" id="detail_frequency">-</small></div>
+                                            <div class="col-6 col-md-4"><label class="form-label">주파수 지역</label><small class="d-block" id="detail_frequency_region">-</small></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                </div>
+
+                                <!-- A-설정 -->
+                                <div class="tab-pane fade" id="pane-config-e" role="tabpanel">
+                                <form id="speakerSettingForm">
+                                    <div class="setting-card overflow-auto tab-pane-card p-0">
+                                        <div class="setting-grid">
+
+                                            <div class="setting-card">
+                                                <div class="setting-title">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="fas fa-volume-up text-warning me-2"></i>
+                                                        <span class="fw-semibold">출력 볼륨 설정</span>
+                                                    </div>
+                                                    <div class="form-check form-switch m-0">
+                                                        <input class="form-check-input" type="checkbox" id="volumeSettingToggle" checked>
+                                                        <label class="form-check-label small" for="volumeSettingToggle">사용</label>
+                                                    </div>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label for="volumeType" class="form-label">볼륨 종류</label>
+                                                    <select id="volumeType" class="form-select form-select-sm">
+                                                        <option value="" selected disabled>선택</option>
+                                                        <option value="bgm">BGM</option>
+                                                        <option value="warning_broadcast">경보방송</option>
+                                                        <option value="fm">FM</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="row g-3">
+                                                    <div class="col-6">
+                                                        <label class="form-label small">채널 1</label>
+                                                        <input id="vol_ch1" type="number" class="form-control form-control-sm custom-form-control" min="0" max="100" value="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small">채널 2</label>
+                                                        <input id="vol_ch2" type="number" class="form-control form-control-sm custom-form-control" min="0" max="100" value="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small">채널 3</label>
+                                                        <input id="vol_ch3" type="number" class="form-control form-control-sm custom-form-control" min="0" max="100" value="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small">채널 4</label>
+                                                        <input id="vol_ch4" type="number" class="form-control form-control-sm custom-form-control" min="0" max="100" value="0">
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
 
-                                    <div class="setting-card mb-0">
-                                        <div class="setting-title">
-                                            <div class="d-flex align-items-center">
-                                                <i class="fas fa-music text-warning me-2"></i>
-                                                <span class="fw-semibold">음원 모드 설정</span>
-                                            </div>
-                                            <div class="form-check form-switch m-0">
-                                                <input class="form-check-input" type="checkbox" id="soundSettingToggle" checked>
-                                                <label class="form-check-label small" for="soundSettingToggle">사용</label>
-                                            </div>
-                                        </div>
+                                            <div class="setting-card">
+                                                <div class="setting-title">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="fas fa-head-side-cough text-warning me-2"></i>
+                                                        <span class="fw-semibold">TTS & 오디오 설정</span>
+                                                    </div>
+                                                    <div class="form-check form-switch m-0">
+                                                        <input class="form-check-input" type="checkbox" id="ttsSettingToggle" checked>
+                                                        <label class="form-check-label small" for="ttsSettingToggle">사용</label>
+                                                    </div>
+                                                </div>
 
-                                        <div class="mb-3">
-                                            <label class="small text-light opacity-75 mb-1">음원</label>
-                                            <select id="soundMode" class="custom-form-control form-select form-select-sm">
-                                                <option value="" selected disabled>선택</option>
-                                                <option value="bgm">BGM</option>
-                                                <option value="fm">FM</option>
-                                            </select>
-                                        </div>
+                                                <div class="row g-3">
+                                                    <div class="col-6">
+                                                        <label for="ttsSpeed" class="form-label">TTS Speed</label>
+                                                        <input id="ttsSpeed" type="number" class="form-control form-control-sm" min="0" max="100" value="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label for="ttsPitch" class="form-label">TTS Pitch</label>
+                                                        <input id="ttsPitch" type="number" class="form-control form-control-sm" min="0" max="100" value="0">
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <label for="audioType" class="form-label">볼륨 종류</label>
+                                                        <select id="audioType" class="form-select form-select-sm mb-2">
+                                                            <option value="" selected disabled>선택</option>
+                                                            <option value="bgm">BGM 입력 볼륨</option>
+                                                            <option value="msg">저장메시지 입력 볼륨</option>
+                                                            <option value="tts">TTS 입력 볼륨</option>
+                                                            <option value="fm">FM 입력 볼륨</option>
+                                                        </select>
+                                                    </div>
 
-                                        <div>
-                                            <label class="small text-light opacity-75 mb-1">BGM 폴더 경로</label>
-                                            <div class="input-group input-group-sm">
-                                                <input id="bgmFolder" type="text" class="custom-form-control form-control form-control-sm" placeholder="/audio/bgm/" value="/audio/bgm/">
-                                                <button class="btn btn-primary" type="button">
-                                                    <i class="fas fa-folder-open"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="setting-card">
-                                        <div class="setting-title">
-                                            <div class="d-flex align-items-center">
-                                                <i class="fas fa-broadcast-tower text-warning me-2"></i>
-                                                <span class="fw-semibold">채널 사용 설정</span>
-                                            </div>
-                                            <div class="form-check form-switch m-0">
-                                                <input class="form-check-input" type="checkbox" id="channelSettingToggle" checked>
-                                                <label class="form-check-label small" for="channelSettingToggle">사용</label>
-                                            </div>
-                                        </div>
-
-                                        <div class="row g-3">
-                                            <div class="col-6">
-                                                <label class="form-label small">채널 1</label>
-                                                <select id="use_ch1_sel" class="form-select form-select-sm">
-                                                    <option value="" selected disabled>선택</option>
-                                                    <option value="1">사용</option>
-                                                    <option value="2">미사용</option>
-                                                    <option value="3">없음</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-6">
-                                                <label class="form-label small">채널 2</label>
-                                                <select id="use_ch2_sel" class="form-select form-select-sm">
-                                                    <option value="" selected disabled>선택</option>
-                                                    <option value="1">사용</option>
-                                                    <option value="2">미사용</option>
-                                                    <option value="3">없음</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-6">
-                                                <label class="form-label small">채널 3</label>
-                                                <select id="use_ch3_sel" class="form-select form-select-sm">
-                                                    <option value="" selected disabled>선택</option>
-                                                    <option value="1">사용</option>
-                                                    <option value="2">미사용</option>
-                                                    <option value="3">없음</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-6">
-                                                <label class="form-label small">채널 4</label>
-                                                <select id="use_ch4_sel" class="form-select form-select-sm">
-                                                    <option value="" selected disabled>선택</option>
-                                                    <option value="1">사용</option>
-                                                    <option value="2">미사용</option>
-                                                    <option value="3">없음</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="setting-card">
-                                        <div class="setting-title">
-                                            <div class="d-flex align-items-center">
-                                                <i class="fas fa-music text-warning me-2"></i>
-                                                <span class="fw-semibold">BGM & 라디오 설정</span>
-                                            </div>
-                                            <div class="form-check form-switch m-0">
-                                                <input class="form-check-input" type="checkbox" id="bgmSettingToggle" checked>
-                                                <label class="form-check-label small" for="bgmSettingToggle">사용</label>
-                                            </div>
-                                        </div>
-
-                                        <div class="row g-3 mb-3">
-                                            <div class="col-6">
-                                                <label for="bgmFolderSel" class="form-label">BGM 폴더</label>
-                                                <select id="bgmFolderSel" class="form-select form-select-sm">
-                                                    <option value="" selected disabled>선택</option>
-                                                    <option value="song">가요</option>
-                                                    <option value="movie">영화</option>
-                                                    <option value="classic_1">클래식_1</option>
-                                                    <option value="classic_2">클래식_2</option>
-                                                    <option value="classic_3">클래식_3</option>
-                                                    <option value="classic_4">클래식_4</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-6">
-                                                <label for="bgmStatusSel" class="form-label">BGM 상태</label>
-                                                <select id="bgmStatusSel" class="form-select form-select-sm">
-                                                    <option value="" selected disabled>선택</option>
-                                                    <option value="play">재생</option>
-                                                    <option value="stop">정지</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div class="row g-3">
-                                            <div class="col-6">
-                                                <label for="freqSel" class="form-label">주파수</label>
-                                                <select id="freqSel" class="form-select form-select-sm">
-                                                    <option value="" selected disabled>선택</option>
-                                                    <option value="bgm">BGM 입력 볼륨</option>
-                                                    <option value="msg">저장메시지 입력 볼륨</option>
-                                                    <option value="tts">TTS 입력 볼륨</option>
-                                                    <option value="fm">FM 입력 볼륨</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-6">
-                                                <label for="freqRegionSel" class="form-label">주파수 지역</label>
-                                                <select id="freqRegionSel" class="form-select form-select-sm">
-                                                    <option value="" selected disabled>선택</option>
-                                                    <option value="capital">수도권</option>
-                                                    <option value="daejeon">대전</option>
-                                                    <option value="gwangju">광주</option>
-                                                    <option value="busan">부산</option>
-                                                    <option value="daegu">대구</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="setting-card mb-2">
-                                        <div class="setting-title">
-                                            <div class="d-flex align-items-center">
-                                                <i class="fas fa-network-wired text-warning me-2"></i>
-                                                <span class="fw-semibold">네트워크 설정</span>
-                                            </div>
-                                            <div class="form-check form-switch m-0">
-                                                <input class="form-check-input" type="checkbox" id="netSettingToggle" checked>
-                                                <label class="form-check-label small" for="netSettingToggle">사용</label>
-                                            </div>
-                                        </div>
-
-                                        <div class="row g-3">
-                                            <div class="col-12">
-                                                <label class="small text-light opacity-75 mb-1">통제 서버 IP</label>
-                                                <input id="net_ip" type="text" class="custom-form-control form-control form-control-sm" placeholder="000.000.0.0">
-                                            </div>
-                                            <div class="col-12">
-                                                <label class="small text-light opacity-75 mb-1">스피커 ID</label>
-                                                <input id="net_speaker_id" type="text" class="custom-form-control form-control form-control-sm" placeholder="000.000.000.000">
-                                            </div>
-                                            <div class="col-12">
-                                                <label for="net_interval" class="form-label">상태 확인 주기</label>
-                                                <div class="input-group input-group-sm">
-                                                    <input id="net_interval" type="number" class="custom-form-control form-control form-control-sm" min="1" max="100" value="0">
-                                                    <span class="input-group-text border-start-0">s</span>
+                                                    <div class="col-12">
+                                                        <label for="volumeRange" class="form-label mb-2">오디오 볼륨</label>
+                                                        <div class="d-flex align-items-center">
+                                                            <input
+                                                                type="range"
+                                                                class="custom-range flex-grow-1 me-1"
+                                                                min="0"
+                                                                max="100"
+                                                                value="50"
+                                                                id="volumeRange"
+                                                            >
+                                                            <span class="text-white small flex-shrink-0" id="volumeValue" style="min-width: 3rem; text-align: right;">
+                                                                50%
+                                                            </span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
+
+                                            <div class="setting-card mb-0">
+                                                <div class="setting-title">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="fas fa-music text-warning me-2"></i>
+                                                        <span class="fw-semibold">음원 모드 설정</span>
+                                                    </div>
+                                                    <div class="form-check form-switch m-0">
+                                                        <input class="form-check-input" type="checkbox" id="soundSettingToggle" checked>
+                                                        <label class="form-check-label small" for="soundSettingToggle">사용</label>
+                                                    </div>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="small text-light opacity-75 mb-1">음원</label>
+                                                    <select id="soundMode" class="custom-form-control form-select form-select-sm">
+                                                        <option value="" selected disabled>선택</option>
+                                                        <option value="bgm">BGM</option>
+                                                        <option value="fm">FM</option>
+                                                    </select>
+                                                </div>
+
+                                                <div>
+                                                    <label class="small text-light opacity-75 mb-1">BGM 폴더 경로</label>
+                                                    <div class="input-group input-group-sm">
+                                                        <input id="bgmFolder" type="text" class="custom-form-control form-control form-control-sm" placeholder="/audio/bgm/" value="/audio/bgm/">
+                                                        <button class="btn btn-primary" type="button">
+                                                            <i class="fas fa-folder-open"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="setting-card">
+                                                <div class="setting-title">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="fas fa-broadcast-tower text-warning me-2"></i>
+                                                        <span class="fw-semibold">채널 사용 설정</span>
+                                                    </div>
+                                                    <div class="form-check form-switch m-0">
+                                                        <input class="form-check-input" type="checkbox" id="channelSettingToggle" checked>
+                                                        <label class="form-check-label small" for="channelSettingToggle">사용</label>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row g-3">
+                                                    <div class="col-6">
+                                                        <label class="form-label small">채널 1</label>
+                                                        <select id="use_ch1_sel" class="form-select form-select-sm">
+                                                            <option value="" selected disabled>선택</option>
+                                                            <option value="1">사용</option>
+                                                            <option value="2">미사용</option>
+                                                            <option value="3">없음</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small">채널 2</label>
+                                                        <select id="use_ch2_sel" class="form-select form-select-sm">
+                                                            <option value="" selected disabled>선택</option>
+                                                            <option value="1">사용</option>
+                                                            <option value="2">미사용</option>
+                                                            <option value="3">없음</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small">채널 3</label>
+                                                        <select id="use_ch3_sel" class="form-select form-select-sm">
+                                                            <option value="" selected disabled>선택</option>
+                                                            <option value="1">사용</option>
+                                                            <option value="2">미사용</option>
+                                                            <option value="3">없음</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small">채널 4</label>
+                                                        <select id="use_ch4_sel" class="form-select form-select-sm">
+                                                            <option value="" selected disabled>선택</option>
+                                                            <option value="1">사용</option>
+                                                            <option value="2">미사용</option>
+                                                            <option value="3">없음</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="setting-card">
+                                                <div class="setting-title">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="fas fa-music text-warning me-2"></i>
+                                                        <span class="fw-semibold">BGM & 라디오 설정</span>
+                                                    </div>
+                                                    <div class="form-check form-switch m-0">
+                                                        <input class="form-check-input" type="checkbox" id="bgmSettingToggle" checked>
+                                                        <label class="form-check-label small" for="bgmSettingToggle">사용</label>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row g-3 mb-3">
+                                                    <div class="col-6">
+                                                        <label for="bgmFolderSel" class="form-label">BGM 폴더</label>
+                                                        <select id="bgmFolderSel" class="form-select form-select-sm">
+                                                            <option value="" selected disabled>선택</option>
+                                                            <option value="song">가요</option>
+                                                            <option value="movie">영화</option>
+                                                            <option value="classic_1">클래식_1</option>
+                                                            <option value="classic_2">클래식_2</option>
+                                                            <option value="classic_3">클래식_3</option>
+                                                            <option value="classic_4">클래식_4</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label for="bgmStatusSel" class="form-label">BGM 상태</label>
+                                                        <select id="bgmStatusSel" class="form-select form-select-sm">
+                                                            <option value="" selected disabled>선택</option>
+                                                            <option value="play">재생</option>
+                                                            <option value="stop">정지</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row g-3">
+                                                    <div class="col-6">
+                                                        <label for="freqSel" class="form-label">주파수</label>
+                                                        <select id="freqSel" class="form-select form-select-sm">
+                                                            <option value="" selected disabled>선택</option>
+                                                            <option value="bgm">BGM 입력 볼륨</option>
+                                                            <option value="msg">저장메시지 입력 볼륨</option>
+                                                            <option value="tts">TTS 입력 볼륨</option>
+                                                            <option value="fm">FM 입력 볼륨</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label for="freqRegionSel" class="form-label">주파수 지역</label>
+                                                        <select id="freqRegionSel" class="form-select form-select-sm">
+                                                            <option value="" selected disabled>선택</option>
+                                                            <option value="capital">수도권</option>
+                                                            <option value="daejeon">대전</option>
+                                                            <option value="gwangju">광주</option>
+                                                            <option value="busan">부산</option>
+                                                            <option value="daegu">대구</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="setting-card mb-2">
+                                                <div class="setting-title">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="fas fa-network-wired text-warning me-2"></i>
+                                                        <span class="fw-semibold">네트워크 설정</span>
+                                                    </div>
+                                                    <div class="form-check form-switch m-0">
+                                                        <input class="form-check-input" type="checkbox" id="netSettingToggle" checked>
+                                                        <label class="form-check-label small" for="netSettingToggle">사용</label>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row g-3">
+                                                    <div class="col-12">
+                                                        <label class="small text-light opacity-75 mb-1">통제 서버 IP</label>
+                                                        <input id="net_ip" type="text" class="custom-form-control form-control form-control-sm" placeholder="000.000.0.0">
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <label class="small text-light opacity-75 mb-1">스피커 ID</label>
+                                                        <input id="net_speaker_id" type="text" class="custom-form-control form-control form-control-sm" placeholder="000.000.000.000">
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <label for="net_interval" class="form-label">상태 확인 주기</label>
+                                                        <div class="input-group input-group-sm">
+                                                            <input id="net_interval" type="number" class="custom-form-control form-control form-control-sm" min="1" max="100" value="0">
+                                                            <span class="input-group-text border-start-0">s</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                         </div>
                                     </div>
-
+                                </form>
                                 </div>
-                                </div>
-                            </form>
                             </div>
-                        </div>
 
                         </div>
 
                         <!-- =========================
                             B 타입 영역 (tb_spk_setting 맞춤)
                         ========================== -->
-                        <div id="area_type_b" class="d-none">
+                        <div id="area_type_o" class="d-none">
 
-                        <ul class="nav nav-pills mb-2" role="tablist">
-                            <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="tab-info-b"
-                                    data-bs-toggle="pill" data-bs-target="#pane-info-b"
-                                    type="button" role="tab">설정 정보(B)</button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="tab-config-b"
-                                    data-bs-toggle="pill" data-bs-target="#pane-config-b"
-                                    type="button" role="tab" disabled>설정 변경(B)</button>
-                            </li>
-                        </ul>
+                            <ul class="nav nav-pills mb-2" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="tab-info-o"
+                                        data-bs-toggle="pill" data-bs-target="#pane-info-o"
+                                        type="button" role="tab">설정 정보</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="tab-config-o"
+                                        data-bs-toggle="pill" data-bs-target="#pane-config-o"
+                                        type="button" role="tab" disabled>설정 변경</button>
+                                </li>
+                            </ul>
 
-                        <div class="tab-content">
-                            <!-- B-정보(읽기) -->
-                            <div class="tab-pane fade show active" id="pane-info-b" role="tabpanel">
-                                <div class="setting-card overflow-auto tab-pane-card">
-                            
-                                <!-- ✅ 기본정보 -->
-                                <div class="setting-card h-auto">
-                                    <div class="setting-title">
-                                    <span class="fw-semibold text-white">기본정보</span>
+                            <div class="tab-content">
+                                <!-- B-정보(읽기) -->
+                                <div class="tab-pane fade show active" id="pane-info-o" role="tabpanel">
+                                    <div class="setting-card overflow-auto tab-pane-card">
+                                
+                                    <!-- 기본정보 -->
+                                    <div class="setting-card h-auto">
+                                        <div class="setting-title">
+                                        <span class="fw-semibold text-white">기본정보</span>
+                                        </div>
+                                        <div class="row g-2">
+                                            <div class="col-12 col-md-4">
+                                                <label class="form-label">스피커 이름</label>
+                                                <small id="b_speakerName" class="d-block">-</small>
+                                            </div>
+                                            <div class="col-12 col-md-4">
+                                                <label class="form-label">ID</label>
+                                                <small id="b_speakerId" class="d-block">-</small>
+                                            </div>
+                                            <div class="col-12 col-md-4">
+                                                <label class="form-label">통제서버 IP</label>
+                                                <small id="b_serverip" class="d-block">-</small>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="row g-2">
-                                    <div class="col-12 col-md-4">
-                                        <label class="form-label">스피커 Key</label>
-                                        <small id="b_speakerKey" class="d-block">-</small>
+                                
+                                    <!-- 채널별 출력 볼륨 -->
+                                    <div class="setting-card h-auto">
+                                        <div class="setting-title">
+                                        <span class="fw-semibold text-white">채널별 출력 볼륨</span>
+                                        </div>
+                                
+                                        <div class="table-responsive rounded-3">
+                                        <table class="table table-sm table-light table-striped text-center align-middle mb-0">
+                                            <thead>
+                                            <tr>
+                                            <th class="text-muted">구분</th>
+                                            <th>CH1</th><th>CH2</th><th>CH3</th><th>CH4</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <tr>
+                                            <td class="fw-semibold">BGM</td>
+                                            <td id="b_bgm_vol_ch1">-</td><td id="b_bgm_vol_ch2">-</td><td id="b_bgm_vol_ch3">-</td><td id="b_bgm_vol_ch4">-</td>
+                                            </tr>
+                                            <tr>
+                                            <td class="fw-semibold">경보방송</td>
+                                            <td id="b_alert_vol_ch1">-</td><td id="b_alert_vol_ch2">-</td><td id="b_alert_vol_ch3">-</td><td id="b_alert_vol_ch4">-</td>
+                                            </tr>
+                                            <tr>
+                                            <td class="fw-semibold">FM</td>
+                                            <td id="b_fm_vol_ch1">-</td><td id="b_fm_vol_ch2">-</td><td id="b_fm_vol_ch3">-</td><td id="b_fm_vol_ch4">-</td>
+                                            </tr>
+                                            <tr>
+                                            <td class="fw-semibold">채널 사용</td>
+                                            <td id="b_useCh1">-</td><td id="b_useCh2">-</td><td id="b_useCh3">-</td><td id="b_useCh4">-</td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                        </div>
                                     </div>
-                                    <div class="col-12 col-md-4">
-                                        <label class="form-label">설정 수신시간</label>
-                                        <small id="b_receiveTime" class="d-block">-</small>
+                                
+                                    <!-- 기타 설정정보 -->
+                                    <div class="setting-card h-auto mb-0">
+                                        <div class="setting-title">
+                                        <span class="fw-semibold text-white">기타 설정정보</span>
+                                        </div>
+                                
+                                        <div class="row g-3 text-nowrap">
+                                        <div class="col-6 col-md-4"><label class="form-label">TTA 지역코드</label><small id="b_TTARegionCode" class="d-block">-</small></div>
+                                        <div class="col-6 col-md-4"><label class="form-label">DMB 주파수 1</label><small id="b_DMBFrequency1" class="d-block">-</small></div>
+                                        <div class="col-6 col-md-4"><label class="form-label">DMB 주파수 2</label><small id="b_DMBFrequency2" class="d-block">-</small></div>
+                                
+                                        <div class="col-6 col-md-4"><label class="form-label">BGM 폴더 번호</label><small id="b_BGMFolderNo" class="d-block">-</small></div>
+                                        <div class="col-6 col-md-4"><label class="form-label">BGM 상태</label><small id="b_BGMStatus" class="d-block">-</small></div>
+                                        <div class="col-6 col-md-4"><label class="form-label">음원 모드</label><small id="b_MusicMode" class="d-block">-</small></div>
+                                
+                                        <div class="col-6 col-md-4"><label class="form-label">BGM 입력 볼륨</label><small id="b_BGM_IN_VOL" class="d-block">-</small></div>
+                                        <div class="col-6 col-md-4"><label class="form-label">저장메시지 입력 볼륨</label><small id="b_STO_IN_VOL" class="d-block">-</small></div>
+                                        <div class="col-6 col-md-4"><label class="form-label">TTS 입력 볼륨</label><small id="b_TTS_IN_VOL" class="d-block">-</small></div>
+                                
+                                        <div class="col-6 col-md-4"><label class="form-label">FM 입력 볼륨</label><small id="b_FM_IN_VOL" class="d-block">-</small></div>
+                                        <div class="col-6 col-md-4"><label class="form-label">TTS Pitch</label><small id="b_TTS_Pitch" class="d-block">-</small></div>
+                                        <div class="col-6 col-md-4"><label class="form-label">TTS Speed</label><small id="b_TTS_Speed" class="d-block">-</small></div>
+                                
+                                        <div class="col-6 col-md-4"><label class="form-label">폴링 주기</label><small id="b_PollingCheckTime" class="d-block">-</small></div>
+                                        <div class="col-6 col-md-4"><label class="form-label">라디오 주파수</label><small id="b_RadioFrequency" class="d-block">-</small></div>
+                                        <div class="col-6 col-md-4"><label class="form-label">라디오 지역</label><small id="b_RadioFrequencyRegion" class="d-block">-</small></div>
+                                        </div>
                                     </div>
-                                    <div class="col-12 col-md-4">
-                                        <label class="form-label">통제서버 IP</label>
-                                        <small id="b_serverip" class="d-block">-</small>
-                                    </div>
+                                
                                     </div>
                                 </div>
-                            
-                                <!-- ✅ 채널별 출력 볼륨 -->
-                                <div class="setting-card h-auto">
-                                    <div class="setting-title">
-                                    <span class="fw-semibold text-white">채널별 출력 볼륨</span>
+
+
+                                <!-- B-설정(수정) -->
+                                <div class="tab-pane fade" id="pane-config-o" role="tabpanel">
+                                <form id="speakerSettingFormB">
+                                    <div class="setting-card overflow-auto tab-pane-card p-3">
+
+                                    <div class="row g-3">
+                                        <div class="col-12 col-md-4">
+                                            <label class="form-label">통제서버 IP</label>
+                                            <input id="bi_serverip" class="form-control form-control-sm" type="text" placeholder="예: 192.168.0.10">
+                                        </div>
+                                        
+                                        <div class="col-6 col-md-4">
+                                            <label class="form-label">TTA 지역코드</label>
+                                            <input id="bi_TTARegionCode" class="form-control form-control-sm" type="text" maxlength="10" placeholder="예: 1234567890">
+                                        </div>
+                                        
+                                        <div class="col-6 col-md-4">
+                                            <label class="form-label">폴링 주기(초) (10~3600)</label>
+                                            <input id="bi_PollingCheckTime" class="form-control form-control-sm" type="number" min="10" max="3600" placeholder="예: 30">
+                                        </div>
+                                        
+                                        <div class="col-6 col-md-4">
+                                            <label class="form-label">DMB 주파수 1</label>
+                                            <input id="bi_DMBFrequency1" class="form-control form-control-sm" type="text" maxlength="7">
+                                        </div>
+                                        
+                                        <div class="col-6 col-md-4">
+                                            <label class="form-label">DMB 주파수 2</label>
+                                            <input id="bi_DMBFrequency2" class="form-control form-control-sm" type="text" maxlength="7">
+                                        </div>
+                                        
+                                        <div class="col-6 col-md-4">
+                                            <label class="form-label">BGM 폴더 번호 (0~2)</label>
+                                            <input id="bi_BGMFolderNo" class="form-control form-control-sm" type="number" min="0" max="2">
+                                        </div>
+                                        
+                                        <div class="col-6 col-md-4">
+                                            <label class="form-label">BGM 상태 (0:재생, 1:정지)</label>
+                                            <input id="bi_BGMStatus" class="form-control form-control-sm" type="number" min="0" max="1">
+                                        </div>
+                                        
+                                        <div class="col-6 col-md-4">
+                                            <label class="form-label">음원 모드 (0:BGM, 1:FM)</label>
+                                            <input id="bi_MusicMode" class="form-control form-control-sm" type="number" min="0" max="1">
+                                        </div>
+
+                                        <div class="col-6 col-md-4">
+                                            <label class="form-label">RadioFrequency(0~8)</label>
+                                            <input id="bi_RadioFrequency" class="form-control form-control-sm" type="number" min="0" max="8">
+                                        </div>
+                                        <div class="col-6 col-md-4">
+                                            <label class="form-label">RadioFrequencyRegion(0~5)</label>
+                                            <input id="bi_RadioFrequencyRegion" class="form-control form-control-sm" type="number" min="0" max="5">
+                                        </div>
+
+                                        <!-- 입력 볼륨 -->
+                                        <div class="col-12"><div class="text-light fw-semibold my-2">입력 볼륨</div></div>
+
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label">BGM 입력 볼륨</label>
+                                            <div class="range-row">
+                                                <div class="range-label">VOL</div>
+                                                <input id="bi_BGM_IN_VOL" class="form-range range-slim flex-grow-1" type="range"
+                                                    min="0" max="100" step="1" value="0" data-sync-value="bi_BGM_IN_VOL_val">
+                                                <span id="bi_BGM_IN_VOL_val" class="range-badge">0</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label">저장메시지 입력 볼륨</label>
+                                            <div class="range-row">
+                                                <div class="range-label">VOL</div>
+                                                <input id="bi_STO_IN_VOL" class="form-range range-slim flex-grow-1" type="range"
+                                                    min="0" max="100" step="1" value="0" data-sync-value="bi_STO_IN_VOL_val">
+                                                <span id="bi_STO_IN_VOL_val" class="range-badge">0</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label">TTS 입력 볼륨</label>
+                                            <div class="range-row">
+                                                <div class="range-label">VOL</div>
+                                                <input id="bi_TTS_IN_VOL" class="form-range range-slim flex-grow-1" type="range"
+                                                    min="0" max="100" step="1" value="0" data-sync-value="bi_TTS_IN_VOL_val">
+                                                <span id="bi_TTS_IN_VOL_val" class="range-badge">0</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label">FM 입력 볼륨</label>
+                                            <div class="range-row">
+                                                <div class="range-label">VOL</div>
+                                                <input id="bi_FM_IN_VOL" class="form-range range-slim flex-grow-1" type="range"
+                                                    min="0" max="100" step="1" value="0" data-sync-value="bi_FM_IN_VOL_val">
+                                                <span id="bi_FM_IN_VOL_val" class="range-badge">0</span>
+                                            </div>
+                                        </div>
+
+
+                                        <div class="col-12"><div class="text-light fw-semibold my-2">TTS 설정</div></div>
+
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label">TTS 음높이(Pitch)</label>
+                                            <div class="range-row">
+                                                <div class="range-label">PITCH</div>
+                                                <input id="bi_TTS_Pitch" class="form-range range-slim flex-grow-1" type="range"
+                                                    min="0" max="100" step="1" value="0" data-sync-value="bi_TTS_Pitch_val">
+                                                <span id="bi_TTS_Pitch_val" class="range-badge">0</span>
+                                            </div>
+                                        </div>
+                                            
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label">TTS 속도(Speed)</label>
+                                            <div class="range-row">
+                                                <div class="range-label">SPEED</div>
+                                                <input id="bi_TTS_Speed" class="form-range range-slim flex-grow-1" type="range"
+                                                    min="0" max="100" step="1" value="0" data-sync-value="bi_TTS_Speed_val">
+                                                <span id="bi_TTS_Speed_val" class="range-badge">0</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- 출력 볼륨(채널별) -->
+                                        <!-- <div class="col-12"><hr class="border-light"></div> -->
+                                        <div class="col-12"><div class="text-light fw-semibold my-2">BGM 채널 볼륨</div></div>
+                                        
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label small text-light opacity-75">BGM CH1</label>
+                                            <div class="range-row">
+                                                <div class="range-label">CH1</div>
+                                                <input id="bi_bgm_vol_ch1" class="form-range range-slim flex-grow-1" type="range"
+                                                    min="0" max="100" step="1" value="0" data-sync-value="bi_bgm_vol_ch1_val">
+                                                <span id="bi_bgm_vol_ch1_val" class="range-badge">0</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label small text-light opacity-75">BGM CH2</label>
+                                            <div class="range-row">
+                                                <div class="range-label">CH2</div>
+                                                <input id="bi_bgm_vol_ch2" class="form-range range-slim flex-grow-1" type="range"
+                                                    min="0" max="100" step="1" value="0" data-sync-value="bi_bgm_vol_ch2_val">
+                                                <span id="bi_bgm_vol_ch2_val" class="range-badge">0</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label small text-light opacity-75">BGM CH3</label>
+                                            <div class="range-row">
+                                                <div class="range-label">CH3</div>
+                                                <input id="bi_bgm_vol_ch3" class="form-range range-slim flex-grow-1" type="range"
+                                                    min="0" max="100" step="1" value="0" data-sync-value="bi_bgm_vol_ch3_val">
+                                                <span id="bi_bgm_vol_ch3_val" class="range-badge">0</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label small text-light opacity-75">BGM CH4</label>
+                                            <div class="range-row">
+                                                <div class="range-label">CH4</div>
+                                                <input id="bi_bgm_vol_ch4" class="form-range range-slim flex-grow-1" type="range"
+                                                    min="0" max="100" step="1" value="0" data-sync-value="bi_bgm_vol_ch4_val">
+                                                <span id="bi_bgm_vol_ch4_val" class="range-badge">0</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- ALERT 채널 볼륨 -->
+                                        <div class="col-12 my-2">
+                                            <div class="text-light fw-semibold my-2">ALERT 채널 볼륨</div>
+                                        </div>
+                                        
+                                        <div class="col-12">
+                                            <div class="row g-2">
+                                                <!-- CH1 -->
+                                                <div class="col-12 col-md-6">
+                                                    <div class="range-row">
+                                                        <div class="range-label">CH1</div>
+                                                        <input id="bi_alert_vol_ch1" class="form-range range-slim" type="range"
+                                                                min="0" max="100" step="1" value="0" data-sync-value="bi_alert_vol_ch1_val">
+                                                        <span id="bi_alert_vol_ch1_val" class="range-badge">0</span>
+                                                    </div>
+                                                </div>
+                                                <!-- CH2 -->
+                                                <div class="col-12 col-md-6">
+                                                    <div class="range-row">
+                                                        <div class="range-label">CH2</div>
+                                                        <input id="bi_alert_vol_ch2" class="form-range range-slim" type="range"
+                                                                min="0" max="100" step="1" value="0" data-sync-value="bi_alert_vol_ch2_val">
+                                                        <span id="bi_alert_vol_ch2_val" class="range-badge">0</span>
+                                                    </div>
+                                                </div>
+                                                <!-- CH3 -->
+                                                <div class="col-12 col-md-6">
+                                                    <div class="range-row">
+                                                        <div class="range-label">CH3</div>
+                                                        <input id="bi_alert_vol_ch3" class="form-range range-slim" type="range"
+                                                                min="0" max="100" step="1" value="0" data-sync-value="bi_alert_vol_ch3_val">
+                                                        <span id="bi_alert_vol_ch3_val" class="range-badge">0</span>
+                                                    </div>
+                                                </div>
+                                                <!-- CH4 -->
+                                                <div class="col-12 col-md-6">
+                                                    <div class="range-row">
+                                                        <div class="range-label">CH4</div>
+                                                        <input id="bi_alert_vol_ch4" class="form-range range-slim" type="range"
+                                                                min="0" max="100" step="1" value="0" data-sync-value="bi_alert_vol_ch4_val">
+                                                        <span id="bi_alert_vol_ch4_val" class="range-badge">0</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- FM 채널 볼륨 -->
+                                        <div class="col-12 mt-2">
+                                            <div class="text-light fw-semibold my-2">FM 채널 볼륨</div>
+                                        </div>
+                                        
+                                        <div class="col-12">
+                                            <div class="row g-2">
+                                                <!-- CH1 -->
+                                                <div class="col-12 col-md-6">
+                                                    <div class="range-row">
+                                                        <div class="range-label">CH1</div>
+                                                        <input id="bi_fm_vol_ch1" class="form-range range-slim" type="range"
+                                                                min="0" max="100" step="1" value="0" data-sync-value="bi_fm_vol_ch1_val">
+                                                        <span id="bi_fm_vol_ch1_val" class="range-badge">0</span>
+                                                    </div>
+                                                </div>
+                                                <!-- CH2 -->
+                                                <div class="col-12 col-md-6">
+                                                    <div class="range-row">
+                                                        <div class="range-label">CH2</div>
+                                                        <input id="bi_fm_vol_ch2" class="form-range range-slim" type="range"
+                                                                min="0" max="100" step="1" value="0" data-sync-value="bi_fm_vol_ch2_val">
+                                                        <span id="bi_fm_vol_ch2_val" class="range-badge">0</span>
+                                                    </div>
+                                                </div>
+                                                <!-- CH3 -->
+                                                <div class="col-12 col-md-6">
+                                                    <div class="range-row">
+                                                        <div class="range-label">CH3</div>
+                                                        <input id="bi_fm_vol_ch3" class="form-range range-slim" type="range"
+                                                                min="0" max="100" step="1" value="0" data-sync-value="bi_fm_vol_ch3_val">
+                                                        <span id="bi_fm_vol_ch3_val" class="range-badge">0</span>
+                                                    </div>
+                                                </div>
+                                                <!-- CH4 -->
+                                                <div class="col-12 col-md-6">
+                                                    <div class="range-row">
+                                                        <div class="range-label">CH4</div>
+                                                        <input id="bi_fm_vol_ch4" class="form-range range-slim" type="range"
+                                                                min="0" max="100" step="1" value="0" data-sync-value="bi_fm_vol_ch4_val">
+                                                        <span id="bi_fm_vol_ch4_val" class="range-badge">0</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-12 mt-2">
+                                            <div class="text-light fw-semibold my-1">채널 사용</div>
+                                        </div>
+
+                                        <div class="col-6 col-md-3">
+                                            <label class="form-label small text-light opacity-75">CH1</label>
+                                            <select id="bi_useCh1" class="form-select form-select-sm">
+                                                <option value="1">사용</option>
+                                                <option value="2">미사용</option>
+                                                <option value="3">없음</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-6 col-md-3">
+                                            <label class="form-label small text-light opacity-75">CH2</label>
+                                            <select id="bi_useCh2" class="form-select form-select-sm">
+                                                <option value="1">사용</option>
+                                                <option value="2">미사용</option>
+                                                <option value="3">없음</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-6 col-md-3">
+                                            <label class="form-label small text-light opacity-75">CH3</label>
+                                            <select id="bi_useCh3" class="form-select form-select-sm">
+                                                <option value="1">사용</option>
+                                                <option value="2">미사용</option>
+                                                <option value="3">없음</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-6 col-md-3">
+                                            <label class="form-label small text-light opacity-75">CH4</label>
+                                            <select id="bi_useCh4" class="form-select form-select-sm">
+                                                <option value="1">사용</option>
+                                                <option value="2">미사용</option>
+                                                <option value="3">없음</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- <div class="col-12"><hr class="border-light"></div>
+                                        <div class="col-6 col-md-4">
+                                            <label class="form-label">RadioFrequency(0~8)</label>
+                                            <input id="bi_RadioFrequency" class="form-control form-control-sm" type="number" min="0" max="8">
+                                        </div>
+                                        <div class="col-6 col-md-4">
+                                            <label class="form-label">RadioFrequencyRegion(0~5)</label>
+                                            <input id="bi_RadioFrequencyRegion" class="form-control form-control-sm" type="number" min="0" max="5">
+                                        </div> -->
                                     </div>
-                            
-                                    <div class="table-responsive rounded-3">
-                                    <table class="table table-sm table-light table-striped text-center align-middle mb-0">
-                                        <thead>
-                                        <tr>
-                                        <th class="text-muted">구분</th>
-                                        <th>CH1</th><th>CH2</th><th>CH3</th><th>CH4</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                        <tr>
-                                        <td class="fw-semibold">BGM</td>
-                                        <td id="b_bgm_vol_ch1">-</td><td id="b_bgm_vol_ch2">-</td><td id="b_bgm_vol_ch3">-</td><td id="b_bgm_vol_ch4">-</td>
-                                        </tr>
-                                        <tr>
-                                        <td class="fw-semibold">경보방송</td>
-                                        <td id="b_alert_vol_ch1">-</td><td id="b_alert_vol_ch2">-</td><td id="b_alert_vol_ch3">-</td><td id="b_alert_vol_ch4">-</td>
-                                        </tr>
-                                        <tr>
-                                        <td class="fw-semibold">FM</td>
-                                        <td id="b_fm_vol_ch1">-</td><td id="b_fm_vol_ch2">-</td><td id="b_fm_vol_ch3">-</td><td id="b_fm_vol_ch4">-</td>
-                                        </tr>
-                                        <tr>
-                                        <td class="fw-semibold">채널 사용</td>
-                                        <td id="b_useCh1">-</td><td id="b_useCh2">-</td><td id="b_useCh3">-</td><td id="b_useCh4">-</td>
-                                        </tr>
-                                        </tbody>
-                                    </table>
+
                                     </div>
-                                </div>
-                            
-                                <!-- ✅ 기타 설정정보 -->
-                                <div class="setting-card h-auto mb-0">
-                                    <div class="setting-title">
-                                    <span class="fw-semibold text-white">기타 설정정보</span>
-                                    </div>
-                            
-                                    <div class="row g-3 text-nowrap">
-                                    <div class="col-6 col-md-4"><label class="form-label">TTA 지역코드</label><small id="b_TTARegionCode" class="d-block">-</small></div>
-                                    <div class="col-6 col-md-4"><label class="form-label">DMB 주파수 1</label><small id="b_DMBFrequency1" class="d-block">-</small></div>
-                                    <div class="col-6 col-md-4"><label class="form-label">DMB 주파수 2</label><small id="b_DMBFrequency2" class="d-block">-</small></div>
-                            
-                                    <div class="col-6 col-md-4"><label class="form-label">BGM 폴더 번호</label><small id="b_BGMFolderNo" class="d-block">-</small></div>
-                                    <div class="col-6 col-md-4"><label class="form-label">BGM 상태</label><small id="b_BGMStatus" class="d-block">-</small></div>
-                                    <div class="col-6 col-md-4"><label class="form-label">음원 모드</label><small id="b_MusicMode" class="d-block">-</small></div>
-                            
-                                    <div class="col-6 col-md-4"><label class="form-label">BGM 입력 볼륨</label><small id="b_BGM_IN_VOL" class="d-block">-</small></div>
-                                    <div class="col-6 col-md-4"><label class="form-label">저장메시지 입력 볼륨</label><small id="b_STO_IN_VOL" class="d-block">-</small></div>
-                                    <div class="col-6 col-md-4"><label class="form-label">TTS 입력 볼륨</label><small id="b_TTS_IN_VOL" class="d-block">-</small></div>
-                            
-                                    <div class="col-6 col-md-4"><label class="form-label">FM 입력 볼륨</label><small id="b_FM_IN_VOL" class="d-block">-</small></div>
-                                    <div class="col-6 col-md-4"><label class="form-label">TTS Pitch</label><small id="b_TTS_Pitch" class="d-block">-</small></div>
-                                    <div class="col-6 col-md-4"><label class="form-label">TTS Speed</label><small id="b_TTS_Speed" class="d-block">-</small></div>
-                            
-                                    <div class="col-6 col-md-4"><label class="form-label">폴링 주기</label><small id="b_PollingCheckTime" class="d-block">-</small></div>
-                                    <div class="col-6 col-md-4"><label class="form-label">라디오 주파수</label><small id="b_RadioFrequency" class="d-block">-</small></div>
-                                    <div class="col-6 col-md-4"><label class="form-label">라디오 지역</label><small id="b_RadioFrequencyRegion" class="d-block">-</small></div>
-                                    </div>
-                                </div>
-                            
+                                </form>
                                 </div>
                             </div>
-
-
-                            <!-- B-설정(수정) -->
-                            <div class="tab-pane fade" id="pane-config-b" role="tabpanel">
-                            <form id="speakerSettingFormB">
-                                <div class="setting-card overflow-auto tab-pane-card p-3">
-
-                                <div class="row g-3">
-                                    <div class="col-12 col-md-4">
-                                    <label class="form-label">serverip</label>
-                                    <input id="bi_serverip" class="form-control form-control-sm" type="text">
-                                    </div>
-                                    <div class="col-6 col-md-4">
-                                    <label class="form-label">TTARegionCode</label>
-                                    <input id="bi_TTARegionCode" class="form-control form-control-sm" type="text" maxlength="10">
-                                    </div>
-                                    <div class="col-6 col-md-4">
-                                    <label class="form-label">PollingCheckTime(10~3600)</label>
-                                    <input id="bi_PollingCheckTime" class="form-control form-control-sm" type="number" min="10" max="3600">
-                                    </div>
-
-                                    <div class="col-6 col-md-4">
-                                    <label class="form-label">DMBFrequency1</label>
-                                    <input id="bi_DMBFrequency1" class="form-control form-control-sm" type="text" maxlength="7">
-                                    </div>
-                                    <div class="col-6 col-md-4">
-                                    <label class="form-label">DMBFrequency2</label>
-                                    <input id="bi_DMBFrequency2" class="form-control form-control-sm" type="text" maxlength="7">
-                                    </div>
-
-                                    <div class="col-6 col-md-4">
-                                    <label class="form-label">BGMFolderNo(0~2)</label>
-                                    <input id="bi_BGMFolderNo" class="form-control form-control-sm" type="number" min="0" max="2">
-                                    </div>
-                                    <div class="col-6 col-md-4">
-                                    <label class="form-label">BGMStatus(0:PLAY,1:STOP)</label>
-                                    <input id="bi_BGMStatus" class="form-control form-control-sm" type="number" min="0" max="1">
-                                    </div>
-                                    <div class="col-6 col-md-4">
-                                    <label class="form-label">MusicMode(0:BGM,1:FM)</label>
-                                    <input id="bi_MusicMode" class="form-control form-control-sm" type="number" min="0" max="1">
-                                    </div>
-
-                                    <!-- 입력 볼륨 -->
-                                    <div class="col-6 col-md-3"><label class="form-label">BGM_IN_VOL</label><input id="bi_BGM_IN_VOL" class="form-control form-control-sm" type="number" min="0" max="100"></div>
-                                    <div class="col-6 col-md-3"><label class="form-label">STO_IN_VOL</label><input id="bi_STO_IN_VOL" class="form-control form-control-sm" type="number" min="0" max="100"></div>
-                                    <div class="col-6 col-md-3"><label class="form-label">TTS_IN_VOL</label><input id="bi_TTS_IN_VOL" class="form-control form-control-sm" type="number" min="0" max="100"></div>
-                                    <div class="col-6 col-md-3"><label class="form-label">FM_IN_VOL</label><input id="bi_FM_IN_VOL" class="form-control form-control-sm" type="number" min="0" max="100"></div>
-
-                                    <div class="col-6 col-md-3"><label class="form-label">TTS_Pitch</label><input id="bi_TTS_Pitch" class="form-control form-control-sm" type="number" min="0" max="100"></div>
-                                    <div class="col-6 col-md-3"><label class="form-label">TTS_Speed</label><input id="bi_TTS_Speed" class="form-control form-control-sm" type="number" min="0" max="100"></div>
-
-                                    <!-- 출력 볼륨(채널별) -->
-                                    <div class="col-12"><hr class="border-secondary"></div>
-
-                                    <div class="col-12"><div class="text-light fw-semibold mb-1">BGM 채널 볼륨</div></div>
-                                    <div class="col-6 col-md-3"><input id="bi_bgm_vol_ch1" class="form-control form-control-sm" type="number" min="0" max="100" placeholder="CH1"></div>
-                                    <div class="col-6 col-md-3"><input id="bi_bgm_vol_ch2" class="form-control form-control-sm" type="number" min="0" max="100" placeholder="CH2"></div>
-                                    <div class="col-6 col-md-3"><input id="bi_bgm_vol_ch3" class="form-control form-control-sm" type="number" min="0" max="100" placeholder="CH3"></div>
-                                    <div class="col-6 col-md-3"><input id="bi_bgm_vol_ch4" class="form-control form-control-sm" type="number" min="0" max="100" placeholder="CH4"></div>
-
-                                    <div class="col-12 mt-2"><div class="text-light fw-semibold mb-1">ALERT 채널 볼륨</div></div>
-                                    <div class="col-6 col-md-3"><input id="bi_alert_vol_ch1" class="form-control form-control-sm" type="number" min="0" max="100" placeholder="CH1"></div>
-                                    <div class="col-6 col-md-3"><input id="bi_alert_vol_ch2" class="form-control form-control-sm" type="number" min="0" max="100" placeholder="CH2"></div>
-                                    <div class="col-6 col-md-3"><input id="bi_alert_vol_ch3" class="form-control form-control-sm" type="number" min="0" max="100" placeholder="CH3"></div>
-                                    <div class="col-6 col-md-3"><input id="bi_alert_vol_ch4" class="form-control form-control-sm" type="number" min="0" max="100" placeholder="CH4"></div>
-
-                                    <div class="col-12 mt-2"><div class="text-light fw-semibold mb-1">FM 채널 볼륨</div></div>
-                                    <div class="col-6 col-md-3"><input id="bi_fm_vol_ch1" class="form-control form-control-sm" type="number" min="0" max="100" placeholder="CH1"></div>
-                                    <div class="col-6 col-md-3"><input id="bi_fm_vol_ch2" class="form-control form-control-sm" type="number" min="0" max="100" placeholder="CH2"></div>
-                                    <div class="col-6 col-md-3"><input id="bi_fm_vol_ch3" class="form-control form-control-sm" type="number" min="0" max="100" placeholder="CH3"></div>
-                                    <div class="col-6 col-md-3"><input id="bi_fm_vol_ch4" class="form-control form-control-sm" type="number" min="0" max="100" placeholder="CH4"></div>
-
-                                    <div class="col-12 mt-2"><div class="text-light fw-semibold mb-1">채널 사용(useCh1~4)</div></div>
-                                    <div class="col-6 col-md-3"><input id="bi_useCh1" class="form-control form-control-sm" type="number" min="1" max="3" placeholder="CH1(1~3)"></div>
-                                    <div class="col-6 col-md-3"><input id="bi_useCh2" class="form-control form-control-sm" type="number" min="1" max="3" placeholder="CH2(1~3)"></div>
-                                    <div class="col-6 col-md-3"><input id="bi_useCh3" class="form-control form-control-sm" type="number" min="1" max="3" placeholder="CH3(1~3)"></div>
-                                    <div class="col-6 col-md-3"><input id="bi_useCh4" class="form-control form-control-sm" type="number" min="1" max="3" placeholder="CH4(1~3)"></div>
-
-                                    <div class="col-12"><hr class="border-secondary"></div>
-
-                                    <div class="col-6 col-md-4">
-                                    <label class="form-label">RadioFrequency(0~8)</label>
-                                    <input id="bi_RadioFrequency" class="form-control form-control-sm" type="number" min="0" max="8">
-                                    </div>
-                                    <div class="col-6 col-md-4">
-                                    <label class="form-label">RadioFrequencyRegion(0~5)</label>
-                                    <input id="bi_RadioFrequencyRegion" class="form-control form-control-sm" type="number" min="0" max="5">
-                                    </div>
-                                </div>
-
-                                </div>
-                            </form>
-                            </div>
-                        </div>
 
                         </div>
 

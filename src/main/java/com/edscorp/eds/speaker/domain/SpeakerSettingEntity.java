@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.IdClass;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,59 +12,89 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@IdClass(SpeakerSettingId.class)
-@Table(name = "tb_speaker_setting")
+@Table(name = "tb_spk_setting")
 public class SpeakerSettingEntity {
-    @Id
-    @Column(name = "locationCode")
-    private String locationCode;
 
     @Id
-    @Column(name = "speakerCode")
-    private String speakerCode;
+    @Column(name = "speakerKey", nullable = false)
+    private Integer speakerKey;
 
-    // ========== 볼륨 설정 ==========
-    private Integer bgm_ch1;
-    private Integer bgm_ch2;
-    private Integer bgm_ch3;
-    private Integer bgm_ch4;
+    @Column(name = "ReceiveTime")
+    private LocalDateTime receiveTime;
 
-    private Integer alert_ch1;
-    private Integer alert_ch2;
-    private Integer alert_ch3;
-    private Integer alert_ch4;
+    @Column(name = "bgm_vol_ch1")
+    private Integer bgmVolCh1;
+    @Column(name = "bgm_vol_ch2")
+    private Integer bgmVolCh2;
+    @Column(name = "bgm_vol_ch3")
+    private Integer bgmVolCh3;
+    @Column(name = "bgm_vol_ch4")
+    private Integer bgmVolCh4;
 
-    private Integer fm_ch1;
-    private Integer fm_ch2;
-    private Integer fm_ch3;
-    private Integer fm_ch4;
+    @Column(name = "alert_vol_ch1")
+    private Integer alertVolCh1;
+    @Column(name = "alert_vol_ch2")
+    private Integer alertVolCh2;
+    @Column(name = "alert_vol_ch3")
+    private Integer alertVolCh3;
+    @Column(name = "alert_vol_ch4")
+    private Integer alertVolCh4;
 
-    // ========== 채널 사용 ==========
-    private Integer use_ch1;
-    private Integer use_ch2;
-    private Integer use_ch3;
-    private Integer use_ch4;
+    @Column(name = "fm_vol_ch1")
+    private Integer fmVolCh1;
+    @Column(name = "fm_vol_ch2")
+    private Integer fmVolCh2;
+    @Column(name = "fm_vol_ch3")
+    private Integer fmVolCh3;
+    @Column(name = "fm_vol_ch4")
+    private Integer fmVolCh4;
 
-    // ========== 상세 설정 ==========
-    private String bgm_folder;
-    private String bgm_status;
-    private Integer bgm_input_volume;
+    @Column(name = "useCh1")
+    private Integer useCh1;
+    @Column(name = "useCh2")
+    private Integer useCh2;
+    @Column(name = "useCh3")
+    private Integer useCh3;
+    @Column(name = "useCh4")
+    private Integer useCh4;
 
-    private Integer msg_volume;
-    private Integer tts_volume;
-    private Integer fm_volume;
+    @Column(name = "TTARegionCode")
+    private String ttaRegionCode;
+    @Column(name = "DMBFrequency1")
+    private String dmbFrequency1;
+    @Column(name = "DMBFrequency2")
+    private String dmbFrequency2;
 
-    private Integer tts_pitch;
-    private Integer tts_speed;
+    @Column(name = "serverip")
+    private String serverip;
 
-    private Integer polling_interval;
+    @Column(name = "BGMFolderNo")
+    private Integer bgmFolderNo;
+    @Column(name = "BGMStatus")
+    private Integer bgmStatus;
 
-    private String sound_mode;
-    private String frequency;
+    @Column(name = "BGM_IN_VOL")
+    private Integer bgmInVol;
+    @Column(name = "STO_IN_VOL")
+    private Integer stoInVol;
+    @Column(name = "TTS_IN_VOL")
+    private Integer ttsInVol;
+    @Column(name = "FM_IN_VOL")
+    private Integer fmInVol;
 
-    @Column(name = "frequency_region")
-    private String frequencyRegion;
+    @Column(name = "TTS_Pitch")
+    private Integer ttsPitch;
+    @Column(name = "TTS_Speed")
+    private Integer ttsSpeed;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Column(name = "PollingCheckTime")
+    private Integer pollingCheckTime;
+
+    @Column(name = "MusicMode")
+    private Integer musicMode;
+
+    @Column(name = "RadioFrequency")
+    private Integer radioFrequency;
+    @Column(name = "RadioFrequencyRegion")
+    private Integer radioFrequencyRegion;
 }

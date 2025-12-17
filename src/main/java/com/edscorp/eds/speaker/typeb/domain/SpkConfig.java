@@ -38,6 +38,9 @@ public class SpkConfig {
     @Column(name = "speakerName", length = 20)
     private String speakerName; // 단말명
 
+    @Column(name = "type", length = 20)
+    private String type; // 단말 타입
+
     @Column(name = "saveDivi", length = 4)
     private String saveDivi; // 00: 미삭제, 01: 삭제
 

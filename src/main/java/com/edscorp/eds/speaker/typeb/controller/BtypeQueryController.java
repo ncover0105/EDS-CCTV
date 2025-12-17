@@ -100,6 +100,13 @@ public class BtypeQueryController {
 
     // ===================== 스피커 config 조회 =====================
 
+    // 전체 조회
+    // GET /api/btype/config
+    @GetMapping("/config/list")
+    public ResponseEntity<List<SpkConfig>> getAllSpeakers() {
+        return ResponseEntity.ok(spkConfigService.getList());
+    }
+
     // 단일 스피커 설정 조회 (speakerKey 기준)
     // GET /api/btype/config/{speakerKey}
     @GetMapping("/config/{speakerKey}")
@@ -127,7 +134,6 @@ public class BtypeQueryController {
     }
 
     // ===================== 재난 코드 조회 =====================
-
     // 전체 재난 코드
     @GetMapping("/disaster")
     public ResponseEntity<List<SpkDisaster>> getAllDisasterCodes() {

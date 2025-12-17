@@ -15,21 +15,25 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class SpkConfigService {
 
-    private final SpkConfigRepository repository;
+    private final SpkConfigRepository spkConfigRepository;
+
+    public List<SpkConfig> getList() {
+        return spkConfigRepository.findAll();
+    }
 
     public SpkConfig getSpeakerByKey(Integer key) {
-        return repository.findById(key).orElse(null);
+        return spkConfigRepository.findById(key).orElse(null);
     }
 
     public SpkConfig getSpeakerById(String speakerId) {
-        return repository.findBySpeakerId(speakerId);
+        return spkConfigRepository.findBySpeakerId(speakerId);
     }
 
     public List<SpkConfig> getSpeakersByLocation(String locationCode) {
-        return repository.findByLocationCode(locationCode);
+        return spkConfigRepository.findByLocationCode(locationCode);
     }
 
     public List<SpkConfig> getActiveSpeakers() {
-        return repository.findBySaveDivi("00"); // 미삭제 스피커
+        return spkConfigRepository.findBySaveDivi("00"); // 미삭제 스피커
     }
 }
