@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>발령 이력</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: #1a1a1a;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            padding: 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+        }
+
+        .filter-card {
+            background: rgba(45, 55, 72, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .history-card {
+            background: rgba(45, 55, 72, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .history-card:hover {
+            background: rgba(45, 55, 72, 0.6);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .badge {
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .badge.info {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .badge.success {
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .badge.warning {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .badge.danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-apple {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 10px;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-apple:hover {
+            background: rgba(59, 130, 246, 0.25);
+            color: #93c5fd;
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+
+        .btn-apple.danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-apple.danger:hover {
+            background: rgba(239, 68, 68, 0.25);
+            color: #fca5a5;
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        .form-control, .form-select {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border-radius: 8px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(0, 0, 0, 0.4);
+            border-color: rgba(59, 130, 246, 0.5);
+            color: #fff;
+            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.15);
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .history-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .history-meta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.75rem;
+        }
+
+        .history-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+
+        .history-meta-item i {
+            color: rgba(59, 130, 246, 0.7);
+        }
+
+        .history-message {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 3px solid rgba(59, 130, 246, 0.5);
+            margin-top: 1rem;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.6;
+        }
+
+        .pagination-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .pagination .page-link {
+            background: rgba(45, 55, 72, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            margin: 0 0.25rem;
+            border-radius: 8px;
+        }
+
+        .pagination .page-link:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.3);
+            color: #60a5fa;
+        }
+
+        .pagination .page-item.active .page-link {
+            background: rgba(59, 130, 246, 0.3);
+            border-color: rgba(59, 130, 246, 0.5);
+            color: #93c5fd;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #60a5fa;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <!-- 페이지 헤더 -->
+        <div class="page-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-2"><i class="fas fa-history me-2"></i>발령 이력</h2>
+                    <p class="mb-0 text-white-50">재난 방송 발령 내역을 조회하고 관리합니다.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn-apple" id="refresh_btn">
+                        <i class="fas fa-rotate-right me-1"></i>새로고침
+                    </button>
+                    <button type="button" class="btn-apple" id="export_btn">
+                        <i class="fas fa-download me-1"></i>내보내기
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 통계 -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-value" id="total_count">0</div>
+                <div class="stat-label">전체 발령</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="today_count">0</div>
+                <div class="stat-label">오늘 발령</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="real_count">0</div>
+                <div class="stat-label">실제 방송</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="test_count">0</div>
+                <div class="stat-label">시험 방송</div>
+            </div>
+        </div>
+
+        <!-- 필터 -->
+        <div class="filter-card">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label text-white-50 small">기간 선택</label>
+                    <select class="form-select form-select-sm" id="period_filter">
+                        <option value="today">오늘</option>
+                        <option value="week">최근 7일</option>
+                        <option value="month" selected>최근 30일</option>
+                        <option value="all">전체</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-white-50 small">방송 모드</label>
+                    <select class="form-select form-select-sm" id="mode_filter">
+                        <option value="">전체</option>
+                        <option value="REAL">실제 방송</option>
+                        <option value="TEST">시험 방송</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-white-50 small">경보 종류</label>
+                    <select class="form-select form-select-sm" id="alert_filter">
+                        <option value="">전체</option>
+                        <option value="CFW">CFW</option>
+                        <option value="ACL">ACL</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-white-50 small">우선순위</label>
+                    <select class="form-select form-select-sm" id="priority_filter">
+                        <option value="">전체</option>
+                        <option value="NONE">없음</option>
+                        <option value="CAUTION">주의</option>
+                        <option value="WARNING">경계</option>
+                        <option value="DANGER">위험</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label text-white-50 small">스피커 검색</label>
+                    <input type="text" class="form-control form-control-sm" id="speaker_search" placeholder="스피커명으로 검색">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label text-white-50 small">메시지 검색</label>
+                    <input type="text" class="form-control form-control-sm" id="message_search" placeholder="메시지 내용으로 검색">
+                </div>
+            </div>
+        </div>
+
+        <!-- 발령 이력 목록 -->
+        <div id="history_list">
+            <!-- 샘플 데이터 -->
+            <div class="history-card">
+                <div class="history-header">
+                    <div>
+                        <div class="history-title">
+                            <i class="fas fa-bullhorn me-2"></i>호우 경보 발령
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <span class="badge danger">실제 방송</span>
+                        <span class="badge warning">위험</span>
+                    </div>
+                </div>
+                
+                <div class="history-meta">
+                    <div class="history-meta-item">
+                        <i class="far fa-clock"></i>
+                        <span>2024-12-18 14:35:22</span>
+                    </div>
+                    <div class="history-meta-item">
+                        <i class="fas fa-volume-up"></i>
+                        <span>스피커명_001</span>
+                    </div>
+                    <div class="history-meta-item">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>CFW</span>
+                    </div>
+                    <div class="history-meta-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>대구시 중구</span>
+                    </div>
+                </div>
+
+                <div class="history-message">
+                    현재 대구 지역에 호우경보가 발효되었습니다. 저지대 침수 및 산사태 위험이 있으니 안전한 장소로 이동하시고 외출을 자제해주시기 바랍니다.
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <button type="button" class="btn-apple btn-sm">
+                        <i class="fas fa-eye me-1"></i>상세보기
+                    </button>
+                    <button type="button" class="btn-apple btn-sm">
+                        <i class="fas fa-redo me-1"></i>재발령
+                    </button>
+                </div>
+            </div>
+
+            <div class="history-card">
+                <div class="history-header">
+                    <div>
+                        <div class="history-title">
+                            <i class="fas fa-bullhorn me-2"></i>정기 점검 방송
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <span class="badge info">시험 방송</span>
+                        <span class="badge success">없음</span>
+                    </div>
+                </div>
+                
+                <div class="history-meta">
+                    <div class="history-meta-item">
+                        <i class="far fa-clock"></i>
+                        <span>2024-12-18 12:00:00</span>
+                    </div>
+                    <div class="history-meta-item">
+                        <i class="fas fa-volume-up"></i>
+                        <span>스피커명_002</span>
+                    </div>
+                    <div class="history-meta-item">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>ACL</span>
+                    </div>
+                    <div class="history-meta-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>대구시 전체</span>
+                    </div>
+                </div>
+
+                <div class="history-message">
+                    이것은 재난 경보 시스템의 정기 점검 방송입니다. 실제 재난 상황이 아니니 안심하시기 바랍니다.
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <button type="button" class="btn-apple btn-sm">
+                        <i class="fas fa-eye me-1"></i>상세보기
+                    </button>
+                    <button type="button" class="btn-apple btn-sm">
+                        <i class="fas fa-redo me-1"></i>재발령
+                    </button>
+                </div>
+            </div>
+
+            <div class="history-card">
+                <div class="history-header">
+                    <div>
+                        <div class="history-title">
+                            <i class="fas fa-bullhorn me-2"></i>태풍 특보 발령
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <span class="badge danger">실제 방송</span>
+                        <span class="badge warning">경계</span>
+                    </div>
+                </div>
+                
+                <div class="history-meta">
+                    <div class="history-meta-item">
+                        <i class="far fa-clock"></i>
+                        <span>2024-12-17 09:15:43</span>
+                    </div>
+                    <div class="history-meta-item">
+                        <i class="fas fa-volume-up"></i>
+                        <span>스피커명_003</span>
+                    </div>
+                    <div class="history-meta-item">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>CFW</span>
+                    </div>
+                    <div class="history-meta-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>대구시 북구</span>
+                    </div>
+                </div>
+
+                <div class="history-message">
+                    태풍 북상으로 인해 강풍과 호우가 예상됩니다. 외출을 자제하시고 야외 시설물을 미리 점검해주시기 바랍니다.
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <button type="button" class="btn-apple btn-sm">
+                        <i class="fas fa-eye me-1"></i>상세보기
+                    </button>
+                    <button type="button" class="btn-apple btn-sm">
+                        <i class="fas fa-redo me-1"></i>재발령
+                    </button>
+                </div>
+            </div>
+
+            <!-- 빈 상태 (데이터 없을 때 표시) -->
+            <!-- <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <h5>발령 이력이 없습니다</h5>
+                <p class="text-white-50">선택한 조건에 해당하는 발령 이력이 없습니다.</p>
+            </div> -->
+        </div>
+
+        <!-- 페이지네이션 -->
+        <div class="pagination-wrapper">
+            <nav>
+                <ul class="pagination">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item"><a class="page-link" href="#">4</a></li>
+                    <li class="page-item"><a class="page-link" href="#">5</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 샘플 통계 데이터 설정
+        document.getElementById('total_count').textContent = '127';
+        document.getElementById('today_count').textContent = '3';
+        document.getElementById('real_count').textContent = '89';
+        document.getElementById('test_count').textContent = '38';
+
+        // 새로고침 버튼
+        document.getElementById('refresh_btn').addEventListener('click', function() {
+            console.log('데이터 새로고침');
+            // API 호출 로직
+        });
+
+        // 내보내기 버튼
+        document.getElementById('export_btn').addEventListener('click', function() {
+            console.log('데이터 내보내기');
+            // 엑셀 등 내보내기 로직
+        });
+
+        // 필터 변경 이벤트
+        document.querySelectorAll('select, input').forEach(element => {
+            element.addEventListener('change', function() {
+                console.log('필터 적용:', this.id, this.value);
+                // 필터링 로직
+            });
+        });
+
+        // 상세보기 버튼
+        document.querySelectorAll('.history-card').forEach(card => {
+            card.querySelectorAll('.btn-apple').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const action = this.textContent.trim();
+                    console.log(action, '클릭');
+                    // 상세보기/재발령 로직
+                });
+            });
+        });
+    </script>
+</body>
+</html>

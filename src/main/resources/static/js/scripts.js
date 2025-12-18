@@ -33,10 +33,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const modalEl = document.getElementById("broadcast_modal");
 
-    modalEl.addEventListener("shown.bs.modal", () => {
-        console.log("broadcast_modal opened → running init()");
-        BroadcastModal.init();
-    });
+    // modalEl.addEventListener("shown.bs.modal", () => {
+    //     console.log("broadcast_modal opened → running init()");
+    //     BroadcastModal.init();
+    // });
 
     Weather.init();          // AWS, 예보, 레이더, 위성 (2분 주기)
     Weather.loadAirQuality(); // 대기질 1회 호출
@@ -362,10 +362,7 @@ async function renderSpeakerPanel() {
     // 1) API에서 스피커 목록 불러오기
     let speakerList = [];
     try {
-        // App.utils.fetchJson() 사용 가능
-        // speakerList = await App.utils.fetchJson("/api/speaker/list");
-
-        const res = await fetch("/api/speaker/list");
+        const res = await fetch("/api/btype/query/config/list");
         speakerList = await res.json();
 
     } catch (err) {
@@ -394,12 +391,11 @@ async function renderSpeakerPanel() {
     speakerList.forEach(sp => {
         const isOnline =
             sp.connStat === "01" || sp.connStat === "1" || sp.status === "온라인";
-
+        
         const html = `
             <div class="speaker-item">
                 <div style="display: flex; align-items: center; justify-content: space-between;">
                     <div style="display: flex; align-items: center;">
-                        <span class="dot ${isOnline ? "dot-online" : "dot-offline"}"></span>
                         <span>${(sp.speakerName || sp.name || "").trim() || "알수 없음"}</span>
                     </div>
                     <small style="opacity: 0.7; font-size: 0.75rem;">
@@ -408,6 +404,20 @@ async function renderSpeakerPanel() {
                 </div>
             </div>
         `;
+
+        // const html = `
+        //     <div class="speaker-item">
+        //         <div style="display: flex; align-items: center; justify-content: space-between;">
+        //             <div style="display: flex; align-items: center;">
+        //                 <span class="dot ${isOnline ? "dot-online" : "dot-offline"}"></span>
+        //                 <span>${(sp.speakerName || sp.name || "").trim() || "알수 없음"}</span>
+        //             </div>
+        //             <small style="opacity: 0.7; font-size: 0.75rem;">
+        //                 ${(sp.speakerAdr || sp.ip || "").trim() || "알수 없음"}
+        //             </small>
+        //         </div>
+        //     </div>
+        // `;
 
         // const html = `
         //     <div class="log-item d-flex align-items-center justify-content-between">

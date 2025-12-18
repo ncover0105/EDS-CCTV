@@ -46,6 +46,8 @@
     <script src="/js/module/logs.js"></script>
     <script src="/js/ui/modal_broadcast.js"></script>
     <script src="/js/ui/modal_speaker_setting.js"></script>
+    <script src="/js/ui/modal_speaker_broadcast.js"></script>
+
     <!-- <script th:src="@{/js/btype_action_modal.js}"></script> -->
 </head>
 <body>
@@ -72,7 +74,7 @@
                     <i class="bi bi-list"></i>
                     <span class="d-none d-md-inline">스피커 정보</span>
                 </button>
-                <button type="button" data-bs-toggle="modal" data-bs-target="#broadcast_modal" class="btn-apple-danger">
+                <button type="button" data-bs-toggle="modal" data-bs-target="#speaker_broadcast_modal" class="btn-apple-danger">
                     <i class="bi bi-exclamation-triangle"></i>
                     <span class="d-none d-md-inline">수동발령</span>
                 </button>
@@ -253,8 +255,6 @@
         <div class="footer-custom d-none">
             <div th:replace="~{fragments/footer :: footerFragment}"></div>
         </div>
-
-        <div th:replace="~{fragments/modal/broadcast_modal :: #broadcast_modal}"></div>
 
         <!-- 전체화면 뷰 -->
         <div id="fullscreenView" class="fullscreen-view d-none">

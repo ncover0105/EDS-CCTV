@@ -12771,18 +12771,24 @@ body {
   .cctv-feed {
       min-height: 200px;
   }
-}
+} 
 
 .cctv-label {
   position: absolute;
-  bottom: 0.5rem;
-  left: 0.5rem;
-  background: rgba(0, 0, 0, 0.8);
-  padding: 0.5rem;
-  border-radius: 8px;
-  font-size: 0.75rem;
-  backdrop-filter: blur(10px);
-  color: white;
+  bottom: 0.4rem;
+  left: 0.4rem;
+
+  background: rgba(0, 0, 0, 0.22);
+  padding: 0.35rem 0.5rem;
+  border-radius: 5px;
+
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.75);
+
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+
+  box-shadow: none;
 }
 
 .status-badge {
@@ -15890,14 +15896,14 @@ body {
 }
 
 /* ================================
-   Speaker Setting Modal Tabs
+    Speaker Setting Modal Tabs
 ================================ */
-#speaker_setting_modal .nav-pills {
+.speaker-modal .nav-pills {
   gap: 0.5rem;
 }
 
 /* 기본 탭 */
-#speaker_setting_modal .nav-pills .nav-link {
+.speaker-modal .nav-pills .nav-link {
   color: rgba(255, 255, 255, 0.75);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -15908,13 +15914,13 @@ body {
 }
 
 /* hover */
-#speaker_setting_modal .nav-pills .nav-link:hover {
+.speaker-modal .nav-pills .nav-link:hover {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
 }
 
 /* 활성 탭 (파란색 제거) */
-#speaker_setting_modal .nav-pills .nav-link.active {
+.speaker-modal .nav-pills .nav-link.active {
   color: #fff;
   background: rgba(255, 255, 255, 0.18);
   border-color: rgba(255, 255, 255, 0.35);
@@ -15922,16 +15928,17 @@ body {
 }
 
 /* 비활성(disabled) 탭 */
-#speaker_setting_modal .nav-pills .nav-link:disabled {
+.speaker-modal .nav-pills .nav-link:disabled {
   color: rgba(255, 255, 255, 0.35);
   background: rgba(255, 255, 255, 0.03);
   border-color: rgba(255, 255, 255, 0.1);
   cursor: not-allowed;
 }
 
-#speaker_setting_modal #tab-config-o:not(:disabled)::before {
+/* #speaker_setting_modal #tab-config-o:not(:disabled)::before {
   content: "●";
-  color: #4ade80; /* green */
-  margin-left: 6px;
+  color: #4ade80;
+  margin-left: 3px;
+  margin-right: 3px;
   font-size: 0.6rem;
-}
+} */

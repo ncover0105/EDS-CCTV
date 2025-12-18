@@ -114,57 +114,57 @@
         
         <!-- 발령이력 -->
         <div th:if="${view == 'broadcast'}" class="d-flex flex-column h-100">
-            <div class="bg-white rounded shadow-sm p-4 mb-3 flex-shrink-0">
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pb-3">
-                    <div>
-                        <h4 class="fw-bold text-dark mb-3">발령 이력</h4>
-                        <p class="text-secondary mb-0 small">발령 이력 및 결과를 관리하세요</p>
+            <div class="container">
+                <div class="bg-white rounded shadow-sm p-4 mb-3 flex-shrink-0">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pb-3">
+                        <div>
+                            <h4 class="fw-bold text-dark mb-3">발령 이력</h4>
+                            <p class="text-secondary mb-0 small">발령 이력 및 결과를 관리하세요</p>
+                        </div>
+                    </div>
+            
+                    <!-- 검색 폼 -->
+                    <div class="border-top pt-3">
+                        <form class="row g-3 align-items-end">
+                            <div class="col-12 col-md-6 col-lg-2">
+                                <label for="startDateTime" class="form-label small fw-semibold mb-1">시작 일시</label>
+                                <input type="datetime-local" class="form-control form-control-sm" id="startDateTime">
+                            </div>
+                            <div class="col-auto d-none d-lg-flex align-items-end pb-1">
+                                <span class="fw-bold text-secondary">~</span>
+                            </div>
+                            <div class="col-12 col-md-6 col-lg-2">
+                                <label for="endDateTime" class="form-label small fw-semibold mb-1">종료 일시</label>
+                                <input type="datetime-local" class="form-control form-control-sm" id="endDateTime">
+                            </div>
+                            <div class="col-12 col-md-6 col-lg-1">
+                                <label class="form-label small fw-semibold mb-1">모드</label>
+                                <select class="form-select form-select-sm" id="modeType">
+                                    <option value="">전체</option>
+                                    <option value="normal">일반모드</option>
+                                    <option value="emergency">긴급모드</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6 col-lg-1">
+                                <label class="form-label small fw-semibold mb-1">매체</label>
+                                <select class="form-select form-select-sm" id="mediaType">
+                                    <option value="">전체</option>
+                                    <option value="lte">LTE</option>
+                                    <option value="dmb">DMB</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-lg-auto">
+                                <button type="button" class="btn btn-primary btn-sm w-100" onclick="situationSearch()">
+                                    <i class="bi bi-search me-1"></i>
+                                    검색
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
-        
-                <!-- 검색 폼 -->
-                <div class="border-top pt-3">
-                    <form class="row g-3 align-items-end">
-                        <div class="col-12 col-md-6 col-lg-2">
-                            <label for="startDateTime" class="form-label small fw-semibold mb-1">시작 일시</label>
-                            <input type="datetime-local" class="form-control form-control-sm" id="startDateTime">
-                        </div>
-                        <div class="col-auto d-none d-lg-flex align-items-end pb-1">
-                            <span class="fw-bold text-secondary">~</span>
-                        </div>
-                        <div class="col-12 col-md-6 col-lg-2">
-                            <label for="endDateTime" class="form-label small fw-semibold mb-1">종료 일시</label>
-                            <input type="datetime-local" class="form-control form-control-sm" id="endDateTime">
-                        </div>
-                        <div class="col-12 col-md-6 col-lg-1">
-                            <label class="form-label small fw-semibold mb-1">모드</label>
-                            <select class="form-select form-select-sm" id="modeType">
-                                <option value="">전체</option>
-                                <option value="normal">일반모드</option>
-                                <option value="emergency">긴급모드</option>
-                            </select>
-                        </div>
-                        <div class="col-12 col-md-6 col-lg-1">
-                            <label class="form-label small fw-semibold mb-1">매체</label>
-                            <select class="form-select form-select-sm" id="mediaType">
-                                <option value="">전체</option>
-                                <option value="lte">LTE</option>
-                                <option value="dmb">DMB</option>
-                            </select>
-                        </div>
-                        <div class="col-12 col-lg-auto">
-                            <button type="button" class="btn btn-primary btn-sm w-100" onclick="situationSearch()">
-                                <i class="bi bi-search me-1"></i>
-                                검색
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        
-            <!-- 메인 목록 영역 -->
-            <div class="container">
-                <div class="row g-3 flex-grow-1 broadcast-container mb-3" style="height: 60vh;">
+            
+                <!-- 메인 목록 영역 -->
+                <div class="row g-3 broadcast-container">
                     <!-- 왼쪽 -->
                     <div class="col-md-6 d-flex flex-column broadcast-left-column h-100">
                         <div class="card h-100 d-flex flex-column">
@@ -176,14 +176,14 @@
                                     <small class="status-badge status-primary ms-2 d-none" id="broadcastCount"></small>
                                 </div>
                             </div>
-                            <div class="card-body p-3 overflow-auto broadcast-table-body flex-grow-1 bg-gray-100">
+                            <div class="card-body p-3 overflow-auto broadcast-table-body bg-gray-100">
                                 <div class="row g-2" id="broadcastList">
                                     <!-- JS에서 이 내부에 카드들이 append됨 -->
                                 </div>
                             </div>
-                            <div class="card-footer bg-white border-top d-none">
+                            <!-- <div class="card-footer bg-white border-top d-none">
                                 <ul class="pagination pagination-sm justify-content-end mb-0" id="broadcastPagination"></ul>
-                            </div>
+                            </div> -->
                         </div>
                     </div>
             
@@ -199,7 +199,7 @@
                                 </div>
                             </div>
                     
-                            <div class="card-body p-3 overflow-auto flex-grow-1 broadcast-result-body bg-gray-100">
+                            <div class="card-body p-3 overflow-auto broadcast-result-body bg-gray-100">
                                 <!-- 발령 상세 카드 -->
                                 <div id="broadcastDetail" class="d-none mb-3">
                                     <div class="card shadow-sm border-0">

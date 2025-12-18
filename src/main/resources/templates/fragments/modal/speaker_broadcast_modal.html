@@ -1,0 +1,232 @@
+<div th:fragment="speaker_broadcast_modal">
+    <div class="modal fade speaker-modal" id="speaker_broadcast_modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-content bg-dark">
+
+            <!-- Header -->
+            <div class="modal-header border-0 pb-0">
+                <div class="d-flex flex-column py-2 ps-3">
+                    <h5 class="modal-title text-white fw-bold">발령 모달</h5>
+                    <small id="bc_hint" class="text-white-50">스피커 선택 후 설정 정보를 조회하면 발령 단계로 진행됩니다.</small>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn-apple secondary" data-bs-dismiss="modal">
+                        닫기
+                    </button>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body pt-0">
+                <div class="setting-grid">
+                    <!-- LEFT: 스피커 리스트 -->
+                    <div class="setting-card">
+                        <div class="setting-title">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-semibold">스피커 리스트</span>
+                                <span class="badge info" id="bc_speaker_count">0 개</span>
+                            </div>
+                            <button type="button" class="btn-apple text-nowrap" id="bc_refresh_speaker">
+                                <i class="fas fa-rotate-right me-1"></i>갱신
+                            </button>
+                        </div>
+
+                        <div id="bc_empty_speaker" class="text-center text-white-50 py-4 d-none">
+                            <small>등록된 스피커가 없습니다.</small>
+                        </div>
+
+                        <!-- 스크롤 영역 -->
+                        <div class="speaker-list-container overflow-auto">
+                            <div id="bc_speaker_list" class="flex-column gap-2 py-1 pe-2"></div>
+                        </div>
+                        <!-- <div class="flex-grow-1 overflow-auto pe-1" style="min-height: 240px; max-height: 480px;">
+                            <div id="bc_speaker_list"></div>
+                        </div> -->
+
+                        <hr class="text-white-50">
+                        <div class="d-flex flex-column gap-1">
+                            <small class="text-white-50">선택된 스피커</small>
+                            <input id="bc_selected_speaker_name" class="form-control form-control-sm"
+                                    readonly placeholder="스피커를 선택하세요">
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: 발령 설정(처음엔 숨김) -->
+                    <div class="setting-card">
+                        <div class="setting-title">
+                            <div class="d-flex flex-column">
+                                <span class="fw-semibold">수동 발령</span>
+                                <small class="text-white-50" id="bc_step_text">스피커를 선택하세요.</small>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn-apple info" id="bc_go_manual" disabled>
+                                    발령 설정
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 발령 폼 영역 -->
+                        <div id="bc_manual_area" class="d-none">
+
+                            <ul class="nav nav-pills mb-2" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="tab-bc-manual"
+                                        data-bs-toggle="pill" data-bs-target="#pane-bc-manual"
+                                        type="button" role="tab">설정</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="tab-bc-preview"
+                                        data-bs-toggle="pill" data-bs-target="#pane-bc-preview"
+                                        type="button" role="tab">미리보기</button>
+                            </li>
+                            </ul>
+
+                            <div class="tab-content pb-0">
+                                <!-- 설정 -->
+                                <div class="tab-pane fade show active" id="pane-bc-manual" role="tabpanel">
+                                    <div class="row g-3">
+
+                                        <!-- 실제/시험 -->
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label text-white-50">방송 모드</label>
+                                            <select id="bc_mode" class="form-select form-select-sm">
+                                            <option value="REAL">실제 방송</option>
+                                            <option value="TEST">시험 방송</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- 경보 종류 -->
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label text-white-50">경보 종류</label>
+                                            <select id="bc_alert_type" class="form-select form-select-sm">
+                                            <option value="CFW">CFW</option>
+                                            <option value="ACL">ACL</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- 방송 종류 -->
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label text-white-50">방송 종류</label>
+                                            <select id="bc_broadcast_type" class="form-select form-select-sm">
+                                            <option value="TTS">TTS</option>
+                                            <option value="STORED">저장메시지</option>
+                                            <option value="ETC">기타</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- 우선순위 -->
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label text-white-50">우선순위</label>
+                                            <select id="bc_priority" class="form-select form-select-sm">
+                                            <option value="NONE">없음</option>
+                                            <option value="CAUTION">주의</option>
+                                            <option value="WARNING">경계</option>
+                                            <option value="DANGER">위험</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- 방송 범위 -->
+                                        <div class="col-12">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <label class="form-label text-white-50 mb-0">방송 범위</label>
+                                                <!-- <small class="text-white-50" id="bc_scope_hint">스피커(선택) 범위로 진행됩니다.</small> -->
+                                            </div>
+
+                                            <div class="row g-2 mt-1">
+                                                <div class="col-12 col-md-6">
+                                                    <select id="bc_scope" class="form-select form-select-sm">
+                                                    <option value="SIDO">시/도</option>
+                                                    <option value="GUN">군/구</option>
+                                                    <option value="SPEAKER" selected>스피커</option>
+                                                    </select>
+                                                </div>
+
+                                                <!-- <div class="col-12 col-md-6" id="bc_scope_sido_wrap">
+                                                    <select id="bc_sido" class="form-select form-select-sm">
+                                                    <option value="" selected>시/도 선택</option>
+                                                    <option value="11">서울</option>
+                                                    <option value="26">부산</option>
+                                                    <option value="27">대구</option>
+                                                    <option value="28">인천</option>
+                                                    <option value="29">광주</option>
+                                                    <option value="30">대전</option>
+                                                    <option value="31">울산</option>
+                                                    <option value="41">경기</option>
+                                                    <option value="42">강원</option>
+                                                    <option value="43">충북</option>
+                                                    <option value="44">충남</option>
+                                                    <option value="45">전북</option>
+                                                    <option value="46">전남</option>
+                                                    <option value="47">경북</option>
+                                                    <option value="48">경남</option>
+                                                    <option value="50">제주</option>
+                                                    </select>
+                                                </div> -->
+
+                                                <!-- <div class="col-12 col-md-6" id="bc_scope_gun_wrap">
+                                                    <input id="bc_gun" class="form-control form-control-sm" placeholder="군/구 코드 또는 명칭">
+                                                </div> -->
+
+                                                <!-- <div class="col-12 col-md-6" id="bc_scope_speaker_wrap">
+                                                    <input id="bc_scope_speaker_key" class="form-control form-control-sm" readonly
+                                                            placeholder="선택된 스피커 KEY">
+                                                </div> -->
+                                            </div>
+                                        </div>
+
+                                        <!-- 재난 리스트 -->
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label text-white-50">재난 선택</label>
+                                            <div class="d-flex gap-2">
+                                                <select id="bc_disaster" class="form-select form-select-sm">
+                                                    <option value="" selected>재난을 선택하세요</option>
+                                                </select>
+                                                <!-- <button type="button" class="btn-apple" id="bc_refresh_disaster">
+                                                    <i class="fas fa-rotate-right me-1"></i>갱신
+                                                </button> -->
+                                            </div>
+                                        </div>
+
+                                        <!-- TTS 메시지 -->
+                                        <div class="col-12">
+                                            <label class="form-label text-white-50">TTS 메시지</label>
+                                            <textarea id="bc_tts" class="form-control form-control-sm" rows="3"
+                                                    placeholder="예: 현재 ○○지역에 호우경보가 발효되었습니다. 안전한 장소로 이동하세요."></textarea>
+                                            <small class="text-white-50">방송 종류가 TTS일 때 사용됩니다.</small>
+                                        </div>
+
+                                        <!-- 버튼 -->
+                                        <div class="col-12 d-flex justify-content-end gap-2 mt-2">
+                                            <button type="button" class="btn-apple danger" id="bc_send">
+                                                <i class="fas fa-bullhorn me-1"></i>발령
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 미리보기 -->
+                                <div class="tab-pane fade" id="pane-bc-preview" role="tabpanel">
+                                    <pre id="bc_preview" class="p-3"
+                                        style="background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.1);
+                                                border-radius: 12px; color: #fff; white-space: pre-wrap; min-height: 180px;"></pre>
+                                    <small class="text-white-50">발령 전 요청 payload를 확인합니다.</small>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- 스피커 미선택 안내 -->
+                        <div id="bc_need_select" class="text-white-50">
+                            <small>스피커 선택 후 “발령 설정” 버튼이 활성화됩니다.</small>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+        </div>
+    </div>
+</div>
