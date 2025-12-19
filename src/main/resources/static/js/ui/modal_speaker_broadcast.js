@@ -260,9 +260,9 @@ const BroadcastModal = {
         modalEl.addEventListener("click", (e) => {
             if (!e.target.closest("#bc_go_manual")) return;
             if (!bcSelectedSpeaker?.speakerKey) {
-            notify("스피커를 먼저 선택해주세요.", "warning");
-            return;
-        }
+                notify("스피커를 먼저 선택해주세요.", "warning");
+                return;
+            }
 
             hide("bc_need_select");
             show("bc_manual_area");
@@ -295,32 +295,80 @@ const BroadcastModal = {
                 notify("스피커를 먼저 선택해주세요.", "warning");
                 return;
             }
+            const payloadUI = this.getPayloadForPreview();
 
-            const payload = this.getPayloadForPreview();
-
-            // 간단 검증
-            if (!payload.disasterCode) {
-                notify("재난을 선택해주세요.", "warning");
+            if(!payloadUI.disasterCode) {
+                notify("재난 코드를 선택해주세요.", "warning");
                 return;
             }
-            if (payload.broadcastType === "TTS" && !payload.tts.trim()) {
+
+            if(!payloadUI.broadcastType === "TTS" && !payloadUI.tts.trim()) {
                 notify("TTS 메시지를 입력해주세요.", "warning");
                 return;
             }
 
+            const alertPayload = {
+                deviceId: String(payloadUI.speakerKey),
+                commandCode: "41",
+                alertMode: payloadUI.mode === "REAL" ? 0 : 1,
+                disasterCode: payloadUI.disasterCode,
+                alertKind: payloadUI.broadcastType === "TTS" ? 1 : 0,
+                alertRange: payloadUI.scope === "SPEAKER" ? 3 : 1,
+                alertPriority: ({
+                    NONE: 0,
+                    CAUTION: 1,
+                    WARNING: 2,
+                    DANGER: 3
+                })[payloadUI.priority] ?? 0,
+                ttsMessage: payloadUI.tts || ""
+            };
+
             btn.disabled = true;
-            btn.dataset.loading = "1";
 
             try {
-                const res = await BroadcastApi.send(payload);
-                console.log("broadcast result =", res);
-                notify("발령 요청을 전송했습니다.", "success");
+                console.log("[B-Type ALERT SEND]", alertPayload);
+
+                await fetch("/api/web/dispatch/log", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                    dispatchType: "manual",
+                    mode: payloadUI.mode,
+                    alertType: payloadUI.alertType,
+                    broadcastType: payloadUI.broadcastType,
+                    priority: payloadUI.priority,
+                    scope: payloadUI.scope,
+                    disasterCode: payloadUI.disasterCode,
+                    tts: payloadUI.tts,
+                    commandCode: "41",
+                    speakerId: String(payloadUI.speakerKey),       // 단일이면
+                      // speakerIds: ["SPK001","SPK002"],             // 다중이면 이쪽
+                    memo: ""
+                    })
+                });
+        
+                const res = await fetch("/api/btype/command/alert", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(alertPayload)
+                });
+        
+                const text = await res.text();
+        
+                if (!res.ok) {
+                    console.error("발령 실패:", text);
+                    notify("발령 실패: " + text, "danger");
+                    return;
+                }
+        
+                notify("발령 요청이 정상적으로 전송되었습니다.", "success");
+                console.log("발령 성공:", text);
+        
             } catch (err) {
-                console.error("broadcast send error:", err);
-                notify("발령 요청 중 오류가 발생했습니다.", "danger");
+                console.error("발령 오류:", err);
+                notify("발령 중 오류가 발생했습니다.", "danger");
             } finally {
                 btn.disabled = false;
-                btn.dataset.loading = "0";
             }
         });
     }

@@ -1,33 +1,24 @@
 const itemsPerPage = 15;
 const resultItemsPerPage = 5;
-
 let currentPage = 1;
-
-const alertNames = ['태풍 경보', '호우 주의보', '강풍 경보', '폭염 경보', '한파 주의보'];
-const regions = ['서울', '부산', '대구', '인천', '광주', '대전', '울산'];
-
-let specialData = [];
+const alertNames = ['홍수', '태풍', '산불', '지진', '화재'];
+const regions = ['중부', '남부', '동부', '서부', '북부', '도심'];
+let specialData;
 let broadcastData = [];
 let filteredResultData = [];
 const resultData = [];
-
-const situationData = Array.from({ length: 32 }, (_, i) => ({
+const situationData = Array.from({length: 32}, (_, i) => ({
     id: i + 1,
-    content: `상황 내용 예시 ${i + 1}`,
-    datetime: `2025-07-11 10:${(10 + i).toString().padStart(2, '0')}:00`,
-    status: (i % 3 === 0) ? '미승인' : '승인',
-    location: `지역 ${((i % 5) + 1)}`
+    content: `상황 ${i + 1}`,
+    datetime: `2025-07-11 10:10${i.toString().padStart(2, '0')}:00`,
+    status: i % 3 === 0 ? 'COMPLETE' : 'PENDING',
+    location: regions[i % 5] || ''
 }));
 
 const renderMap = {
-    situation: (page) => renderSituationTable(page),
-    broadcast: (page) => {
-        renderBroadcastTable(page);
-        // renderResultTable(page);
-    },
-    special: (page) => {
-        renderSpecialTable(page);
-    }
+    'situation-page': renderSituationTable,
+    'broadcast-page': renderBroadcastCards,  // 변경: 테이블 → 카드
+    'special-page': renderSpecialTable
 };
 
 function renderView(currentView, currentPage) {
@@ -40,36 +31,41 @@ function renderView(currentView, currentPage) {
 }
 
 function getBadgeClass(status) {
-    return status === '승인' ? 'status-success' : 'status-primary';
+    return status ? 'status-success' : 'status-primary';
 }
 
 function getResultBadgeClass(result) {
-    return result === '성공' ? 'status-success' : 'status-error';
+    return result ? 'status-success' : 'status-error';
 }
 
-// 초기 랜덤 데이터 생성 및 렌더링
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function() {
     broadcastData = generateRandomBroadcastData(20);
     specialData = generateRandomSpecialData();
-
-    renderView(currentView, currentPage);
-
-    App.utils.fillDateTimeInputs(); // 시간 입력 렌더링
+    
+    const view = document.body.dataset.view || 'none';
+    renderView(view, currentPage);
+    
+    if (window.App?.utils?.fillDateTimeInputs) {
+        App.utils.fillDateTimeInputs();
+    }
+    
+    if (currentView === 'broadcast') {
+        bindBroadcastEventsOnce();
+        applyBroadcastFilters(true);
+    }
 });
 
-// --- 상황발생이력 ---
+// ==================== SITUATION (기존 유지) ====================
 function renderSituationTable(page) {
     const tbody = document.getElementById('situationList');
     if (!tbody) {
-        console.error('situationList tbody 요소가 없습니다.');
+        console.error('situationList tbody not found');
         return;
     }
 
     const start = (page - 1) * itemsPerPage;
-    const currentPageData = situationData;
-    // const currentPageData = situationData.slice(start, start + itemsPerPage);
-
-    // 전체 HTML 문자열 생성
+    const currentPageData = situationData.slice(start, start + itemsPerPage);
+    
     const rowsHTML = currentPageData.map((item, index) => {
         const badgeClass = getBadgeClass(item.status);
         return `
@@ -81,560 +77,491 @@ function renderSituationTable(page) {
                     <span class="status-badge ${badgeClass}">${item.status}</span>
                 </td>
                 <td>${item.location}</td>
-            </tr>`;
+            </tr>
+        `;
     }).join('');
 
-    // 빈 행 추가
     const emptyRowsHTML = App.utils.getEmptyRowsHTML(itemsPerPage, currentPageData.length, 5);
-
-    // DOM 조작 1회로 줄임
+    
     tbody.innerHTML = rowsHTML + emptyRowsHTML;
-
-    // 총 개수 표시
-    // document.getElementById('situationCount').innerText = `총 ${situationData.length}개`;
-    document.getElementById('situationCount').innerText = `총 ${situationData.length}건 | 상황 발생 목록`;
-
-    // renderSituationPagination();
+    document.getElementById('situationCount').innerText = `${situationData.length}건`;
+    
+    renderSituationPagination();
 }
 
 function renderSituationPagination() {
-    App.utils.renderPagination({
-        containerId: 'situationPagination',
-        currentPage,
-        totalItems: situationData.length,
+    App.utils.renderPagination(
+        'situationPagination', 
+        currentPage, 
+        situationData.length, 
         itemsPerPage,
-        onPageChange: (newPage) => {
+        (newPage) => {
             currentPage = newPage;
             renderSituationTable(currentPage);
-            renderSituationPagination();
         }
-    });
+    );
 }
 
-// --- 발령이력 ---
+// ==================== BROADCAST (페이지네이션 → 카드 리스트로 변경) ====================
+function pad2(n) {
+    return String(n).padStart(2, '0');
+}
+
+function formatDateTime(dt) {
+    return `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())} ${pad2(dt.getHours())}:${pad2(dt.getMinutes())}:${pad2(dt.getSeconds())}`;
+}
+
+function parseInputDateTime(v) {
+    // datetime-local: YYYY-MM-DDTHH:mm -> Date
+    if (!v) return null;
+    const d = new Date(v);
+    return isNaN(d.getTime()) ? null : d;
+}
+
+function isSameYmd(a, b) {
+    return a.getFullYear() === b.getFullYear() &&
+           a.getMonth() === b.getMonth() &&
+           a.getDate() === b.getDate();
+}
+
 function generateRandomBroadcastData(count) {
-    const types = ['경보', '주의보', '속보', '안내', '점검'];
-    const modes = ['긴급 모드', '일반 모드', '자동 모드'];
-    const medias = ['DMB', 'SMS', 'TV', '라디오'];
-    const targets = ['전국', '서울특별시', '부산광역시', '강원도', '제주도'];
-    const disasters = ['태풍', '호우', '지진', '산불', '한파', '폭염', '홍수'];
-    const senderNames = ['홍길동', '김철수', '이영희', '박민수', '정다은'];
-    const senderIds = ['admin01', 'manager02', 'operator03', 'system04', 'user05'];
+    const types = ['REAL', 'TEST'];
+    const priorities = ['NONE', 'CAUTION', 'WARNING', 'DANGER'];
+    const codes = ['ACL', 'CFW', 'RWT', 'HTW', 'SNO', 'DNG'];
+    const locations = ['1층', '2층', '3층', '옥상', '지하'];
+    const disasters = ['홍수', '태풍', '산불', '지진', '화재', '가스누출'];
+    const speakerNames = ['001', '002', '003', '004', '005'];
+    const senderNames = ['관리자', '시스템', '자동', '운영팀', '긴급'];
 
     const now = new Date();
-
-    return Array.from({ length: count }, (_, i) => {
-        const time = new Date(now.getTime() - Math.random() * 1e7)
-            .toISOString()
-            .replace('T', ' ')
-            .substring(0, 19);
-
+    return Array.from({length: count}, (_, i) => {
+        const dt = new Date(now.getTime() - Math.floor(Math.random() * 1000 * 60 * 60 * 48) * 1000);
         const disaster = disasters[Math.floor(Math.random() * disasters.length)];
-        const senderIndex = Math.floor(Math.random() * senderNames.length);
+        const type = types[Math.floor(Math.random() * types.length)];
+        const isReal = Math.random() > 0.35; // 65%
+        const priority = priorities[Math.floor(Math.random() * priorities.length)];
+        const speakerName = speakerNames[Math.floor(Math.random() * speakerNames.length)];
+        const code = codes[Math.floor(Math.random() * codes.length)];
+        const location = locations[Math.floor(Math.random() * locations.length)];
+        const senderName = senderNames[Math.floor(Math.random() * senderNames.length)];
+        
+        const message = priority === 'DANGER' ? `${disaster} 위험 상황 발생. 즉시 대피하세요.` :
+                       priority === 'WARNING' ? `${disaster} 경고. 주의 필요.` :
+                       priority === 'CAUTION' ? `${disaster} 주의 상황입니다.` :
+                       `${disaster} 상황 보고`;
 
         return {
-            selected: false, // 선택 체크박스 용
-            no: i + 1, // 번호
-            time: time, // 발령 시간
-            type: types[Math.floor(Math.random() * types.length)], // 종류
-            mode: modes[Math.floor(Math.random() * modes.length)], // 모드
-            media: medias[Math.floor(Math.random() * medias.length)], // 매체
-            target: targets[Math.floor(Math.random() * targets.length)], // 대상
-            disaster: disaster, // 재난명
-            ment: `${disaster} 관련 문안이 발송되었습니다.`, // 문안
-            senderId: senderIds[senderIndex], // 발령자 ID
-            senderName: senderNames[senderIndex], // 발령자 이름
+            selected: false,
+            no: i + 1,
+            dt,
+            time: formatDateTime(dt),
+            title: `${disaster} ${type}`,
+            isReal,
+            priority,
+            speakerName,
+            code,
+            location,
+            message,
+            senderName,
+            volume: Math.floor(Math.random() * 30) + 70
         };
     });
 }
 
-function generateRandomResultData(count) {
-    const mediaTypes = ['DMB', 'SMS', 'TV'];
-    const results = ['성공', '실패'];
-
-    return Array.from({ length: count }, (_, i) => ({
-        id: i + 1,
-        equipment: `장비-${i + 1}`,
-        media: mediaTypes[Math.floor(Math.random() * mediaTypes.length)],
-        elapsed: `${Math.floor(Math.random() * 5) + 1}분 경과`,
-        result: results[Math.floor(Math.random() * results.length)],
-    }));
+function getPriorityBadge(priority) {
+    switch (priority) {
+        case 'DANGER': return 'cls danger text';
+        case 'WARNING': return 'cls warning text';
+        case 'CAUTION': return 'cls info text';
+        default: return 'cls success text';
+    }
 }
 
-function renderBroadcastTable(page) {
-    const listContainer = document.getElementById('broadcastList');
-    const countEl = document.getElementById('broadcastCount');
+function updateBroadcastStats(list) {
+    const totalEl = document.getElementById('broadcast_stat_total');
+    const todayEl = document.getElementById('broadcast_stat_today');
+    const realEl = document.getElementById('broadcast_stat_real');
+    const testEl = document.getElementById('broadcast_stat_test');
+    
+    if (!totalEl || !todayEl || !realEl || !testEl) return;
+    
+    const today = new Date();
+    const total = list.length;
+    const todayCount = list.filter(x => isSameYmd(x.dt, today)).length;
+    const realCount = list.filter(x => x.isReal).length;
+    const testCount = list.filter(x => !x.isReal).length;
+    
+    totalEl.textContent = total;
+    todayEl.textContent = todayCount;
+    realEl.textContent = realCount;
+    testEl.textContent = testCount;
+    
+    document.getElementById('broadcastCount').textContent = `총 ${total}건`;
+}
 
-    if (!listContainer) {
-        console.error('broadcastList 요소가 없습니다.');
+// ==================== 핵심 변경: 카드 리스트 렌더링 ====================
+let broadcastFiltered = [];
+
+function renderBroadcastCards() {  // 변경: renderBroadcastTable → renderBroadcastCards
+    const container = document.getElementById('broadcastCardList');
+    if (!container) {
+        console.error('broadcastCardList not found');
         return;
     }
 
-    const start = (page - 1) * resultItemsPerPage;
-    // const currentPageData = broadcastData.slice(start, start + resultItemsPerPage);
-    // <div class="col-12 col-md-6">
-    //     <div class="broadcast-card card ${item.selected ? 'active-card' : ''}" data-id="${item.no}">
-    //     <div class="card-body">
-    //         <div class="card-header-line d-flex justify-content-between align-items-center mb-2">
-    //             <h6 class="mb-0 fw-semibold text-truncate">${item.disaster}</h6>
-    //             <input type="checkbox" class="form-check-input broadcast-checkbox" data-id="${item.no}" ${item.selected ? 'checked' : ''}>
-    //         </div>
-    //         <div class="broadcast-info small">
-    //         <div><span class="fw-semibold text-muted">발령 시간:</span> ${item.time}</div>
-    //         <div><span class="fw-semibold text-muted">종류:</span> ${item.type}</div>
-    //         <div><span class="fw-semibold text-muted">모드:</span> ${item.mode}</div>
-    //         <div><span class="fw-semibold text-muted">대상:</span> ${item.target}</div>
-    //         <div><span class="fw-semibold text-muted">문안:</span> ${item.ment}</div>
-    //         <div><span class="fw-semibold text-muted">발령자:</span> ${item.senderName}</div>
-    //         </div>
-    //     </div>
-    //     </div>
-    // </div>
-    // ✅ 카드 형태로 렌더링
-    const cardsHTML = broadcastData.map(item => `
-    <div class="col-12 col-md-6 text-wrap">
-        <div class="broadcast-card card ${item.selected ? 'active-card' : ''}" data-id="${item.no}">
-            <div class="card-body">
-                <div class="card-header-line d-flex justify-content-between align-items-center mb-3">
-                    <span class="status-badge status-info">${item.type}</span>
-                    <input type="checkbox" class="form-check-input broadcast-checkbox" data-id="${item.no}" ${item.selected ? 'checked' : ''}>
-                </div>
-                <h6 class="mb-0 fw-semibold text-truncate mb-2">${item.disaster}</h6>
-                <small class="text-muted mb-2">${item.ment}</small>
-                <div class="broadcast-info small">
-                    <div><span class="fw-semibold text-muted">발령 시간:</span> ${item.time}</div>
-                    <div><span class="fw-semibold text-muted">모드:</span> ${item.mode}</div>
-                    <div><span class="fw-semibold text-muted">대상:</span> ${item.target}</div>
-                    <div><span class="fw-semibold text-muted">발령자:</span> ${item.senderName}</div>
-                </div>
+    container.innerHTML = '';
+
+    if (broadcastFiltered.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5 text-secondary">
+                <i class="bi bi-broadcast display-1 opacity-50 mb-3"></i>
+                <h5 class="mb-1">발령 내역이 없습니다</h5>
+                <p class="mb-0 small">검색 조건을 변경하여 확인해보세요</p>
             </div>
-        </div>
-    </div>
-    `).join('');
+        `;
+        updateBroadcastStats([]);
+        return;
+    }
 
-    listContainer.innerHTML = cardsHTML;
-    countEl.innerText = `총 ${broadcastData.length}개`;
-    renderBroadcastPagination();
-
-    // ✅ 행 선택 로직 유지
-    document.querySelectorAll('.broadcast-card').forEach(card => {
-        const id = parseInt(card.dataset.id);
-        const checkbox = card.querySelector('.broadcast-checkbox');
-    
-        const selectCard = () => {
-            const item = broadcastData.find(d => d.no === id);
-    
-            // ✅ 이미 선택된 상태라면 -> 해제
-            if (item && item.selected) {
-                card.classList.remove('active-card');
-                checkbox.checked = false;
-                item.selected = false;
-            } 
-            // ✅ 선택되지 않은 상태라면 -> 다른 것 전부 해제 후 선택
-            else {
-                document.querySelectorAll('.broadcast-card').forEach(c => {
-                    c.classList.remove('active-card');
-                    c.querySelector('.broadcast-checkbox').checked = false;
-                });
-                broadcastData.forEach(d => d.selected = false);
-    
-                card.classList.add('active-card');
-                checkbox.checked = true;
-                if (item) item.selected = true;
-            }
-    
-            updateSelectedResults();
-        };
-    
-        card.addEventListener('click', (e) => {
-            selectCard();
-        });
-    
-        checkbox.addEventListener('click', (e) => {
-            e.stopPropagation();
-            selectCard();
-        });
+    broadcastFiltered.forEach((item, index) => {
+        const card = createBroadcastCard(item, index);
+        container.appendChild(card);
     });
+
+    updateBroadcastStats(broadcastFiltered);
 }
 
-// function renderBroadcastTable(page) {
-//     const tbody = document.getElementById('broadcastList');
-//     const countEl = document.getElementById('broadcastCount');
+function createBroadcastCard(item, index) {
+    const card = document.createElement('div');
+    card.className = 'fade-in mb-3';
+    card.style.cssText = `
+        animation-delay: ${index * 0.05}s;
+        border: 1px solid rgba(0,0,0,0.08);
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        transition: all 0.3s ease;
+        overflow: hidden;
+        background: white;
+    `;
+    card.dataset.id = item.no;
+    card.onmouseenter = () => card.style.cssText += 'border-color:rgba(13,110,253,0.2);box-shadow:0 8px 25px rgba(0,0,0,0.12);transform:translateY(-2px);';
+    card.onmouseleave = () => card.style.cssText = card.style.cssText.replace(/border-color:.*?;|box-shadow:.*?;|transform:.*?;/g, '');
+    
+    const priorityBadgeClass = getPriorityBadgeClass(item.priority);
+    const modeText = item.isReal ? '실제' : '실험';
+    
+    card.innerHTML = `
+        <div style="
+            padding: 1.25rem;
+            background: white;
+        ">
+            <!-- 헤더 -->
+            <div style="
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 1rem;
+                gap: 0.75rem;
+            ">
+                <div style="
+                    font-size: 1.1rem;
+                    font-weight: 600;
+                    color: #212529;
+                    line-height: 1.3;
+                ">
+                    <i class="bi bi-megaphone" style="color: #0d6efd; margin-right: 0.5rem;"></i>
+                    ${item.speakerName}
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <span style="
+                        padding: 0.4rem 0.75rem;
+                        border-radius: 6px;
+                        font-size: 0.8rem;
+                        font-weight: 500;
+                        background: ${item.isReal ? '#fee2e2' : '#dbeafe'};
+                        color: ${item.isReal ? '#dc2626' : '#2563eb'};
+                        border: 1px solid ${item.isReal ? '#fecaca' : '#bfdbfe'};
+                    ">${modeText}</span>
+                    <span style="
+                        padding: 0.4rem 0.75rem;
+                        border-radius: 6px;
+                        font-size: 0.8rem;
+                        font-weight: 500;
+                        background: ${priorityBadgeClass.bg};
+                        color: ${priorityBadgeClass.color};
+                        border: 1px solid ${priorityBadgeClass.border};
+                    ">${item.priority}</span>
+                </div>
+            </div>
+            
+            <!-- 메타 정보 -->
+            <div style="
+                display: flex;
+                gap: 1.25rem;
+                flex-wrap: wrap;
+                margin-bottom: 1rem;
+            ">
+                <div style="
+                    display: flex;
+                    align-items: center;
+                    gap: 0.25rem;
+                    color: #6b7280;
+                    font-size: 0.85rem;
+                ">
+                    <i class="bi bi-clock" style="color: #6b7280;"></i>
+                    <span>${item.time}</span>
+                </div>
+                <div style="
+                    display: flex;
+                    align-items: center;
+                    gap: 0.25rem;
+                    color: #6b7280;
+                    font-size: 0.85rem;
+                ">
+                    <i class="bi bi-volume-up" style="color: #6b7280;"></i>
+                    <span>${item.volume}%</span>
+                </div>
+                <div style="
+                    display: flex;
+                    align-items: center;
+                    gap: 0.25rem;
+                    color: #6b7280;
+                    font-size: 0.85rem;
+                ">
+                    <i class="bi bi-exclamation-triangle" style="color: #f59e0b;"></i>
+                    <span>${item.code}</span>
+                </div>
+                <div style="
+                    display: flex;
+                    align-items: center;
+                    gap: 0.25rem;
+                    color: #6b7280;
+                    font-size: 0.85rem;
+                ">
+                    <i class="bi bi-geo-alt" style="color: #6b7280;"></i>
+                    <span>${item.location}</span>
+                </div>
+            </div>
+            
+            <!-- 메시지 -->
+            <div style="
+                padding: 1rem;
+                background: #f8f9fa;
+                border-radius: 8px;
+                border-left: 4px solid #0d6efd;
+                margin-bottom: 1rem;
+                min-height: 60px;
+                color: #495057;
+                font-size: 0.9rem;
+                line-height: 1.6;
+            ">
+                ${item.message}
+            </div>
+            
+            <!-- 버튼 -->
+            <div style="
+                display: flex;
+                justify-content: flex-end;
+                gap: 0.5rem;
+            ">
+                <button type="button" class="btn btn-outline-primary btn-sm px-3 py-1" data-action="detail" style="
+                    border-radius: 6px;
+                    font-size: 0.85rem;
+                    transition: all 0.2s ease;
+                ">
+                    <i class="bi bi-eye me-1"></i>상세
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm px-3 py-1" data-action="reissue" style="
+                    border-radius: 6px;
+                    font-size: 0.85rem;
+                    transition: all 0.2s ease;
+                ">
+                    <i class="bi bi-arrow-repeat me-1"></i>재발령
+                </button>
+            </div>
+        </div>
+    `;
 
-//     if (!tbody) {
-//         console.error('broadcastList tbody 요소가 없습니다.');
-//         return;
-//     }
+    // 버튼 이벤트 (기존 유지)
+    card.querySelectorAll('button[data-action]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const action = btn.dataset.action;
+            const id = parseInt(card.dataset.id, 10);
+            const targetItem = broadcastFiltered.find(x => x.no === id);
+            if (action === 'detail') {
+                alert(`${targetItem.title}\n\n발령자: ${targetItem.senderName}\n시간: ${targetItem.time}\n스피커: ${targetItem.speakerName}\n위치: ${targetItem.location}\n\n메시지:\n${targetItem.message}`);
+            } else if (action === 'reissue') {
+                alert(`${targetItem.title} 재발령`);
+            }
+        });
+    });
 
-//     const start = (page - 1) * resultItemsPerPage;
-//     const currentPageData = broadcastData.slice(start, start + resultItemsPerPage);
-// //     <tr class="broadcast-row ${item.selected ? 'table-active' : ''}" data-id="${item.no}">
-// //     <td class="text-center">
-// //         <input type="checkbox" class="form-check-input broadcast-checkbox" data-id="${item.no}" ${item.selected ? 'checked' : ''}>
-// //     </td>
-// //     <td>${item.no}</td>
-// //     <td>${item.time}</td>
-// //     <td>${item.type}</td>
-// //     <td>${item.mode}</td>
-// //     <td>${item.media}</td>
-// //     <td>${item.target}</td>
-// //     <td>${item.disaster}</td>
-// //     <td>${item.ment}</td>
-// //     <td>${item.senderId}</td>
-// //     <td>${item.senderName}</td>
-// // </tr>
-//     const rowsHTML = currentPageData.map(item => `
-//         <tr class="broadcast-row ${item.selected ? 'table-active' : ''}" data-id="${item.no}">
-//             <td class="text-center">
-//                 <input type="checkbox" class="form-check-input broadcast-checkbox" data-id="${item.no}" ${item.selected ? 'checked' : ''}>
-//             </td>
-//             <td>${item.time}</td>
-//             <td>${item.type}</td>
-//             <td>${item.mode}</td>
-//             <td>${item.media}</td>
-//             <td>${item.target}</td>
-//             <td>${item.disaster}</td>
-//             <td>${item.ment}</td>
-//             <td>${item.senderId}</td>
-//             <td>${item.senderName}</td>
-//         </tr>
-//     `).join('');
+    return card;
+}
 
-//     const emptyRowsHTML = App.utils.getEmptyRowsHTML(resultItemsPerPage, currentPageData.length, 11);
-//     tbody.innerHTML = rowsHTML + emptyRowsHTML;
+function getPriorityBadgeClass(priority) {
+    const classes = {
+        'NONE': { bg: '#d1fae5', color: '#059669', border: '#a7f3d0' },
+        'CAUTION': { bg: '#fef3c7', color: '#d97706', border: '#fde68a' },
+        'WARNING': { bg: '#fee2e2', color: '#dc2626', border: '#fecaca' },
+        'DANGER': { bg: '#f3f4f6', color: '#374151', border: '#d1d5db' }
+    };
+    return classes[priority] || { bg: '#e5e7eb', color: '#6b7280', border: '#d1d5db' };
+}
 
-//     countEl.innerText = `총 ${broadcastData.length}개`;
-//     renderBroadcastPagination();
 
-//     // ✅ 행 + 체크박스 모두 선택 가능하도록 통합 이벤트
-//     document.querySelectorAll('.broadcast-row').forEach(row => {
-//         const id = parseInt(row.dataset.id);
-//         const checkbox = row.querySelector('.broadcast-checkbox');
+function getPriorityColor(priority) {
+    const colors = {
+        'NONE': 'light', 
+        'CAUTION': 'warning', 
+        'WARNING': 'danger', 
+        'DANGER': 'dark'
+    };
+    return colors[priority] || 'secondary';
+}
 
-//         // 하나의 통합 핸들러 (행/체크박스 공용)
-//         const selectRow = () => {
-//             // 모두 초기화
-//             document.querySelectorAll('.broadcast-row').forEach(r => {
-//                 r.classList.remove('table-active');
-//                 r.querySelector('.broadcast-checkbox').checked = false;
-//             });
-//             broadcastData.forEach(d => d.selected = false);
+function applyBroadcastFilters(resetPage = true) {
+    const startEl = document.getElementById('broadcastStartDateTime');
+    const endEl = document.getElementById('broadcastEndDateTime');
+    const modeEl = document.getElementById('broadcastModeFilter');
+    const priorityEl = document.getElementById('broadcastPriorityFilter');
+    const speakerEl = document.getElementById('broadcastSpeakerSearch');
+    const messageEl = document.getElementById('broadcastMessageSearch');
 
-//             // 현재 행만 선택
-//             row.classList.add('table-active');
-//             checkbox.checked = true;
-//             const item = broadcastData.find(d => d.no === id);
-//             if (item) item.selected = true;
+    const startDt = parseInputDateTime(startEl?.value);
+    const endDt = parseInputDateTime(endEl?.value);
+    const mode = modeEl?.value;
+    const priority = priorityEl?.value;
+    const speakerQ = speakerEl?.value?.trim().toLowerCase();
+    const messageQ = messageEl?.value?.trim().toLowerCase();
 
-//             updateSelectedResults();
-//         };
+    broadcastFiltered = broadcastData.filter(item => {
+        if (startDt && item.dt < startDt) return false;
+        if (endDt && item.dt > endDt) return false;
+        if (mode === 'REAL' && !item.isReal) return false;
+        if (mode === 'TEST' && item.isReal) return false;
+        if (priority && item.priority !== priority) return false;
+        if (speakerQ && !item.speakerName.toLowerCase().includes(speakerQ)) return false;
+        if (messageQ && !item.message.toLowerCase().includes(messageQ)) return false;
+        return true;
+    });
 
-//         // 행 클릭 시
-//         row.addEventListener('click', (e) => {
-//             // 클릭한 곳이 체크박스더라도 같은 처리 실행
-//             selectRow();
-//         });
+    if (resetPage) currentPage = 1;
+    renderBroadcastCards();  // 변경: renderBroadcastTable → renderBroadcastCards
+}
 
-//         // 체크박스 직접 클릭 시
-//         checkbox.addEventListener('click', (e) => {
-//             e.stopPropagation(); // 클릭 버블링 방지
-//             selectRow();
-//         });
-//     });
-// }
+function bindBroadcastEventsOnce() {
+    const searchBtn = document.getElementById('broadcastSearchBtn');
+    if (searchBtn?.dataset.bound === '1') return;
 
-function renderBroadcastPagination() {
-    App.utils.renderPagination({
-        containerId: 'broadcastPagination',
-        currentPage: currentPage,
-        totalItems: broadcastData.length,
-        itemsPerPage: resultItemsPerPage,
-        onPageChange: (newPage) => {
-            currentPage = newPage;
-            renderBroadcastTable(currentPage);
-            renderBroadcastPagination();
+    const resetBtn = document.getElementById('broadcastResetBtn');
+    const startEl = document.getElementById('broadcastStartDateTime');
+    const endEl = document.getElementById('broadcastEndDateTime');
+    const modeEl = document.getElementById('broadcastModeFilter');
+    const priorityEl = document.getElementById('broadcastPriorityFilter');
+    const speakerEl = document.getElementById('broadcastSpeakerSearch');
+    const messageEl = document.getElementById('broadcastMessageSearch');
+
+    if (searchBtn) {
+        searchBtn.dataset.bound = '1';
+        searchBtn.addEventListener('click', () => applyBroadcastFilters(true));
+    }
+
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            if (startEl) startEl.value = '';
+            if (endEl) endEl.value = '';
+            if (modeEl) modeEl.value = '';
+            if (priorityEl) priorityEl.value = '';
+            if (speakerEl) speakerEl.value = '';
+            if (messageEl) messageEl.value = '';
+            applyBroadcastFilters(true);
+        });
+    }
+
+    const liveApply = () => applyBroadcastFilters(true);
+    [startEl, endEl, modeEl, priorityEl].forEach(el => {
+        if (el) el.addEventListener('change', liveApply);
+    });
+    
+    [speakerEl, messageEl].forEach(el => {
+        if (el) {
+            el.addEventListener('input', () => {
+                clearTimeout(el.t);
+                el.t = setTimeout(liveApply, 200);
+            });
         }
     });
 }
 
-function updateSelectedResults() {
-    const selectedItems = broadcastData.filter(item => item.selected);
-    const detailContainer = document.getElementById('broadcastDetail');
-    const detailList = document.getElementById('detailList');
-    const noResultMessage = document.getElementById('noResultMessage');
-    const resultCardsContainer = document.getElementById('resultCardsContainer');
-
-    // 초기화
-    resultCardsContainer.innerHTML = '';
-    detailList.innerHTML = '';
-
-    if (selectedItems.length === 0) {
-        detailContainer.classList.add('d-none');
-        resultCardsContainer.classList.add('d-none');
-        noResultMessage.classList.remove('d-none');
-        return;
-    }
-
-    // ✅ 상단 발령 상세 카드
-    const selected = selectedItems[0];
-    detailContainer.classList.remove('d-none');
-    noResultMessage.classList.add('d-none');
-    detailList.innerHTML = `
-    <div class="detail-info-grid">
-        <div class="detail-info-item">
-            <i class="bi bi-exclamation-triangle-fill text-danger"></i>
-            <div>
-                <div class="info-label">재난명</div>
-                <div class="info-value">${selected.disaster}</div>
-            </div>
-        </div>
-        
-        <div class="detail-info-item">
-            <i class="bi bi-clock-fill text-primary"></i>
-            <div>
-                <div class="info-label">발령 시간</div>
-                <div class="info-value">${selected.time}</div>
-            </div>
-        </div>
-        
-        <div class="detail-info-item">
-            <i class="bi bi-tag-fill text-primary"></i>
-            <div>
-                <div class="info-label">종류</div>
-                <div class="info-value">${selected.type}</div>
-            </div>
-        </div>
-        
-        <div class="detail-info-item">
-            <i class="bi bi-gear-fill text-primary"></i>
-            <div>
-                <div class="info-label">모드</div>
-                <div class="info-value">${selected.mode}</div>
-            </div>
-        </div>
-        
-        <div class="detail-info-item">
-            <i class="bi bi-people-fill text-primary"></i>
-            <div>
-                <div class="info-label">대상</div>
-                <div class="info-value">${selected.target}</div>
-            </div>
-        </div>
-        
-        <div class="detail-info-item">
-            <i class="bi bi-person-fill text-primary"></i>
-            <div>
-                <div class="info-label">발령자</div>
-                <div class="info-value">${selected.senderName}</div>
-            </div>
-        </div>
-
-        <div class="detail-info-item full-width">
-            <i class="bi bi-chat-text-fill text-primary"></i>
-            <div>
-                <div class="info-label">문안</div>
-                <div class="info-value">${selected.ment}</div>
-            </div>
-        </div>
-
-    </div>
-`;
-
-
-    // ✅ 결과 데이터 생성 (샘플)
-    const newResults = Array.from({ length: 10 }).map((_, idx) => ({
-        id: `${selected.no}-${idx + 1}`,
-        time: new Date().toLocaleString(),
-        result: Math.random() > 0.3 ? '성공' : '실패',
-        name: selected.senderName,
-        deviceType: selected.media || 'LTE',
-        authId: 'AUTH-' + selected.senderId,
-        lteNumber: `010-${Math.floor(1000 + Math.random()*9000)}-${Math.floor(1000 + Math.random()*9000)}`,
-        manufacturer: ['삼성전자','LG전자','한화테크윈'][Math.floor(Math.random()*3)]
-    }));
-
-    // ✅ 결과 카드 렌더링
-    renderResultCards(newResults);
-}
-
-function renderResultCards(results) {
-    const container = document.getElementById('resultCardsContainer');
-    container.classList.remove('d-none');
-    container.innerHTML = results.map(res => {
-        const badgeClass = res.result === '성공' ? 'status-success' : 'status-error';
-        const iconClass = res.result === '성공' ? 'bi-check-circle-fill' : 'bi-x-circle-fill';
-        
-        return `
-            <div class="col-12 col-md-6 col-lg-4">
-                <div class="card result-card shadow-sm h-100">
-                    <div class="card-body p-3 d-flex flex-column">
-                        <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap">
-                            <div class="flex-grow-1 pe-2 text-truncate">
-                                <h6 class="fw-bold mb-1 text-dark text-truncate">${res.name}</h6>
-                                <small class="text-muted">${res.time}</small>
-                            </div>
-                            <span class="status-badge ${badgeClass} d-flex align-items-center gap-1 flex-shrink-0">
-                                <i class="bi ${iconClass}"></i> ${res.result}
-                            </span>
-                        </div>
-
-                        <div class="row g-2 small text-wrap">
-                            <div class="col-6 d-flex align-items-start">
-                                <div class="text-truncate">
-                                    <div class="text-muted small">단말</div>
-                                    <div class="fw-semibold">${res.deviceType}</div>
-                                </div>
-                            </div>
-
-                            <div class="col-6 d-flex align-items-start">
-                                <div class="text-truncate">
-                                    <div class="text-muted small">제조사</div>
-                                    <div class="fw-semibold">${res.manufacturer}</div>
-                                </div>
-                            </div>
-
-                            <div class="col-6 d-flex align-items-start">
-                                <div class="text-truncate">
-                                    <div class="text-muted small">LTE</div>
-                                    <div class="text-truncate fw-semibold">${res.lteNumber}</div>
-                                </div>
-                            </div>
-
-                            <div class="col-6 d-flex align-items-start">
-                                <div class="text-truncate">
-                                    <div class="text-muted small">인증 ID</div>
-                                    <div class="text-truncate fw-semibold">${res.authId}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-    }).join('');
-}
-
-// function renderResultTable(page) {
-//     const tbody = document.getElementById('resultList');
-//     if (!tbody) {
-//         console.error('resultList tbody 요소가 없습니다.');
-//         return;
-//     }
-//     if (resultData.length === 0) {
-//         document.getElementById('noDataMessage').style.display = 'flex';
-//       } else {
-//         document.getElementById('noDataMessage').style.display = 'none';
-//       }
-//     const start = (page - 1) * 4;
-//     const currentPageData = resultData.slice(start, start + 4);
-
-//     const rowsHTML = currentPageData.map((item, idx) => {
-//         const badgeClass = item.result === '성공' ? 'status-success' : 'status-error';
-//         return `
-//         <tr>
-//             <td>${item.id}</td>
-//             <td>${item.time}</td>
-//             <td>
-//                 <div class="d-flex justify-content-center align-items-center">
-//                     <span class="status-badge ${badgeClass}">${item.result}</span>
-//                 </div>
-//             </td>
-//             <td>${item.name}</td>
-//             <td>${item.deviceType}</td>
-//             <td>${item.authId}</td>
-//             <td>${item.lteNumber}</td>
-//             <td>${item.manufacturer}</td>
-//         </tr>`;
-//     }).join('');
-
-//     const emptyRowsHTML = App.utils.getEmptyRowsHTML(4, currentPageData.length, 5);
-//     tbody.innerHTML = rowsHTML + emptyRowsHTML;
-
-//     document.getElementById('resultCount').innerText = `총 ${resultData.length}개`;
-//     renderResultPagination();
-// }
-
-// // 선택 발령 결과 테이블
-// function renderResultPagination() {
-//     App.utils.renderPagination({
-//         containerId: 'resultListPagination',
-//         currentPage: currentPage,
-//         totalItems: resultData.length,
-//         itemsPerPage: 4,
-//         onPageChange: (newPage) => {
-//             currentPage = newPage;
-//             renderResultTable(currentPage);
-//             renderResultPagination();
-//         }
-//     });
-// }
-
-// --- 특보이력 ---
+// ==================== SPECIAL (기존 유지) ====================
 function generateRandomSpecialData() {
     const length = Math.floor(Math.random() * 30) + 10;
-    return Array.from({ length }, (_, i) => {
+    return Array.from({length}, (_, i) => {
         const alert = alertNames[Math.floor(Math.random() * alertNames.length)];
         const region = regions[Math.floor(Math.random() * regions.length)];
         const hour = String(8 + (i % 12)).padStart(2, '0');
         const min = String(10 + i).padStart(2, '0');
-
         let status = '';
-        if (i % 3 === 0) status = '승인';
-        else if (i % 3 === 1) status = '대기';
-        else status = '미승인';
+        if (i % 3 === 0) status = 'COMPLETE';
+        else if (i % 3 === 1) status = 'PENDING';
+        else status = 'CANCEL';
 
         return {
             no: i + 1,
-            name: `${alert} ${i + 1}`,
+            name: alert + (i + 1),
             time: `2025-07-16 ${hour}:${min}:00`,
-            region: region,
-            status: status,
-            result: (status === '승인') ? '발령' : '미발령'
+            region,
+            status,
+            result: status === 'COMPLETE' ? '성공' : '실패'
         };
     });
 }
 
-function renderSpecialTable(page = currentPage) {
+function renderSpecialTable(page) {
+    currentPage = page;
     const tbody = document.getElementById('specialList');
     if (!tbody) {
-        console.error('specialList tbody 요소가 없습니다.');
+        console.error('specialList tbody not found');
         return;
     }
 
     const start = (page - 1) * itemsPerPage;
-    const currentPageData = specialData;
-
+    const currentPageData = specialData.slice(start, start + itemsPerPage);
+    
     const rowsHTML = currentPageData.map(item => {
-        const badgeClass = item.status === '승인' ? 'status-success' : 'status-primary';
+        const badgeClass = item.status ? 'status-success' : 'status-primary';
         return `
-        <tr>
-            <td>${item.no}</td>
-            <td>${item.name}</td>
-            <td>${item.time}</td>
-            <td>${item.region}</td>
-            <td><span class="status-badge ${badgeClass}">${item.status}</span></td>
-            <td>${item.result}</td>
-        </tr>`;
+            <tr>
+                <td>${item.no}</td>
+                <td>${item.name}</td>
+                <td>${item.time}</td>
+                <td>${item.region}</td>
+                <td><span class="status-badge ${badgeClass}">${item.status}</span></td>
+                <td>${item.result}</td>
+            </tr>
+        `;
     }).join('');
 
     const emptyRowsHTML = App.utils.getEmptyRowsHTML(itemsPerPage, currentPageData.length, 6);
     tbody.innerHTML = rowsHTML + emptyRowsHTML;
-    document.getElementById('specialCount').innerText = `총 ${specialData.length}건 | 특보이력을 관리하세요`;
-    // document.getElementById('specialCount').innerText = `총 ${specialData.length}개`;
-    // renderSpecialPagination(page);
+    document.getElementById('specialCount').innerText = `${specialData.length}건`;
+    
+    renderSpecialPagination(page);
 }
 
-function renderSpecialPagination() {
-    App.utils.renderPagination({
-        containerId: 'specialPagination',
-        currentPage: currentPage,
-        totalItems: specialData.length,
-        itemsPerPage: itemsPerPage,
-        onPageChange: (newPage) => {
+function renderSpecialPagination(page) {
+    App.utils.renderPagination(
+        'specialPagination', 
+        currentPage, 
+        specialData.length, 
+        itemsPerPage,
+        (newPage) => {
             currentPage = newPage;
             renderSpecialTable(currentPage);
-            renderSpecialPagination();
         }
-    });
+    );
 }
 
 function refreshData() {
