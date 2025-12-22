@@ -1,5 +1,6 @@
 package com.edscorp.eds.speaker.dto;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import lombok.Getter;
@@ -22,4 +23,6 @@ public class WebDispatchLogRequest {
     private List<String> speakerIds; // 다중이면 사용
 
     private String memo;
+    private LocalDateTime dispatchTime; // 발령 이벤트 발생 시각
+
 }

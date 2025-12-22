@@ -1,12 +1,15 @@
 package com.edscorp.eds.speaker.typeb.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.edscorp.eds.speaker.typeb.domain.SpkDisaster;
 
 public interface SpkDisasterRepository extends JpaRepository<SpkDisaster, String> {
+
+    Optional<SpkDisaster> findByDstCode(String dstCode);
 
     // 사용 중인 재난 코드 조회 (예: Y)
     List<SpkDisaster> findByDstUseFlag(String useFlag);

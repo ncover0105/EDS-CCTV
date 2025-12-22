@@ -13,6 +13,8 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class TbWebSpkDispatchLog {
+
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "log_key")
     private Long logKey;
@@ -42,7 +44,7 @@ public class TbWebSpkDispatchLog {
     private String disasterCode;
 
     @Lob
-    @Column(name = "tts_message")
+    @Column(name = "tts_message", columnDefinition = "TEXT")
     private String ttsMessage;
 
     @Column(name = "command_code", length = 10)
@@ -52,7 +54,7 @@ public class TbWebSpkDispatchLog {
     private String speakerId; // 단일이면 사용
 
     @Lob
-    @Column(name = "speaker_ids")
+    @Column(name = "speaker_ids", columnDefinition = "TEXT")
     private String speakerIds; // JSON 문자열
 
     @Column(name = "request_user_id", length = 50)
@@ -72,6 +74,6 @@ public class TbWebSpkDispatchLog {
         if (this.dispatchTime == null)
             this.dispatchTime = LocalDateTime.now();
         if (this.dispatchType == null || this.dispatchType.isBlank())
-            this.dispatchType = "manual";
+            this.dispatchType = "MANUAL";
     }
 }

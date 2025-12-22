@@ -2,6 +2,7 @@ package com.edscorp.eds.speaker.controller;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 import org.springframework.data.domain.Page;
@@ -32,9 +33,7 @@ public class WebDispatchLogController {
             HttpServletRequest request,
             Principal principal) {
 
-        // 로그인 연동 전이면 null로 저장됨
         String userId = (principal != null) ? principal.getName() : null;
-
         String ip = extractClientIp(request);
         String ua = request.getHeader("User-Agent");
 
@@ -45,28 +44,56 @@ public class WebDispatchLogController {
                 "logKey", logKey));
     }
 
-    private String extractClientIp(HttpServletRequest req) {
-        String xff = req.getHeader("X-Forwarded-For");
-        if (xff != null && !xff.isBlank()) {
-            // "client, proxy1, proxy2" 형태면 첫 번째가 원 IP
-            return xff.split(",")[0].trim();
-        }
-        String xrip = req.getHeader("X-Real-IP");
-        if (xrip != null && !xrip.isBlank())
-            return xrip.trim();
-        return req.getRemoteAddr();
-    }
-
     @GetMapping("/loglist")
-    public Page<WebSpkDispatchLogRow> list(
+    public ResponseEntity<?> list(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+
             @RequestParam(required = false) String mode,
             @RequestParam(required = false) String priority,
             @RequestParam(required = false) String speakerQ,
             @RequestParam(required = false) String messageQ,
+
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
-        return logService.search(start, end, mode, priority, speakerQ, messageQ, page, size);
+        LocalDateTime now = LocalDateTime.now();
+
+        // 오늘 00:00
+        LocalDateTime todayStart = now.toLocalDate().atStartOfDay();
+
+        // 기본값: 오늘 00:00 ~ 현재
+        LocalDateTime safeStart = (start != null) ? start : todayStart;
+        LocalDateTime safeEnd = (end != null) ? end : now;
+
+        Page<WebSpkDispatchLogRow> result = logService.search(
+                safeStart,
+                safeEnd,
+                mode,
+                priority,
+                speakerQ,
+                messageQ,
+                page,
+                size);
+
+        return ResponseEntity.ok(Map.of(
+                "ok", true,
+                "page", result.getNumber(),
+                "size", result.getSize(),
+                "totalElements", result.getTotalElements(),
+                "totalPages", result.getTotalPages(),
+                "items", result.getContent()));
+    }
+
+    private String extractClientIp(HttpServletRequest req) {
+        String xff = req.getHeader("X-Forwarded-For");
+        if (xff != null && !xff.isBlank())
+            return xff.split(",")[0].trim();
+
+        String xrip = req.getHeader("X-Real-IP");
+        if (xrip != null && !xrip.isBlank())
+            return xrip.trim();
+
+        return req.getRemoteAddr();
     }
 }

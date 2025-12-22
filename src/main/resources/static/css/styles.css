@@ -15942,3 +15942,45 @@ body {
   margin-right: 3px;
   font-size: 0.6rem;
 } */
+
+/* 발령이력 컨테이너 최소 높이 확보 */
+/* .dispatch-history-wrap {
+  min-height: 360px;
+  max-height: 62vh;
+} */
+
+/* 카드 리스트는 내부 스크롤 유지 */
+#broadcastCardList {
+  flex: 1 1 auto;
+  overflow: auto;
+  min-height: 220px;
+}
+
+/* 화면 높이가 작은 경우: 내부만 쥐어짜지 말고 전체 스크롤 허용 */
+/* @media (max-height: 820px) {
+  .dispatch-history-wrap {
+    min-height: 300px;
+  }
+} */
+
+.bottom-panel {
+  flex: 1 1 auto;
+  min-height: 360px;
+  max-height: 62vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.bottom-panel-scroll {
+  flex: 1 1 auto;
+  overflow: auto;
+  min-height: 220px;
+}
+
+/* 화면 높이가 작은 경우 */
+@media (max-height: 820px) {
+  .bottom-panel {
+    min-height: 300px;
+    max-height: none;  /* 작은 화면에서는 제한 해제 */
+  }
+}

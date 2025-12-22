@@ -113,10 +113,10 @@
         </div>
         
         <!-- 발령 이력 섹션 -->
-        <div th:if="${view == 'broadcast'}" class="d-flex flex-column h-100">
-            <div class="container">
+        <div th:if="${view == 'broadcast'}" class="d-flex flex-column h-100 min-h-0">
+            <div class="container d-flex flex-column h-100 min-h-0">
                 <!-- 고정 헤더 + 통계 + 검색폼 -->
-                <div class="bg-white rounded shadow-sm p-4 mb-3 flex-shrink-0">
+                <div class="bg-white rounded shadow-sm p-4 mb-3 flex-shrink-0 ">
                     <!-- 헤더 + 통계 (row 구조) -->
                     <div class="row g-3 align-items-center mb-3">
                         <div class="col-12 col-md-6">
@@ -205,9 +205,16 @@
                 </div>
 
                 <!-- 스크롤 가능한 발령 카드 리스트 (전체 남은 높이 사용) -->
-                <div class="bg-white rounded shadow-lg flex-grow-1 d-flex flex-column" style="min-height: 0;">
-                    <div id="broadcastCardList" class="flex-grow-1 p-4 overflow-auto custom-scrollbar">
-                        <!-- test.html 스타일의 history-card들이 동적으로 생성 -->
+                <div class="bg-white rounded shadow-lg bottom-panel">
+                    <div id="broadcastCardList" class="flex-grow-1 p-4 overflow-auto">
+                        <!-- 데이터 없을 때 표시 -->
+                        <div id="broadcastEmptyState" class="text-center py-5 text-secondary d-none">
+                            <i class="bi bi-broadcast display-1 opacity-50 mb-3"></i>
+                            <h5 class="mb-1">발령 이력이 없습니다</h5>
+                            <p class="mb-0 small">검색 조건을 변경하여 확인해보세요</p>
+                        </div>
+
+                        <div id="broadcastCardItems"></div>
                     </div>
                 </div>
             </div>
@@ -216,42 +223,37 @@
 
         <!-- 특보이력 -->
         <div th:if="${view == 'special'}" class="d-flex flex-column h-100">
-            <div class="container">
+            <div class="container d-flex flex-column h-100">
+        
+                <!-- 🔹 상단 필터 영역 (변경 없음) -->
                 <div class="bg-white rounded shadow-sm p-4 mb-3">
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pb-3">
                         <div>
                             <h4 class="fw-bold text-dark mb-3">특보 이력</h4>
-                            <p class="text-secondary mb-0 small" id="specialCount">총 0건 | 특보 이력을 조회하세요</p>
+                            <p class="text-secondary mb-0 small" id="specialCount">
+                                총 0건 | 특보 이력을 조회하세요
+                            </p>
                         </div>
-                        <!-- <div class="d-flex gap-2">
-                            <button id="btn-detail" class="btn btn-primary">
-                                <i class="bi bi-eye"></i>
-                                <span class="d-none d-md-inline ms-1">상세보기</span>
-                            </button>
-                            <button id="btn-export" class="btn btn-secondary">
-                                <i class="bi bi-download"></i>
-                                <span class="d-none d-md-inline ms-1">내보내기</span>
-                            </button>
-                        </div> -->
                     </div>
+        
                     <div class="border-top pt-3">
                         <form class="row g-3 align-items-end">
                             <div class="col-12 col-sm-6 col-lg-3">
-                                <label for="startDateTime" class="form-label small fw-semibold mb-1">시작 일시</label>
+                                <label class="form-label small fw-semibold mb-1">시작 일시</label>
                                 <input type="datetime-local" class="form-control form-control-sm" id="startDateTime">
                             </div>
-                            
+        
                             <div class="col-auto d-none d-lg-flex align-items-end pb-1">
                                 <span class="fw-bold text-secondary">~</span>
                             </div>
-                            
+        
                             <div class="col-12 col-sm-6 col-lg-3">
-                                <label for="endDateTime" class="form-label small fw-semibold mb-1">종료 일시</label>
+                                <label class="form-label small fw-semibold mb-1">종료 일시</label>
                                 <input type="datetime-local" class="form-control form-control-sm" id="endDateTime">
                             </div>
-                            
+        
                             <div class="col-12 col-sm-6 col-lg-2">
-                                <label for="situationType" class="form-label small fw-semibold mb-1">상황 종류</label>
+                                <label class="form-label small fw-semibold mb-1">상황 종류</label>
                                 <select class="form-select form-select-sm" id="modeType">
                                     <option value="">전체</option>
                                     <option value="화재">화재</option>
@@ -261,58 +263,71 @@
                                     <option value="기타">기타</option>
                                 </select>
                             </div>
-                            
+        
                             <div class="col-12 col-lg-auto">
-                                <button type="button" class="btn btn-primary btn-sm w-100" onclick="situationSearch()">
-                                    <i class="bi bi-search me-1"></i>
-                                    검색
+                                <button type="button"
+                                        class="btn btn-primary btn-sm w-100"
+                                        onclick="situationSearch()">
+                                    <i class="bi bi-search me-1"></i> 검색
                                 </button>
                             </div>
                         </form>
                     </div>
                 </div>
-
-                <div class="bg-white rounded shadow-sm mb-3" style="min-height: 70vh; max-height: 70vh; overflow-x: auto; overflow-y: hidden;">
-                    <div style="display: flex; flex-direction: column; min-width: 800px; height: 70vh;">
-                        <div style="flex-shrink: 0;">
-                            <table class="table table-hover mb-0" style="table-layout: fixed; width: 100%;">
-                                <colgroup>
-                                    <col style="width: 5%;">
-                                    <col style="width: 10%;">
-                                    <col style="width: 25%;">
-                                    <col style="width: 20%;">
-                                    <col style="width: 20%;">
-                                    <col style="width: 20%;">
-                                </colgroup>
-                                <thead>
-                                    <tr>
-                                        <th>번호</th>
-                                        <th>특보 명</th>
-                                        <th>특보 발생 시각</th>
-                                        <th>특보 발생 지역</th>
-                                        <th>특보 발령 승인 상태</th>
-                                        <th>특보 발령 여부</th>
-                                    </tr>
-                                </thead>
-                            </table>
-                        </div>
-                        <div style="overflow-y: auto; flex: 1; min-height: 0;">
-                            <table class="table table-hover mb-0" style="table-layout: fixed; width: 100%;">
-                                <colgroup>
-                                    <col style="width: 5%;">
-                                    <col style="width: 10%;">
-                                    <col style="width: 25%;">
-                                    <col style="width: 20%;">
-                                    <col style="width: 20%;">
-                                    <col style="width: 20%;">
-                                </colgroup>
-                                <tbody id="specialList"></tbody>
-                            </table>
+        
+                <!-- 🔹 하단 공용 패널 (bottom-panel 적용) -->
+                <div class="bg-white rounded shadow-sm bottom-panel">
+        
+                    <div class="bottom-panel-scroll">
+        
+                        <div style="min-width: 800px;" class="d-flex flex-column h-100">
+        
+                            <!-- 테이블 헤더 (고정) -->
+                            <div class="flex-shrink-0">
+                                <table class="table table-hover mb-0" style="table-layout: fixed; width: 100%;">
+                                    <colgroup>
+                                        <col style="width: 5%;">
+                                        <col style="width: 10%;">
+                                        <col style="width: 25%;">
+                                        <col style="width: 20%;">
+                                        <col style="width: 20%;">
+                                        <col style="width: 20%;">
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th>번호</th>
+                                            <th>특보 명</th>
+                                            <th>특보 발생 시각</th>
+                                            <th>특보 발생 지역</th>
+                                            <th>특보 발령 승인 상태</th>
+                                            <th>특보 발령 여부</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+        
+                            <!-- 테이블 바디 (스크롤) -->
+                            <div class="flex-grow-1 min-h-0 overflow-auto">
+                                <table class="table table-hover mb-0" style="table-layout: fixed; width: 100%;">
+                                    <colgroup>
+                                        <col style="width: 5%;">
+                                        <col style="width: 10%;">
+                                        <col style="width: 25%;">
+                                        <col style="width: 20%;">
+                                        <col style="width: 20%;">
+                                        <col style="width: 20%;">
+                                    </colgroup>
+                                    <tbody id="specialList"></tbody>
+                                </table>
+                            </div>
+        
                         </div>
                     </div>
                 </div>
+        
             </div>
         </div>
+        
         
     </div>
 </body>

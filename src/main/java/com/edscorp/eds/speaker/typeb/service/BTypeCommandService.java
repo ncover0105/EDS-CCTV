@@ -10,10 +10,10 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import com.edscorp.eds.speaker.typeb.domain.DisasterListEntity;
+import com.edscorp.eds.speaker.typeb.domain.SpkDisaster;
 import com.edscorp.eds.speaker.typeb.dto.BTypeActionRequest;
 import com.edscorp.eds.speaker.typeb.dto.BTypeAlertRequest;
-import com.edscorp.eds.speaker.typeb.repository.DisasterListRepository;
+import com.edscorp.eds.speaker.typeb.repository.SpkDisasterRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 public class BTypeCommandService {
 
     private final RestTemplate restTemplate;
-    private final DisasterListRepository disasterListRepository;
+    private final SpkDisasterRepository spkDisasterRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     // 데몬 서버 playradio 주소 (application.properties 에서 설정 가능)
@@ -109,8 +109,8 @@ public class BTypeCommandService {
             // TTS만 사용하는 경우 (그대로 사용)
         } else if (alertKind == 2 || alertKind == 3) {
             // 재난 코드 기반 방송
-            DisasterListEntity disaster = disasterListRepository
-                    .findByDstCd(req.getDisasterCode())
+            SpkDisaster disaster = spkDisasterRepository
+                    .findByDstCode(req.getDisasterCode())
                     .orElseThrow(() -> new IllegalArgumentException("Invalid disasterCode: " + req.getDisasterCode()));
 
             if (disaster.getDstPriority() != null) {
@@ -120,10 +120,10 @@ public class BTypeCommandService {
                         "dst_priority not found for disasterCode: " + req.getDisasterCode());
             }
 
-            if (disaster.getDstSirenCode() != null && disaster.getDstStoCd() != null) {
+            if (disaster.getDstSirenCode() != null && disaster.getDstCode() != null) {
                 String dstSirenCode = disaster.getDstSirenCode();
-                String dstStoCd = disaster.getDstStoCd();
-                String dstStoMsg = disaster.getDstStoMsg();
+                String dstStoCd = disaster.getDstCode();
+                String dstStoMsg = disaster.getDstStoreMsg();
 
                 if ("000".equals(dstStoCd)) {
                     alertTTSmessage = (dstStoMsg != null ? dstStoMsg : "");

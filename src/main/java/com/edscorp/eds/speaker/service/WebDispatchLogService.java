@@ -17,50 +17,64 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 public class WebDispatchLogService {
+
     private final TbWebSpkDispatchLogRepository repo;
 
+    /**
+     * 웹 발령 요청 로그 저장
+     * - speakerIds(List)가 있으면 JSON 문자열 형태로 speaker_ids 컬럼에 저장
+     * - speakerId가 비어있고 speakerIds가 1개면 speaker_id에도 함께 저장
+     * - dispatchType 기본값: MANUAL (요청값 없을 때)
+     */
     @Transactional
     public Long writeLog(WebDispatchLogRequest req, String userId, String ip, String ua) {
         String speakerId = req.getSpeakerId();
-        String speakerIdsJson = null;
+        String speakerIdsJson = toSpeakerIdsJson(req);
 
-        if (req.getSpeakerIds() != null && !req.getSpeakerIds().isEmpty()) {
-            // JSON 라이브러리 안 쓰고 아주 단순하게 문자열로 저장 (필요하면 Jackson으로 바꿔도 됨)
-            speakerIdsJson = req.getSpeakerIds().stream()
-                    .filter(Objects::nonNull)
-                    .map(s -> s.replace("\"", ""))
-                    .map(s -> "\"" + s + "\"")
-                    .reduce((a, b) -> a + "," + b)
-                    .map(s -> "[" + s + "]")
-                    .orElse("[]");
-
-            if (speakerId == null && req.getSpeakerIds().size() == 1) {
-                speakerId = req.getSpeakerIds().get(0);
-            }
+        // speakerIds가 1개이고 speakerId가 비어있으면 단일 speakerId로도 넣어줌
+        if ((speakerId == null || speakerId.isBlank())
+                && req.getSpeakerIds() != null
+                && req.getSpeakerIds().size() == 1) {
+            speakerId = req.getSpeakerIds().get(0);
         }
+
+        LocalDateTime eventTime = (req.getDispatchTime() != null)
+                ? req.getDispatchTime()
+                : LocalDateTime.now();
 
         TbWebSpkDispatchLog saved = repo.save(
                 TbWebSpkDispatchLog.builder()
-                        .dispatchType(nvl(req.getDispatchType(), "manual"))
-                        .mode(req.getMode())
-                        .alertType(req.getAlertType())
-                        .broadcastType(req.getBroadcastType())
-                        .priority(req.getPriority())
-                        .scope(req.getScope())
-                        .disasterCode(req.getDisasterCode())
-                        .ttsMessage(req.getTts())
-                        .commandCode(req.getCommandCode())
+                        .dispatchTime(eventTime) // 이벤트 발생 시각
+                        .dispatchType(nvl(req.getDispatchType(), "MANUAL"))
+                        .mode(req.getMode()) // REAL/TEST
+                        .alertType(req.getAlertType()) // ALERT/TEST 등(선택)
+                        .broadcastType(req.getBroadcastType()) // TTS/BGM/SIREN
+                        .priority(req.getPriority()) // NONE/CAUTION/WARNING/DANGER
+                        .scope(req.getScope()) // ALL/PART
+                        .disasterCode(req.getDisasterCode()) // SR1 등
+                        .ttsMessage(req.getTts()) // TTS 전문
+                        .commandCode(req.getCommandCode()) // ex) 41
                         .speakerId(speakerId)
                         .speakerIds(speakerIdsJson)
                         .requestUserId(userId)
                         .requestIp(ip)
                         .requestUa(ua)
                         .memo(req.getMemo())
+                        .dispatchTime(req.getDispatchTime()) // null이면 @PrePersist로 현재시간 들어감
                         .build());
 
         return saved.getLogKey();
     }
 
+    /**
+     * 운영용 발령 로그 조회
+     * - tb_spk_disaster_list 조인하여 disasterName/defaultMessage 등 포함
+     * - 메시지는 "ttsMessage(있으면) -> defaultMessage -> memo" 순으로 최종 값을 만들어 ttsMessage에
+     * 세팅해서 반환
+     *
+     * ※ start/end 기본값(오늘)은 Controller에서 처리하는 것을 권장
+     */
+    @Transactional(readOnly = true)
     public Page<WebSpkDispatchLogRow> search(
             LocalDateTime start,
             LocalDateTime end,
@@ -71,19 +85,67 @@ public class WebDispatchLogService {
             int page,
             int size) {
         PageRequest pr = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "dispatchTime"));
-        return repo.search(start, end, mode, priority, speakerQ, messageQ, pr)
-                .map(l -> new WebSpkDispatchLogRow(
-                        l.getLogKey(),
-                        l.getDispatchTime(),
-                        l.getMode(),
-                        l.getPriority(),
-                        l.getDisasterCode(),
-                        l.getTtsMessage(),
-                        l.getSpeakerId(),
-                        l.getRequestUserId()));
+
+        // ✅ 조인 DTO 조회 메서드 사용
+        Page<WebSpkDispatchLogRow> raw = repo.searchWithDisaster(start, end, mode, priority, speakerQ, messageQ, pr);
+
+        // ✅ 운영용: 메시지 최종값을 확정해서 내려줌
+        return raw.map(r -> {
+            // 1) 메시지 확정 (TTS -> 기본메시지 -> 메모)
+            String finalMsg = pickMessage(r.getTtsMessage(), r.getDefaultMessage(), r.getMemo());
+            r.setTtsMessage(finalMsg);
+
+            // 2) priority가 비어있으면 재난 우선순위로 fallback (문자열로 내려줌)
+            if (isBlank(r.getPriority()) && r.getDisasterPriority() != null) {
+                r.setPriority(String.valueOf(r.getDisasterPriority()));
+            }
+
+            // 3) 기타 기본값 정리(선택)
+            if (isBlank(r.getBroadcastType()))
+                r.setBroadcastType("ETC");
+            if (isBlank(r.getDispatchType()))
+                r.setDispatchType("MANUAL");
+
+            return r;
+        });
+    }
+
+    // =========================
+    // 내부 유틸
+    // =========================
+
+    private String toSpeakerIdsJson(WebDispatchLogRequest req) {
+        if (req.getSpeakerIds() == null || req.getSpeakerIds().isEmpty())
+            return null;
+
+        // JSON 라이브러리 없이 최소한으로 JSON 배열 형태 문자열 생성
+        // ex) ["SPK-001","SPK-002"]
+        return req.getSpeakerIds().stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .map(s -> s.replace("\"", "")) // 안전하게 " 제거
+                .map(s -> "\"" + s + "\"")
+                .reduce((a, b) -> a + "," + b)
+                .map(s -> "[" + s + "]")
+                .orElse("[]");
+    }
+
+    private String pickMessage(String tts, String defMsg, String memo) {
+        if (!isBlank(tts))
+            return tts;
+        if (!isBlank(defMsg))
+            return defMsg;
+        if (!isBlank(memo))
+            return memo;
+        return "";
     }
 
     private String nvl(String v, String fb) {
-        return (v == null || v.isBlank()) ? fb : v;
+        return isBlank(v) ? fb : v;
+    }
+
+    private boolean isBlank(String s) {
+        return s == null || s.isBlank();
     }
 }
