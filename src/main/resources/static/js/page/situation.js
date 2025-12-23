@@ -90,7 +90,7 @@ function renderSituationTable(page) {
     const emptyRowsHTML = App.utils.getEmptyRowsHTML(itemsPerPage, currentPageData.length, 5);
 
     tbody.innerHTML = rowsHTML + emptyRowsHTML;
-    document.getElementById('situationCount').innerText = `${situationData.length}건`;
+    document.getElementById('situationCount').innerText = `총 ${situationData.length}건 | 상황 발생 목록`;
 
     renderSituationPagination();
 }
@@ -626,7 +626,7 @@ function renderSpecialTable(page) {
     const currentPageData = specialData.slice(start, start + itemsPerPage);
 
     const rowsHTML = currentPageData.map(item => {
-        const badgeClass = item.status ? 'status-success' : 'status-primary';
+        const badgeClass = item.status === '승인' ? 'status-success' : 'status-primary';
         return `
             <tr>
                 <td>${item.no}</td>
@@ -641,7 +641,7 @@ function renderSpecialTable(page) {
 
     const emptyRowsHTML = App.utils.getEmptyRowsHTML(itemsPerPage, currentPageData.length, 6);
     tbody.innerHTML = rowsHTML + emptyRowsHTML;
-    document.getElementById('specialCount').innerText = `${specialData.length}건`;
+    document.getElementById('specialCount').innerText = `총 ${specialData.length}건 | 특보이력을 관리하세요`;
 
     renderSpecialPagination(page);
 }

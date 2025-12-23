@@ -8,7 +8,12 @@
 <head>
     <meta charset="UTF-8" />
     <title th:text="${title}">EDS</title>
-    <script src="/js/page/setting.js?v=1"></script>
+    <!-- <script src="/js/page/setting.js?v=1"></script> -->
+    <script defer src="/js/page/setting/setting.js"></script>
+    <script defer src="/js/page/setting/setting_ment.js"></script>
+    <script defer src="/js/page/setting/setting_user.js"></script>
+    <script defer src="/js/page/setting/setting_sms.js"></script>
+    <script defer src="/js/page/setting/setting_bgm.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast/dist/css/iziToast.min.css">
     <script src="https://cdn.jsdelivr.net/npm/izitoast/dist/js/iziToast.min.js"></script>
     <script th:inline="javascript">
@@ -285,7 +290,7 @@
                         <div>
                             <h4 class="fw-bold text-dark mb-3">문안설정 및 관리</h4>
                             <p class="text-secondary mb-0 small" id="mentCount"
-                            th:text="'총 ' + ${broadcastCount} + '개의 문안 | 문안 내용과 문안 정보를 관리하세요'">총 0개의 문안 | 문안 내용과 문안 정보를 관리하세요</p>
+                            th:text="'총 ' + ${disasterCount} + '개의 문안 | 문안 내용과 문안 정보를 관리하세요'">총 0개의 문안 | 문안 내용과 문안 정보를 관리하세요</p>
                         </div>
                         <div class="d-flex gap-2">
                             <button id="btn-register" class="btn btn-primary" onclick="mentInsert()">
@@ -336,15 +341,15 @@
                                     <col style="width: 22%;">
                                 </colgroup>
                                 <tbody id="mentList">
-                                    <tr th:each="broadcast, iterStat : ${broadcastList}">
-                                        <td><input type="checkbox" name="selectedIds" value="${iterStat.count}"></td>
+                                    <tr th:each="disaster, iterStat : ${disasterList}">
+                                        <td><input type="checkbox" name="selectedIds" value="${disaster.dstCode}"></td>
                                         <td th:text="${iterStat.count}"></td>
-                                        <td th:text="${broadcast.title}"></td>
-                                        <td th:text="${broadcast.text}" class="text-wrap"></td>
+                                        <td th:text="${disaster.dstName}"></td>
+                                        <td th:text="${disaster.dstStoreMsg}" class="text-wrap"></td>
                                         <td>
-                                            <span class="status-badge" 
-                                            th:classappend="${broadcast.useInfo == 1 ? 'status-success' : 'status-primary'}" 
-                                            th:text="${broadcast.useInfo == 1 ? '사용중' : '미사용'}">
+                                            <span class="status-badge"
+                                                th:classappend="${'Use'.equals(disaster.dstUseFlag) ? 'status-success' : 'status-primary'}"
+                                                th:text="${'Use'.equals(disaster.dstUseFlag) ? '사용중' : '미사용'}">
                                             </span>
                                         </td>
                                     </tr>
@@ -717,15 +722,15 @@
         </div>
 
         <!-- SETTING -->
-        <div th:if="${view == 'setting'}" class="d-flex flex-column h-100">
+        <div th:if="${view == 'set'}" class="d-flex flex-column h-100">
             <div class="container">
                 <div class="bg-white rounded shadow-sm p-4 mb-3">
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                         <div>
                             <h4 class="fw-bold text-dark mb-3">시스템 설정</h4>
-                            <p class="text-secondary mb-0 small" id="schedule-count">안전 관리 프로그램 시스템 설정 및 관리</p>
+                            <p class="text-secondary mb-0 small">안전 관리 프로그램 시스템 설정 및 관리</p>
                         </div>
-                        <button id="add-schedule-btn" class="btn btn-primary" onclick="saveSetting()">
+                        <button id="btn-setting-save" class="btn btn-primary" onclick="saveSetting()">
                             <i class="bi bi-check"></i>
                             <span class="d-none d-md-inline ms-1">저장</span>
                         </button>

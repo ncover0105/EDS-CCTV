@@ -16,6 +16,8 @@ import com.edscorp.eds.speaker.domain.SpeakerStatusEntity;
 import com.edscorp.eds.speaker.dto.ScheduleDetailDTO;
 import com.edscorp.eds.speaker.service.BroadcastScheduleService;
 import com.edscorp.eds.speaker.service.SpeakerService;
+import com.edscorp.eds.speaker.typeb.domain.SpkDisaster;
+import com.edscorp.eds.speaker.typeb.service.SpkDisasterService;
 import com.edscorp.eds.user.entity.UserEntity;
 import com.edscorp.eds.user.service.UserService;
 
@@ -32,6 +34,7 @@ public class MenuController {
     private final UserService userService;
     private final SpeakerService speakerService;
     private final BroadcastScheduleService broadcastScheduleService;
+    private final SpkDisasterService spkDisasterService;
 
     @GetMapping("/dashboard")
     public String showMainPage(Model model) {
@@ -121,9 +124,13 @@ public class MenuController {
                 model.addAttribute("userCount", userList.size());
                 break;
             case "ment":
-                List<BroadcastListEntity> broadcastList = speakerService.getBroadcastList();
-                model.addAttribute("broadcastList", broadcastList);
-                model.addAttribute("broadcastCount", broadcastList.size());
+                // List<BroadcastListEntity> broadcastList = speakerService.getBroadcastList();
+                // model.addAttribute("broadcastList", broadcastList);
+                // model.addAttribute("broadcastCount", broadcastList.size());
+                List<SpkDisaster> disasterList = spkDisasterService.getAllDisasters();
+
+                model.addAttribute("disasterList", disasterList);
+                model.addAttribute("disasterCount", disasterList.size());
                 break;
             case "sms":
                 model.addAttribute("userList", userList);
@@ -169,7 +176,7 @@ public class MenuController {
                 }
                 model.addAttribute("scheduleList", scheduleList);
                 break;
-            case "setting":
+            case "set":
                 break;
         }
         return "page/menu/settingPage";
