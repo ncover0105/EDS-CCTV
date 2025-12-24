@@ -21,9 +21,9 @@ const situationData = Array.from({ length: 32 }, (_, i) => ({
 }));
 
 const renderMap = {
-    'situation-page': renderSituationTable,
-    'broadcast-page': renderBroadcastCards,  // 카드 렌더
-    'special-page': renderSpecialTable
+    'situation': renderSituationTable,
+    'broadcast': renderBroadcastCards,
+    'special': renderSpecialTable
 };
 
 function renderView(currentView, currentPage) {

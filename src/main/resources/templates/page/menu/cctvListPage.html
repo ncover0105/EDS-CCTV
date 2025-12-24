@@ -21,17 +21,17 @@
                             <p class="text-secondary mb-0 small" id="userCount"
                                 th:text="'등록된 CCTV 총 ' + ${#lists.size(cctvList)}  + '건 | 등록된 CCTV를 관리하세요'">등록된 CCTV 총 0명 | 등록된 CCTV를 관리하세요</p>
                         </div>
-                        <div class="d-flex gap-2 d-none">
+                        <div class="d-flex gap-2">
                             <button id="btn-register" class="btn btn-primary">
-                                <i class="bi bi-person-plus"></i>
-                                <span class="d-none d-md-inline ms-1">등록</span>
+                                <i class="bi bi-plus"></i>
+                                <span class="d-none d-md-inline ms-1">추가</span>
                             </button>
                             <button id="btn-edit" class="btn btn-primary">
-                                <i class="bi bi-person-fill-add"></i>
+                                <i class="bi bi-pencil-square"></i>
                                 <span class="d-none d-md-inline ms-1">수정</span>
                             </button>
                             <button id="btn-disable" class="btn btn-secondary">
-                                <i class="bi bi-person-x-fill"></i>
+                                <i class="bi bi-x-circle"></i>
                                 <span class="d-none d-md-inline ms-1">사용중지</span>
                             </button>
                         </div>
@@ -86,7 +86,8 @@
                                             </div>
                                         </td>
                                     </tr>
-                                    <tr th:each="cctv, iterStat : ${cctvList}">
+                                    <tr th:each="cctv, iter : ${cctvList}"
+                                        th:attr="data-login-id=${cctv.id}, data-login-pw=${cctv.password}">
                                         <td>
                                             <input type="checkbox"
                                                 name="selectedCctv"
@@ -212,42 +213,117 @@
         
         <div class="modal fade" id="addCctvModal" tabindex="-1" aria-labelledby="addCctvModalLabel" aria-hidden="true">
             <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addCctvModalLabel">CCTV 추가</h5>
+                        <!-- <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button> -->
+                    </div>
+                    <div class="modal-body">
+                        <form id="addCctvForm">
+                            <div class="mb-3">
+                                <label for="cctvCode" class="form-label">CCTV 코드</label>
+                                <input type="text" class="form-control" id="cctvCode" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="cctvName" class="form-label">CCTV 이름</label>
+                                <input type="text" class="form-control" id="cctvName" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="cctvLoginId" class="form-label">접속 ID</label>
+                                <input type="text" class="form-control" id="cctvLoginId" placeholder="카메라 접속 ID">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="cctvLoginPassword" class="form-label">접속 Password</label>
+                                <input type="password" class="form-control" id="cctvLoginPassword" placeholder="카메라 접속 비밀번호">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="cctvUrl" class="form-label">RTSP URL</label>
+                                <input type="text" class="form-control" id="cctvUrl">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="cctvLat" class="form-label">위도</label>
+                                <input type="number" step="any" class="form-control" id="cctvLat">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="cctvLng" class="form-label">경도</label>
+                                <input type="number" step="any" class="form-control" id="cctvLng">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-primary" onclick="submitAddCctv()">추가</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ✅ CCTV 수정 모달 -->
+        <div class="modal fade" id="editCctvModal" tabindex="-1" aria-labelledby="editCctvModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
             <div class="modal-content">
+        
                 <div class="modal-header">
-                <h5 class="modal-title" id="addCctvModalLabel">CCTV 추가</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+                    <h6 class="modal-title" id="editCctvModalLabel">CCTV 수정</h6>
+                    <!-- <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button> -->
                 </div>
+        
                 <div class="modal-body">
-                <form id="addCctvForm">
-                    <div class="mb-3">
-                    <label for="cctvCode" class="form-label">CCTV 코드</label>
-                    <input type="text" class="form-control" id="cctvCode" required>
-                    </div>
-                    <div class="mb-3">
-                    <label for="cctvName" class="form-label">CCTV 이름</label>
-                    <input type="text" class="form-control" id="cctvName" required>
-                    </div>
-                    <div class="mb-3">
-                    <label for="cctvUrl" class="form-label">RTSP URL</label>
-                    <input type="text" class="form-control" id="cctvUrl">
-                    </div>
-                    <div class="mb-3">
-                    <label for="cctvLat" class="form-label">위도</label>
-                    <input type="number" step="any" class="form-control" id="cctvLat">
-                    </div>
-                    <div class="mb-3">
-                    <label for="cctvLng" class="form-label">경도</label>
-                    <input type="number" step="any" class="form-control" id="cctvLng">
-                    </div>
-                </form>
+                    <form id="editCctvForm">
+                        <div class="mb-3">
+                            <label for="editCctvCode" class="form-label">CCTV 코드</label>
+                            <!-- ✅ 코드는 PK처럼 쓰는 경우가 많아서 수정 불가로 -->
+                            <input type="text" class="form-control" id="editCctvCode" readonly>
+                        </div>
+            
+                        <div class="mb-3">
+                            <label for="editCctvName" class="form-label">CCTV 이름</label>
+                            <input type="text" class="form-control" id="editCctvName" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editCctvLoginId" class="form-label">접속 ID</label>
+                            <input type="text" class="form-control" id="editCctvLoginId" placeholder="카메라 접속 ID">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editCctvLoginPassword" class="form-label">접속 Password</label>
+                            <input type="password" class="form-control" id="editCctvLoginPassword" placeholder="비밀번호(변경 시에만 입력)">
+                            <div class="form-text">비워두면 비밀번호는 변경하지 않도록 처리하는 걸 권장합니다.</div>
+                        </div>
+            
+                        <div class="mb-3">
+                            <label for="editCctvUrl" class="form-label">RTSP URL</label>
+                            <input type="text" class="form-control" id="editCctvUrl">
+                        </div>
+            
+                        <div class="mb-3">
+                            <label for="editCctvLat" class="form-label">위도</label>
+                            <input type="number" step="any" class="form-control" id="editCctvLat">
+                        </div>
+            
+                        <div class="mb-3">
+                            <label for="editCctvLng" class="form-label">경도</label>
+                            <input type="number" step="any" class="form-control" id="editCctvLng">
+                        </div>
+                    </form>
                 </div>
+        
                 <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-                <button type="button" class="btn btn-primary" onclick="submitAddCctv()">추가</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-edit-cctv">저장</button>
                 </div>
+        
             </div>
             </div>
         </div>
+
     </div>
 </body>
 </html>

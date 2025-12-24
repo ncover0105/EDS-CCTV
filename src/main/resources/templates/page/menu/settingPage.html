@@ -17,53 +17,55 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast/dist/css/iziToast.min.css">
     <script src="https://cdn.jsdelivr.net/npm/izitoast/dist/js/iziToast.min.js"></script>
     <script th:inline="javascript">
-        const currentView = /*[[${view}]]*/ 'none'; // fallback
-        const scheduleListData = /*[[${scheduleList}]]*/ [];
+        const currentView = /*[[${view}]]*/ 'none';
+        // const scheduleListData = /*[[${scheduleList}]]*/ [];
+        
+        const scheduleListDataRaw = /*[[${scheduleList}]]*/ null;
     
         // 같은 스케줄끼리 그룹핑
-        const groupedSchedules = Object.values(
-            scheduleListData.reduce((acc, schedule) => {
-                const id = schedule.scheduleId;
+        // const groupedSchedules = Object.values(
+        //     scheduleListData.reduce((acc, schedule) => {
+        //         const id = schedule.scheduleId;
                 
-                const formatDateTime = (dt) => {
-                    if (!dt) return '-';
-                    return dt.substring(0, 16).replace('T', ' ');
-                };
+        //         const formatDateTime = (dt) => {
+        //             if (!dt) return '-';
+        //             return dt.substring(0, 16).replace('T', ' ');
+        //         };
 
-                if (!acc[id]) {
-                    acc[id] = {
-                        id: schedule.scheduleId,
-                        name: schedule.scheduleName,
-                        startTime: String(schedule.startTime),
-                        endTime: String(schedule.endTime),
-                        playType: schedule.playType,
-                        bgmFolder: schedule.folderName,
-                        isRepeat: schedule.repeatEnabled || false,
-                        weekSchedule: schedule.weekSchedule,
-                        createdDate: formatDateTime(schedule.recvTime),
-                        createdAt: formatDateTime(schedule.createdAt),
-                        speakers: []  // 스피커 리스트
-                    };
-                }
+        //         if (!acc[id]) {
+        //             acc[id] = {
+        //                 id: schedule.scheduleId,
+        //                 name: schedule.scheduleName,
+        //                 startTime: String(schedule.startTime),
+        //                 endTime: String(schedule.endTime),
+        //                 playType: schedule.playType,
+        //                 bgmFolder: schedule.folderName,
+        //                 isRepeat: schedule.repeatEnabled || false,
+        //                 weekSchedule: schedule.weekSchedule,
+        //                 createdDate: formatDateTime(schedule.recvTime),
+        //                 createdAt: formatDateTime(schedule.createdAt),
+        //                 speakers: []  // 스피커 리스트
+        //             };
+        //         }
                 
-                // 스피커 정보 추가
-                if (schedule.speakerCode) {
-                    acc[id].speakers.push({
-                        speakerCode: schedule.speakerCode,
-                        speakerName: schedule.speakerName || '-',
-                        installAddress: schedule.installAddress || '-',
-                        phone: schedule.phone || '-',
-                        connStat: schedule.connStat || '00',
-                        recvTime: formatDateTime(schedule.recvTime),
-                        createdAt: formatDateTime(schedule.createdAt)
-                    });
-                }
+        //         // 스피커 정보 추가
+        //         if (schedule.speakerCode) {
+        //             acc[id].speakers.push({
+        //                 speakerCode: schedule.speakerCode,
+        //                 speakerName: schedule.speakerName || '-',
+        //                 installAddress: schedule.installAddress || '-',
+        //                 phone: schedule.phone || '-',
+        //                 connStat: schedule.connStat || '00',
+        //                 recvTime: formatDateTime(schedule.recvTime),
+        //                 createdAt: formatDateTime(schedule.createdAt)
+        //             });
+        //         }
                 
-                return acc;
-            }, {})
-        );
+        //         return acc;
+        //     }, {})
+        // );
 
-        const scheduleList = groupedSchedules;
+        // const scheduleList = groupedSchedules;
     </script>
 </head>
 <body>
@@ -87,9 +89,9 @@
                                 <i class="bi bi-person-fill-add"></i>
                                 <span class="d-none d-md-inline ms-1">수정</span>
                             </button>
-                            <button id="btn-disable" class="btn btn-secondary">
+                            <button id="btn-disable" class="btn btn-danger">
                                 <i class="bi bi-person-x-fill"></i>
-                                <span class="d-none d-md-inline ms-1">사용중지</span>
+                                <span class="d-none d-md-inline ms-1">삭제</span>
                             </button>
                         </div>
                     </div>
