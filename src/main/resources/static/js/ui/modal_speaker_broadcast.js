@@ -29,10 +29,10 @@ bootstrap.Tab.getOrCreateInstance(btn).show();
 }
 
 function notify(msg, type = "warning") {
-try {
-if (window.App?.utils?.showGlobalAlert) return window.App.utils.showGlobalAlert(msg, type);
-} catch (_) {}
-alert(msg);
+    try {
+        if (window.App?.utils?.showGlobalAlert) return window.App.utils.showGlobalAlert(msg, type);
+    } catch (_) {}
+    alert(msg);
 }
 
 /* =========================

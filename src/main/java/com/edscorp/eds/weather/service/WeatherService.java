@@ -163,31 +163,84 @@ public class WeatherService {
      * 내부 처리 메서드
      * AWS 관측 데이터 파싱
      */
+    // private WeatherResponseDTO parseAWSData(String response) {
+    // RAINAWSLISTVO data = new RAINAWSLISTVO();
+    // for (String line : response.split("\n")) {
+    // if (!line.contains("#")) {
+    // String[] values = line.split(",");
+    // if (values.length > 14) {
+    // data.setWD1(values[2].trim());
+    // data.setWS1(values[3].trim());
+    // data.setWDS(values[4].trim());
+    // data.setTA(values[8].trim());
+    // data.setRN(values[10].trim());
+    // data.setHM(values[14].trim());
+    // }
+    // }
+    // }
+
+    // WeatherResponseDTO dto = new WeatherResponseDTO();
+    // dto.setTemperature(data.getTA());
+    // dto.setHumidity(data.getHM());
+    // dto.setWindspeed(data.getWS1());
+    // try {
+    // dto.setWinddirection(getSimpleDirection(Double.parseDouble(data.getWD1())) +
+    // "풍");
+    // } catch (NumberFormatException e) {
+    // dto.setWinddirection("N/A");
+    // }
+    // return dto;
+    // }
+
     private WeatherResponseDTO parseAWSData(String response) {
+        WeatherResponseDTO dto = new WeatherResponseDTO();
+
+        if (response == null || response.isBlank()) {
+            dto.setWinddirection("N/A");
+            return dto;
+        }
+
         RAINAWSLISTVO data = new RAINAWSLISTVO();
+
         for (String line : response.split("\n")) {
-            if (!line.contains("#")) {
-                String[] values = line.split(",");
-                if (values.length > 14) {
-                    data.setWD1(values[2].trim());
-                    data.setWS1(values[3].trim());
-                    data.setWDS(values[4].trim());
-                    data.setTA(values[8].trim());
-                    data.setRN(values[10].trim());
-                    data.setHM(values[14].trim());
-                }
+            if (line == null)
+                continue;
+            line = line.trim();
+            if (line.isBlank())
+                continue;
+            if (line.startsWith("#"))
+                continue; // ✅ contains("#") 말고 startsWith("#")
+
+            String[] values = line.split(",");
+            if (values.length > 14) {
+                data.setWD1(values[2] != null ? values[2].trim() : null);
+                data.setWS1(values[3] != null ? values[3].trim() : null);
+                data.setWDS(values[4] != null ? values[4].trim() : null);
+                data.setTA(values[8] != null ? values[8].trim() : null);
+                data.setRN(values[10] != null ? values[10].trim() : null);
+                data.setHM(values[14] != null ? values[14].trim() : null);
+
+                // ✅ “마지막 유효 라인” 기준으로 계속 갱신되게 하고 싶으면 break 하지 마세요.
+                // ✅ “첫 유효 라인”만 쓰려면 여기서 break;
             }
         }
 
-        WeatherResponseDTO dto = new WeatherResponseDTO();
         dto.setTemperature(data.getTA());
         dto.setHumidity(data.getHM());
         dto.setWindspeed(data.getWS1());
+
+        String wd1 = data.getWD1();
+        if (wd1 == null || wd1.isBlank()) {
+            dto.setWinddirection("N/A");
+            return dto;
+        }
+
         try {
-            dto.setWinddirection(getSimpleDirection(Double.parseDouble(data.getWD1())) + "풍");
-        } catch (NumberFormatException e) {
+            dto.setWinddirection(getSimpleDirection(Double.parseDouble(wd1)) + "풍");
+        } catch (Exception e) { // ✅ NumberFormatException만 잡으면 NPE 못 막음
             dto.setWinddirection("N/A");
         }
+
         return dto;
     }
 

@@ -21,7 +21,14 @@
         // const scheduleListData = /*[[${scheduleList}]]*/ [];
         
         const scheduleListDataRaw = /*[[${scheduleList}]]*/ null;
-    
+
+        const auths = /*[[${#authentication.authorities}]]*/ [];
+        window.IS_MANAGER = Array.isArray(auths)
+            && auths.some(a => (a.authority || a) === 'ROLE_MANAGER');
+
+        console.log("auths =", auths);
+        console.log("IS_MANAGER =", window.IS_MANAGER);
+
         // 같은 스케줄끼리 그룹핑
         // const groupedSchedules = Object.values(
         //     scheduleListData.reduce((acc, schedule) => {
@@ -141,8 +148,13 @@
                                             </div>
                                         </td>
                                     </tr>
-                                    <tr th:each="user, iterStat : ${userList}">
-                                        <td><input type="checkbox" name="selectedIds" value="${iterStat.count}"></td>
+                                    <tr th:each="user, iterStat : ${userList}"
+                                        th:data-user-id="${user.id}">
+                                        <td>
+                                            <input type="checkbox" 
+                                                name="selectedUserIds" 
+                                                th:value="${user.id}">
+                                        </td>
                                         <td th:text="${iterStat.count}"></td>
                                         <td th:text="${user.id}"></td>
                                         <td th:text="${user.name}"></td>

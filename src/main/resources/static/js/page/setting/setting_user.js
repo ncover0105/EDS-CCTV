@@ -1,223 +1,284 @@
 /**
- * ======================================================
- * setting.user.js
- *  - 사용자 관리 전용 JS (추가/수정/삭제)
- * ======================================================
+ * setting_user.js (FULL - final)
+ * 정책:
+ *  - 등록: ID + PW(필수) + 전화 + (관리자면 권한 선택 가능)
+ *  - 수정: ID(readonly) + 전화 + (관리자면 권한 변경 가능)
+ *          비밀번호는 수정 불가(모달에서 숨김 + API로 전송 안 함)
+ *  - 삭제: DELETE 호출(서버에서 soft delete 권장)
+ *  - 행 클릭 시 체크박스 토글
+ *
+ * 필요 HTML 요소(IDs):
+ *  - tbody#userList
+ *  - button#btn-register #btn-edit #btn-disable
+ *  - modal#userEditModal
+ *  - input#editUserId #editUserPw #editUserPhone
+ *  - select#editUserRole
+ *  - button#saveUserBtn
+ *  - (권장) 비번 영역 wrapper: #pwField  (없으면 editUserPw만 숨김)
+ *
+ * 필요 체크박스:
+ *  - input[type=checkbox] name="selectedUserIds" value="{user.id}"
+ *
+ * 권한 플래그:
+ *  - window.IS_MANAGER (settingPage.html에서 th:inline="javascript"로 주입)
  */
 
-let userData = [];
-let userInitialized = false;
+(() => {
+  const API_BASE = "/api/users";
+  const IS_MANAGER = !!window.IS_MANAGER;
 
-function initUserManager() {
-  if (userInitialized) return;
-  userInitialized = true;
+  document.addEventListener("DOMContentLoaded", () => {
+    const tbody = document.getElementById("userList");
+    if (tbody) bindRowToggle(tbody);
 
-  console.log('[User] initUserManager');
+    bindButtons();
+    bindSave();
 
-  syncUserDataFromDOM();
-  bindUserEvents();
-  updateUserCountText();
-}
-
-/* ---------- DOM -> Data ---------- */
-function syncUserDataFromDOM() {
-  const tbody = document.getElementById('userList');
-  if (!tbody) return;
-
-  const rows = Array.from(tbody.querySelectorAll('tr'));
-  userData = rows.map((tr, idx) => {
-    const cb = tr.querySelector('input[name="selectedUserIds"]');
-    const tds = tr.querySelectorAll('td');
-
-    // td 예시: 0 체크, 1 번호, 2 아이디, 3 이름, 4 권한, 5 사용여부
-    const id = cb?.value ?? String(idx + 1);
-    const userId = (tds[2]?.textContent ?? '').trim();
-    const name = (tds[3]?.textContent ?? '').trim();
-    const role = (tds[4]?.textContent ?? '').trim();
-    const useText = (tds[5]?.textContent ?? '').trim();
-    const useFlag = useText.includes('사용') ? 'Use' : 'Unuse';
-
-    return { id, userId, name, role, useFlag };
-  });
-}
-
-/* ---------- Events ---------- */
-function bindUserEvents() {
-  const tbody = document.getElementById('userList');
-  if (!tbody) return;
-
-  // 행 클릭 -> 체크 토글
-  tbody.addEventListener('click', (e) => {
-    if (e.target.matches('input[type="checkbox"]')) return;
-    const row = e.target.closest('tr');
-    if (!row) return;
-    const cb = row.querySelector('input[name="selectedUserIds"]');
-    if (!cb) return;
-
-    cb.checked = !cb.checked;
-    row.classList.toggle('table-active', cb.checked);
+    // 관리자 아니면 권한 select 비활성화(UX)
+    const roleSelect = document.getElementById("editUserRole");
+    if (roleSelect && !IS_MANAGER) roleSelect.disabled = true;
   });
 
-  tbody.addEventListener('change', (e) => {
-    if (!e.target.matches('input[name="selectedUserIds"]')) return;
-    const row = e.target.closest('tr');
-    if (row) row.classList.toggle('table-active', e.target.checked);
-  });
+  /* ------------------------------
+   * 1) Row click -> checkbox toggle
+   * ------------------------------ */
+  function bindRowToggle(tbody) {
+    tbody.addEventListener("click", (e) => {
+      const tr = e.target.closest("tr");
+      if (!tr) return;
 
-  const saveBtn = document.getElementById('userSaveUpdateBtn');
-  if (saveBtn) saveBtn.addEventListener('click', onSaveUserModal);
-}
+      const cb = tr.querySelector('input[type="checkbox"][name="selectedUserIds"]');
+      if (!cb) return;
 
-function getSelectedUserIds() {
-  return Array.from(
-    document.querySelectorAll('#userList input[name="selectedUserIds"]:checked')
-  ).map(cb => cb.value);
-}
+      // checkbox 자체 클릭이면 change에서 처리
+      if (e.target === cb) return;
 
-function clearUserSelection() {
-  document.querySelectorAll('#userList input[name="selectedUserIds"]').forEach(cb => cb.checked = false);
-  document.querySelectorAll('#userList tr').forEach(tr => tr.classList.remove('table-active'));
-}
+      cb.checked = !cb.checked;
+      tr.classList.toggle("table-active", cb.checked);
+    });
 
-/* ---------- CRUD ---------- */
-function userInsert() {
-  openUserModal('insert');
-}
-
-function userUpdate() {
-  const ids = getSelectedUserIds();
-  if (ids.length !== 1) {
-    alert('수정은 1명만 선택하세요.');
-    return;
-  }
-  const item = userData.find(x => String(x.id) === String(ids[0]));
-  if (!item) {
-    alert('선택한 사용자를 찾을 수 없습니다.');
-    return;
-  }
-  openUserModal('update', item);
-}
-
-// 삭제(미사용 처리)
-function userDeprecated() {
-  const ids = getSelectedUserIds();
-  if (ids.length === 0) {
-    alert('삭제(미사용)할 사용자를 선택하세요.');
-    return;
-  }
-  if (!confirm(`선택한 ${ids.length}명 사용자를 미사용 처리할까요?`)) return;
-
-  ids.forEach(id => {
-    const item = userData.find(x => String(x.id) === String(id));
-    if (item) item.useFlag = 'Unuse';
-  });
-
-  clearUserSelection();
-  renderUserTable();
-  updateUserCountText();
-
-  // TODO 서버연동:
-  // PATCH /api/user/deprecated
-}
-
-/* ---------- Modal ---------- */
-// HTML에 아래 입력들이 있다고 가정(없으면 너 HTML에 맞게 id만 바꿔줘)
-// #userUpdateId (hidden), #userUpdateUserId, #userUpdateName, #userUpdateRole, #userUpdateStatus
-function openUserModal(mode, item = null) {
-  const modalEl = document.getElementById('userUpdateModal');
-  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-
-  modalEl.dataset.mode = mode;
-
-  const title = modalEl.querySelector('.modal-title');
-  if (title) title.textContent = (mode === 'insert') ? '사용자 추가' : '사용자 수정';
-
-  setVal('userUpdateId', item?.id ?? '');
-  setVal('userUpdateUserId', item?.userId ?? '');
-  setVal('userUpdateName', item?.name ?? '');
-  setVal('userUpdateRole', item?.role ?? '');
-  setVal('userUpdateStatus', item?.useFlag === 'Use' ? '사용' : '미사용');
-
-  modal.show();
-}
-
-function onSaveUserModal() {
-  const modalEl = document.getElementById('userUpdateModal');
-  const mode = modalEl.dataset.mode || 'update';
-
-  const id = getVal('userUpdateId').trim();
-  const userId = getVal('userUpdateUserId').trim();
-  const name = getVal('userUpdateName').trim();
-  const role = getVal('userUpdateRole').trim();
-  const statusKor = getVal('userUpdateStatus');
-  const useFlag = statusKor === '사용' ? 'Use' : 'Unuse';
-
-  if (!userId || !name) {
-    alert('아이디/이름은 필수입니다.');
-    return;
+    tbody.addEventListener("change", (e) => {
+      if (!e.target.matches('input[type="checkbox"][name="selectedUserIds"]')) return;
+      const tr = e.target.closest("tr");
+      if (!tr) return;
+      tr.classList.toggle("table-active", e.target.checked);
+    });
   }
 
-  if (mode === 'insert') {
-    userData.unshift({ id: String(Date.now()), userId, name, role, useFlag });
-    // TODO 서버연동: POST /api/user
-  } else {
-    const item = userData.find(x => String(x.id) === String(id));
-    if (!item) {
-      alert('수정할 사용자를 찾을 수 없습니다.');
+  /* ------------------------------
+   * 2) Buttons
+   * ------------------------------ */
+  function bindButtons() {
+    const btnRegister = document.getElementById("btn-register");
+    const btnEdit = document.getElementById("btn-edit");
+    const btnDelete = document.getElementById("btn-disable");
+
+    if (btnRegister) btnRegister.addEventListener("click", () => openModal("insert"));
+    if (btnEdit) btnEdit.addEventListener("click", onEdit);
+    if (btnDelete) btnDelete.addEventListener("click", onDelete);
+
+    // HTML에 onclick="userInsert()" 남아있어도 동작하게
+    window.userInsert = function () {
+      openModal("insert");
+    };
+  }
+
+  async function onEdit() {
+    const ids = getSelectedIds();
+    if (ids.length !== 1) {
+      alert("수정은 1명만 선택하세요.");
       return;
     }
-    item.userId = userId;
-    item.name = name;
-    item.role = role;
-    item.useFlag = useFlag;
-    // TODO 서버연동: PUT /api/user/{id}
+
+    const id = ids[0];
+
+    // th:value 누락 등 재발 방지
+    if (!id || id.includes("${")) {
+      alert("선택 값이 사용자 ID가 아닙니다. 체크박스 th:value를 user.id로 수정하세요.");
+      return;
+    }
+
+    try {
+      const user = await fetchJson(`${API_BASE}/${encodeURIComponent(id)}`);
+      openModal("update", user);
+    } catch (err) {
+      console.error(err);
+      alert("사용자 정보를 불러오지 못했습니다.");
+    }
   }
 
-  renderUserTable();
-  updateUserCountText();
-  bootstrap.Modal.getOrCreateInstance(modalEl).hide();
-}
+  async function onDelete() {
+    const ids = getSelectedIds();
+    if (ids.length === 0) {
+      alert("삭제(비활성)할 사용자를 선택하세요.");
+      return;
+    }
 
-/* ---------- Render ---------- */
-function renderUserTable() {
-  const tbody = document.getElementById('userList');
-  if (!tbody) return;
+    if (!confirm(`선택한 ${ids.length}명을 삭제(비활성) 처리할까요?`)) return;
 
-  tbody.innerHTML = '';
+    try {
+      for (const id of ids) {
+        await fetch(`${API_BASE}/${encodeURIComponent(id)}`, { method: "DELETE" });
+      }
+      location.reload();
+    } catch (err) {
+      console.error(err);
+      alert("삭제(비활성) 처리에 실패했습니다.");
+    }
+  }
 
-  userData.forEach((u, idx) => {
-    const isUse = u.useFlag === 'Use';
-    tbody.insertAdjacentHTML('beforeend', `
-      <tr>
-        <td><input type="checkbox" name="selectedUserIds" value="${escapeHtml(u.id)}"></td>
-        <td>${idx + 1}</td>
-        <td>${escapeHtml(u.userId)}</td>
-        <td>${escapeHtml(u.name)}</td>
-        <td>${escapeHtml(u.role)}</td>
-        <td>
-          <span class="status-badge ${isUse ? 'status-success' : 'status-primary'}">
-            ${isUse ? '사용중' : '미사용'}
-          </span>
-        </td>
-      </tr>
-    `);
-  });
-}
+  /* ------------------------------
+   * 3) Modal open
+   * ------------------------------ */
+  function openModal(mode, user) {
+    const modalEl = document.getElementById("userEditModal");
+    if (!modalEl) {
+      alert("userEditModal이 없습니다.");
+      return;
+    }
+    modalEl.dataset.mode = mode;
 
-function updateUserCountText() {
-  const el = document.getElementById('userCount');
-  if (!el) return;
-  el.textContent = `총 ${userData.length}명 | 사용자 정보를 관리하세요`;
-}
+    const titleEl = modalEl.querySelector(".modal-title");
+    if (titleEl) titleEl.textContent = (mode === "insert") ? "사용자 등록" : "사용자 수정";
 
-/* ---------- Helpers ---------- */
-function escapeHtml(str) {
-  return String(str ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
-}
-function getVal(id) { return document.getElementById(id)?.value ?? ''; }
-function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = v; }
+    const idEl = document.getElementById("editUserId");
+    const pwEl = document.getElementById("editUserPw");
+    const pwField = document.getElementById("pwField"); // 권장 wrapper
+    const phoneEl = document.getElementById("editUserPhone");
+    const roleEl = document.getElementById("editUserRole");
+
+    // ID
+    if (idEl) {
+      idEl.value = user?.id ?? "";
+      if (mode === "insert") {
+        idEl.removeAttribute("readonly");
+        idEl.placeholder = "사용자 ID";
+      } else {
+        idEl.setAttribute("readonly", "readonly");
+      }
+    }
+
+    // PW: 등록만 입력 가능 / 수정에서는 숨김
+    if (mode === "insert") {
+      if (pwField) pwField.classList.remove("d-none");
+      if (pwEl) {
+        pwEl.value = "";
+        pwEl.placeholder = "비밀번호 입력(필수)";
+      }
+    } else {
+      // update
+      if (pwField) pwField.classList.add("d-none");
+      if (pwEl) {
+        pwEl.value = "";
+        // wrapper가 없으면 input 자체 숨김
+        if (!pwField) pwEl.classList.add("d-none");
+      }
+    }
+
+    // Phone
+    if (phoneEl) phoneEl.value = user?.phnNo ?? "";
+
+    // Role: 관리자만 변경 가능
+    if (roleEl) {
+      roleEl.value = (user?.userRole ?? "USER");
+      roleEl.disabled = !IS_MANAGER;
+    }
+
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+  }
+
+  /* ------------------------------
+   * 4) Save (insert/update)
+   * ------------------------------ */
+  function bindSave() {
+    const saveBtn = document.getElementById("saveUserBtn");
+    if (!saveBtn) return;
+    saveBtn.addEventListener("click", onSave);
+  }
+
+  async function onSave() {
+    const modalEl = document.getElementById("userEditModal");
+    const mode = modalEl?.dataset.mode || "update";
+
+    const id = (document.getElementById("editUserId")?.value ?? "").trim();
+    const pw = document.getElementById("editUserPw")?.value ?? "";
+    const phnNo = (document.getElementById("editUserPhone")?.value ?? "").trim();
+    const userRole = (document.getElementById("editUserRole")?.value ?? "USER").trim();
+
+    if (!id) return alert("ID는 필수입니다.");
+
+    try {
+      if (mode === "insert") {
+        // ✅ 등록: 비밀번호 필수
+        if (!pw || !pw.trim()) {
+          alert("등록 시 비밀번호는 필수입니다.");
+          return;
+        }
+
+        await fetchJson(API_BASE, {
+          method: "POST",
+          body: JSON.stringify({
+            id,
+            pw,
+            phnNo,
+            userRole: IS_MANAGER ? userRole : "USER" // 관리자 아니면 USER 고정
+          })
+        });
+
+        location.reload();
+        return;
+      }
+
+      // ✅ 수정: 비밀번호 전송 X (전화만 수정)
+      await fetchJson(`${API_BASE}/${encodeURIComponent(id)}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          phnNo
+        })
+      });
+
+      // ✅ 권한 변경은 관리자만 별도 호출
+      if (IS_MANAGER) {
+        await fetchJson(`${API_BASE}/${encodeURIComponent(id)}/role`, {
+          method: "PUT",
+          body: JSON.stringify({ userRole })
+        });
+      }
+
+      location.reload();
+    } catch (err) {
+      console.error(err);
+
+      if (String(err?.message || "").includes("HTTP 403")) {
+        alert("권한 변경은 관리자만 가능합니다.");
+        return;
+      }
+
+      alert("저장에 실패했습니다.");
+    }
+  }
+
+  /* ------------------------------
+   * helpers
+   * ------------------------------ */
+  function getSelectedIds() {
+    return Array.from(document.querySelectorAll('input[name="selectedUserIds"]:checked'))
+      .map(cb => cb.value);
+  }
+
+  async function fetchJson(url, options = {}) {
+    const res = await fetch(url, {
+      headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+      ...options
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`HTTP ${res.status} ${res.statusText} :: ${text}`);
+    }
+
+    const ct = res.headers.get("content-type") || "";
+    if (!ct.includes("application/json")) return null;
+    return res.json();
+  }
+})();

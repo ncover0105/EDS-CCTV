@@ -6,6 +6,7 @@ import java.util.Arrays;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -33,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import nz.net.ultraq.thymeleaf.layoutdialect.LayoutDialect;
 
 @Configuration
-@EnableWebSecurity(debug = true)
+@EnableWebSecurity(debug = false) // ✅ debug=true 는 로그가 너무 많아서 권장하지 않음
 @Slf4j
 @RequiredArgsConstructor
 public class SecurityConfig {
@@ -49,17 +50,17 @@ public class SecurityConfig {
 
     // 로그인 없이 접근 가능한 경로
     private static final String[] PUBLIC_URLS = {
-            "/login", "/", "/error/**", "/css/**", "/js/**", "/favicon.ico", "/imgFiles/**", "/eds/**", "/images/**",
-            "/hls/**", "/imgFiles/sailimg/**", "/imgFiles/radar/**", "/fonts/**", "/janus/**", "/ws/**"
-
+            "/login", "/", "/error/**",
+            "/css/**", "/js/**", "/favicon.ico",
+            "/imgFiles/**", "/eds/**", "/images/**",
+            "/hls/**", "/imgFiles/sailimg/**", "/imgFiles/radar/**",
+            "/fonts/**", "/janus/**", "/ws/**", "/api/users/signup"
     };
 
+    // 일반 사용자/관리자 모두 접근 가능한 경로
     private static final String[] USER_URLS = {
-            "/main", "/home", "/menu/**", "/stream", "/stream/**", "/api/**",
+            "/main", "/home", "/menu/**", "/stream", "/stream/**", "/api/**"
     };
-
-    // @Autowired
-    // private SessionInterceptor sessioninterceptor;
 
     @Bean
     PasswordEncoder passwordEncoder() {
@@ -69,41 +70,41 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         log.info("--------------------------------security config--------------------------------");
+
         http
-                .httpBasic(AbstractHttpConfigurer::disable) // Http 기본 인증 비활성화
-                .csrf((csrf) -> csrf.disable()) // CSRF 설정 (사이트 위변조 요청 방지)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable)
 
-                .headers(headerConfig -> headerConfig
-                        .frameOptions(frameOptionsConfig -> frameOptionsConfig
-                                .disable()))
+                .headers(headers -> headers.frameOptions(frame -> frame.disable()))
 
-                .sessionManagement(sessionManagement -> sessionManagement
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
 
-                // 인증절차 설정
-                .authorizeHttpRequests((authz) -> authz
+                .authorizeHttpRequests(authz -> authz
+                        // ✅ 1) 누구나 접근
                         .requestMatchers(PUBLIC_URLS).permitAll()
-                        .requestMatchers(USER_URLS).hasRole("USER")
-                        .anyRequest().authenticated() // 나머지 요청은 인증 필요
-                )
 
-                // 401 403 관련 예외처리
-                .exceptionHandling((exceptionHandling) -> exceptionHandling
-                        .authenticationEntryPoint(unauthorizedEntryPoint).accessDeniedHandler(accessDeniedHandler))
+                        // ✅ 2) "권한 변경"은 관리자만
+                        .requestMatchers(HttpMethod.PUT, "/api/users/*/role").hasRole("MANAGER")
 
-                // 로그인 설정
-                .formLogin((form) -> form
-                        .loginPage("/login") // 로그인 Url, default: /login
+                        // ✅ 3) 나머지 USER 영역은 USER/MANAGER 모두 허용
+                        .requestMatchers(USER_URLS).hasAnyRole("USER", "MANAGER")
+
+                        .anyRequest().authenticated())
+
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(unauthorizedEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler))
+
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .loginProcessingUrl("/loginProc")
                         .usernameParameter("id")
                         .passwordParameter("pw")
-                        .loginProcessingUrl("/loginProc") // 로그인 Form Action Url
-                        .defaultSuccessUrl("/main") // 로그인 성공 후 메인 페이지로 이동
                         .successHandler(successHandler)
                         .failureHandler(failureHandler)
                         .permitAll())
 
-                // 로그아웃 설정
-                .logout((logout) -> logout
+                .logout(logout -> logout
                         .logoutUrl("/logout")
                         .permitAll()
                         .logoutSuccessUrl("/login"));
@@ -114,6 +115,9 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+
+        // ⚠️ allowCredentials=true 이면 allowedOrigins="*" 조합은 브라우저에서 제한될 수 있음.
+        // 문제가 생기면 setAllowedOriginPatterns(Arrays.asList("*"))로 변경 추천.
         configuration.setAllowedOrigins(Arrays.asList("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("authorization", "content-type", "x-auth-token"));
@@ -122,7 +126,6 @@ public class SecurityConfig {
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
-
         return source;
     }
 
@@ -158,17 +161,6 @@ public class SecurityConfig {
         private final HttpStatus status;
         private final String message;
     }
-
-    // @Bean
-    // UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
-    // log.info("userDetailsService :: id :" + username + " / pw :" + password);
-    // UserDetails user = User.withUsername(username)
-    // .password(passwordEncoder.encode(password))
-    // .roles("USER")
-    // .build();
-
-    // return new InMemoryUserDetailsManager(user);
-    // }
 
     @Bean
     LayoutDialect layoutDialect() {
