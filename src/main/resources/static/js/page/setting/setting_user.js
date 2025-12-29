@@ -9,7 +9,7 @@
  *
  * 필요 HTML 요소(IDs):
  *  - tbody#userList
- *  - button#btn-register #btn-edit #btn-disable
+ *  - button#user_btn_register #user_btn_edit #user_btn_disable
  *  - modal#userEditModal
  *  - input#editUserId #editUserPw #editUserPhone
  *  - select#editUserRole
@@ -69,9 +69,9 @@
    * 2) Buttons
    * ------------------------------ */
   function bindButtons() {
-    const btnRegister = document.getElementById("btn-register");
-    const btnEdit = document.getElementById("btn-edit");
-    const btnDelete = document.getElementById("btn-disable");
+    const btnRegister = document.getElementById("user_btn_register");
+    const btnEdit = document.getElementById("user_btn_edit");
+    const btnDelete = document.getElementById("user_btn_disable");
 
     if (btnRegister) btnRegister.addEventListener("click", () => openModal("insert"));
     if (btnEdit) btnEdit.addEventListener("click", onEdit);

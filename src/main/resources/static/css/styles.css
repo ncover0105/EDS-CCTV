@@ -13317,7 +13317,9 @@ body {
 }
 
 #logContainer,
-#speakerContainer {
+#speakerContainer,
+#emptyLogMessage,
+#emptySpeakerMessage {
     max-height: 10vh;
 }
 
@@ -14708,7 +14710,6 @@ body {
   color: #4b5563; /* 라이트에서 보기 좋은 회색 텍스트 */
 }
 
-
 .btn-text-none{
   display: none;
   display: inline !important;
@@ -14719,7 +14720,15 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1rem;
   padding: 1rem;
+  align-content: start;
 }
+
+/* .speaker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+} */
 
 .speaker-card {
   background: rgba(255, 255, 255, 0.05);
@@ -14778,7 +14787,6 @@ body {
 .speaker-status.online {
   background-color: #28a745;
   animation: blink-slow 5s infinite;
-
 }
 
 .speaker-status.offline {
@@ -14884,10 +14892,13 @@ body {
 }
 
 .broadcast-log {
-  /* min-height: 0; */
-  max-height: 360px;
+  flex-grow: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 1rem;
+
+  /* 안전장치 (초소형 화면) */
+  max-height: 20vh;
 }
 
 .log-entry {
@@ -14917,7 +14928,11 @@ body {
 }
 
 .log-message {
-  margin-top: 0.25rem;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  line-height: 1.4;
 }
 
 /* Responsive Design */
@@ -15386,14 +15401,19 @@ body {
 
 /* 미세먼지 정보 */
 .air-quality-main {
-  /* grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem; */
   margin-top: 0.6rem;
+
+  /* ✅ 남은 영역 먹기 */
+  flex: 1 1 auto;
+  min-height: 0;
+
+  /* ✅ 2열 grid 유지 */
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.5rem;
+
+  /* ✅ grid 내용이 남는 높이에 가운데 오도록(선택) */
+  align-content: center;
 }
 
 .air-quality-item {
@@ -15401,6 +15421,20 @@ body {
   border-radius: 8px;
   padding: 0.5rem;
   text-align: center;
+
+  /* ✅ 셀(그리드 칸) 기준으로 카드가 꽉 차게 */
+  height: 100%;
+  width: 100%;
+  /* ✅ 카드 내부 중앙 정렬 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+@media (max-width: 768px) {
+  .air-quality-main {
+    grid-template-columns: 1fr;
+  }
 }
 
 .air-quality-label {
@@ -15420,6 +15454,7 @@ body {
   justify-content: space-between;
   font-size: 0.75rem;
   margin-bottom: 0.25rem;
+  width: 100%;
 }
 
 /* 숫자 색상 (PM10, PM2.5 값) */
@@ -15983,4 +16018,26 @@ body {
     min-height: 300px;
     max-height: none;  /* 작은 화면에서는 제한 해제 */
   }
+}
+
+/* ✅ 1920x1080 대시보드 고정: 그보다 작으면 전체 스크롤 */
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: auto; /* 전체 스크롤 허용 */
+}
+
+/* 핵심: 최소 해상도 고정 */
+.main-container {
+  min-width: 1920px;
+  min-height: 1080px;
+}
+
+/* 콘텐츠가 넘쳐도 내부가 아니라 body에서 스크롤 되게 */
+.main-layout,
+.content-wrapper,
+.sidebar,
+.main-content {
+  min-width: 0;
+  min-height: 0;
 }

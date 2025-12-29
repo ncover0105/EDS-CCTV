@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Service;
 
 import com.edscorp.eds.cctv.domain.CctvEntity;
+import com.edscorp.eds.cctv.dto.CctvUpdateRequest;
 import com.edscorp.eds.cctv.repository.CctvRepository;
 import com.edscorp.eds.cctv.stream.JanusApi;
 import com.edscorp.eds.cctv.stream.JanusManager;
@@ -119,4 +120,31 @@ public class CctvService {
     public List<Map<String, Object>> getAllCameras() {
         return cameraCache.getCameras();
     }
+
+    public CctvEntity updateByCctvCode(String cctvCode, CctvUpdateRequest req) {
+        CctvEntity e = cctvRepository.findByCctvCode(cctvCode)
+                .orElseThrow(() -> new IllegalArgumentException("CCTV not found: " + cctvCode));
+
+        e.setName(req.getName());
+        e.setMountpointId(req.getMountpointId());
+        e.setVideoPort(req.getVideoPort());
+        e.setAddress(req.getAddress());
+        e.setId(req.getId());
+        e.setPassword(req.getPassword());
+        e.setRtspUrl(req.getRtspUrl());
+        e.setType(req.getType());
+        e.setWsPort(req.getWsPort());
+        e.setLatitude(req.getLatitude());
+        e.setLongitude(req.getLongitude());
+
+        return e;
+    }
+
+    public void deleteByCctvCode(String cctvCode) {
+        if (!cctvRepository.existsByCctvCode(cctvCode)) {
+            throw new IllegalArgumentException("CCTV not found: " + cctvCode);
+        }
+        cctvRepository.deleteByCctvCode(cctvCode);
+    }
+
 }

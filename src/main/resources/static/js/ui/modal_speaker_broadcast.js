@@ -7,25 +7,25 @@
 let bcSelectedSpeaker = null;
 
 function safe(v, fb = "-") {
-return v !== undefined && v !== null && v !== "" ? v : fb;
+    return v !== undefined && v !== null && v !== "" ? v : fb;
 }
 function setText(id, v) {
-const el = document.getElementById(id);
-if (el) el.textContent = safe(v, "-");
+    const el = document.getElementById(id);
+    if (el) el.textContent = safe(v, "-");
 }
 function setVal(id, v) {
-const el = document.getElementById(id);
-if (!el) return;
-el.value = (v === undefined || v === null) ? "" : String(v);
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = (v === undefined || v === null) ? "" : String(v);
 }
 function show(id) { document.getElementById(id)?.classList.remove("d-none"); }
 function hide(id) { document.getElementById(id)?.classList.add("d-none"); }
 
 function showTab(btnId) {
-const btn = document.getElementById(btnId);
-if (!btn) return;
-if (typeof bootstrap === "undefined" || !bootstrap.Tab) return;
-bootstrap.Tab.getOrCreateInstance(btn).show();
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    if (typeof bootstrap === "undefined" || !bootstrap.Tab) return;
+    bootstrap.Tab.getOrCreateInstance(btn).show();
 }
 
 function notify(msg, type = "warning") {
@@ -39,32 +39,32 @@ function notify(msg, type = "warning") {
 API (엔드포인트는 프로젝트에 맞게 변경)
 ========================= */
 const BroadcastApi = {
-async listSpeakers() {
-const res = await fetch("/api/btype/query/config/list");
-if (!res.ok) return [];
-return (await res.json()) ?? [];
-},
+    async listSpeakers() {
+        const res = await fetch("/api/btype/query/config/list");
+        if (!res.ok) return [];
+        return (await res.json()) ?? [];
+    },
 
-async listDisasters() {
-const res = await fetch("/api/btype/query/disaster");
-if (!res.ok) return [];
-return (await res.json()) ?? [];
-},
+    async listDisasters() {
+        const res = await fetch("/api/btype/query/disaster");
+        if (!res.ok) return [];
+        return (await res.json()) ?? [];
+    },
 
-async send(payload) {
-// TODO: 실제 발령 API로 변경
-const res = await fetch("/api/btype/broadcast/send", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-});
+    async send(payload) {
+        // TODO: 실제 발령 API로 변경
+        const res = await fetch("/api/btype/broadcast/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
 
-if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    throw new Error(`HTTP ${res.status} ${txt}`);
-}
-return await res.json().catch(() => ({}));
-}
+        if (!res.ok) {
+            const txt = await res.text().catch(() => "");
+            throw new Error(`HTTP ${res.status} ${txt}`);
+        }
+        return await res.json().catch(() => ({}));
+    }
 };
 
 /* =========================

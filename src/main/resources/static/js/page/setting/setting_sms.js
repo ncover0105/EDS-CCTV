@@ -1,214 +1,238 @@
-/**
- * ======================================================
- * setting.sms.js
- *  - SMS 설정/문구/대상 관리 전용 JS (추가/수정/삭제)
- * ======================================================
- */
+// setting_sms.js
+// SMS 알림 설정(UserEntity: eventAlertYn / warnAlertYn / alertEnabledYn) 관리
+// - 등록: 선택 1명 → 모달 오픈(기본 alertEnabledYn=Y)
+// - 수정: 선택 1명 → 모달 오픈(현재 값 로드)
+// - 삭제: 선택 N명 → 미사용 처리(배치) alertEnabledYn=N, event/warn=N
+// API:
+//   PATCH /api/users/sms/{id}
+//   POST  /api/users/sms/disable-batch
 
-let smsData = [];
-let smsInitialized = false;
+(function () {
+  // ===== DOM helpers =====
+  const $ = (id) => document.getElementById(id);
 
-function initSmsManager() {
-  if (smsInitialized) return;
-  smsInitialized = true;
+  // settingPage.html에 currentView가 있으면 sms 뷰에서만 동작
+  const isSmsView = () => {
+    try {
+      return typeof currentView === "undefined" || currentView === "sms";
+    } catch (e) {
+      return true;
+    }
+  };
 
-  console.log('[SMS] initSmsManager');
+  // ===== Selection =====
+  function getSelectedSmsUserIds() {
+    const tbody = $("smsUserList");
+    if (!tbody) return [];
 
-  syncSmsDataFromDOM();
-  bindSmsEvents();
-  updateSmsCountText();
-}
-
-/* ---------- DOM -> Data ---------- */
-function syncSmsDataFromDOM() {
-  const tbody = document.getElementById('smsList');
-  if (!tbody) return;
-
-  const rows = Array.from(tbody.querySelectorAll('tr'));
-  smsData = rows.map((tr, idx) => {
-    const cb = tr.querySelector('input[name="selectedSmsIds"]');
-    const tds = tr.querySelectorAll('td');
-
-    // td 예시: 0 체크, 1 번호, 2 템플릿명, 3 내용, 4 사용여부
-    const id = cb?.value ?? String(idx + 1);
-    const name = (tds[2]?.textContent ?? '').trim();
-    const content = (tds[3]?.textContent ?? '').trim();
-    const useText = (tds[4]?.textContent ?? '').trim();
-    const useFlag = useText.includes('사용') ? 'Use' : 'Unuse';
-
-    return { id, name, content, useFlag };
-  });
-}
-
-/* ---------- Events ---------- */
-function bindSmsEvents() {
-  const tbody = document.getElementById('smsList');
-  if (!tbody) return;
-
-  tbody.addEventListener('click', (e) => {
-    if (e.target.matches('input[type="checkbox"]')) return;
-    const row = e.target.closest('tr');
-    if (!row) return;
-    const cb = row.querySelector('input[name="selectedSmsIds"]');
-    if (!cb) return;
-
-    cb.checked = !cb.checked;
-    row.classList.toggle('table-active', cb.checked);
-  });
-
-  tbody.addEventListener('change', (e) => {
-    if (!e.target.matches('input[name="selectedSmsIds"]')) return;
-    const row = e.target.closest('tr');
-    if (row) row.classList.toggle('table-active', e.target.checked);
-  });
-
-  const saveBtn = document.getElementById('smsSaveUpdateBtn');
-  if (saveBtn) saveBtn.addEventListener('click', onSaveSmsModal);
-}
-
-function getSelectedSmsIds() {
-  return Array.from(
-    document.querySelectorAll('#smsList input[name="selectedSmsIds"]:checked')
-  ).map(cb => cb.value);
-}
-
-function clearSmsSelection() {
-  document.querySelectorAll('#smsList input[name="selectedSmsIds"]').forEach(cb => cb.checked = false);
-  document.querySelectorAll('#smsList tr').forEach(tr => tr.classList.remove('table-active'));
-}
-
-/* ---------- CRUD ---------- */
-function smsInsert() {
-  openSmsModal('insert');
-}
-
-function smsUpdate() {
-  const ids = getSelectedSmsIds();
-  if (ids.length !== 1) {
-    alert('수정은 1개만 선택하세요.');
-    return;
-  }
-  const item = smsData.find(x => String(x.id) === String(ids[0]));
-  if (!item) {
-    alert('선택한 SMS 항목을 찾을 수 없습니다.');
-    return;
-  }
-  openSmsModal('update', item);
-}
-
-function smsDeprecated() {
-  const ids = getSelectedSmsIds();
-  if (ids.length === 0) {
-    alert('삭제(미사용)할 항목을 선택하세요.');
-    return;
-  }
-  if (!confirm(`선택한 ${ids.length}개 항목을 미사용 처리할까요?`)) return;
-
-  ids.forEach(id => {
-    const item = smsData.find(x => String(x.id) === String(id));
-    if (item) item.useFlag = 'Unuse';
-  });
-
-  clearSmsSelection();
-  renderSmsTable();
-  updateSmsCountText();
-
-  // TODO 서버연동: PATCH /api/sms/deprecated
-}
-
-/* ---------- Modal ---------- */
-// HTML에 아래 입력이 있다고 가정
-// #smsUpdateId(hidden), #smsUpdateName, #smsUpdateContent, #smsUpdateStatus
-function openSmsModal(mode, item = null) {
-  const modalEl = document.getElementById('smsUpdateModal');
-  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-
-  modalEl.dataset.mode = mode;
-  const title = modalEl.querySelector('.modal-title');
-  if (title) title.textContent = (mode === 'insert') ? 'SMS 추가' : 'SMS 수정';
-
-  setVal('smsUpdateId', item?.id ?? '');
-  setVal('smsUpdateName', item?.name ?? '');
-  setVal('smsUpdateContent', item?.content ?? '');
-  setVal('smsUpdateStatus', item?.useFlag === 'Use' ? '사용' : '미사용');
-
-  modal.show();
-}
-
-function onSaveSmsModal() {
-  const modalEl = document.getElementById('smsUpdateModal');
-  const mode = modalEl.dataset.mode || 'update';
-
-  const id = getVal('smsUpdateId').trim();
-  const name = getVal('smsUpdateName').trim();
-  const content = getVal('smsUpdateContent').trim();
-  const statusKor = getVal('smsUpdateStatus');
-  const useFlag = statusKor === '사용' ? 'Use' : 'Unuse';
-
-  if (!name || !content) {
-    alert('이름/내용은 필수입니다.');
-    return;
+    const checks = tbody.querySelectorAll('input.alert-toggle[type="checkbox"]:checked');
+    const ids = [];
+    checks.forEach((chk) => {
+      const tr = chk.closest("tr");
+      const userId = tr?.dataset?.userId;
+      if (userId) ids.push(userId);
+    });
+    return ids;
   }
 
-  if (mode === 'insert') {
-    smsData.unshift({ id: String(Date.now()), name, content, useFlag });
-    // TODO 서버연동: POST /api/sms
-  } else {
-    const item = smsData.find(x => String(x.id) === String(id));
-    if (!item) {
-      alert('수정할 항목을 찾을 수 없습니다.');
+  function getRowByUserId(userId) {
+    const tbody = $("smsUserList");
+    if (!tbody) return null;
+    return tbody.querySelector(`tr[data-user-id="${CSS.escape(userId)}"]`);
+  }
+
+  // ===== Table parsing (현재 화면값 → Y/N) =====
+  function readYnFromCell(td) {
+    const text = (td?.textContent || "").trim();
+    // 배지 텍스트가 "사용"/"미사용" 형태라면 이 방식이 가장 단순
+    return text.includes("사용") && !text.includes("미사용") ? "Y" : (text.includes("미사용") ? "N" : (text.includes("사용") ? "Y" : "N"));
+  }
+
+  function getUserInfoFromRow(tr) {
+    // 컬럼 예상:
+    // [0] checkbox, [1] no, [2] name, [3] phnNo, [4] event, [5] warn, [6] enabled
+    const tds = tr ? tr.querySelectorAll("td") : null;
+    if (!tds || tds.length < 7) return null;
+
+    const id = tr.dataset.userId;
+    const name = (tds[2]?.textContent || "").trim();
+    const phnNo = (tds[3]?.textContent || "").trim();
+
+    const eventAlertYn = readYnFromCell(tds[4]);
+    const warnAlertYn = readYnFromCell(tds[5]);
+    const alertEnabledYn = readYnFromCell(tds[6]);
+
+    return { id, name, phnNo, eventAlertYn, warnAlertYn, alertEnabledYn };
+  }
+
+  // ===== Modal helpers =====
+  function syncChildTogglesByEnabled() {
+    const enabled = $("modalAlertEnabled")?.checked;
+
+    const ev = $("modalEventAlert");
+    const wa = $("modalWarnAlert");
+    if (!ev || !wa) return;
+
+    ev.disabled = !enabled;
+    wa.disabled = !enabled;
+
+    // 정책: 전체 알림이 OFF면 하위 2개도 OFF로 강제
+    if (!enabled) {
+      ev.checked = false;
+      wa.checked = false;
+    }
+  }
+
+  function openSmsModal(userInfo, mode) {
+    const modalEl = $("smsEditModal");
+    if (!modalEl) {
+      alert("smsEditModal이 없습니다.");
       return;
     }
-    item.name = name;
-    item.content = content;
-    item.useFlag = useFlag;
-    // TODO 서버연동: PUT /api/sms/{id}
+
+    const titleEl = $("smsEditModalLabel");
+    if (titleEl) titleEl.textContent = (mode === "insert") ? "SMS 알림 등록" : "SMS 알림 수정";
+
+    $("modalUserId").value = userInfo.id;
+    $("modalUserName").value = userInfo.name || "-";
+    $("modalUserPhn").value = userInfo.phnNo || "-";
+
+    $("modalEventAlert").checked = userInfo.eventAlertYn === "Y";
+    $("modalWarnAlert").checked = userInfo.warnAlertYn === "Y";
+    $("modalAlertEnabled").checked = userInfo.alertEnabledYn === "Y";
+
+    syncChildTogglesByEnabled();
+
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
   }
 
-  renderSmsTable();
-  updateSmsCountText();
-  bootstrap.Modal.getOrCreateInstance(modalEl).hide();
-}
+  // ===== API =====
+  async function apiUpdateSmsSetting(userId, payload) {
+    const res = await fetch(`/api/users/sms/${encodeURIComponent(userId)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    // controller가 Entity를 리턴할 수도 / Void일 수도 있으니 유연하게 처리
+    return res.text().catch(() => "");
+  }
 
-/* ---------- Render ---------- */
-function renderSmsTable() {
-  const tbody = document.getElementById('smsList');
-  if (!tbody) return;
+  async function apiDisableSmsBatch(userIds) {
+    const res = await fetch(`/api/users/sms/disable-batch`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userIds }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.text().catch(() => "");
+  }
 
-  tbody.innerHTML = '';
+  function reloadPage() {
+    location.reload();
+  }
 
-  smsData.forEach((s, idx) => {
-    const isUse = s.useFlag === 'Use';
-    tbody.insertAdjacentHTML('beforeend', `
-      <tr>
-        <td><input type="checkbox" name="selectedSmsIds" value="${escapeHtml(s.id)}"></td>
-        <td>${idx + 1}</td>
-        <td>${escapeHtml(s.name)}</td>
-        <td class="text-wrap">${escapeHtml(s.content)}</td>
-        <td>
-          <span class="status-badge ${isUse ? 'status-success' : 'status-primary'}">
-            ${isUse ? '사용중' : '미사용'}
-          </span>
-        </td>
-      </tr>
-    `);
+  // ===== Actions (등록/수정/삭제) =====
+  window.smsInsert = function smsInsert() {
+    const selected = getSelectedSmsUserIds();
+    if (selected.length !== 1) {
+      alert("등록은 1명만 선택하세요.");
+      return;
+    }
+
+    const tr = getRowByUserId(selected[0]);
+    const info = getUserInfoFromRow(tr);
+    if (!info) {
+      alert("선택된 사용자를 찾을 수 없습니다.");
+      return;
+    }
+
+    // 등록 의미: 기본 enabled=Y로 켜고 시작(필요하면 정책 변경)
+    info.alertEnabledYn = "Y";
+    openSmsModal(info, "insert");
+  };
+
+  window.smsUpdate = function smsUpdate() {
+    const selected = getSelectedSmsUserIds();
+    if (selected.length !== 1) {
+      alert("수정은 1명만 선택하세요.");
+      return;
+    }
+
+    const tr = getRowByUserId(selected[0]);
+    const info = getUserInfoFromRow(tr);
+    if (!info) {
+      alert("선택된 사용자를 찾을 수 없습니다.");
+      return;
+    }
+
+    openSmsModal(info, "edit");
+  };
+
+  // 삭제 의미: 알림 미사용(soft)
+  window.smsDelete = async function smsDelete() {
+    const selected = getSelectedSmsUserIds();
+    if (selected.length === 0) {
+      alert("삭제(미사용)할 사용자를 선택하세요.");
+      return;
+    }
+
+    if (!confirm(`선택한 ${selected.length}명에 대해 SMS 알림을 미사용 처리할까요?`)) return;
+
+    try {
+      await apiDisableSmsBatch(selected);
+      reloadPage();
+    } catch (e) {
+      console.error(e);
+      alert("삭제(미사용) 처리 중 오류가 발생했습니다.\n" + (e?.message ?? ""));
+    }
+  };
+
+  // ===== Modal save =====
+  async function onSaveModal() {
+    const userId = $("modalUserId")?.value?.trim();
+    if (!userId) return alert("사용자 ID가 없습니다.");
+
+    const alertEnabledYn = $("modalAlertEnabled").checked ? "Y" : "N";
+    const eventAlertYn = $("modalEventAlert").checked ? "Y" : "N";
+    const warnAlertYn = $("modalWarnAlert").checked ? "Y" : "N";
+
+    const payload = {
+      alertEnabledYn,
+      eventAlertYn: alertEnabledYn === "Y" ? eventAlertYn : "N",
+      warnAlertYn: alertEnabledYn === "Y" ? warnAlertYn : "N",
+    };
+
+    try {
+      await apiUpdateSmsSetting(userId, payload);
+
+      const modalEl = $("smsEditModal");
+      bootstrap.Modal.getInstance(modalEl)?.hide();
+      reloadPage();
+    } catch (e) {
+      console.error(e);
+      alert("저장 중 오류가 발생했습니다.\n" + (e?.message ?? ""));
+    }
+  }
+
+  // ===== Bind events =====
+  function bindSmsEvents() {
+    // (추천) SMS 버튼 id는 충돌 방지를 위해 sms_btn_* 사용
+    // 만약 네 HTML이 id="btn-edit" 같은 공용 id라면 꼭 분리해줘야 함.
+    const btnAdd = $("sms_btn_register") || $("sms-btn-register");
+    const btnEdit = $("sms_btn_edit") || $("sms-btn-edit");
+    const btnDel = $("sms_btn_disable") || $("sms-btn-disable");
+
+    if (btnAdd) btnAdd.addEventListener("click", window.smsInsert);
+    if (btnEdit) btnEdit.addEventListener("click", window.smsUpdate);
+    if (btnDel) btnDel.addEventListener("click", window.smsDelete);
+
+    $("modalAlertEnabled")?.addEventListener("change", syncChildTogglesByEnabled);
+    $("modalSaveBtn")?.addEventListener("click", onSaveModal);
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    if (!isSmsView()) return;
+    bindSmsEvents();
   });
-}
-
-function updateSmsCountText() {
-  const el = document.getElementById('smsCount');
-  if (!el) return;
-  el.textContent = `총 ${smsData.length}개 | SMS 항목을 관리하세요`;
-}
-
-/* ---------- Helpers ---------- */
-function escapeHtml(str) {
-  return String(str ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
-}
-function getVal(id) { return document.getElementById(id)?.value ?? ''; }
-function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = v; }
+})();

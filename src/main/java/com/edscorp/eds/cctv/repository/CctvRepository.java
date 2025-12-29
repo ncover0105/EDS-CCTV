@@ -21,6 +21,10 @@ public interface CctvRepository extends JpaRepository<CctvEntity, String> {
      */
     List<CctvEntity> findByStatusCam(String status);
 
+    boolean existsByCctvCode(String cctvCode);
+
+    void deleteByCctvCode(String cctvCode);
+
     // List<CctvEntity> findByPortStatusAndVideoPortIsNotNull(String portStatus);
 
     // @Query("SELECT c FROM CctvEntity c WHERE c.videoPort BETWEEN :startPort AND

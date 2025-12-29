@@ -192,20 +192,20 @@ document.addEventListener("DOMContentLoaded", () => {
       cctvCode: code,
       cctvName: name,
       rtspUrl: url || null,
-      latitude: Number.isFinite(lat) ? lat : null,
-      longitude: Number.isFinite(lng) ? lng : null,
+      latitude: Number.isFinite(lat) ? String(lat) : null,
+      longitude: Number.isFinite(lng) ? String(lng) : null,
       id: loginId || null,
       ...(loginPw ? { password: loginPw } : {})
     };
   
-    fetch("/api/cctv/update", {
+    fetch(`/api/cctv/update/${code}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     })
       .then(async (res) => {
         if (!res.ok) throw new Error(await res.text());
-        return res.json().catch(() => ({}));
+        return res.text().then(t => (t ? JSON.parse(t) : {})).catch(() => ({}));
       })
       .then(() => {
         bootstrap.Modal.getInstance(document.getElementById("editCctvModal"))?.hide();
@@ -214,32 +214,28 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .catch((err) => {
         console.error(err);
-        alert("CCTV 수정 중 오류가 발생했습니다.");
+        alert("CCTV 수정 중 오류가 발생했습니다.\n" + (err?.message ?? ""));
       });
   }
   
   /* -----------------------------
    * 사용중지(삭제 대체)
    * ----------------------------- */
-  function disableSelectedCctv() {
+  function deleteSelectedCctv() {
     const selected = getSelectedCctvCodes();
-    if (selected.length === 0) {
-      alert("사용중지할 CCTV를 선택하세요.");
+    if (selected.length !== 1) {
+      alert("삭제는 1개만 선택해서 처리하세요.");
       return;
     }
   
-    if (!confirm(`선택한 ${selected.length}개 CCTV를 사용중지할까요?`)) return;
+    const code = selected[0];
+    if (!confirm(`CCTV(${code})를 삭제할까요?`)) return;
   
-    // 삭제 대신 soft-delete(사용여부 변경)로 처리하는 걸 추천
-    // payload/endpoint는 백엔드에 맞춰 조정
-    fetch("/api/cctv/disable", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cctvCodes: selected })
+    fetch(`/api/cctv/delete/${code}`, {
+      method: "DELETE"
     })
       .then(async (res) => {
         if (!res.ok) throw new Error(await res.text());
-        return res.json().catch(() => ({}));
       })
       .then(() => {
         clearSelection();
@@ -247,10 +243,10 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .catch((err) => {
         console.error(err);
-        alert("사용중지 처리 중 오류가 발생했습니다.");
+        alert("삭제 처리 중 오류가 발생했습니다.\n" + (err?.message ?? ""));
       });
   }
-  
+
   /* -----------------------------
    * 목록 갱신(렌더링)
    * ----------------------------- */

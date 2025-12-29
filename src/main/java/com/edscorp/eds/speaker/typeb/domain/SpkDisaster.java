@@ -40,4 +40,5 @@ public class SpkDisaster {
 
     @Column(name = "dst_use_flag", length = 255)
     private String dstUseFlag; // 사용 여부 (Y/N)
+
 }
