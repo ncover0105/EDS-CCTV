@@ -138,7 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function openEditModal() {
     const selected = getSelectedCctvCodes();
     if (selected.length !== 1) {
-      alert("수정은 1개만 선택하세요.");
+      App.utils.showGlobalAlert("수정은 1개만 선택하세요.", "warning");
       return;
     }
   
@@ -146,9 +146,9 @@ document.addEventListener("DOMContentLoaded", () => {
   
     // ✅ 현재 화면에 있는 row에서 값 뽑아서 모달 채우기
     const row = document.querySelector(`.cctv-checkbox[value="${cssEscape(code)}"]`)?.closest("tr");
-    console.log(row?.dataset);          // 여기서 loginId/loginPw 찍혀야 함
-    console.log(row?.dataset.loginId);  // ""
-    console.log(row?.dataset.loginPw);  // ""
+    console.log(row?.dataset);
+    console.log(row?.dataset.loginId);
+    console.log(row?.dataset.loginPw);
 
     if (!row) {
         alert("선택한 CCTV 행을 찾을 수 없습니다.");

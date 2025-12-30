@@ -50,7 +50,7 @@ window.Weather = (function () {
     =========================================================================== */
     async function loadAWS() {
         try {
-            const data = await fetchJson('/api/weather/awsdata');
+            const data = await fetchJson('/api/weather/aws');
             updateAWS(data);
         } catch (e) {
             console.error("AWS 데이터 오류:", e);

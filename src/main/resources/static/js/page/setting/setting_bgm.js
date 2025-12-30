@@ -2,6 +2,7 @@
  * ======================================================
  * setting_bgm.js
  *  - BGM 관리 + (스케줄 카드 UI) 통합JS 스타일 동작
+ *  - ✅ 스케줄 모달: 발령 설정 + (TTS시만 메시지) + 스피커 리스트 선택
  * ======================================================
  */
 
@@ -10,6 +11,20 @@
  * ======================= */
 let bgmData = [];
 let bgmInitialized = false;
+
+const ScheduleApi = {
+  async listSpeakers() {
+    const res = await fetch("/api/btype/query/config/list");
+    if (!res.ok) return [];
+    return (await res.json()) ?? [];
+  },
+
+  async listDisasters() {
+    const res = await fetch("/api/btype/query/disaster");
+    if (!res.ok) return [];
+    return (await res.json()) ?? [];
+  }
+};
 
 function initBgmManager() {
   if (bgmInitialized) return;
@@ -24,6 +39,9 @@ function initBgmManager() {
 
   // ✅ 통합JS처럼: 스케줄도 함께 초기화/렌더
   initScheduleManager();
+
+  // ✅ 스케줄 모달(발령 설정 + 스피커 선택) 이벤트 바인딩
+  bindScheduleModalEvents();
 }
 
 /* ---------- DOM -> Data ---------- */
@@ -194,9 +212,6 @@ function updateBgmCountText() {
 
 /* ======================================================
  * ✅ Schedule (통합 JS 스타일)
- *  - window.scheduleListDataRaw(원본) -> groupSchedules -> scheduleList
- *  - empty(#no-schedule-msg) 토글 + 카드 렌더 + 펼침(스피커 테이블)
- *  - 이벤트 위임(toggle/edit/delete)
  * ====================================================== */
 
 let scheduleInitialized = false;
@@ -220,11 +235,11 @@ function initScheduleManager() {
   if (!listDiv || !emptyMsg) return; // 스케줄 UI가 없으면 종료
 
   // ✅ 원본 데이터(없으면 빈 배열)
-  const raw = scheduleListDataRaw;
+  const raw = window.scheduleListDataRaw;
   const scheduleListData = Array.isArray(raw) ? raw : [];
 
   scheduleList = scheduleListData.length ? groupSchedules(scheduleListData) : [];
-  window.scheduleList = scheduleList; // 필요하면 외부에서 접근
+  window.scheduleList = scheduleList;
 
   renderScheduleList();
   bindScheduleEvents();
@@ -279,7 +294,6 @@ function renderScheduleList() {
   const emptyMsg = document.getElementById('no-schedule-msg');
   if (!listDiv || !emptyMsg) return;
 
-  // ✅ empty 토글 (핵심)
   emptyMsg.classList.toggle('d-none', scheduleList.length > 0);
 
   if (countSpan) {
@@ -411,7 +425,6 @@ function bindScheduleEvents() {
     }
 
     if (action === 'edit') {
-      // TODO: 스케줄 수정 모달 연동
       console.log('[Schedule] edit:', id);
       alert('스케줄 수정 연결 전입니다.');
       return;
@@ -419,12 +432,322 @@ function bindScheduleEvents() {
 
     if (action === 'delete') {
       if (!confirm('해당 스케줄을 삭제할까요?')) return;
-      // TODO: 서버 삭제 연동 후 재조회/재렌더
       console.log('[Schedule] delete:', id);
       alert('스케줄 삭제 연결 전입니다.');
     }
   });
 }
+
+/* ======================================================
+ * ✅ Schedule Modal open/bind
+ *  - TTS 선택 시에만 메시지 표시
+ *  - 스피커 리스트 로드(/api/btype/query/config/list) 후 체크 선택
+ * ====================================================== */
+
+let modalSpeakers = [];
+let modalSpeakersFiltered = [];
+let selectedSpeakerKeys = new Set();
+let disastersLoaded = false;
+
+function openScheduleModalCreate() {
+  const modalEl = document.getElementById('scheduleModal');
+  const formEl = document.getElementById('schedule-form');
+  if (!modalEl || !formEl) {
+    console.error('scheduleModal or schedule-form not found');
+    return;
+  }
+
+  const titleEl = document.getElementById('scheduleModalLabel');
+  const submitBtn = document.getElementById('submitBtn');
+  if (titleEl) titleEl.textContent = '새 스케줄 추가';
+  if (submitBtn) submitBtn.textContent = '저장';
+
+  // 초기화
+  formEl.reset();
+  selectedSpeakerKeys.clear();
+
+  // 요일 버튼 생성/토글 바인딩
+  renderWeekdayButtons();
+
+  // 모달 show
+  bootstrap.Modal.getOrCreateInstance(modalEl).show();
+}
+
+function renderWeekdayButtons() {
+  const wrap = document.getElementById('weekdays');
+  if (!wrap) return;
+
+  if (!wrap.querySelector('button[data-weekday]')) {
+    wrap.innerHTML = weekDays.map(d => `
+      <button type="button"
+        class="btn btn-outline-secondary btn-sm flex-fill"
+        data-weekday="${d.key}">
+        ${d.label}
+      </button>
+    `).join('');
+  }
+
+  // 클릭 시 토글 (중복 바인딩 방지)
+  if (!wrap.dataset.bound) {
+    wrap.dataset.bound = '1';
+    wrap.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-weekday]');
+      if (!btn) return;
+      btn.classList.toggle('btn-outline-secondary');
+      btn.classList.toggle('btn-primary');
+    });
+  }
+}
+
+/* ---------- TTS 표시 토글 ---------- */
+function syncTtsSection() {
+  const typeEl = document.getElementById('sc_broadcast_type');
+  const ttsSec = document.getElementById('ttsSection');
+  const ttsEl = document.getElementById('sc_tts');
+
+  if (!typeEl || !ttsSec) return;
+
+  const isTts = typeEl.value === 'TTS';
+  ttsSec.classList.toggle('d-none', !isTts);
+  if (!isTts && ttsEl) ttsEl.value = '';
+}
+
+/* ---------- 재난 목록 채우기 ---------- */
+async function ensureDisasterOptions() {
+  const select = document.getElementById('sc_disaster');
+  if (!select) return;
+
+  // 이미 로딩했으면 스킵
+  if (disastersLoaded && select.options.length > 1) return;
+
+  const list = await ScheduleApi.listDisasters();
+  select.innerHTML = `<option value="" selected>재난을 선택하세요</option>`;
+  list.forEach(d => {
+    // 서버 필드명은 기존 모달 코드 방식에 맞춰 유연 대응
+    const code = d.dstCode ?? d.code ?? d.disasterCode ?? '';
+    const name = d.dstName ?? d.name ?? d.disasterName ?? code;
+    if (!code) return;
+    select.insertAdjacentHTML('beforeend', `
+      <option value="${escapeHtml(code)}">${escapeHtml(name)}</option>
+    `);
+  });
+
+  disastersLoaded = true;
+}
+
+/* ---------- 스피커 선택 테이블 ---------- */
+async function loadModalSpeakers() {
+  const list = await ScheduleApi.listSpeakers();
+  // saveDivi: 00=미삭제, 01=삭제 → 기본은 00만 보여주기
+  modalSpeakers = (Array.isArray(list) ? list : []).filter(sp => (sp.saveDivi ?? '00') === '00');
+  modalSpeakersFiltered = [...modalSpeakers];
+  renderSpeakerPickTable();
+}
+
+function applySpeakerSearch() {
+  const q = (document.getElementById('speakerSearch')?.value ?? '').trim().toLowerCase();
+
+  if (!q) {
+    modalSpeakersFiltered = [...modalSpeakers];
+  } else {
+    modalSpeakersFiltered = modalSpeakers.filter(sp => {
+      const name = String(sp.speakerName ?? '').toLowerCase();
+      const id   = String(sp.speakerId ?? '').toLowerCase();
+      const loc  = String(sp.locationName ?? '').toLowerCase();
+      const adr  = String(sp.speakerAdr ?? '').toLowerCase();
+      return name.includes(q) || id.includes(q) || loc.includes(q) || adr.includes(q);
+    });
+  }
+  renderSpeakerPickTable();
+}
+
+function renderSpeakerPickTable() {
+  const tbody = document.getElementById('speakerPickTbody');
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+
+  if (!modalSpeakersFiltered.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">스피커가 없습니다.</td></tr>`;
+    updatePickedCount();
+    syncHeaderCheckbox();
+    return;
+  }
+
+  modalSpeakersFiltered.forEach(sp => {
+    const key = String(sp.speakerKey ?? '');
+    const name = sp.speakerName ?? '-';
+    const id = sp.speakerId ?? '-';
+    const loc = sp.locationName ?? '-';
+    const adr = sp.speakerAdr ?? '-';
+
+    const checked = selectedSpeakerKeys.has(key) ? 'checked' : '';
+
+    const tr = document.createElement('tr');
+    tr.dataset.key = key;
+    tr.style.cursor = 'pointer';
+    tr.innerHTML = `
+      <td style="width:44px;">
+        <input class="form-check-input speaker-row-check" type="checkbox" ${checked}>
+      </td>
+      <td>${escapeHtml(name)}</td>
+      <td><small class="text-muted">${escapeHtml(id)}</small></td>
+      <td>${escapeHtml(loc)}</td>
+      <td><small class="text-muted">${escapeHtml(adr)}</small></td>
+    `;
+
+    // 행 클릭 시 체크 토글
+    tr.addEventListener('click', (e) => {
+      if (e.target.classList.contains('speaker-row-check')) return;
+      const cb = tr.querySelector('.speaker-row-check');
+      cb.checked = !cb.checked;
+      cb.dispatchEvent(new Event('change'));
+    });
+
+    // 체크 변경 시 선택Set 반영
+    tr.querySelector('.speaker-row-check').addEventListener('change', (e) => {
+      if (!key) return;
+      if (e.target.checked) selectedSpeakerKeys.add(key);
+      else selectedSpeakerKeys.delete(key);
+      updatePickedCount();
+      syncHeaderCheckbox();
+    });
+
+    tbody.appendChild(tr);
+  });
+
+  updatePickedCount();
+  syncHeaderCheckbox();
+}
+
+function updatePickedCount() {
+  const el = document.getElementById('speakerPickedCount');
+  if (el) el.textContent = String(selectedSpeakerKeys.size);
+}
+
+function syncHeaderCheckbox() {
+  const header = document.getElementById('speakerHeaderCheck');
+  if (!header) return;
+
+  const visibleKeys = modalSpeakersFiltered.map(sp => String(sp.speakerKey ?? '')).filter(Boolean);
+
+  if (!visibleKeys.length) {
+    header.checked = false;
+    header.indeterminate = false;
+    return;
+  }
+
+  const selectedCount = visibleKeys.filter(k => selectedSpeakerKeys.has(k)).length;
+  header.checked = (selectedCount === visibleKeys.length);
+  header.indeterminate = (selectedCount > 0 && selectedCount < visibleKeys.length);
+}
+
+function getSelectedSpeakerKeys() {
+  return Array.from(selectedSpeakerKeys)
+    .map(v => Number(v))
+    .filter(n => !Number.isNaN(n));
+}
+
+/* ---------- 모달 이벤트 바인딩 ---------- */
+function bindScheduleModalEvents() {
+  const modalEl = document.getElementById('scheduleModal');
+  if (!modalEl) return; // 모달이 페이지에 없으면 종료
+
+  // 방송 종류 변경 → TTS 영역 토글
+  const typeEl = document.getElementById('sc_broadcast_type');
+  if (typeEl && !typeEl.dataset.bound) {
+    typeEl.dataset.bound = '1';
+    typeEl.addEventListener('change', syncTtsSection);
+  }
+
+  // 스피커 검색
+  const searchEl = document.getElementById('speakerSearch');
+  if (searchEl && !searchEl.dataset.bound) {
+    searchEl.dataset.bound = '1';
+    searchEl.addEventListener('input', applySpeakerSearch);
+  }
+
+  // 헤더 체크박스(현재 필터된 목록 기준 전체선택/해제)
+  const headerCheck = document.getElementById('speakerHeaderCheck');
+  if (headerCheck && !headerCheck.dataset.bound) {
+    headerCheck.dataset.bound = '1';
+    headerCheck.addEventListener('change', (e) => {
+      const on = e.target.checked;
+      modalSpeakersFiltered.forEach(sp => {
+        const k = String(sp.speakerKey ?? '');
+        if (!k) return;
+        if (on) selectedSpeakerKeys.add(k);
+        else selectedSpeakerKeys.delete(k);
+      });
+      renderSpeakerPickTable();
+    });
+  }
+
+  // 버튼들
+  const reloadBtn = document.getElementById('speakerReloadBtn');
+  if (reloadBtn && !reloadBtn.dataset.bound) {
+    reloadBtn.dataset.bound = '1';
+    reloadBtn.addEventListener('click', async () => {
+      await loadModalSpeakers();
+    });
+  }
+
+  const selectAllBtn = document.getElementById('speakerSelectAllBtn');
+  if (selectAllBtn && !selectAllBtn.dataset.bound) {
+    selectAllBtn.dataset.bound = '1';
+    selectAllBtn.addEventListener('click', () => {
+      modalSpeakersFiltered.forEach(sp => {
+        const k = String(sp.speakerKey ?? '');
+        if (k) selectedSpeakerKeys.add(k);
+      });
+      renderSpeakerPickTable();
+    });
+  }
+
+  const clearBtn = document.getElementById('speakerClearBtn');
+  if (clearBtn && !clearBtn.dataset.bound) {
+    clearBtn.dataset.bound = '1';
+    clearBtn.addEventListener('click', () => {
+      modalSpeakersFiltered.forEach(sp => {
+        const k = String(sp.speakerKey ?? '');
+        if (k) selectedSpeakerKeys.delete(k);
+      });
+      renderSpeakerPickTable();
+    });
+  }
+
+  // 모달 열릴 때: 재난 목록 + 스피커 목록 + TTS 토글
+  if (!modalEl.dataset.boundShown) {
+    modalEl.dataset.boundShown = '1';
+    modalEl.addEventListener('shown.bs.modal', async () => {
+      try {
+        syncTtsSection();
+        await ensureDisasterOptions();
+        await loadModalSpeakers();
+      } catch (e) {
+        console.error(e);
+        alert('스케줄 모달 초기화 실패: ' + (e?.message || e));
+      }
+    });
+  }
+}
+
+/* ======================================================
+ * ✅ bindScheduleEvents()에 add 버튼 연결
+ * ====================================================== */
+const _bindScheduleEvents = bindScheduleEvents;
+bindScheduleEvents = function () {
+  _bindScheduleEvents();
+
+  const addBtn = document.getElementById('add-schedule-btn');
+  if (addBtn && !addBtn.dataset.bound) {
+    addBtn.dataset.bound = '1';
+    addBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openScheduleModalCreate();
+    });
+  }
+};
 
 /* ---------- Helpers ---------- */
 function escapeHtml(str) {
@@ -437,3 +760,12 @@ function escapeHtml(str) {
 }
 function getVal(id) { return document.getElementById(id)?.value ?? ''; }
 function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = v; }
+
+/* ======================================================
+ * ✅ Entry
+ * ====================================================== */
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.currentView === 'bgm' || !window.currentView) {
+    initBgmManager();
+  }
+});

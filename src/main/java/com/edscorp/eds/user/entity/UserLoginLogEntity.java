@@ -15,6 +15,7 @@ import lombok.*;
 public class UserLoginLogEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "log_id")
     private Long logId;
 
     @Column(name = "user_id", nullable = false)

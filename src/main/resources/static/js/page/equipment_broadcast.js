@@ -20,12 +20,181 @@ function safeStatus(connStat) {
         case "00": return "offline";
         case "01": return "online";
         case "02": return "online";
-        default:   return "warrning";
+        default: return "warning";
     }
 }
 
 /** ✅ SpkDisaster 리스트 캐시(방송 실행 시 재사용) */
 let disasterCache = [];
+
+/** ✅ 체크리스트 선택(방송대상 선택 아래 리스트) */
+let selectedTargetSpeakerIds = new Set();
+
+async function listSpeakers() {
+    const res = await fetch("/api/btype/query/config/list");
+    if (!res.ok) return [];
+    return (await res.json()) ?? [];
+}
+
+/**
+ * 체크리스트 렌더링 (equipmentPage.html에 아래 id가 있을 때만 동작)
+ * - targetSpeakerSearch
+ * - targetSpeakerSelectAll
+ * - targetSpeakerList
+ * - targetSpeakerEmpty
+ * - selectedTargetSpeakerCount
+ */
+function renderTargetSpeakerList(list) {
+    const listEl = document.getElementById("targetSpeakerList");
+    const emptyEl = document.getElementById("targetSpeakerEmpty");
+    const cntEl = document.getElementById("selectedTargetSpeakerCount");
+    const allEl = document.getElementById("targetSpeakerSelectAll");
+
+    // 체크리스트 UI 없는 페이지면 스킵 (기존 카드 방식만 사용)
+    if (!listEl || !emptyEl || !cntEl) return;
+
+    listEl.innerHTML = "";
+
+    if (!list || list.length === 0) {
+        emptyEl.classList.remove("d-none");
+        cntEl.textContent = "0";
+        if (allEl) allEl.checked = false;
+        return;
+    }
+    emptyEl.classList.add("d-none");
+
+    list.forEach(spk => {
+        // equipment_broadcast.js에서 speaker.id를 사용중이므로 그대로 사용
+        const id = String(safeValue(spk.id, ""));
+        if (!id) return;
+
+        const name = safeName(safeValue(spk.speakerName));
+        const adr = safeValue(spk.speakerAdr, "-");
+        const statusClass = safeStatus(spk.connStat);
+
+        const checked = selectedTargetSpeakerIds.has(id);
+
+        const row = document.createElement("div");
+        row.className = "d-flex align-items-center justify-content-between px-2 py-2 rounded bg-white bg-opacity-10";
+        row.innerHTML = `
+            <div class="form-check mb-0 w-100">
+                <input class="form-check-input targetSpeakerChk" type="checkbox"
+                    id="ts_${id}" data-id="${id}" ${checked ? "checked" : ""}>
+                <label class="form-check-label w-100" for="ts_${id}">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="dot dot-${statusClass}"></span>
+                        <span class="fw-semibold text-white">${name}</span>
+                    </div>
+                    <div class="small text-white-50">${adr}</div>
+                </label>
+            </div>
+        `;
+
+        // ✅ 행 클릭 시 체크 토글 (input 직접 클릭은 제외)
+        row.addEventListener("click", (e) => {
+            if (e.target.closest("input")) return;
+            const chk = row.querySelector("input.targetSpeakerChk");
+            chk.checked = !chk.checked;
+            chk.dispatchEvent(new Event("change"));
+        });
+
+        // ✅ 체크 변경 처리
+        row.querySelector("input.targetSpeakerChk").addEventListener("change", (e) => {
+            const sid = String(e.target.dataset.id);
+            if (e.target.checked) selectedTargetSpeakerIds.add(sid);
+            else selectedTargetSpeakerIds.delete(sid);
+
+            cntEl.textContent = String(selectedTargetSpeakerIds.size);
+
+            // 전체선택 동기화
+            if (allEl) {
+                const total = document.querySelectorAll(".targetSpeakerChk").length;
+                const checkedCount = document.querySelectorAll(".targetSpeakerChk:checked").length;
+                allEl.checked = (total > 0 && total === checkedCount);
+            }
+        });
+
+        listEl.appendChild(row);
+    });
+
+    cntEl.textContent = String(selectedTargetSpeakerIds.size);
+
+    // 전체선택 초기 동기화
+    const allEl2 = document.getElementById("targetSpeakerSelectAll");
+    if (allEl2) {
+        const total = document.querySelectorAll(".targetSpeakerChk").length;
+        const checkedCount = document.querySelectorAll(".targetSpeakerChk:checked").length;
+        allEl2.checked = (total > 0 && total === checkedCount);
+    }
+}
+
+/** ✅ 체크리스트 UI 이벤트 바인딩 */
+function bindTargetSpeakerUI() {
+    // 체크리스트 UI가 없으면 스킵
+    if (!document.getElementById("targetSpeakerList")) return;
+
+    const searchEl = document.getElementById("targetSpeakerSearch");
+    const allEl = document.getElementById("targetSpeakerSelectAll");
+
+    // 최초 렌더
+    renderTargetSpeakerList(window.speakerList || []);
+
+    // 검색 필터
+    if (searchEl) {
+        searchEl.addEventListener("input", () => {
+            const q = searchEl.value.trim().toLowerCase();
+            const base = window.speakerList || [];
+            const filtered = !q ? base : base.filter(spk => {
+                const id = String(spk.id ?? "").toLowerCase();
+                const name = String(spk.speakerName ?? "").toLowerCase();
+                const adr = String(spk.speakerAdr ?? "").toLowerCase();
+                return id.includes(q) || name.includes(q) || adr.includes(q);
+            });
+            renderTargetSpeakerList(filtered);
+        });
+    }
+
+    // 전체 선택/해제
+    if (allEl) {
+        allEl.addEventListener("change", () => {
+            document.querySelectorAll(".targetSpeakerChk").forEach(chk => {
+                chk.checked = allEl.checked;
+                chk.dispatchEvent(new Event("change"));
+            });
+        });
+    }
+}
+
+/** ✅ 체크리스트 선택 해제 버튼용 */
+function clearTargetSpeakers() {
+    selectedTargetSpeakerIds.clear();
+    document.querySelectorAll(".targetSpeakerChk").forEach(chk => (chk.checked = false));
+
+    const cntEl = document.getElementById("selectedTargetSpeakerCount");
+    if (cntEl) cntEl.textContent = "0";
+
+    const allEl = document.getElementById("targetSpeakerSelectAll");
+    if (allEl) allEl.checked = false;
+}
+
+/** ✅ 체크리스트 선택이 있으면 그걸 우선 사용, 없으면 기존 카드 선택(selectedSpeakers) 사용 */
+function getSelectedSpeakerCodes() {
+    // 체크리스트 UI 존재 + 선택 있으면 우선
+    if (document.getElementById("targetSpeakerList") && selectedTargetSpeakerIds.size > 0) {
+        return Array.from(selectedTargetSpeakerIds);
+    }
+
+    // 기존 카드 선택 방식(기존 로직 유지)
+    if (Array.isArray(window.selectedSpeakers) && window.selectedSpeakers.length > 0) {
+        // "all"이면 전체 id로 확장
+        if (window.selectedSpeakers.includes("all")) {
+            return (window.speakerList || []).map(sp => String(sp.id)).filter(Boolean);
+        }
+        return window.selectedSpeakers.map(String);
+    }
+
+    return [];
+}
 
 async function listDisasters() {
     const res = await fetch("/api/btype/query/disaster");
@@ -72,7 +241,7 @@ function renderSpeakerCards() {
     container.appendChild(allCard);
 
     /* 개별 스피커 */
-    speakerList.forEach((speaker) => {
+    (window.speakerList || []).forEach((speaker) => {
         const card = document.createElement("div");
         card.className = "speaker-card";
         card.dataset.id = safeValue(speaker.id, "");
@@ -99,44 +268,48 @@ function renderSpeakerCards() {
         container.appendChild(card);
     });
 
-    console.log(`총 ${speakerList.length}개 스피커 카드 생성`);
+    console.log(`총 ${(window.speakerList || []).length}개 스피커 카드 생성`);
 }
 
 /* =========================
- * 스피커 선택
+ * 스피커 선택 (기존 카드 방식)
  * ========================= */
 function selectSpeaker(speakerId) {
+    // selectedSpeakers는 기존 코드 구조상 전역으로 존재한다고 가정
+    // (없으면 window에 만들어 둠)
+    if (!Array.isArray(window.selectedSpeakers)) window.selectedSpeakers = [];
+
     const cards = document.querySelectorAll(".speaker-card");
     const allButton = document.querySelector(".all-speakers");
 
     if (speakerId === "all") {
-        if (selectedSpeakers.includes("all")) {
-            selectedSpeakers = [];
-            allButton.classList.remove("selected");
+        if (window.selectedSpeakers.includes("all")) {
+            window.selectedSpeakers = [];
+            allButton?.classList.remove("selected");
             cards.forEach((c) => c.classList.remove("selected"));
         } else {
-            allButton.classList.add("selected");
-            // ✅ 문법 오류 방지 + "all" 포함해서 전체 선택
-            selectedSpeakers = ["all", ...Array.from(cards).map((c) => c.dataset.id).filter(Boolean)];
+            allButton?.classList.add("selected");
+            // ✅ "all" 포함 + 전체 선택
+            window.selectedSpeakers = ["all", ...Array.from(cards).map((c) => c.dataset.id).filter(Boolean)];
             cards.forEach((c) => c.classList.add("selected"));
         }
     } else {
-        allButton.classList.remove("selected");
-        selectedSpeakers = selectedSpeakers.filter((id) => id !== "all");
+        allButton?.classList.remove("selected");
+        window.selectedSpeakers = window.selectedSpeakers.filter((id) => id !== "all");
 
         const card = document.querySelector(`.speaker-card[data-id="${speakerId}"]`);
         if (!card) return;
 
-        if (selectedSpeakers.includes(speakerId)) {
-            selectedSpeakers = selectedSpeakers.filter((id) => id !== speakerId);
+        if (window.selectedSpeakers.includes(speakerId)) {
+            window.selectedSpeakers = window.selectedSpeakers.filter((id) => id !== speakerId);
             card.classList.remove("selected");
         } else {
-            selectedSpeakers.push(speakerId);
+            window.selectedSpeakers.push(speakerId);
             card.classList.add("selected");
         }
     }
 
-    console.log("선택된 스피커:", selectedSpeakers);
+    console.log("선택된 스피커:", window.selectedSpeakers);
 }
 
 /* =========================
@@ -172,8 +345,6 @@ async function renderBroadcastTypes() {
         div.dataset.message = safeValue(disaster.dstStoreMsg, "");
 
         // ✅ audioFile 매핑(기존 proceedBroadcast 유지용)
-        // - 저장코드(dstStoCode)를 우선 audioFile로 사용
-        // - 없으면 사이렌코드(dstSirenCode)를 대체값으로
         const audioFile = (disaster.dstStoCode ?? "").trim() || (disaster.dstSirenCode ?? "").trim() || "";
         div.dataset.audio = audioFile;
         div.dataset.category = type;
@@ -188,13 +359,11 @@ async function renderBroadcastTypes() {
         titleDiv.textContent = safeValue(disaster.dstName, "(이름없음)");
         div.appendChild(titleDiv);
 
-        // ✅ selectBroadcastType에 dstCode를 넘김
         div.onclick = () => selectBroadcastType(div, div.dataset.code);
-
         container.appendChild(div);
     });
 
-    // ✅ 사용자정의 카드 (원하면 제거 가능)
+    // ✅ 사용자정의 카드
     const custom = document.createElement("div");
     custom.className = "broadcast-type normal";
     custom.dataset.code = "CUSTOM";
@@ -224,20 +393,20 @@ function selectBroadcastType(element, code) {
 
     if (element.classList.contains("selected")) {
         element.classList.remove("selected");
-        selectedBroadcastType = null;
-        infoArea.style.display = "none";
-        customArea.style.display = "none";
+        window.selectedBroadcastType = null;
+        if (infoArea) infoArea.style.display = "none";
+        if (customArea) customArea.style.display = "none";
         return;
     }
 
     document.querySelectorAll(".broadcast-type").forEach((el) => el.classList.remove("selected"));
 
     element.classList.add("selected");
-    selectedBroadcastType = code; // ✅ 이제 dstCode or "CUSTOM"
+    window.selectedBroadcastType = code; // dstCode or "CUSTOM"
 
     if (code === "CUSTOM") {
-        customArea.style.display = "block";
-        infoArea.style.display = "none";
+        if (customArea) customArea.style.display = "block";
+        if (infoArea) infoArea.style.display = "none";
         return;
     }
 
@@ -245,25 +414,32 @@ function selectBroadcastType(element, code) {
     const message = element.dataset.message;
     const audio = element.dataset.audio;
 
-    titleEl.innerText = title || "-";
-    messageEl.innerText = message || "-";
-    audioEl.innerText = audio ? `저장코드: ${audio}` : "";
+    if (titleEl) titleEl.innerText = title || "-";
+    if (messageEl) messageEl.innerText = message || "-";
+    if (audioEl) audioEl.innerText = audio ? `저장코드: ${audio}` : "";
 
-    infoArea.style.display = "block";
-    customArea.style.display = "none";
+    if (infoArea) infoArea.style.display = "block";
+    if (customArea) customArea.style.display = "none";
 }
 
 /* =========================
  * 방송 실행
  * ========================= */
 function startBroadcast() {
-    if (!selectedBroadcastType) {
+    if (!window.selectedBroadcastType) {
         App.utils.showGlobalAlert("방송 유형을 선택해 주세요.", "warning");
         return;
     }
 
+    // ✅ 대상 스피커 선택 체크 (체크리스트/카드 둘 다 포함)
+    const speakerCodes = getSelectedSpeakerCodes();
+    if (!speakerCodes || speakerCodes.length === 0) {
+        App.utils.showGlobalAlert("방송 대상을 선택해 주세요.", "warning");
+        return;
+    }
+
     // 사용자정의 처리
-    if (selectedBroadcastType === "CUSTOM") {
+    if (window.selectedBroadcastType === "CUSTOM") {
         const msg = (document.getElementById("customMessageText")?.value ?? "").trim();
         if (!msg) {
             App.utils.showGlobalAlert("사용자 정의 메시지를 입력해 주세요.", "warning");
@@ -273,7 +449,7 @@ function startBroadcast() {
         const typeInfo = {
             title: "사용자정의",
             type: "normal",
-            audioFile: "",     // 사용자정의는 오디오 없이 처리(필요하면 지정)
+            audioFile: "",
             text: msg
         };
 
@@ -294,7 +470,7 @@ function startBroadcast() {
     }
 
     // ✅ dstCode로 DB 데이터 찾기
-    const disaster = (disasterCache ?? []).find((d) => String(d.dstCode) === String(selectedBroadcastType));
+    const disaster = (disasterCache ?? []).find((d) => String(d.dstCode) === String(window.selectedBroadcastType));
     if (!disaster) {
         App.utils.showGlobalAlert("유효한 방송 유형이 아닙니다. (재난 코드 없음)", "danger");
         return;
@@ -303,7 +479,6 @@ function startBroadcast() {
     const { type } = mapDisasterStyle(disaster);
     const audioFile = (disaster.dstStoCode ?? "").trim() || (disaster.dstSirenCode ?? "").trim() || "";
 
-    // 기존 로직 유지: audioFile 없으면 막기(원하면 여기서 메시지방송만 허용 가능)
     if (!audioFile) {
         App.utils.showGlobalAlert("해당 재난 코드에 저장코드/사이렌코드가 없습니다.", "warning");
         return;
@@ -312,13 +487,12 @@ function startBroadcast() {
     const typeInfo = {
         title: disaster.dstName,
         type,
-        audioFile,               // ✅ proceedBroadcast에서 /audio/{audioFile}로 재생
+        audioFile,
         text: disaster.dstStoreMsg,
         dstCode: disaster.dstCode
     };
 
     const offlineList = getOfflineSpeakers();
-
     if (offlineList.length > 0) {
         const names = offlineList.map((sp) => sp.speakerName || sp.speakerCode).join(", ");
         edsConfirm(
@@ -334,68 +508,76 @@ function startBroadcast() {
 }
 
 function proceedBroadcast(typeInfo) {
+    // audio, broadcastInProgress 는 기존처럼 전역이라고 가정 (없으면 window에 생성)
+    if (typeof window.audio === "undefined") window.audio = null;
+    if (typeof window.broadcastInProgress === "undefined") window.broadcastInProgress = false;
+
     const audioSrc = `/audio/${typeInfo.audioFile}`;
 
-    if (audio) {
-        audio.pause();
-        audio.currentTime = 0;
+    if (window.audio) {
+        window.audio.pause();
+        window.audio.currentTime = 0;
     }
 
     // 사용자정의(오디오 없음)일 수도 있으니 방어
     if (!typeInfo.audioFile) {
-        // 오디오 없이 진행바만 짧게 표시
         const progressContainer = document.getElementById("broadcastProgress");
         const progressFill = document.getElementById("progressFill");
         const progressText = document.getElementById("progressText");
 
-        progressContainer.classList.remove("d-none");
-        progressFill.style.width = "100%";
-        progressText.textContent = "100%";
+        if (progressContainer && progressFill && progressText) {
+            progressContainer.classList.remove("d-none");
+            progressFill.style.width = "100%";
+            progressText.textContent = "100%";
+        }
 
         const speakerCodes = getSelectedSpeakerCodes();
         logBroadcastStart(typeInfo, speakerCodes);
 
         setTimeout(() => {
-            progressContainer.classList.add("d-none");
+            if (progressContainer) progressContainer.classList.add("d-none");
             resetSelection();
         }, 800);
         return;
     }
 
-    audio = new Audio(audioSrc);
+    window.audio = new Audio(audioSrc);
 
     const progressContainer = document.getElementById("broadcastProgress");
     const progressFill = document.getElementById("progressFill");
     const progressText = document.getElementById("progressText");
 
-    progressContainer.classList.remove("d-none");
-    progressFill.style.width = "0%";
-    progressText.textContent = "0%";
-    broadcastInProgress = true;
+    if (progressContainer && progressFill && progressText) {
+        progressContainer.classList.remove("d-none");
+        progressFill.style.width = "0%";
+        progressText.textContent = "0%";
+    }
+
+    window.broadcastInProgress = true;
 
     // 🔥 로그 저장 호출
     const speakerCodes = getSelectedSpeakerCodes();
     logBroadcastStart(typeInfo, speakerCodes);
 
-    audio.play().then(() => {
-        const duration = audio.duration;
-        audio.addEventListener("timeupdate", () => {
-            if (!broadcastInProgress || audio.paused || audio.ended) {
-                progressFill.style.width = "100%";
-                progressText.textContent = "100%";
-                progressContainer.classList.add("d-none");
-                broadcastInProgress = false;
+    window.audio.play().then(() => {
+        const duration = window.audio.duration;
+        window.audio.addEventListener("timeupdate", () => {
+            if (!window.broadcastInProgress || window.audio.paused || window.audio.ended) {
+                if (progressFill) progressFill.style.width = "100%";
+                if (progressText) progressText.textContent = "100%";
+                if (progressContainer) progressContainer.classList.add("d-none");
+                window.broadcastInProgress = false;
                 resetSelection();
                 return;
             }
 
-            const percent = (audio.currentTime / duration) * 100;
-            progressFill.style.width = `${percent}%`;
-            progressText.textContent = `${percent.toFixed(1)}%`;
+            const percent = (window.audio.currentTime / duration) * 100;
+            if (progressFill) progressFill.style.width = `${percent}%`;
+            if (progressText) progressText.textContent = `${percent.toFixed(1)}%`;
         });
     }).catch(() => {
         App.utils.showGlobalAlert("오디오 재생 실패", "danger");
-        progressContainer.classList.add("d-none");
+        if (progressContainer) progressContainer.classList.add("d-none");
     });
 }
 
@@ -403,18 +585,18 @@ function proceedBroadcast(typeInfo) {
  * 방송 중지
  * ========================= */
 function stopBroadcast() {
-    if (!broadcastInProgress) {
+    if (!window.broadcastInProgress) {
         App.utils.showGlobalAlert("진행 중인 방송이 없습니다.", "warning");
         return;
     }
 
-    broadcastInProgress = false;
-    if (audio) {
-        audio.pause();
-        audio.currentTime = 0;
+    window.broadcastInProgress = false;
+    if (window.audio) {
+        window.audio.pause();
+        window.audio.currentTime = 0;
     }
 
-    document.getElementById("broadcastProgress").classList.add("d-none");
+    document.getElementById("broadcastProgress")?.classList.add("d-none");
     App.utils.showGlobalAlert("방송이 중지되었습니다.", "success");
 }
 
@@ -422,12 +604,14 @@ function stopBroadcast() {
  * 테스트 방송
  * ========================= */
 function testBroadcast() {
-    if (selectedSpeakers.length === 0) {
+    // 체크리스트/카드 모두 반영
+    const codes = getSelectedSpeakerCodes();
+    if (!codes || codes.length === 0) {
         App.utils.showGlobalAlert("테스트할 스피커를 선택해주세요.", "warning");
         return;
     }
 
-    const speakers = selectedSpeakers.includes("all") ? "전체 스피커" : selectedSpeakers.join(", ");
+    const speakers = (codes.length === (window.speakerList || []).length) ? "전체 스피커" : codes.join(", ");
     App.utils.showGlobalAlert(`${speakers}에서 테스트 방송 시작`, "info");
 }
 
@@ -435,25 +619,36 @@ function testBroadcast() {
  * 방송 선택 초기화
  * ========================= */
 function resetSelection() {
-    selectedSpeakers = [];
+    // 기존 카드 선택 초기화
+    if (Array.isArray(window.selectedSpeakers)) window.selectedSpeakers = [];
     document.querySelectorAll(".speaker-card").forEach((card) => {
         card.classList.remove("selected");
     });
 
-    selectedBroadcastType = null;
+    // 체크리스트 초기화(있으면)
+    clearTargetSpeakers();
+
+    // 방송 타입 초기화
+    window.selectedBroadcastType = null;
     document.querySelectorAll(".broadcast-type").forEach((el) => {
         el.classList.remove("selected");
     });
 
-    document.getElementById("customMessageArea").style.display = "none";
-    document.getElementById("customMessageText").value = "";
+    const customArea = document.getElementById("customMessageArea");
+    if (customArea) customArea.style.display = "none";
+
+    const customText = document.getElementById("customMessageText");
+    if (customText) customText.value = "";
 
     const infoArea = document.getElementById("selectedBroadcastInfo");
-    infoArea.style.display = "none";
+    if (infoArea) infoArea.style.display = "none";
 
-    document.getElementById("selectedBroadcastTitle").innerText = "-";
-    document.getElementById("selectedBroadcastMessage").innerText = "";
-    document.getElementById("selectedBroadcastAudio").innerText = "";
+    const t = document.getElementById("selectedBroadcastTitle");
+    const m = document.getElementById("selectedBroadcastMessage");
+    const a = document.getElementById("selectedBroadcastAudio");
+    if (t) t.innerText = "-";
+    if (m) m.innerText = "";
+    if (a) a.innerText = "";
 }
 
 /* =========================
@@ -463,8 +658,8 @@ function edsConfirm(message, onConfirm) {
     const msgEl = document.getElementById("edsConfirmMessage");
     const titleEl = document.getElementById("edsConfirmTitle");
 
-    msgEl.innerHTML = message;
-    titleEl.innerText = "확인";
+    if (msgEl) msgEl.innerHTML = message;
+    if (titleEl) titleEl.innerText = "확인";
 
     const okBtn = document.getElementById("edsConfirmOk");
     const cancelBtn = document.getElementById("edsConfirmCancel");
@@ -472,18 +667,22 @@ function edsConfirm(message, onConfirm) {
     const modalEl = document.getElementById("edsConfirmModal");
     const modal = new bootstrap.Modal(modalEl);
 
-    okBtn.onclick = () => {
-        modal.hide();
-        if (onConfirm) onConfirm();
-    };
+    if (okBtn) {
+        okBtn.onclick = () => {
+            modal.hide();
+            if (onConfirm) onConfirm();
+        };
+    }
+    if (cancelBtn) cancelBtn.onclick = () => modal.hide();
 
-    cancelBtn.onclick = () => modal.hide();
     modal.show();
 }
 
+/** ✅ 오프라인 스피커 찾기 (체크리스트/카드 선택 모두 반영) */
 function getOfflineSpeakers() {
-    return speakerList
-        .filter((sp) => selectedSpeakers.includes(sp.id))
+    const codes = getSelectedSpeakerCodes();
+    return (window.speakerList || [])
+        .filter((sp) => codes.includes(String(sp.id)))
         .filter((sp) => sp.connStat !== "01"); // 01 = 정상
 }
 
@@ -567,9 +766,9 @@ function renderBroadcastLogs() {
         const level = item.level || "info";
         const badgeClass =
             level === "success" ? "bg-success" :
-            level === "warning" ? "bg-warning text-dark" :
-            level === "error" ? "bg-danger" :
-            "bg-primary";
+                level === "warning" ? "bg-warning text-dark" :
+                    level === "error" ? "bg-danger" :
+                        "bg-primary";
 
         div.className = "border rounded-3 p-2";
         div.innerHTML = `
@@ -616,7 +815,8 @@ function refreshBroadcastLogs() {
  * ========================= */
 document.addEventListener("DOMContentLoaded", async () => {
     try {
-        renderSpeakerCards();
+        renderSpeakerCards();     // 기존 카드 UI
+        bindTargetSpeakerUI();    // ✅ 체크리스트 UI (있으면)
         await renderBroadcastTypes();
     } catch (e) {
         console.error("init error:", e);

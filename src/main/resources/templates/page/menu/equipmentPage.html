@@ -221,7 +221,47 @@
                                         방송 대상 선택
                                     </span>
                                 </div>
-                                <div class="speaker-grid h-100 overflow-auto text-wrap" id="speaker-card-container"></div>
+                                <!-- <div class="speaker-grid h-100 overflow-auto text-wrap" id="speaker-card-container"></div> -->
+                                <!-- ✅ 추가: 대상 선택 UI -->
+                                <div class="p-3 d-flex flex-column flex-grow-1" style="min-height:0;">
+                                    <!-- 검색/전체선택 -->
+                                    <div class="d-flex gap-2 align-items-center mb-2">
+                                        <input id="targetSpeakerSearch"
+                                            type="text"
+                                            class="form-control form-control-sm"
+                                            placeholder="스피커 검색 (이름/ID/지역)">
+
+                                        <div class="form-check ms-1 flex-shrink-0">
+                                            <input class="form-check-input" type="checkbox" id="targetSpeakerSelectAll">
+                                            <label class="form-check-label small text-white-50" for="targetSpeakerSelectAll">
+                                                전체
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- 리스트 영역(스크롤) -->
+                                    <div class="flex-grow-1 overflow-auto pe-1" style="min-height:0;">
+                                        <div id="targetSpeakerList" class="d-flex flex-column gap-2">
+                                            <!-- JS로 렌더링: 체크박스 리스트 -->
+                                        </div>
+
+                                        <!-- 빈 상태 -->
+                                        <div id="targetSpeakerEmpty" class="text-center py-5 text-white-50 d-none">
+                                            <i class="bi bi-inbox fs-1 opacity-50"></i>
+                                            <div class="mt-2">표시할 스피커가 없습니다</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 선택 정보 -->
+                                    <div class="mt-2 pt-2 border-top border-white-10 d-flex justify-content-between align-items-center">
+                                        <small class="text-white-50">
+                                            선택: <span id="selectedTargetSpeakerCount">0</span>대
+                                        </small>
+                                        <button class="btn btn-sm btn-outline-light" type="button" onclick="clearTargetSpeakers()">
+                                            선택 해제
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="col-12 col-xl-8 h-100 d-flex">

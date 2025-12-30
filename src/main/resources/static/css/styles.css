@@ -15991,6 +15991,12 @@ body {
   min-height: 220px;
 }
 
+#broadcastCardList.is-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* 화면 높이가 작은 경우: 내부만 쥐어짜지 말고 전체 스크롤 허용 */
 /* @media (max-height: 820px) {
   .dispatch-history-wrap {

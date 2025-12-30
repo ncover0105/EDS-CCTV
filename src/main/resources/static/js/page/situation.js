@@ -47,8 +47,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     // 특이사항/상황은 기존 유지
     specialData = generateRandomSpecialData();
 
-    const view = document.body.dataset.view || 'none';
-    renderView(view, currentPage);
+    // const view = document.body.dataset.view || 'none';
+    renderView(currentView, currentPage);
 
     if (window.App?.utils?.fillDateTimeInputs) {
         App.utils.fillDateTimeInputs();
@@ -292,34 +292,40 @@ function normalizePriority(p) {
 
 // ==================== 카드 렌더 ====================
 function renderBroadcastCards() {
-    const container = document.getElementById('broadcastCardList');
-    if (!container) {
-        console.error('broadcastCardList not found');
-        return;
-    }
+  const listEl = document.getElementById('broadcastCardList');      // 스크롤 컨테이너
+  const emptyEl = document.getElementById('broadcastEmptyState');   // 빈 상태 영역
+  const itemsEl = document.getElementById('broadcastCardItems');    // 카드 붙일 영역
 
-    container.innerHTML = '';
+  if (!listEl || !emptyEl || !itemsEl) {
+      console.error('broadcast elements not found');
+      return;
+  }
 
-    // ✅ 데이터 없을 때 표시
-    if (broadcastFiltered.length === 0) {
-        container.innerHTML = `
-            <div class="text-center py-5 text-secondary">
-                <i class="bi bi-broadcast display-1 opacity-50 mb-3"></i>
-                <h5 class="mb-1">발령 이력이 없습니다</h5>
-                <p class="mb-0 small">검색 조건을 변경하여 확인해보세요</p>
-            </div>
-        `;
-        updateBroadcastStats([]);
-        return;
-    }
+  // ✅ 카드 영역만 비우기 (컨테이너 전체 innerHTML 삭제 금지)
+  itemsEl.innerHTML = '';
 
-    broadcastFiltered.forEach((item, index) => {
-        const card = createBroadcastCard(item, index);
-        container.appendChild(card);
-    });
+  // ✅ 데이터 없을 때: 중앙정렬 + empty 보여주기
+  if (!broadcastFiltered || broadcastFiltered.length === 0) {
+      listEl.classList.add('is-empty');
+      emptyEl.classList.remove('d-none');
+      itemsEl.classList.add('d-none'); // 선택: 카드영역 숨김
+      updateBroadcastStats([]);
+      return;
+  }
 
-    updateBroadcastStats(broadcastFiltered);
+  // ✅ 데이터 있을 때: 원복
+  listEl.classList.remove('is-empty');
+  emptyEl.classList.add('d-none');
+  itemsEl.classList.remove('d-none');
+
+  broadcastFiltered.forEach((item, index) => {
+      const card = createBroadcastCard(item, index);
+      itemsEl.appendChild(card);
+  });
+
+  updateBroadcastStats(broadcastFiltered);
 }
+
 
 // 운영용 컬러 안정(튀지 않게)
 function getPriorityChipStyle(priority) {

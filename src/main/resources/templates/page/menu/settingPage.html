@@ -607,136 +607,162 @@
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- 스케줄 모달 -->
-        <div class="modal fade" id="scheduleModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-                <form id="schedule-form" class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="scheduleModalLabel">새 스케줄 추가</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body p-3">
-                    <!-- 시간 설정 -->
-                    <div class="row mb-3">
-                        <div class="col-6">
-                        <label class="form-label fw-medium">시작 시간 <span class="text-danger">*</span></label>
-                        <input type="time" class="form-control" name="startTime" required>
+            <!-- 스케줄 모달 -->
+            <div class="modal fade" id="scheduleModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+                    <form id="schedule-form" class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="scheduleModalLabel">새 스케줄 추가</h5>
+                            <!-- <button type="button" class="btn-close" data-bs-dismiss="modal"></button> -->
                         </div>
-                        <div class="col-6">
-                        <label class="form-label fw-medium">종료 시간 <span class="text-danger">*</span></label>
-                        <input type="time" class="form-control" name="endTime" required>
+                
+                        <div class="modal-body p-3">
+                        <!-- 시간 설정 -->
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <label class="form-label fw-medium">시작 시간 <span class="text-danger">*</span></label>
+                                <input type="time" class="form-control" name="startTime" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-medium">종료 시간 <span class="text-danger">*</span></label>
+                                <input type="time" class="form-control" name="endTime" required>
+                            </div>
                         </div>
-                    </div>
-            
-                    <!-- 재생 종류 -->
-                    <div class="mb-3">
-                        <label class="form-label fw-medium">재생 종류 <span class="text-danger">*</span></label>
-                        <div class="radio-group">
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="playType" id="typeBgm" value="BGM" checked>
-                            <label class="form-check-label" for="typeBgm">BGM</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="playType" id="typeRadio" value="라디오">
-                            <label class="form-check-label" for="typeRadio">라디오</label>
-                        </div>
-                        </div>
-                    </div>
-            
-                    <!-- BGM 폴더명 -->
-                    <div class="mb-3" id="bgm-section">
-                        <label class="form-label fw-medium">BGM 폴더명 <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="bgmFolder" placeholder="예: 매장음악/클래식">
-                    </div>
-            
-                    <!-- 라디오 정보 -->
-                    <div class="row mb-3 d-none" id="radio-section">
-                        <div class="col-6">
-                        <label class="form-label fw-medium">라디오 채널 <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="radioChannel" placeholder="예: KBS 1FM">
-                        </div>
-                        <div class="col-6">
-                        <label class="form-label fw-medium">지역 <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="radioRegion" placeholder="예: 서울">
-                        </div>
-                    </div>
-            
-                    <!-- 요일 선택 -->
-                    <div class="mb-3">
-                        <label class="form-label fw-medium d-block">요일 선택 <span class="text-danger">*</span></label>
-                        <div class="d-flex gap-2 w-100" role="group" id="weekdays">
+                
+                        <!-- 요일 선택 -->
+                        <div class="mb-3">
+                            <label class="form-label fw-medium d-block">요일 선택 <span class="text-danger">*</span></label>
+                            <div class="d-flex gap-2 w-100" role="group" id="weekdays">
                             <!-- JS로 생성됨 -->
+                            </div>
                         </div>
-                    </div>
-            
-                    <!-- 반복재생 -->
-                    <div class="mb-3">
-                        <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="isRepeat" id="isRepeat">
-                        <label class="form-check-label fw-medium" for="isRepeat">반복 재생</label>
+                
+                        <!-- 반복 -->
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="isRepeat" id="isRepeat">
+                                <label class="form-check-label fw-medium" for="isRepeat">반복 실행</label>
+                            </div>
                         </div>
-                    </div>
-            
-                    <!-- 단말 추가 -->
-                    <hr class="my-4">
-                    <h6 class="fw-bold mb-3">단말 정보 추가</h6>
-                    <div class="row g-2 mb-2">
-                        <div class="col-4">
-                        <input type="text" class="form-control form-control-sm" id="deviceName" placeholder="단말기명">
+                
+                        <!-- 발령 설정 -->
+                        <hr class="my-4">
+                        <h6 class="fw-bold mb-3">발령 설정</h6>
+                
+                        <div class="row g-2 mb-2">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-medium">방송 모드 <span class="text-danger">*</span></label>
+                                <select id="sc_mode" class="form-select" required>
+                                    <option value="REAL">실제 방송</option>
+                                    <option value="TEST">시험 방송</option>
+                                </select>
+                            </div>
+                
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-medium">경보 종류 <span class="text-danger">*</span></label>
+                                <select id="sc_alert_type" class="form-select" required>
+                                    <option value="CFW">CFW</option>
+                                    <option value="ACL">ACL</option>
+                                </select>
+                            </div>
+                
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-medium">방송 종류 <span class="text-danger">*</span></label>
+                                <select id="sc_broadcast_type" class="form-select" required>
+                                    <option value="TTS">TTS</option>
+                                    <option value="STORED">저장메시지</option>
+                                    <option value="ETC">기타</option>
+                                </select>
+                            </div>
+                
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-medium">우선순위 <span class="text-danger">*</span></label>
+                                <select id="sc_priority" class="form-select" required>
+                                    <option value="NONE">없음</option>
+                                    <option value="CAUTION">주의</option>
+                                    <option value="WARNING">경계</option>
+                                    <option value="DANGER">위험</option>
+                                </select>
+                            </div>
+                
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-medium">방송 범위 <span class="text-danger">*</span></label>
+                                <select id="sc_scope" class="form-select" required>
+                                    <option value="SIDO">시/도</option>
+                                    <option value="GUN">군/구</option>
+                                    <option value="SPEAKER" selected>스피커</option>
+                                </select>
+                            </div>
+                
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-medium">재난 선택 <span class="text-danger">*</span></label>
+                                <select id="sc_disaster" class="form-select" required>
+                                    <option value="" selected>재난을 선택하세요</option>
+                                </select>
+                            </div>
+                
+                            <!-- ✅ TTS 메시지: 방송 종류가 TTS일 때만 표시 -->
+                            <div class="col-12 d-none" id="ttsSection">
+                                <label class="form-label fw-medium">TTS 메시지 <span class="text-danger">*</span></label>
+                                <textarea id="sc_tts" class="form-control" rows="3"
+                                    placeholder="예: 현재 ○○지역에 호우경보가 발효되었습니다. 안전한 장소로 이동하세요."></textarea>
+                                <small class="text-muted">방송 종류가 TTS일 때만 입력합니다.</small>
+                            </div>
                         </div>
-                        <div class="col-4">
-                        <input type="text" class="form-control form-control-sm" id="deviceAuthIp" placeholder="인증 IP">
+                
+                        <!-- ✅ 스피커 선택(단말 입력 대신) -->
+                        <hr class="my-4">
+                        <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                            <h6 class="fw-bold mb-0">스피커 선택</h6>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="speakerReloadBtn">
+                                    <i class="bi bi-arrow-clockwise me-1"></i> 새로고침
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="speakerSelectAllBtn">
+                                    전체선택
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="speakerClearBtn">
+                                    선택해제
+                                </button>
+                            </div>
                         </div>
-                        <div class="col-4">
-                        <input type="text" class="form-control form-control-sm" id="deviceType" placeholder="구분">
+                
+                        <div class="input-group input-group-sm mb-2">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control" id="speakerSearch" placeholder="스피커명/설치주소/코드 검색">
                         </div>
-                    </div>
-                    <div class="row g-2 mb-2">
-                        <div class="col-4">
-                        <input type="text" class="form-control form-control-sm" id="deviceManufacturer" placeholder="제조사">
+                
+                        <div class="table-responsive border rounded" style="max-height: 320px;">
+                            <table class="table table-hover align-middle mb-0 w-100">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th style="width:44px;">
+                                            <input class="form-check-input" type="checkbox" id="speakerHeaderCheck">
+                                        </th>
+                                        <th>스피커명</th>
+                                        <th>ID</th>
+                                        <th>설치주소</th>
+                                        <th>상태</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="speakerPickTbody">
+                                    <!-- JS 렌더 -->
+                                </tbody>
+                            </table>
                         </div>
-                        <div class="col-4">
-                        <input type="text" class="form-control form-control-sm" id="deviceLte" placeholder="LTE번호">
+                
+                        <div class="small text-muted mt-2">
+                            선택된 스피커: <b id="speakerPickedCount">0</b>개
                         </div>
-                        <div class="col-4">
-                        <input type="text" class="form-control form-control-sm" id="deviceLocation" placeholder="설치위치">
+                
                         </div>
-                    </div>
-                    <div class="d-grid mb-3">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="addDeviceBtn">
-                        <i class="bi bi-plus-lg me-1"></i> 단말 추가
-                        </button>
-                    </div>
-            
-                    <!-- 등록된 단말 목록 -->
-                    <div id="deviceTableWrapper" style="display:none;">
-                        <p class="small fw-medium text-secondary mb-2">등록된 단말 (<span id="deviceCount">0</span>)</p>
-                        <div class="table-responsive" style="max-height: 300px;">
-                        <table class="table table-sm table-bordered table-hover align-middle mb-0">
-                            <thead class="table-light sticky-top">
-                            <tr>
-                                <th>단말기명</th>
-                                <th>IP</th>
-                                <th>구분</th>
-                                <th>제조사</th>
-                                <th>LTE</th>
-                                <th>위치</th>
-                                <th width="50"></th>
-                            </tr>
-                            </thead>
-                            <tbody id="deviceTable"></tbody>
-                        </table>
+                
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary flex-fill" id="submitBtn">저장</button>
+                            <button type="button" class="btn btn-secondary flex-fill" data-bs-dismiss="modal">취소</button>
                         </div>
-                    </div>
-                    </div>
-            
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary flex-fill" id="submitBtn">추가하기</button>
-                        <button type="button" class="btn btn-secondary flex-fill" data-bs-dismiss="modal">취소</button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
 

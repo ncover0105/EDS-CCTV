@@ -1,17 +1,15 @@
 // setting_sms.js
 // SMS 알림 설정(UserEntity: eventAlertYn / warnAlertYn / alertEnabledYn) 관리
-// - 등록: 선택 1명 → 모달 오픈(기본 alertEnabledYn=Y)
-// - 수정: 선택 1명 → 모달 오픈(현재 값 로드)
+// - 등록: 모달 빈값(사용자ID 직접 입력) + 저장(PATCH)
+// - 수정: 선택 1명 → 모달에 선택 데이터 채움 + 저장(PATCH)
 // - 삭제: 선택 N명 → 미사용 처리(배치) alertEnabledYn=N, event/warn=N
 // API:
 //   PATCH /api/users/sms/{id}
 //   POST  /api/users/sms/disable-batch
 
 (function () {
-  // ===== DOM helpers =====
   const $ = (id) => document.getElementById(id);
 
-  // settingPage.html에 currentView가 있으면 sms 뷰에서만 동작
   const isSmsView = () => {
     try {
       return typeof currentView === "undefined" || currentView === "sms";
@@ -41,15 +39,16 @@
     return tbody.querySelector(`tr[data-user-id="${CSS.escape(userId)}"]`);
   }
 
-  // ===== Table parsing (현재 화면값 → Y/N) =====
+  // 화면의 badge 텍스트 기반으로 Y/N 읽기
   function readYnFromCell(td) {
     const text = (td?.textContent || "").trim();
-    // 배지 텍스트가 "사용"/"미사용" 형태라면 이 방식이 가장 단순
-    return text.includes("사용") && !text.includes("미사용") ? "Y" : (text.includes("미사용") ? "N" : (text.includes("사용") ? "Y" : "N"));
+    // "미사용" 포함이면 N, 그 외 "사용"이면 Y
+    if (text.includes("미사용")) return "N";
+    if (text.includes("사용")) return "Y";
+    return "N";
   }
 
   function getUserInfoFromRow(tr) {
-    // 컬럼 예상:
     // [0] checkbox, [1] no, [2] name, [3] phnNo, [4] event, [5] warn, [6] enabled
     const tds = tr ? tr.querySelectorAll("td") : null;
     if (!tds || tds.length < 7) return null;
@@ -65,7 +64,9 @@
     return { id, name, phnNo, eventAlertYn, warnAlertYn, alertEnabledYn };
   }
 
-  // ===== Modal helpers =====
+  // ===== Modal =====
+  let modalMode = "insert"; // "insert" | "edit"
+
   function syncChildTogglesByEnabled() {
     const enabled = $("modalAlertEnabled")?.checked;
 
@@ -76,23 +77,53 @@
     ev.disabled = !enabled;
     wa.disabled = !enabled;
 
-    // 정책: 전체 알림이 OFF면 하위 2개도 OFF로 강제
     if (!enabled) {
       ev.checked = false;
       wa.checked = false;
     }
   }
 
-  function openSmsModal(userInfo, mode) {
+  function openSmsModalEmpty() {
     const modalEl = $("smsEditModal");
     if (!modalEl) {
       alert("smsEditModal이 없습니다.");
       return;
     }
 
-    const titleEl = $("smsEditModalLabel");
-    if (titleEl) titleEl.textContent = (mode === "insert") ? "SMS 알림 등록" : "SMS 알림 수정";
+    modalMode = "insert";
 
+    const titleEl = $("smsEditModalLabel");
+    if (titleEl) titleEl.textContent = "SMS 알림 등록";
+
+    // ✅ 등록: 전부 비움
+    $("modalUserId").value = "";
+    $("modalUserName").value = "";
+    $("modalUserPhn").value = "";
+
+    $("modalEventAlert").checked = false;
+    $("modalWarnAlert").checked = false;
+    $("modalAlertEnabled").checked = true; // 기본은 사용
+
+    // 등록에서는 ID를 입력해야 하므로 활성화
+    $("modalUserId").readOnly = false;
+
+    syncChildTogglesByEnabled();
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+  }
+
+  function openSmsModalWithData(userInfo) {
+    const modalEl = $("smsEditModal");
+    if (!modalEl) {
+      alert("smsEditModal이 없습니다.");
+      return;
+    }
+
+    modalMode = "edit";
+
+    const titleEl = $("smsEditModalLabel");
+    if (titleEl) titleEl.textContent = "SMS 알림 수정";
+
+    // ✅ 수정: 선택 데이터 채움
     $("modalUserId").value = userInfo.id;
     $("modalUserName").value = userInfo.name || "-";
     $("modalUserPhn").value = userInfo.phnNo || "-";
@@ -101,8 +132,10 @@
     $("modalWarnAlert").checked = userInfo.warnAlertYn === "Y";
     $("modalAlertEnabled").checked = userInfo.alertEnabledYn === "Y";
 
-    syncChildTogglesByEnabled();
+    // 수정에서는 ID 변경 못하게
+    $("modalUserId").readOnly = true;
 
+    syncChildTogglesByEnabled();
     bootstrap.Modal.getOrCreateInstance(modalEl).show();
   }
 
@@ -114,7 +147,6 @@
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error(await res.text());
-    // controller가 Entity를 리턴할 수도 / Void일 수도 있으니 유연하게 처리
     return res.text().catch(() => "");
   }
 
@@ -132,26 +164,13 @@
     location.reload();
   }
 
-  // ===== Actions (등록/수정/삭제) =====
+  // ===== Actions =====
+  // 등록: 선택 없이 빈 모달
   window.smsInsert = function smsInsert() {
-    const selected = getSelectedSmsUserIds();
-    if (selected.length !== 1) {
-      alert("등록은 1명만 선택하세요.");
-      return;
-    }
-
-    const tr = getRowByUserId(selected[0]);
-    const info = getUserInfoFromRow(tr);
-    if (!info) {
-      alert("선택된 사용자를 찾을 수 없습니다.");
-      return;
-    }
-
-    // 등록 의미: 기본 enabled=Y로 켜고 시작(필요하면 정책 변경)
-    info.alertEnabledYn = "Y";
-    openSmsModal(info, "insert");
+    openSmsModalEmpty();
   };
 
+  // 수정: 선택 1명 → 값 채워서 모달
   window.smsUpdate = function smsUpdate() {
     const selected = getSelectedSmsUserIds();
     if (selected.length !== 1) {
@@ -166,10 +185,10 @@
       return;
     }
 
-    openSmsModal(info, "edit");
+    openSmsModalWithData(info);
   };
 
-  // 삭제 의미: 알림 미사용(soft)
+  // 삭제(미사용): 선택 N명
   window.smsDelete = async function smsDelete() {
     const selected = getSelectedSmsUserIds();
     if (selected.length === 0) {
@@ -191,8 +210,9 @@
   // ===== Modal save =====
   async function onSaveModal() {
     const userId = $("modalUserId")?.value?.trim();
-    if (!userId) return alert("사용자 ID가 없습니다.");
+    if (!userId) return alert("사용자 ID를 입력하세요.");
 
+    // (등록 모드에서) 이름/전화는 참고용 표시일 수도 있어서 서버로는 안 보냄
     const alertEnabledYn = $("modalAlertEnabled").checked ? "Y" : "N";
     const eventAlertYn = $("modalEventAlert").checked ? "Y" : "N";
     const warnAlertYn = $("modalWarnAlert").checked ? "Y" : "N";
@@ -215,10 +235,32 @@
     }
   }
 
-  // ===== Bind events =====
+  function bindRowClickSelection() {
+    const tbody = document.getElementById("smsUserList");
+    if (!tbody) return;
+  
+    tbody.querySelectorAll("tr").forEach((tr) => {
+      const checkbox = tr.querySelector('input.alert-toggle[type="checkbox"]');
+      if (!checkbox) return;
+  
+      // ✅ row 클릭 시 체크박스 토글
+      tr.addEventListener("click", () => {
+        checkbox.checked = !checkbox.checked;
+        tr.classList.toggle("table-active", checkbox.checked);
+      });
+  
+      // ✅ 체크박스 직접 클릭 시 row 클릭 이벤트 중복 방지
+      checkbox.addEventListener("click", (e) => {
+        e.stopPropagation(); // row 클릭 이벤트 막기
+        tr.classList.toggle("table-active", checkbox.checked);
+      });
+    });
+  }  
+
+  // ===== Bind =====
   function bindSmsEvents() {
-    // (추천) SMS 버튼 id는 충돌 방지를 위해 sms_btn_* 사용
-    // 만약 네 HTML이 id="btn-edit" 같은 공용 id라면 꼭 분리해줘야 함.
+    // 버튼 id는 충돌 방지를 위해 SMS 전용을 권장
+    // (둘 중 존재하는 걸 잡도록)
     const btnAdd = $("sms_btn_register") || $("sms-btn-register");
     const btnEdit = $("sms_btn_edit") || $("sms-btn-edit");
     const btnDel = $("sms_btn_disable") || $("sms-btn-disable");
@@ -234,5 +276,6 @@
   document.addEventListener("DOMContentLoaded", () => {
     if (!isSmsView()) return;
     bindSmsEvents();
+    bindRowClickSelection();
   });
 })();

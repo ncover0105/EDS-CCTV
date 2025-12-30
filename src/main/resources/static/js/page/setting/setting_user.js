@@ -143,6 +143,7 @@
 
     const idEl = document.getElementById("editUserId");
     const pwEl = document.getElementById("editUserPw");
+    const nameEl = document.getElementById("editUserName");
     const pwField = document.getElementById("pwField"); // 권장 wrapper
     const phoneEl = document.getElementById("editUserPhone");
     const roleEl = document.getElementById("editUserRole");
@@ -174,7 +175,7 @@
         if (!pwField) pwEl.classList.add("d-none");
       }
     }
-
+    if (nameEl) nameEl.value = user?.name ?? "";
     // Phone
     if (phoneEl) phoneEl.value = user?.phnNo ?? "";
 

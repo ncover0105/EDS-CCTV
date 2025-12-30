@@ -12,7 +12,6 @@ import com.edscorp.eds.cctv.service.CameraCache;
 import com.edscorp.eds.cctv.service.CctvService;
 import com.edscorp.eds.common.domain.SystemSetting;
 import com.edscorp.eds.speaker.service.SpeakerService;
-import com.edscorp.eds.weather.service.WeatherService;
 import com.edscorp.eds.web.service.SystemSettingService;
 
 import lombok.RequiredArgsConstructor;
@@ -23,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MainController {
 
-    private final WeatherService weatherService;
     private final CameraCache cameraCache;
     // private final JanusManager janusManager;
     private final CctvService cctvService;
