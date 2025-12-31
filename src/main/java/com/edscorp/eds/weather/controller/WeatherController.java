@@ -102,6 +102,7 @@ public class WeatherController {
             @RequestParam(required = false) String wrn, // 예: "R"
             @RequestParam(required = false) String lvl, // 예: "2"
             @RequestParam(required = false) String cmd, // 예: "1"
+
             @RequestParam(required = false) String regId, // 예: "11H10701"
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,

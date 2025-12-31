@@ -8,10 +8,17 @@
 <head>
     <meta charset="UTF-8" />
     <title th:text="${title}">EDS</title>
-    <script src="/js/page/situation.js?v=1"></script>
+    <!-- <script src="/js/page/situation.js?v=1"></script> -->
     <script th:inline="javascript">
         const currentView = /*[[${view}]]*/ 'none';
     </script>
+    <!-- 공통 유틸 (항상 로드) -->
+    <script src="/js/page/situation/situation_common.js?v=1"></script>
+
+    <!-- view별로 필요한 파일만 로드 -->
+    <script th:if="${view == 'situation'}" src="/js/page/situation/situation_view.js?v=1"></script>
+    <script th:if="${view == 'broadcast'}" src="/js/page/situation/broadcast_view.js?v=1"></script>
+    <script th:if="${view == 'special'}"   src="/js/page/situation/special_view.js?v=1"></script>
 </head>
 <body>
     <div class="container-fluid p-3 text-nowrap" layout:fragment="content">
@@ -242,14 +249,31 @@
                             </div>
         
                             <div class="col-12 col-sm-6 col-lg-2">
-                                <label class="form-label small fw-semibold mb-1">상황 종류</label>
-                                <select class="form-select form-select-sm" id="modeType">
+                                <label class="form-label small fw-semibold mb-1">특보 종류</label>
+                                <select class="form-select form-select-sm" id="specialWrn">
                                     <option value="">전체</option>
-                                    <option value="화재">화재</option>
-                                    <option value="홍수">홍수</option>
-                                    <option value="지진">지진</option>
-                                    <option value="태풍">태풍</option>
-                                    <option value="기타">기타</option>
+                                    <option value="W">강풍</option>
+                                    <option value="R">호우</option>
+                                    <option value="C">한파</option>
+                                    <option value="D">건조</option>
+                                    <option value="O">해일</option>
+                                    <option value="N">지진해일</option>
+                                    <option value="V">풍랑</option>
+                                    <option value="T">태풍</option>
+                                    <option value="S">대설</option>
+                                    <option value="Y">황사</option>
+                                    <option value="H">폭염</option>
+                                    <option value="F">안개</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12 col-sm-6 col-lg-2">
+                                <label class="form-label small fw-semibold mb-1">특보 단계</label>
+                                <select class="form-select form-select-sm" id="specialLvl">
+                                    <option value="">전체</option>
+                                    <option value="1">예비</option>
+                                    <option value="2">주의보</option>
+                                    <option value="3">경보</option>
                                 </select>
                             </div>
         
@@ -288,7 +312,8 @@
                                             <th>특보 명</th>
                                             <th>특보 발생 시각</th>
                                             <th>특보 발생 지역</th>
-                                            <th>특보 발령 승인 상태</th>
+                                            <th>특보 발령</th>
+                                            <th>승인 상태</th>
                                             <th>특보 발령 여부</th>
                                         </tr>
                                     </thead>
@@ -302,6 +327,7 @@
                                         <col style="width: 5%;">
                                         <col style="width: 10%;">
                                         <col style="width: 25%;">
+                                        <col style="width: 20%;">
                                         <col style="width: 20%;">
                                         <col style="width: 20%;">
                                         <col style="width: 20%;">
