@@ -157,8 +157,8 @@
                                         </td>
                                         <td th:text="${iterStat.count}"></td>
                                         <td th:text="${user.id}"></td>
-                                        <td th:text="${user.name}"></td>
-                                        <td th:text="${user.phnNo}"></td>
+                                        <td th:text="${#strings.isEmpty(user.name) ? '-' : user.name}"></td>
+                                        <td th:text="${#strings.isEmpty(user.phnNo) ? '-' : user.phnNo}"></td>                                        
                                         <td>
                                             <span class="status-badge status-info" th:if="${user.role == 'USER'}">
                                                 <i class="bi bi-person"></i>
@@ -358,8 +358,8 @@
                                     <tr th:each="disaster, iterStat : ${disasterList}">
                                         <td><input type="checkbox" name="selectedIds" value="${disaster.dstCode}"></td>
                                         <td th:text="${iterStat.count}"></td>
-                                        <td th:text="${disaster.dstName}"></td>
-                                        <td th:text="${disaster.dstStoreMsg}" class="text-wrap"></td>
+                                        <td th:text="${#strings.isEmpty(disaster.dstName) ? '-' : disaster.dstName}"></td>
+                                        <td th:text="${#strings.isEmpty(disaster.dstStoreMsg) ? '-' : disaster.dstStoreMsg}" class="text-wrap"></td>
                                         <td>
                                             <span class="status-badge"
                                                     th:classappend="${'Use'.equals(disaster.dstUseFlag) ? 'status-success' : 'status-primary'}"
@@ -497,10 +497,10 @@
                                         <td class="text-center" th:text="${iterStat.count}"></td>
                                 
                                         <!-- 이름 -->
-                                        <td th:text="${user.name}"></td>
+                                        <td th:text="${#strings.isEmpty(user.name) ? '-' : user.name}"></td>
                                 
                                         <!-- 휴대폰 번호 -->
-                                        <td th:text="${user.phnNo}"></td>
+                                        <td th:text="${#strings.isEmpty(user.phnNo) ? '-' : user.phnNo}"></td>
                                 
                                         <!-- 상황 발생 알림 -->
                                         <td class="text-center">

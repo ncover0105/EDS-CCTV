@@ -11,7 +11,7 @@
     <script th:inline="javascript">
         /*<![CDATA[*/
         const currentView = /*[[${view}]]*/ 'speaker';
-        const speakerList = /*[[${speakerList}]]*/ [];
+        // const speakerList = /*[[${speakerList}]]*/ [];
         const broadcastList = /*[[${broadcastList}]]*/ [];
         /*]]>*/
     </script>
@@ -50,7 +50,7 @@
             <div class="tab-pane fade"
                 id="speaker-content"
                 th:classappend="${view == null or view == 'speaker'} ? 'show active' : ''">
-                <div class="row g-3 px-4 py-2">
+                <div class="row g-3 px-4 py-2 justify-content-center align-content-center">
                     <!-- Speaker List -->
                     <div class="col-xl-8 h-100">
                         <div class="card h-100 d-flex flex-column">
@@ -83,7 +83,7 @@
                                                 <th>설치 지역</th>
                                                 <th>위도</th>
                                                 <th>경도</th>
-                                                <th>발령 사용 여부</th>
+                                                <!-- <th>발령 사용 여부</th> -->
                                             </tr>
                                             </thead>
                                             <tbody id="speakerTableBody"></tbody>
@@ -213,7 +213,7 @@
                 id="broadcast-content"
                 th:classappend="${view == 'broadcast'} ? 'show active' : ''">
                 <div class="container">
-                    <div class="row flex-grow-1 g-3 py-3 h-100">
+                    <div class="row flex-grow-1 g-2">
                         <div class="col-12 col-xl-4 h-100">
                             <div class="glass-card card-dark animate-fade-in d-flex flex-column h-100">
                                 <div class="section-header">
@@ -223,7 +223,7 @@
                                 </div>
                                 <!-- <div class="speaker-grid h-100 overflow-auto text-wrap" id="speaker-card-container"></div> -->
                                 <!-- ✅ 추가: 대상 선택 UI -->
-                                <div class="p-3 d-flex flex-column flex-grow-1" style="min-height:0;">
+                                <div class="px-3 py-1 pb-2 d-flex flex-column flex-grow-1" style="min-height:0;">
                                     <!-- 검색/전체선택 -->
                                     <div class="d-flex gap-2 align-items-center mb-2">
                                         <input id="targetSpeakerSearch"
@@ -240,7 +240,7 @@
                                     </div>
 
                                     <!-- 리스트 영역(스크롤) -->
-                                    <div class="flex-grow-1 overflow-auto pe-1" style="min-height:0;">
+                                    <div class="flex-grow-1 overflow-auto pe-1 py-2" style="min-height:0;">
                                         <div id="targetSpeakerList" class="d-flex flex-column gap-2">
                                             <!-- JS로 렌더링: 체크박스 리스트 -->
                                         </div>
@@ -253,7 +253,8 @@
                                     </div>
 
                                     <!-- 선택 정보 -->
-                                    <div class="mt-2 pt-2 border-top border-white-10 d-flex justify-content-between align-items-center">
+                                    <!-- <div class="mt-2 pt-2 border-top border-white-10 d-flex justify-content-between align-items-center"> -->
+                                    <div class="mt-2 pt-2 d-flex justify-content-between align-items-center">
                                         <small class="text-white-50">
                                             선택: <span id="selectedTargetSpeakerCount">0</span>대
                                         </small>
@@ -266,7 +267,7 @@
                         </div>
                         <div class="col-12 col-xl-8 h-100 d-flex">
                             <!-- Broadcast Controls -->
-                            <div class="glass-card card-dark animate-fade-in d-flex flex-column h-100 w-100">
+                            <div class="glass-card card-dark animate-fade-in d-flex flex-column h-100 w-100 overflow-auto">
                                 <div class="section-header d-flex flex-wrap">
                                     <span class="section-title fw-semibold flex-grow-1 mb-2 mb-md-0">
                                         방송 종류 선택
@@ -285,16 +286,110 @@
                                             <i class="bi bi-trash"></i>
                                             <span class="ms-1 d-none d-sm-inline">삭제</span>
                                         </button>
-                                        <button class="btn btn-outline-light d-flex align-items-center" onclick="openBroadcastLogModal()">
+                                        <!-- <button class="btn btn-outline-light d-flex align-items-center" onclick="openBroadcastLogModal()">
                                             <i class="bi bi-journal-text"></i>
                                             <span class="ms-1 d-none d-sm-inline">방송 로그</span>
-                                        </button>
+                                        </button> -->
                                     </div>
                                     
                                 </div>
                                 
-                                <div class="broadcast-types" id="broadcastTypesContainer"></div>
-    
+                                <!-- ✅ 상단: 방송 종류 + 설정을 2열로 배치 -->
+                                <div class="px-3 pb-2">
+                                <div class="row g-3" style="min-height:0;">
+
+                                    <!-- 좌: 방송 종류 선택 -->
+                                    <div class="col-12 col-lg-6 d-flex flex-column" style="min-height:0;">
+                                        <div class="flex-grow-1 overflow-auto pe-1" style="min-height:0;">
+                                            <div class="broadcast-types" id="broadcastTypesContainer"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 우: 수동 발령 설정 -->
+                                    <div class="col-12 col-lg-6 d-flex flex-column" style="min-height:0;">
+                                        <div class="flex-grow-1 pe-1">
+                                            <!-- <h6 class="mb-2 text-white-50">수동 발령 설정</h6> -->
+
+                                            <div class="row g-3">
+                                            <!-- 실제/시험 -->
+                                            <div class="col-12 col-md-6">
+                                                <label class="form-label text-white-50">방송 모드</label>
+                                                <select id="bc_mode" class="form-select form-select-sm">
+                                                <option value="REAL">실제 방송</option>
+                                                <option value="TEST">시험 방송</option>
+                                                </select>
+                                            </div>
+
+                                            <!-- 경보 종류 -->
+                                            <div class="col-12 col-md-6">
+                                                <label class="form-label text-white-50">경보 종류</label>
+                                                <select id="bc_alert_type" class="form-select form-select-sm">
+                                                <option value="CFW">CFW</option>
+                                                <option value="ACL">ACL</option>
+                                                </select>
+                                            </div>
+
+                                            <!-- 방송 종류 -->
+                                            <div class="col-12 col-md-6">
+                                                <label class="form-label text-white-50">방송 종류</label>
+                                                <select id="bc_broadcast_type" class="form-select form-select-sm">
+                                                <option value="TTS">TTS</option>
+                                                <option value="STORED">저장메시지</option>
+                                                <option value="ETC">기타</option>
+                                                </select>
+                                            </div>
+
+                                            <!-- 우선순위 -->
+                                            <div class="col-12 col-md-6">
+                                                <label class="form-label text-white-50">우선순위</label>
+                                                <select id="bc_priority" class="form-select form-select-sm">
+                                                <option value="NONE">없음</option>
+                                                <option value="CAUTION">주의</option>
+                                                <option value="WARNING">경계</option>
+                                                <option value="DANGER">위험</option>
+                                                </select>
+                                            </div>
+
+                                            <!-- 방송 범위 -->
+                                            <div class="col-12 col-md-6">
+                                                <label class="form-label text-white-50">방송 범위</label>
+                                                <select id="bc_scope" class="form-select form-select-sm">
+                                                <option value="SIDO">시/도</option>
+                                                <option value="GUN">군/구</option>
+                                                <option value="SPEAKER" selected>스피커</option>
+                                                </select>
+                                            </div>
+
+                                            <!-- 재난 리스트 -->
+                                            <div class="col-12 col-md-6">
+                                                <label class="form-label text-white-50">재난 선택</label>
+                                                <select id="bc_disaster" class="form-select form-select-sm">
+                                                <option value="" selected>재난을 선택하세요</option>
+                                                </select>
+                                            </div>
+
+                                            <!-- TTS 메시지 -->
+                                            <div class="col-12">
+                                                <label class="form-label text-white-50">TTS 메시지</label>
+                                                <textarea id="bc_tts" class="form-control form-control-sm" rows="3"
+                                                placeholder="예: 현재 ○○지역에 호우경보가 발효되었습니다. 안전한 장소로 이동하세요."></textarea>
+                                                <!-- <small class="text-white-50">방송 종류가 TTS일 때 사용됩니다.</small> -->
+                                            </div>
+
+                                            <!-- 발령 버튼 -->
+                                            <!-- <div class="col-12 d-flex justify-content-end gap-2 mt-2">
+                                                <button type="button" class="btn-apple danger" id="bc_send">
+                                                <i class="fas fa-bullhorn me-1"></i>발령
+                                                </button>
+                                            </div> -->
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+                                </div>
+                                </div> 
+
                                 <div class="p-3" id="selectedBroadcastInfo" style="display: none;">
                                     <div class="rounded-3 p-3">
                                         <h6 class="text-accent mb-2" id="selectedBroadcastTitle">-</h6>
@@ -340,8 +435,8 @@
                                 </div>
                                 
                                 <!-- 방송 로그 영역 -->
-                                <div class="d-flex flex-column flex-grow-1" style="min-height:0;">
-                                    <h6 class="my-3 flex-shrink-0">
+                                <div class="d-flex flex-column flex-grow-1">
+                                    <h6 class="flex-shrink-0">
                                         <span class="px-3 text-white-50">방송 로그</span>
                                     </h6>
         
