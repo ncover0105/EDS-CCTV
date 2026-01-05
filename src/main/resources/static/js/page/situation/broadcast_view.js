@@ -24,7 +24,7 @@
     testEl.textContent = testCount;
 
     const countEl = document.getElementById('broadcastCount');
-    if (countEl) countEl.textContent = `총 ${total}건`;
+    if (countEl) countEl.textContent = `총 ${total}건 | 발령 내역을 조회합니다.`;
     }
 
     async function fetchBroadcastLogsFromServer(params) {
