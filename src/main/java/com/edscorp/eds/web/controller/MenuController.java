@@ -17,6 +17,7 @@ import com.edscorp.eds.speaker.dto.ScheduleDetailDTO;
 import com.edscorp.eds.speaker.service.BroadcastScheduleService;
 import com.edscorp.eds.speaker.service.SpeakerService;
 import com.edscorp.eds.speaker.typeb.domain.SpkDisaster;
+import com.edscorp.eds.speaker.typeb.service.SpkConfigService;
 import com.edscorp.eds.speaker.typeb.service.SpkDisasterService;
 import com.edscorp.eds.user.entity.UserEntity;
 import com.edscorp.eds.user.service.UserService;
@@ -35,6 +36,7 @@ public class MenuController {
     private final SpeakerService speakerService;
     private final BroadcastScheduleService broadcastScheduleService;
     private final SpkDisasterService spkDisasterService;
+    private final SpkConfigService spkConfigService;
 
     @GetMapping("/dashboard")
     public String showMainPage(Model model) {
@@ -52,7 +54,7 @@ public class MenuController {
         model.addAttribute("currentMenu", "speaker");
         // model.addAttribute("deviceList", menuService.getAlldevices());
 
-        model.addAttribute("speakerList", speakerService.getSpeakerList());
+        // model.addAttribute("speakerList", spkConfigService.getList());
         model.addAttribute("broadcastList", speakerService.getBroadcastList());
 
         // switch (view) {
