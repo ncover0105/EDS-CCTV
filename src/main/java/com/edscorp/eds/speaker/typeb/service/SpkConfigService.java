@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.edscorp.eds.speaker.typeb.domain.SpkConfig;
+import com.edscorp.eds.speaker.typeb.dto.SpeakerRowDto;
 import com.edscorp.eds.speaker.typeb.repository.SpkConfigRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,10 @@ public class SpkConfigService {
 
     public List<SpkConfig> getList() {
         return spkConfigRepository.findAll();
+    }
+
+    public List<SpeakerRowDto> getSpeakerRows() {
+        return spkConfigRepository.findSpeakerRows();
     }
 
     public SpkConfig getSpeakerByKey(Integer key) {

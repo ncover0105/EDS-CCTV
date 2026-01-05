@@ -19,6 +19,7 @@ import com.edscorp.eds.speaker.typeb.domain.SpkSettingEntity;
 import com.edscorp.eds.speaker.typeb.domain.SpkSystemConfigEntity;
 import com.edscorp.eds.speaker.typeb.domain.SpkTestResultEntity;
 import com.edscorp.eds.speaker.typeb.dto.SpkStatusResponse;
+import com.edscorp.eds.speaker.typeb.dto.SpeakerRowDto;
 import com.edscorp.eds.speaker.typeb.dto.SpkAlertDispatchRequest;
 import com.edscorp.eds.speaker.typeb.service.BTypeSpkService;
 import com.edscorp.eds.speaker.typeb.service.SpkConfigService;
@@ -105,6 +106,11 @@ public class BtypeQueryController {
     @GetMapping("/config/list")
     public ResponseEntity<List<SpkConfig>> getAllSpeakers() {
         return ResponseEntity.ok(spkConfigService.getList());
+    }
+
+    @GetMapping("/config/speakers")
+    public List<SpeakerRowDto> speakers() {
+        return spkConfigService.getSpeakerRows();
     }
 
     // 단일 스피커 설정 조회 (speakerKey 기준)
