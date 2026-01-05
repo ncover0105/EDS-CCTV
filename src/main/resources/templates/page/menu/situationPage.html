@@ -114,11 +114,11 @@
             <div class="container d-flex flex-column h-100 min-h-0">
                 <!-- 고정 헤더 + 통계 + 검색폼 -->
                 <div class="bg-white rounded shadow-sm p-4 mb-3 flex-shrink-0 ">
-                    <!-- 헤더 + 통계 (row 구조) -->
+                    <!-- 헤더 + 통계 (row 구조) --> 
                     <div class="row g-3 align-items-center mb-3">
                         <div class="col-12 col-md-6">
-                            <h4 class="fw-bold text-dark mb-2 mb-md-0">발령 이력</h4>
-                            <p class="text-secondary mb-0 small" id="broadcastCount">총 0건 | 재난 방송 발령 내역을 조회합니다.</p>
+                            <h4 class="fw-bold text-dark pb-2 mb-md-0">발령 이력</h4>
+                            <p class="text-secondary mb-0 small" id="broadcastCount">총 0건 | 발령 내역을 조회합니다.</p>
                         </div>
                         <div class="col-12 col-md-6">
                             <div class="row g-2 h-100">
@@ -301,10 +301,11 @@
                                     <colgroup>
                                         <col style="width: 5%;">
                                         <col style="width: 10%;">
-                                        <col style="width: 25%;">
                                         <col style="width: 20%;">
                                         <col style="width: 20%;">
-                                        <col style="width: 20%;">
+                                        <col style="width: 15%;">
+                                        <col style="width: 15%;">
+                                        <col style="width: 15%;">
                                     </colgroup>
                                     <thead>
                                         <tr>
@@ -312,9 +313,10 @@
                                             <th>특보 명</th>
                                             <th>특보 발생 시각</th>
                                             <th>특보 발생 지역</th>
-                                            <th>특보 발령</th>
+                                            <th>특보 수준</th>
+                                            <th>특보 명령</th>
                                             <th>승인 상태</th>
-                                            <th>특보 발령 여부</th>
+                                            <!-- <th>특보 발령 여부</th> -->
                                         </tr>
                                     </thead>
                                 </table>
@@ -326,11 +328,11 @@
                                     <colgroup>
                                         <col style="width: 5%;">
                                         <col style="width: 10%;">
-                                        <col style="width: 25%;">
                                         <col style="width: 20%;">
                                         <col style="width: 20%;">
-                                        <col style="width: 20%;">
-                                        <col style="width: 20%;">
+                                        <col style="width: 15%;">
+                                        <col style="width: 15%;">
+                                        <col style="width: 15%;">
                                     </colgroup>
                                     <tbody id="specialList"></tbody>
                                 </table>
