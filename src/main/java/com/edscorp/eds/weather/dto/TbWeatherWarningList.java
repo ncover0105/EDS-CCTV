@@ -1,5 +1,7 @@
 package com.edscorp.eds.weather.dto;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
@@ -10,7 +12,8 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "tb_weather_warning_list", indexes = {
-        @Index(name = "WRN_TM_FC_TM_EF_LVL_CMD_SEND", columnList = "WRN,TM_FC,TM_EF,LVL,CMD,SEND")
+        @Index(name = "WRN_TM_FC_TM_EF_LVL_CMD_SEND", columnList = "WRN,TM_FC,TM_EF,LVL,CMD,SEND"),
+        @Index(name = "IDX_WARNING_CREATED_AT", columnList = "CREATED_AT")
 })
 @Getter
 @Setter
@@ -41,4 +44,7 @@ public class TbWeatherWarningList {
 
     @Column(name = "SEND", length = 10)
     private String send;
+
+    @Column(name = "CREATED_AT", updatable = false, insertable = false)
+    private LocalDateTime createdAt;
 }

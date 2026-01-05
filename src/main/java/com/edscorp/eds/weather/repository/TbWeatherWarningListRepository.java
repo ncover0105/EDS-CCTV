@@ -37,4 +37,13 @@ public interface TbWeatherWarningListRepository extends JpaRepository<TbWeatherW
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end,
             @Param("limit") int limit);
+
+    boolean existsByIdStnAndIdRegIdAndIdWrnAndTmFcAndTmEfAndLvlAndCmd(
+            String stn,
+            String regId,
+            String wrn,
+            String tmFc,
+            String tmEf,
+            String lvl,
+            String cmd);
 }

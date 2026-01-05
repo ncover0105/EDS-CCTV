@@ -37,8 +37,8 @@ public class SpecialReportService {
     @Value("${api.hub.key}")
     private String APIHUB_KEY;
 
-    @Value("${api.hub.sido}")
-    private String sido;
+    // @Value("${api.hub.sido}")
+    private String sido = "대구광역시";
 
     private static final String SPECIAL_REPORT_URL = "https://apihub.kma.go.kr/api/typ01/url/wrn_now_data_new.php";
 
@@ -46,6 +46,11 @@ public class SpecialReportService {
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private static final DateTimeFormatter TM_IN_FMT = DateTimeFormatter.ofPattern("yyyyMMddHHmm"); // 12자리
+
+    // 로그 샘플 출력 개수(너무 많으면 로그 폭발)
+    private static final int SAMPLE_LOG_LIMIT = 5;
+    // raw body 로그 길이 제한
+    private static final int RAW_PREVIEW_LIMIT = 800;
 
     public Map<String, Object> getCachedSpecialReport() {
         return cache != null ? cache
@@ -59,15 +64,21 @@ public class SpecialReportService {
     @Scheduled(fixedRate = 5 * 60 * 1000)
     public void refresh() {
         log.info("[SPECIAL] refresh start: {}", LocalDateTime.now());
-        log.info("[SPECIAL-TEST] regionName raw = {}", sido);
-        log.info("[SPECIAL-TEST] regionName bytes = {}", Arrays.toString(sido.getBytes(StandardCharsets.UTF_8)));
+        log.info("[SPECIAL] filter sido raw = {}", sido);
+        log.debug("[SPECIAL] filter sido bytes = {}", Arrays.toString(sido.getBytes(StandardCharsets.UTF_8)));
 
         fetch()
                 .doOnNext(r -> {
                     @SuppressWarnings("unchecked")
                     List<RAINSPEACIALLISTVO> all = (List<RAINSPEACIALLISTVO>) r.getOrDefault("data", List.of());
 
-                    // 1) 전체 DB 저장
+                    // 파싱 결과 기본 로그
+                    log.info("[SPECIAL] parsed list size = {}", all.size());
+
+                    // 파싱 샘플 몇 건 확인(원인 추적용)
+                    logSample("[SPECIAL][PARSED-SAMPLE]", all);
+
+                    // 1) 전체 DB 저장 (필요시)
                     // saveAllToWarningList(all);
 
                     // 2) 화면(cache)용으로만 지역 필터
@@ -75,12 +86,21 @@ public class SpecialReportService {
                             .filter(v -> StringUtils.hasText(v.getREG_KO()) && v.getREG_KO().contains(sido))
                             .toList();
 
+                    saveAllToWarningList(filtered);
+
+                    // 필터링 결과 로그
+                    log.info("[SPECIAL] filtered size = {} (sido contains: '{}')", filtered.size(), sido);
+                    logSample("[SPECIAL][FILTERED-SAMPLE]", filtered);
+
+                    // 누락(드랍) 사유 확인 로그 (DEBUG 권장)
+                    // "왜 13 -> 12" 같은 케이스 추적할 때 가장 유용함
+                    logDropReasons(all, sido);
+
                     Map<String, Object> cacheObj = new HashMap<>(r);
                     cacheObj.put("data", filtered);
                     cache = cacheObj;
 
-                    log.info("[SPECIAL] refresh ok | all={} | region={} | filtered={}", all.size(), sido,
-                            filtered.size());
+                    log.info("[SPECIAL] refresh ok | all={} | filtered={}", all.size(), filtered.size());
                 })
                 .doOnError(e -> log.error("[SPECIAL] refresh fail (keep previous cache)", e))
                 .onErrorResume(e -> Mono.just(getCachedSpecialReport()))
@@ -89,9 +109,20 @@ public class SpecialReportService {
 
     private Mono<Map<String, Object>> fetch() {
         String url = SPECIAL_REPORT_URL + "?fe=f&tm=&disp=0&help=0&authKey=" + APIHUB_KEY;
-        log.debug("[SPECIAL] request url={}", url);
 
+        // URL 확인(운영에서도 남겨도 부담 적음)
+        log.info("[SPECIAL] request url={}", url);
+
+        // raw body 확인 -> parse
         return kmaApiClient.getTextEuckr(url)
+                .doOnNext(body -> {
+                    int len = (body == null) ? 0 : body.length();
+                    log.info("[SPECIAL] raw body length={}", len);
+
+                    // 원문 전체는 너무 크면 위험하니 앞부분만 프리뷰
+                    String preview = preview(body, RAW_PREVIEW_LIMIT);
+                    log.info("[SPECIAL] raw body preview:\n{}", preview);
+                })
                 .map(this::parseSpecialReportText)
                 .onErrorResume(e -> {
                     log.error("[SPECIAL] api error", e);
@@ -111,15 +142,21 @@ public class SpecialReportService {
         }
 
         int total = 0, parsed = 0;
+        int skippedEmpty = 0, skippedShort = 0;
 
         for (String line : body.split("\n")) {
             total++;
-            if (!StringUtils.hasText(line))
+
+            if (!StringUtils.hasText(line)) {
+                skippedEmpty++;
                 continue;
+            }
 
             String[] v = line.split(",");
-            if (v.length < 10)
+            if (v.length < 10) {
+                skippedShort++;
                 continue;
+            }
 
             RAINSPEACIALLISTVO row = new RAINSPEACIALLISTVO();
             row.setREG_UP(safeTrim(v, 0));
@@ -142,7 +179,9 @@ public class SpecialReportService {
             parsed++;
         }
 
-        log.info("[SPECIAL] parsed | totalLine={} | parsed={}", total, parsed);
+        // 파싱 통계 로그(필수)
+        log.info("[SPECIAL] parse stat | totalLine={} | parsed={} | skippedEmpty={} | skippedShort={}",
+                total, parsed, skippedEmpty, skippedShort);
 
         result.put("result", 1);
         result.put("data", list); // 전체
@@ -154,38 +193,115 @@ public class SpecialReportService {
         if (all == null || all.isEmpty())
             return;
 
-        String tmIn = ZonedDateTime.now(KST).format(TM_IN_FMT);
-        String stn = "143"; // STN이 원문에 없으니 고정(3자리 맞춰야 함)
+        String tmIn = ZonedDateTime.now(KST).format(TM_IN_FMT); // 저장 시각(=입력시각)
+        String stn = "143";
+
+        int saved = 0;
+        int skippedSame = 0;
 
         for (RAINSPEACIALLISTVO v : all) {
             if (!StringUtils.hasText(v.getREG_ID()))
                 continue;
 
-            String wrnCode = mapWrnToCode(v.getWRN()); // 한글 → 코드(W/R/S…)
+            String regId = v.getREG_ID().trim();
+
+            String wrnCode = mapWrnToCode(v.getWRN());
             if (!StringUtils.hasText(wrnCode))
                 continue;
 
+            // 이벤트 동일 판단용(= TM_IN 제외)
+            String tmFc = to12Digits(v.getTM_FC());
+            String tmEf = to12Digits(v.getTM_EF());
+            String lvl = mapLvlToCode(v.getLVL());
+            String cmd = mapCmdToCode(v.getCMD());
+
+            // ✅ 동일 이벤트면 아무것도 하지 않고 스킵
+            boolean exists = tbWeatherWarningListRepository
+                    .existsByIdStnAndIdRegIdAndIdWrnAndTmFcAndTmEfAndLvlAndCmd(
+                            stn, regId, wrnCode, tmFc, tmEf, lvl, cmd);
+
+            if (exists) {
+                skippedSame++;
+                continue;
+            }
+
+            // ✅ 신규 이벤트면 저장 (TM_IN은 저장시각으로만 사용)
             TbWeatherWarningListKey key = new TbWeatherWarningListKey(
                     stn,
-                    v.getREG_ID(),
+                    regId,
                     tmIn,
                     wrnCode);
 
             TbWeatherWarningList row = new TbWeatherWarningList();
             row.setId(key);
+            row.setTmFc(tmFc);
+            row.setTmEf(tmEf);
+            row.setLvl(lvl);
+            row.setCmd(cmd);
+            row.setSend("0");
 
-            row.setTmFc(to12Digits(v.getTM_FC()));
-            row.setTmEf(to12Digits(v.getTM_EF()));
-            row.setLvl(mapLvlToCode(v.getLVL())); // 예: "주의보" → "2"
-            row.setCmd(mapCmdToCode(v.getCMD())); // 예: "발효/해제" → "1/3"
-            row.setSend("0"); // 기본: 미통보
+            tbWeatherWarningListRepository.save(row);
+            saved++;
+        }
 
-            try {
-                tbWeatherWarningListRepository.save(row);
-            } catch (Exception dupOrOther) {
-                // 같은 STN+REG_ID+TM_IN+WRN 이면 PK 중복 → 그냥 무시
+        log.info("[SPECIAL] warning save done | saved={} | skippedSame={}", saved, skippedSame);
+    }
+
+    /*
+     * =========================
+     * Debug helpers
+     * =========================
+     */
+
+    private void logSample(String prefix, List<RAINSPEACIALLISTVO> list) {
+        if (list == null || list.isEmpty()) {
+            log.info("{} empty", prefix);
+            return;
+        }
+
+        int limit = Math.min(SAMPLE_LOG_LIMIT, list.size());
+        for (int i = 0; i < limit; i++) {
+            RAINSPEACIALLISTVO v = list.get(i);
+            log.info("{} #{} regKo='{}' wrn='{}' lvl='{}' cmd='{}' tmFc='{}' tmEf='{}'",
+                    prefix,
+                    (i + 1),
+                    safeStr(v.getREG_KO()),
+                    safeStr(v.getWRN()),
+                    safeStr(v.getLVL()),
+                    safeStr(v.getCMD()),
+                    safeStr(v.getTM_FC()),
+                    safeStr(v.getTM_EF()));
+        }
+    }
+
+    private void logDropReasons(List<RAINSPEACIALLISTVO> all, String sidoFilter) {
+        if (!log.isDebugEnabled() || all == null || all.isEmpty())
+            return;
+
+        for (RAINSPEACIALLISTVO v : all) {
+            String regKo = v.getREG_KO();
+            if (!StringUtils.hasText(regKo)) {
+                log.debug("[SPECIAL][DROP] regKo empty | wrn={} lvl={} cmd={}",
+                        safeStr(v.getWRN()), safeStr(v.getLVL()), safeStr(v.getCMD()));
+                continue;
+            }
+            if (!regKo.contains(sidoFilter)) {
+                log.debug("[SPECIAL][DROP] region mismatch | regKo='{}' filter='{}'",
+                        regKo, sidoFilter);
             }
         }
+    }
+
+    private String preview(String s, int limit) {
+        if (!StringUtils.hasText(s))
+            return "(empty)";
+        if (s.length() <= limit)
+            return s;
+        return s.substring(0, limit) + "\n...(truncated, total=" + s.length() + ")";
+    }
+
+    private String safeStr(String s) {
+        return (s == null) ? "-" : s;
     }
 
     private String to12Digits(String s) {
