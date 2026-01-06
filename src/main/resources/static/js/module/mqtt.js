@@ -43,7 +43,8 @@ window.SSE_MQTT = (function () {
                 break;
 
             case "cctv/req":
-                App.utils.showToast("CCTV 요청 감지", "알림");
+                // App.utils.showToast("CCTV 요청 감지", "알림");
+                App.utils.showGlobalAlert("CCTV 요청 감지", "Info");
                 break;
 
             case "cctv/resetIP":
