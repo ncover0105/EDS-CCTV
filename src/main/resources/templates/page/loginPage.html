@@ -35,8 +35,16 @@
 
                 <button type="submit" class="login-btn">로그인</button>
 
-                <div th:if="${param.error}" class="error-message">
+                <!-- <div th:if="${param.error}" class="error-message">
                     <div class="alert">
+                        사용자 ID 또는 Password를 확인해 주세요.
+                    </div>
+                </div> -->
+
+                <div id="loginError"
+                        class="error-message"
+                        th:style="${param.error} ? '' : 'display:none;'">
+                    <div class="alert" th:if="${param.error}">
                         사용자 ID 또는 Password를 확인해 주세요.
                     </div>
                 </div>
@@ -92,7 +100,7 @@
                 </div>
 
                 <button type="button" class="login-btn" id="signupBtn">회원가입</button>
-                <div id="signupError" class="error-message d-none"></div>
+                <div id="signupError" class="error-message" style="display:none;"></div>
 
                 <div class="toggle-section">
                     <p class="toggle-text">이미 계정이 있으신가요?</p>

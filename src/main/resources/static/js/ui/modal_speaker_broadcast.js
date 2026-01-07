@@ -74,8 +74,8 @@ function syncSelectionUI() {
     }
 
     // 발령 설정 버튼 활성/비활성
-    const goBtn = document.getElementById("bc_go_manual");
-    if (goBtn) goBtn.disabled = (count === 0);
+    // const goBtn = document.getElementById("bc_go_manual");
+    // if (goBtn) goBtn.disabled = (count === 0);
 
     // 전체 선택/해제 버튼 텍스트
     const toggleBtn = document.getElementById("bc_toggle_all");
@@ -211,11 +211,11 @@ const BroadcastModal = {
         setText("bc_step_text", "스피커를 선택하세요.");
         setVal("bc_selected_speaker_name", "");
 
-        hide("bc_manual_area");
-        show("bc_need_select");
+        // hide("bc_manual_area");
+        // show("bc_need_select");
 
-        const goBtn = document.getElementById("bc_go_manual");
-        if (goBtn) goBtn.disabled = true;
+        // const goBtn = document.getElementById("bc_go_manual");
+        // if (goBtn) goBtn.disabled = true;
 
         // active 제거
         document.querySelectorAll("#bc_speaker_list .speaker-card.active")
@@ -316,20 +316,20 @@ const BroadcastModal = {
         });
 
         // 발령 설정 버튼
-        modalEl.addEventListener("click", (e) => {
-            if (!e.target.closest("#bc_go_manual")) return;
+        // modalEl.addEventListener("click", (e) => {
+        //     if (!e.target.closest("#bc_go_manual")) return;
 
-            const selected = getSelectedSpeakerIds();
-            if (selected.length === 0) {
-                notify("스피커를 먼저 선택해주세요.", "warning");
-                return;
-            }
+        //     const selected = getSelectedSpeakerIds();
+        //     if (selected.length === 0) {
+        //         notify("스피커를 먼저 선택해주세요.", "warning");
+        //         return;
+        //     }
 
-            hide("bc_need_select");
-            show("bc_manual_area");
-            showTab("tab-bc-manual");
-            this.refreshPreview();
-        });
+        //     hide("bc_need_select");
+        //     show("bc_manual_area");
+        //     showTab("tab-bc-manual");
+        //     this.refreshPreview();
+        // });
 
         // 폼 변경 -> 미리보기 갱신
         modalEl.addEventListener("change", (e) => {

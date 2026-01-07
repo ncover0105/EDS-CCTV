@@ -403,6 +403,8 @@ input.form-input:-webkit-autofill {
 .login-btn.loading {
     pointer-events: none;
     position: relative;
+    color: transparent;
+    text-shadow: none;
 }
 
 .login-btn.loading::after {

@@ -3,7 +3,7 @@
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
             <div class="modal-content bg-dark">
 
-                <!-- 헤더 -->
+                <!-- Modal Header -->
                 <div class="modal-header border-0">
                     <h5 class="modal-title fw-bold text-white">
                         <i class="fas fa-speaker me-2"></i>스피커 설정
@@ -11,20 +11,22 @@
 
                     <div class="d-flex align-items-center gap-2">
                         <div class="btn-group gap-2">
-                        <button type="button" class="btn-apple" id="speakerSettingInfo">
-                            <i class="fas fa-info-circle me-1"></i>정보 요청
-                        </button>
-                        <button type="button" class="btn-apple info" id="speakerSettingSend">
-                            <i class="fas fa-paper-plane me-1"></i>설정 전송
-                        </button>
-                        </div>
+                            <button type="button" class="btn-apple info d-flex align-items-center gap-2" id="speakerSettingInfo">
+                                <i class="fas fa-info-circle me-1"></i>정보 요청
+                            </button>
+                            <!-- <button type="button" class="btn-apple info" id="speakerSettingSend">
+                                <i class="fas fa-paper-plane me-1"></i>설정 전송
+                            </button>
+                            </div>
 
-                        <button type="button" class="btn-apple icon" data-bs-dismiss="modal">
-                        <i class="fas fa-times"></i>
-                        </button>
+                            <button type="button" class="btn-apple icon" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i>
+                            </button> -->
+                        </div>
                     </div>
                 </div>
 
+                <!-- Modal Body -->
                 <div class="modal-body">
                     <div class="d-flex flex-column gap-3">
 
@@ -861,6 +863,14 @@
                     </div>
                 </div>
 
+                <!-- Modal Footer -->
+                <div class="modal-footer border-0 d-flex">
+                    <button type="button" class="btn-apple" data-bs-dismiss="modal">닫기</button>
+                
+                    <button type="button" class="btn-apple info d-flex align-items-center gap-2" id="speakerSettingSend">
+                        <i class="fa-solid fa-arrow-up-from-bracket"></i>설정 전송
+                    </button>
+                </div>
             </div>
         </div>
     </div>

@@ -2,6 +2,8 @@
 * equipment_broadcast.js (수정본)
 * - 방송 대상 선택 UI: #targetSpeakerList 를 speaker-card 스타일로 렌더링
 * - 스피커 목록: /api/btype/query/config/list (API)
+* - ✅ broadcastTypesContainer 에서 사용자정의(CUSTOM) 생성 제거
+* - ✅ 방송종류(#bc_broadcast_type)에서 TTS 선택 시 customMessageArea 표시
 * =================================== */
 
 /* -----------------------------
@@ -393,20 +395,6 @@ async function renderBroadcastTypes() {
     container.appendChild(div);
     });
 
-    const custom = document.createElement("div");
-    custom.className = "broadcast-type normal";
-    custom.dataset.code = "CUSTOM";
-    custom.dataset.title = "사용자정의";
-    custom.dataset.message = "";
-    custom.dataset.audio = "";
-    custom.dataset.category = "normal";
-    custom.innerHTML = `
-    <i class="bi bi-pencil-square" style="color: var(--accent-primary); font-size:1.5rem;"></i>
-    <div>사용자정의</div>
-    `;
-    custom.onclick = () => selectBroadcastType(custom, "CUSTOM");
-    container.appendChild(custom);
-
     resetSelection();
 }
 
@@ -415,29 +403,22 @@ async function renderBroadcastTypes() {
 * ----------------------------- */
 function selectBroadcastType(element, code) {
     const infoArea = document.getElementById("selectedBroadcastInfo");
-    const customArea = document.getElementById("customMessageArea");
     const titleEl = document.getElementById("selectedBroadcastTitle");
     const messageEl = document.getElementById("selectedBroadcastMessage");
     const audioEl = document.getElementById("selectedBroadcastAudio");
 
+    // 재난(저장메시지) 카드 선택 토글
     if (element.classList.contains("selected")) {
-    element.classList.remove("selected");
-    window.selectedBroadcastType = null;
-    if (infoArea) infoArea.style.display = "none";
-    if (customArea) customArea.style.display = "none";
-    return;
+        element.classList.remove("selected");
+        window.selectedBroadcastType = null;
+        if (infoArea) infoArea.style.display = "none";
+        return;
     }
 
     document.querySelectorAll(".broadcast-type").forEach((el) => el.classList.remove("selected"));
 
     element.classList.add("selected");
     window.selectedBroadcastType = code;
-
-    if (code === "CUSTOM") {
-    if (customArea) customArea.style.display = "block";
-    if (infoArea) infoArea.style.display = "none";
-    return;
-    }
 
     const title = element.dataset.title;
     const message = element.dataset.message;
@@ -447,8 +428,9 @@ function selectBroadcastType(element, code) {
     if (messageEl) messageEl.innerText = message || "-";
     if (audioEl) audioEl.innerText = audio ? `저장코드: ${audio}` : "";
 
+    // TTS 선택 상태에 따라 customMessageArea가 보여질 수 있으므로,
+    // 여기서는 infoArea만 제어한다.
     if (infoArea) infoArea.style.display = "block";
-    if (customArea) customArea.style.display = "none";
 }
 
 function getOfflineSpeakers() {
@@ -482,80 +464,116 @@ function edsConfirm(message, onConfirm) {
     modal.show();
 }
 
-function startBroadcast() {
-    if (!window.selectedBroadcastType) {
-    App.utils.showGlobalAlert("방송 유형을 선택해 주세요.", "warning");
-    return;
-    }
+function isTtsBroadcastMode() {
+    const sel = document.getElementById("bc_broadcast_type");
+    // 1=TTS, 2=저장메시지, 3=기타 (equipmentPage.html 기준)
+    return String(sel?.value ?? "") === "1";
+}
 
+function updateCustomMessageAreaVisibility() {
+    const customArea = document.getElementById("customMessageArea");
+    const infoArea = document.getElementById("selectedBroadcastInfo");
+
+    const show = isTtsBroadcastMode();
+
+    if (customArea) customArea.style.display = show ? "block" : "none";
+
+    // TTS 모드에서는 카드 선택 정보 영역이 필수가 아니므로, 선택이 없으면 숨김 유지
+    if (show && infoArea && !window.selectedBroadcastType) {
+        infoArea.style.display = "none";
+    }
+}
+
+function bindBroadcastTypeSelector() {
+    const sel = document.getElementById("bc_broadcast_type");
+    if (!sel) return;
+
+    if (sel.dataset.bound === "1") return;
+    sel.addEventListener("change", () => {
+        updateCustomMessageAreaVisibility();
+    });
+    sel.dataset.bound = "1";
+
+    // 최초 상태 반영
+    updateCustomMessageAreaVisibility();
+}
+
+function startBroadcast() {
     const speakerCodes = getSelectedSpeakerCodes();
     if (!speakerCodes || speakerCodes.length === 0) {
-    App.utils.showGlobalAlert("방송 대상을 선택해 주세요.", "warning");
-    return;
-    }
-
-    if (window.selectedBroadcastType === "CUSTOM") {
-    const msg = (document.getElementById("customMessageText")?.value ?? "").trim();
-    if (!msg) {
-        App.utils.showGlobalAlert("사용자 정의 메시지를 입력해 주세요.", "warning");
+        App.utils.showGlobalAlert("방송 대상을 선택해 주세요.", "warning");
         return;
     }
 
-    const typeInfo = {
-        title: "사용자정의",
-        type: "normal",
-        audioFile: "",
-        text: msg
-    };
+    // ✅ 방송종류(TTS) 선택 시: customMessageArea 기반으로 사용자 메시지 방송
+    if (isTtsBroadcastMode()) {
+        const msg = (document.getElementById("customMessageText")?.value ?? "").trim();
+        if (!msg) {
+            App.utils.showGlobalAlert("TTS 메시지를 입력해 주세요.", "warning");
+            return;
+        }
 
-    const offlineList = getOfflineSpeakers();
-    if (offlineList.length > 0) {
-        const names = offlineList.map(sp => getSpeakerName(sp, getSpeakerKey(sp))).join(", ");
-        edsConfirm(
-        `다음 스피커는 <span class="text-danger fw-bold">오프라인</span>입니다:<br><br>
-        <b>${escapeHtml(names)}</b><br><br>
-        그래도 방송을 진행할까요?`,
-        () => proceedBroadcast(typeInfo)
-        );
+        const typeInfo = {
+            title: "TTS",
+            type: "normal",
+            audioFile: "",
+            text: msg
+        };
+
+        const offlineList = getOfflineSpeakers();
+        if (offlineList.length > 0) {
+            const names = offlineList.map(sp => getSpeakerName(sp, getSpeakerKey(sp))).join(", ");
+            edsConfirm(
+                `다음 스피커는 <span class="text-danger fw-bold">오프라인</span>입니다:<br><br>
+                <b>${escapeHtml(names)}</b><br><br>
+                그래도 방송을 진행할까요?`,
+                () => proceedBroadcast(typeInfo)
+            );
+            return;
+        }
+
+        proceedBroadcast(typeInfo);
         return;
     }
 
-    proceedBroadcast(typeInfo);
-    return;
+    // ✅ 저장메시지/기타 모드: 재난(방송종류 카드) 선택 필수
+    if (!window.selectedBroadcastType) {
+        App.utils.showGlobalAlert("방송 유형(재난)을 선택해 주세요.", "warning");
+        return;
     }
 
     const disaster = (disasterCache ?? []).find((d) => String(d.dstCode) === String(window.selectedBroadcastType));
     if (!disaster) {
-    App.utils.showGlobalAlert("유효한 방송 유형이 아닙니다. (재난 코드 없음)", "danger");
-    return;
+        App.utils.showGlobalAlert("유효한 방송 유형이 아닙니다. (재난 코드 없음)", "danger");
+        return;
     }
 
     const { type } = mapDisasterStyle(disaster);
     const audioFile = (disaster.dstStoCode ?? "").trim() || (disaster.dstSirenCode ?? "").trim() || "";
 
     if (!audioFile) {
-    App.utils.showGlobalAlert("해당 재난 코드에 저장코드/사이렌코드가 없습니다.", "warning");
-    return;
+        App.utils.showGlobalAlert("해당 재난 코드에 저장코드/사이렌코드가 없습니다.", "warning");
+        return;
     }
 
     const typeInfo = {
-    title: disaster.dstName,
-    type,
-    audioFile,
-    text: disaster.dstStoreMsg,
-    dstCode: disaster.dstCode
+        title: disaster.dstName,
+        type,
+        audioFile,
+        text: disaster.dstStoreMsg,
+        dstCode: disaster.dstCode
     };
 
     const offlineList = getOfflineSpeakers();
     if (offlineList.length > 0) {
-    const names = offlineList.map(sp => getSpeakerName(sp, getSpeakerKey(sp))).join(", ");
-    edsConfirm(
-        `다음 스피커는 <span class="text-danger fw-bold">오프라인</span>입니다:<br><br>
-        <b>${escapeHtml(names)}</b><br><br>
-        그래도 방송을 진행할까요?`,
-        () => proceedBroadcast(typeInfo)
-    );
-    return;
+        const names = offlineList.map(sp => getSpeakerName(sp, getSpeakerKey(sp))).join(", ");
+        edsConfirm(
+            `다음 스피커는 <span class="text-danger fw-bold">오프라인</span>입니다:<br><br>
+            <b>${escapeHtml(names)}</b><br><br>
+            그래도 방송을 진행할까요?`,
+            () => proceedBroadcast(typeInfo)
+        );
+        return;
     }
 
     proceedBroadcast(typeInfo);
@@ -666,9 +684,6 @@ function resetSelection() {
     window.selectedBroadcastType = null;
     document.querySelectorAll(".broadcast-type").forEach((el) => el.classList.remove("selected"));
 
-    const customArea = document.getElementById("customMessageArea");
-    if (customArea) customArea.style.display = "none";
-
     const customText = document.getElementById("customMessageText");
     if (customText) customText.value = "";
 
@@ -681,6 +696,9 @@ function resetSelection() {
     if (t) t.innerText = "-";
     if (m) m.innerText = "";
     if (a) a.innerText = "";
+
+    // ✅ 방송종류(TTS) 선택 상태를 기준으로 customMessageArea 표시 여부 동기화
+    updateCustomMessageAreaVisibility();
 }
 window.resetSelection = resetSelection;
 
@@ -692,30 +710,33 @@ let __broadcastInitOnce = false;
 
 async function initBroadcastPage(options = { once: true, refresh: false }) {
     const hasBroadcastDom =
-    document.getElementById("broadcast-content") ||
-    document.getElementById("targetSpeakerList") ||
-    document.getElementById("broadcastTypesContainer");
+        document.getElementById("broadcast-content") ||
+        document.getElementById("targetSpeakerList") ||
+        document.getElementById("broadcastTypesContainer");
 
     if (!hasBroadcastDom) return;
 
     if (!options.refresh && options.once && __broadcastInitOnce) return;
 
     try {
-    // 1) 스피커 목록 조회 → 캐시 반영
-    broadcastSpeakerCache = await listSpeakers();
-    console.log("[broadcast] speakers loaded:", broadcastSpeakerCache.length);
-    console.log("[broadcast] first speaker sample:", broadcastSpeakerCache?.[0]);
+        // 1) 스피커 목록 조회 → 캐시 반영
+        broadcastSpeakerCache = await listSpeakers();
+        console.log("[broadcast] speakers loaded:", broadcastSpeakerCache.length);
+        console.log("[broadcast] first speaker sample:", broadcastSpeakerCache?.[0]);
 
-    // 2) targetSpeakerList 렌더링/바인딩
-    renderTargetSpeakerList(broadcastSpeakerCache);
-    bindTargetSpeakerUI();
+        // 2) targetSpeakerList 렌더링/바인딩
+        renderTargetSpeakerList(broadcastSpeakerCache);
+        bindTargetSpeakerUI();
 
-    // 3) 방송 종류 렌더링
-    await renderBroadcastTypes();
+        // 3) 방송 종류(재난) 렌더링
+        await renderBroadcastTypes();
 
-    __broadcastInitOnce = true;
+        // 4) 방송종류(TTS/저장메시지/기타) 셀렉트 바인딩 → customMessageArea 표시 제어
+        bindBroadcastTypeSelector();
+
+        __broadcastInitOnce = true;
     } catch (e) {
-    console.error("broadcast init error:", e);
+        console.error("broadcast init error:", e);
     }
 }
 
