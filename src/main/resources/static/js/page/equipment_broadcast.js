@@ -402,36 +402,49 @@ async function renderBroadcastTypes() {
 * 방송 타입 선택 / 실행 / 중지
 * ----------------------------- */
 function selectBroadcastType(element, code) {
+    const typeCol = document.getElementById("broadcastTypeCol");
+    const infoCol = document.getElementById("broadcastInfoCol");
     const infoArea = document.getElementById("selectedBroadcastInfo");
-    const titleEl = document.getElementById("selectedBroadcastTitle");
-    const messageEl = document.getElementById("selectedBroadcastMessage");
-    const audioEl = document.getElementById("selectedBroadcastAudio");
 
-    // 재난(저장메시지) 카드 선택 토글
+    const sel = document.getElementById("bc_broadcast_type");
+    if (sel && String(sel.value) !== "2") {
+        sel.value = "2";
+        updateCustomMessageAreaVisibility(); // customMessageArea 숨김/표시 동기화
+    }
+
+    // 선택 해제
     if (element.classList.contains("selected")) {
         element.classList.remove("selected");
         window.selectedBroadcastType = null;
+    
+        // 전체 폭 복원 + 우측 영역 숨김
+        if (typeCol) typeCol.className = "col-12";
+        if (infoCol) infoCol.classList.add("d-none");
         if (infoArea) infoArea.style.display = "none";
         return;
     }
 
-    document.querySelectorAll(".broadcast-type").forEach((el) => el.classList.remove("selected"));
+    document.querySelectorAll(".broadcast-type")
+        .forEach(el => el.classList.remove("selected"));
 
     element.classList.add("selected");
     window.selectedBroadcastType = code;
 
-    const title = element.dataset.title;
-    const message = element.dataset.message;
-    const audio = element.dataset.audio;
-
-    if (titleEl) titleEl.innerText = title || "-";
-    if (messageEl) messageEl.innerText = message || "-";
-    if (audioEl) audioEl.innerText = audio ? `저장코드: ${audio}` : "";
-
-    // TTS 선택 상태에 따라 customMessageArea가 보여질 수 있으므로,
-    // 여기서는 infoArea만 제어한다.
+    // 7:5 분할
+    typeCol.className = "col-12 col-lg-7";
+    infoCol.classList.remove("d-none");
     if (infoArea) infoArea.style.display = "block";
+
+    // 정보 바인딩
+    const t = document.getElementById("selectedBroadcastTitle");
+    const m = document.getElementById("selectedBroadcastMessage");
+    const a = document.getElementById("selectedBroadcastAudio");
+
+    if (t) t.innerText = element.dataset.title || "-";
+    if (m) m.innerText = element.dataset.message || "-";
+    if (a) a.innerText = element.dataset.audio ? `저장코드: ${element.dataset.audio}` : "";
 }
+
 
 function getOfflineSpeakers() {
     const codes = getSelectedSpeakerCodes();
@@ -687,6 +700,12 @@ function resetSelection() {
     const customText = document.getElementById("customMessageText");
     if (customText) customText.value = "";
 
+    const typeCol = document.getElementById("broadcastTypeCol");
+    const infoCol = document.getElementById("broadcastInfoCol");
+
+    if (typeCol) typeCol.className = "col-12";
+    if (infoCol) infoCol.classList.add("d-none");
+
     const infoArea = document.getElementById("selectedBroadcastInfo");
     if (infoArea) infoArea.style.display = "none";
 
@@ -738,6 +757,51 @@ async function initBroadcastPage(options = { once: true, refresh: false }) {
     } catch (e) {
         console.error("broadcast init error:", e);
     }
+
+    initBroadcastLogCollapse();
 }
+
+function initBroadcastLogCollapse() {
+    const panel = document.getElementById("broadcastLogPanel");
+    const btn = document.getElementById("toggleBroadcastLogBtn");
+    const badge = document.getElementById("broadcastLogBadge");
+    if (!panel || !btn) return;
+
+    const KEY = "broadcast.log.expanded";
+    const expanded = localStorage.getItem(KEY) === "1";
+
+    const apply = (open) => {
+        if (open) {
+            panel.classList.remove("d-none");
+            btn.textContent = "접기";
+        if (badge) badge.classList.add("d-none"); // 열면 배지 숨김
+            localStorage.setItem(KEY, "1");
+        } else {
+            panel.classList.add("d-none");
+            btn.textContent = "펼치기";
+            localStorage.setItem(KEY, "0");
+        }
+    };
+
+    apply(expanded);
+
+    // 토글
+    btn.addEventListener("click", () => {
+        const isOpen = !panel.classList.contains("d-none");
+        apply(!isOpen);
+    });
+
+    // (현재는 정적 로그지만) “접힌 상태에서 새 로그 추가되면 배지 증가”를 위한 훅
+    window.__broadcastLogNotify = function(newCount = 1) {
+        if (!badge) return;
+        const isOpen = !panel.classList.contains("d-none");
+        if (isOpen) return;
+
+        const cur = parseInt(badge.textContent || "0", 10) || 0;
+        badge.textContent = String(cur + newCount);
+        badge.classList.remove("d-none");
+    };
+}
+
 
 window.initBroadcastPage = initBroadcastPage;
