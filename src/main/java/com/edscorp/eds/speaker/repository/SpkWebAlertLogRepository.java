@@ -1,0 +1,11 @@
+package com.edscorp.eds.speaker.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
+import com.edscorp.eds.speaker.domain.SpkWebAlertLogEntity;
+
+public interface SpkWebAlertLogRepository
+        extends JpaRepository<SpkWebAlertLogEntity, Long>, JpaSpecificationExecutor<SpkWebAlertLogEntity> {
+
+}

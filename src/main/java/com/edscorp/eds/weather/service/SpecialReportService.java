@@ -1,7 +1,9 @@
 package com.edscorp.eds.weather.service;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -196,6 +198,10 @@ public class SpecialReportService {
         String tmIn = ZonedDateTime.now(KST).format(TM_IN_FMT); // 저장 시각(=입력시각)
         String stn = "143";
 
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.atTime(LocalTime.MAX);
+
         int saved = 0;
         int skippedSame = 0;
 
@@ -216,13 +222,30 @@ public class SpecialReportService {
             String cmd = mapCmdToCode(v.getCMD());
 
             // ✅ 동일 이벤트면 아무것도 하지 않고 스킵
-            boolean exists = tbWeatherWarningListRepository
-                    .existsByIdStnAndIdRegIdAndIdWrnAndTmFcAndTmEfAndLvlAndCmd(
-                            stn, regId, wrnCode, tmFc, tmEf, lvl, cmd);
+            // boolean exists = tbWeatherWarningListRepository
+            // .existsByIdStnAndIdRegIdAndIdWrnAndTmFcAndTmEfAndLvlAndCmd(
+            // stn, regId, wrnCode, tmFc, tmEf, lvl, cmd);
 
-            if (exists) {
+            // if (exists) {
+            // skippedSame++;
+            // continue;
+            // }
+
+            boolean existsToday = tbWeatherWarningListRepository
+                    .existsByIdStnAndIdRegIdAndIdWrnAndTmFcAndTmEfAndLvlAndCmdAndCreatedAtBetween(
+                            stn,
+                            regId,
+                            wrnCode,
+                            tmFc,
+                            tmEf,
+                            lvl,
+                            cmd,
+                            startOfDay,
+                            endOfDay);
+
+            if (existsToday) {
                 skippedSame++;
-                continue;
+                continue; // ✅ 이게 맞음
             }
 
             // ✅ 신규 이벤트면 저장 (TM_IN은 저장시각으로만 사용)

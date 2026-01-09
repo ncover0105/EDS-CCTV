@@ -164,7 +164,7 @@ const SpeakerApi = {
   },
 
   async getSetting(speakerKey) {
-    const res = await fetch(`/api/speaker/setting/${speakerKey}`);
+    const res = await fetch(`/api/spk/${speakerKey}/setting`);
     if (!res.ok) return null; // 404 포함
     return await res.json();
   },

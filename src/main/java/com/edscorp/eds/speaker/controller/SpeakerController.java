@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
 @RestController
-@RequestMapping("/api/speaker")
+@RequestMapping("/api/spk")
 @RequiredArgsConstructor
 public class SpeakerController {
 
@@ -82,4 +82,5 @@ public class SpeakerController {
         }
 
     }
+
 }

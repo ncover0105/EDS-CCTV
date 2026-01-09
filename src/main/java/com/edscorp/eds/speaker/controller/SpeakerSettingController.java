@@ -17,11 +17,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/speaker/setting")
+@RequestMapping("/api/spk")
 public class SpeakerSettingController {
     private final SpeakerSettingService speakerSettingService;
 
-    @GetMapping("/{speakerKey}")
+    @GetMapping("/{speakerKey}/setting")
     public ResponseEntity<SpeakerSettingDTO> getOne(
             @PathVariable Integer speakerKey) {
 
@@ -31,7 +31,7 @@ public class SpeakerSettingController {
         return ResponseEntity.ok(dto);
     }
 
-    @GetMapping
+    @GetMapping("/setting")
     public List<SpeakerSettingDTO> getAll() {
         return speakerSettingService.findAll();
     }

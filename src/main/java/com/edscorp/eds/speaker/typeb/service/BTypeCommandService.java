@@ -10,6 +10,8 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import com.edscorp.eds.speaker.domain.SpkWebAlertLogEntity;
+import com.edscorp.eds.speaker.service.SpkWebAlertLogQueryService;
 import com.edscorp.eds.speaker.typeb.domain.SpkDisaster;
 import com.edscorp.eds.speaker.typeb.dto.BTypeActionRequest;
 import com.edscorp.eds.speaker.typeb.dto.BTypeAlertRequest;
@@ -36,6 +38,8 @@ public class BTypeCommandService {
     // private static final String PLAYRADIO_URL =
     // "http://192.168.0.42:3000/playradio";
     private static final String PLAYRADIO_URL = "http://localhost:3000/playradio";
+
+    private final SpkWebAlertLogQueryService spkWebAlertLogQueryService;
 
     /**
      * 데몬 서버로 실제 명령 전송
@@ -157,7 +161,34 @@ public class BTypeCommandService {
         String argumentStr = objectMapper.writeValueAsString(argumentJson);
 
         String clientIp = httpReq.getRemoteAddr();
-        sendToPlayRadio(req.getDeviceId(), clientIp, req.getCommandCode(), argumentStr);
+
+        SpkWebAlertLogEntity log = SpkWebAlertLogEntity.builder()
+                .deviceId(req.getDeviceId())
+                .commandCode(req.getCommandCode())
+                .alertMode(req.getAlertMode())
+                .disasterCode(req.getDisasterCode())
+                .alertKind(alertKind)
+                .alertRange(req.getAlertRange())
+                .alertPriority(alertPriority)
+                .ttsMessage(alertTTSmessage)
+                .alertStoCd(alertStoCd)
+                .alertSirenCd(alertSirenCd)
+                .build();
+
+        try {
+            // sendToPlayRadio(req.getDeviceId(), httpReq.getRemoteAddr(),
+            // req.getCommandCode(), argumentStr);
+            sendToPlayRadio(req.getDeviceId(), clientIp, req.getCommandCode(), argumentStr);
+
+            log.setStatus("SENT");
+        } catch (Exception e) {
+            log.setStatus("FAILED");
+            throw e;
+        } finally {
+            spkWebAlertLogQueryService.save(log);
+        }
+        // sendToPlayRadio(req.getDeviceId(), clientIp, req.getCommandCode(),
+        // argumentStr);
     }
 
     // =========================

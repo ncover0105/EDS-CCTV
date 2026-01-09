@@ -54,17 +54,24 @@ window.Weather = (function () {
             updateAWS(data);
         } catch (e) {
             console.error("AWS 데이터 오류:", e);
+            updateAWS(null); // ⬅️ 실패 시에도 화면 안정 유지
         }
     }
-
+    
     function updateAWS(data) {
-        $("#temperature").text(data.temperature + "°");
-        $("#windSpeed").text(data.windspeed + "m/s");
-        $("#humidity").text(data.humidity + "%");
-
-        if (data.winddirection) {
+        safeText("#temperature", data?.temperature, "°");
+        safeText("#windSpeed", data?.windspeed, "m/s");
+        safeText("#humidity", data?.humidity, "%");
+    
+        if (data?.winddirection && windDirectionMap[data.winddirection] !== undefined) {
             $("#windText").text(data.winddirection);
-            $("#windIcon").css("transform", `rotate(${windDirectionMap[data.winddirection] ?? 0}deg)`);
+            $("#windIcon").css(
+                "transform",
+                `rotate(${windDirectionMap[data.winddirection]}deg)`
+            );
+        } else {
+            $("#windText").text("-");
+            $("#windIcon").css("transform", "rotate(0deg)");
         }
     }
 
@@ -77,18 +84,18 @@ window.Weather = (function () {
             updateForecast(data);
         } catch (e) {
             console.error("예보 데이터 오류:", e);
+            updateForecast(null);
         }
     }
-
+    
     function updateForecast(data) {
-        $("#rainfall").text(data.rainfall + "%");
-        $("#weather").text(data.weather);
-
-        if (data.icon) {
-            $("#weather_icon")
-                .attr("src", `/production/fill/all/${data.icon}`)
-                .removeClass("invisible");
-        }
+        safeText("#rainfall", data?.rainfall, "%");
+        safeText("#weather", data?.weather);
+    
+        safeIcon(
+            "#weather_icon",
+            data?.icon ? `/production/fill/all/${data.icon}` : null
+        );
     }
 
     /* ============================================================================
@@ -325,12 +332,35 @@ window.Weather = (function () {
     }
 
     /* ============================================================================
-        10) 공통 fetch
+        10) 공통
     =========================================================================== */
     async function fetchJson(path) {
         const res = await fetch(path);
         if (!res.ok) throw new Error(`Fetch 실패: ${path}`);
         return res.json();
+    }
+
+    function safeText(selector, value, unit = '', emptyText = '-') {
+        if (
+            value === null ||
+            value === undefined ||
+            value === '' ||
+            (typeof value === 'number' && isNaN(value))
+        ) {
+            $(selector).text(emptyText);
+        } else {
+            $(selector).text(`${value}${unit}`);
+        }
+    }
+
+    function safeIcon(selector, src) {
+        if (!src) {
+            $(selector).addClass('invisible');
+        } else {
+            $(selector)
+                .attr('src', src)
+                .removeClass('invisible');
+        }
     }
 
     /* ============================================================================

@@ -18,30 +18,28 @@
     D: '건조',
     V: '풍랑',
     O: '해일',
-    N: '대설',
+    N: '지진해일',
     Y: '황사',
     H: '폭염',
-    A: '태풍',
-    S: '지진해일',
+    T: '태풍',
+    S: '대설',
     F: '안개',
-    P: '지진',
-    G: '가뭄',
-    I: '풍수해',
-    T: '폭풍해일'
   };
 
   const LVL_LABEL = {
-    2: '예비',
-    3: '주의보',
-    4: '경보'
+    1: '예비특보',
+    2: '주의보',
+    3: '경보'
   };
 
   const CMD_LABEL = {
     1: '발표',
     2: '대치',
     3: '해제',
-    4: '연장',
-    5: '변경'
+    4: '대치해제',
+    5: '연장',
+    6: '변경',
+    7: '변경해제'
   };
 
   const REG_ID_TO_KO = {
@@ -212,7 +210,7 @@
   function formatLvlText(lvl) {
     const lvlTxt = formatLvl(lvl);
     if (!lvlTxt || lvlTxt === '-') return `<span>-</span>`;
-    return `<span class="badge ${getLvlBadgeClass(lvlTxt)}">${lvlTxt}</span>`;
+    return `<span class="status-badge ${getLvlBadgeClass(lvlTxt)} fw-bold">${lvlTxt}</span>`;
   }
 
   // CMD 배지(발표/대치/해제/연장/변경)

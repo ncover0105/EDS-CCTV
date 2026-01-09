@@ -29,7 +29,7 @@ async function loadMapData() {
 
         const [cctvRes, speakerRes] = await Promise.all([
             fetch('/api/cctv/list'),
-            fetch('/api/speaker/list')
+            fetch('/api/spk/list')
         ]);
 
         console.log("📥 CCTV 응답 상태:", cctvRes.status);

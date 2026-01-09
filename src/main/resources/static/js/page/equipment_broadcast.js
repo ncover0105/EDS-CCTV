@@ -759,6 +759,8 @@ async function initBroadcastPage(options = { once: true, refresh: false }) {
     }
 
     initBroadcastLogCollapse();
+    await initBroadcastLogData({ test: true, testCount: 10 });
+
 }
 
 function initBroadcastLogCollapse() {
@@ -767,41 +769,206 @@ function initBroadcastLogCollapse() {
     const badge = document.getElementById("broadcastLogBadge");
     if (!panel || !btn) return;
 
+    // ✅ 중복 바인딩 방지 (refresh/init 재호출 대비)
+    if (panel.dataset.collapseBound === "1") return;
+    panel.dataset.collapseBound = "1";
+
     const KEY = "broadcast.log.expanded";
     const expanded = localStorage.getItem(KEY) === "1";
 
     const apply = (open) => {
+        // 패널 자체는 숨기지 않음(프리뷰 3줄 보여야 함)
+        panel.classList.remove("d-none");
+
         if (open) {
-            panel.classList.remove("d-none");
+            panel.classList.remove("collapsed");
             btn.textContent = "접기";
-        if (badge) badge.classList.add("d-none"); // 열면 배지 숨김
             localStorage.setItem(KEY, "1");
+
+            // ✅ 펼치면 새 로그 배지 초기화
+            if (badge) {
+            badge.textContent = "0";
+            badge.classList.add("d-none");
+            }
+
+            // 펼칠 때는 최신 로그가 보이도록
+            panel.scrollTop = panel.scrollHeight;
         } else {
-            panel.classList.add("d-none");
+            panel.classList.add("collapsed");
             btn.textContent = "펼치기";
             localStorage.setItem(KEY, "0");
+            // 접힘 상태에서 배지는 __broadcastLogNotify에서 증가
         }
     };
 
     apply(expanded);
 
-    // 토글
     btn.addEventListener("click", () => {
-        const isOpen = !panel.classList.contains("d-none");
+        const isOpen = !panel.classList.contains("collapsed");
         apply(!isOpen);
     });
 
-    // (현재는 정적 로그지만) “접힌 상태에서 새 로그 추가되면 배지 증가”를 위한 훅
-    window.__broadcastLogNotify = function(newCount = 1) {
+    // ✅ 접힘 상태에서 새 로그 알림 배지 증가
+    window.__broadcastLogNotify = function (newCount = 1) {
         if (!badge) return;
-        const isOpen = !panel.classList.contains("d-none");
-        if (isOpen) return;
+
+        const isCollapsed = panel.classList.contains("collapsed");
+        if (!isCollapsed) return;
 
         const cur = parseInt(badge.textContent || "0", 10) || 0;
-        badge.textContent = String(cur + newCount);
+        badge.textContent = String(cur + (parseInt(newCount, 10) || 1));
         badge.classList.remove("d-none");
     };
 }
 
+/* ============================================================================
+ * Broadcast Log: Test Generator + API Loader
+ * - #broadcastLogPanel 에 log-entry 주입
+ * - 접힘(collapsed) 상태면 배지 증가, 펼침이면 하단 스크롤 유지
+ * ========================================================================== */
 
+const BROADCAST_LOG_API = "/api/broadcast/logs"; // ✅ 실제 API 경로로 변경 가능
+
+function formatLogTimestamp(d = new Date()) {
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ` +
+            `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+/**
+ * level: "success" | "warning" | "error" | ""(normal)
+ */
+function appendBroadcastLogEntry({ timestamp, message, level = "" }, opts = { notify: true }) {
+    const panel = document.getElementById("broadcastLogPanel");
+    if (!panel) return;
+
+    const ts = timestamp || formatLogTimestamp(new Date());
+    const msg = message ?? "-";
+    const lvlClass = level ? ` ${level}` : "";
+
+    panel.insertAdjacentHTML(
+        "beforeend",
+        `
+        <div class="log-entry${lvlClass}">
+            <div class="log-timestamp">${escapeHtml(ts)}</div>
+            <div class="log-message">${escapeHtml(msg)}</div>
+        </div>
+        `
+    );
+
+    // ✅ 접힘 상태면 배지 증가 (3개 제한은 CSS가 처리)
+    if (opts?.notify !== false && panel.classList.contains("collapsed") && typeof window.__broadcastLogNotify === "function") {
+        window.__broadcastLogNotify(1);
+    }
+
+    // ✅ 펼친 상태면 최신 로그가 보이도록
+    if (!panel.classList.contains("collapsed")) {
+        panel.scrollTop = panel.scrollHeight;
+    }
+}
+
+function clearBroadcastLogPanel() {
+    const panel = document.getElementById("broadcastLogPanel");
+    if (!panel) return;
+    panel.innerHTML = "";
+
+    // 배지도 초기화
+    const badge = document.getElementById("broadcastLogBadge");
+    if (badge) {
+        badge.textContent = "0";
+        badge.classList.add("d-none");
+    }
+}
+
+/** 테스트용 10개 자동 생성 */
+function generateTestBroadcastLogs(count = 10) {
+    clearBroadcastLogPanel();
+
+    const samples = [
+        { level: "success", message: "스피커A에 테스트 방송이 성공적으로 전송되었습니다." },
+        { level: "",        message: "전체 스피커에 저장메시지 방송을 시작합니다." },
+        { level: "warning", message: "스피커B 연결 상태 확인이 필요합니다." },
+        { level: "error",   message: "스피커C 방송 전송 실패. 네트워크 연결을 확인하세요." },
+        { level: "success", message: "TTS 방송이 정상 처리되었습니다." }
+    ];
+
+    // 최신 순서 느낌을 위해 과거 → 현재로 생성
+    const now = Date.now();
+    for (let i = count; i >= 1; i--) {
+        const base = samples[i % samples.length];
+        const d = new Date(now - i * 60_000); // 1분 간격
+        appendBroadcastLogEntry({
+        timestamp: formatLogTimestamp(d),
+        message: `[TEST-${String(count - i + 1).padStart(2, "0")}] ${base.message}`,
+        level: base.level
+        }, { notify: false }); // 초기 로딩은 배지 증가하지 않음
+    }
+
+    // 접힘 상태에서 "초기 로딩"은 배지 표시하지 않음
+    const badge = document.getElementById("broadcastLogBadge");
+    if (badge) {
+        badge.textContent = "0";
+        badge.classList.add("d-none");
+    }
+}
+
+/** API에서 로그를 받아 렌더링 */
+async function loadBroadcastLogsFromApi() {
+    // fetchJson이 프로젝트에 이미 있다면 그걸 써도 되고, 없으면 fetch로 처리
+    const res = await fetch(BROADCAST_LOG_API, { method: "GET" });
+    if (!res.ok) throw new Error(`broadcast log api failed: ${res.status}`);
+    const data = await res.json();
+
+    // ✅ 허용 포맷:
+    // 1) [ {timestamp, message, level}, ... ]
+    // 2) { items: [ ... ] }
+    const items = Array.isArray(data) ? data : (data?.items ?? []);
+    if (!Array.isArray(items)) return;
+
+    clearBroadcastLogPanel();
+
+    items.forEach((row) => {
+        const level =
+        String(row?.level ?? row?.status ?? "").toLowerCase(); // 서버 필드명 변형 대비
+        const normalizedLevel =
+        level === "success" || level === "warning" || level === "error" ? level : "";
+
+        appendBroadcastLogEntry({
+        timestamp: row?.timestamp ?? row?.inpDttm ?? row?.time ?? "",
+        message: row?.message ?? row?.log ?? row?.logMessage ?? "-",
+        level: normalizedLevel
+        }, { notify: false });
+    });
+
+    // 펼친 상태라면 최신 위치로
+    const panel = document.getElementById("broadcastLogPanel");
+    if (panel && !panel.classList.contains("collapsed")) {
+        panel.scrollTop = panel.scrollHeight;
+    }
+}
+
+/**
+ * 통합 진입점:
+ * - test=true면 테스트 10개 생성
+ * - 아니면 API 로드 시도, 실패하면 테스트로 폴백
+ */
+async function initBroadcastLogData({ test = false, testCount = 10 } = {}) {
+    if (test) {
+        generateTestBroadcastLogs(testCount);
+        return;
+    }
+
+    try {
+        await loadBroadcastLogsFromApi();
+    } catch (e) {
+        console.warn("[broadcastLog] api load failed -> fallback to test logs", e);
+        generateTestBroadcastLogs(testCount);
+    }
+}
+
+// 전역 노출(필요 시 콘솔에서 호출)
+window.initBroadcastLogData = initBroadcastLogData;
+window.generateTestBroadcastLogs = generateTestBroadcastLogs;
+window.loadBroadcastLogsFromApi = loadBroadcastLogsFromApi;
+window.appendBroadcastLogEntry = appendBroadcastLogEntry;
 window.initBroadcastPage = initBroadcastPage;

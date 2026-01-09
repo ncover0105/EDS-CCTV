@@ -299,11 +299,11 @@
         <!-- ment -->
         <div th:if="${view == 'ment'}" class="d-flex flex-column h-100">
             <div class="container">
-                <div class="bg-white rounded shadow-sm p-4 mb-3">
+                <div class="top-panel p-4 mb-3">
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                         <div>
-                            <h4 class="fw-bold text-dark mb-3">문안설정 및 관리</h4>
-                            <p class="text-secondary mb-0 small" id="mentCount"
+                            <h4 class="top-panel-title mb-3">문안설정 및 관리</h4>
+                            <p class="top-panel-desc mb-0 small" id="mentCount"
                             th:text="'총 ' + ${disasterCount} + '개의 문안 | 문안 내용과 문안 정보를 관리하세요'">총 0개의 문안 | 문안 내용과 문안 정보를 관리하세요</p>
                         </div>
                         <div class="d-flex gap-2">
@@ -323,10 +323,10 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded shadow-sm mb-3" style="min-height: 77vh; max-height: 77vh; overflow-x: auto; overflow-y: hidden;">
+                <div class="rounded shadow-sm mb-3" style="min-height: 77vh; max-height: 77vh; overflow-x: auto; overflow-y: hidden;">
                     <div style="display: flex; flex-direction: column; min-width: 800px; height: 77vh;">
                         <div style="flex-shrink: 0;">
-                            <table class="table table-hover mb-0" style="table-layout: fixed; width: 100%;">
+                            <table class="table table-dark table-hover mb-0" style="table-layout: fixed; width: 100%;">
                                 <colgroup>
                                     <col style="width: 5%;">
                                     <col style="width: 8%;">
@@ -346,7 +346,7 @@
                             </table>
                         </div>
                         <div style="overflow-y: auto; flex: 1; min-height: 0;">
-                            <table class="table table-hover mb-0" style="table-layout: fixed; width: 100%;">
+                            <table class="table table-dark table-hover mb-0" style="table-layout: fixed; width: 100%;">
                                 <colgroup>
                                     <col style="width: 5%;">
                                     <col style="width: 8%;">

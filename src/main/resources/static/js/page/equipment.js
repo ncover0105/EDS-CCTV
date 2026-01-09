@@ -967,7 +967,7 @@ async function sendAudioToSpeaker() {
     resultMsg.classList.remove("text-success", "text-danger", "text-warning");
 
     try {
-        const response = await fetch('/api/speaker/upload', {
+        const response = await fetch('/api/spk/upload', {
             method: 'POST',
             body: formData
         });

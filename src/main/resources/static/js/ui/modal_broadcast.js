@@ -178,7 +178,7 @@ function initTargetSelector() {
         if (!listEl) return;
     
         try {
-            // const speakers = await App.utils.fetchJson("/api/speaker/list");
+            // const speakers = await App.utils.fetchJson("/api/spk/list");
             const speakers = await App.utils.fetchJson("/api/btype/query/config/list");
 
             listEl.innerHTML = ""; // 기존 내용 삭제
