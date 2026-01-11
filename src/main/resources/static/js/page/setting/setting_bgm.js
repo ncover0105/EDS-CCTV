@@ -315,7 +315,7 @@ function renderScheduleList() {
     }
 
     const card = document.createElement('div');
-    card.className = 'bg-white rounded shadow-sm mb-2 p-3';
+    card.className = 'schedule-card dark-bg mb-2 p-3';
     card.innerHTML = `
       <div class="d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center gap-3 flex-wrap flex-grow-1">
@@ -360,46 +360,122 @@ function renderScheduleList() {
   });
 }
 
+// function renderSpeakerTable(schedule) {
+//   const speakers = Array.isArray(schedule.speakers) ? schedule.speakers : [];
+//   if (speakers.length === 0) {
+//     return `
+//       <hr class="my-3">
+//       <div class="alert alert-info mb-0" role="alert">
+//         <i class="bi bi-info-circle me-2"></i>할당된 단말이 없습니다.
+//       </div>
+//     `;
+//   }
+
+//   return `
+//     <hr class="my-3">
+//     <div>
+//       <h6 class="fw-bold mb-3 text-muted">할당된 스피커 (${speakers.length}개)</h6>
+//       <div class="table-responsive rounded-3">
+//         <table class="table table-dark">
+//           <thead>
+//             <tr>
+//               <th>코드</th><th>단말명</th><th>설치주소</th><th>연락처</th><th>연결상태</th><th>등록시간</th>
+//             </tr>
+//           </thead>
+//           <tbody>
+//             ${speakers.map(sp => `
+//               <tr>
+//                 <td><small class="text-muted">${escapeHtml(sp.speakerCode || '-')}</small></td>
+//                 <td>${escapeHtml(sp.speakerName || '-')}</td>
+//                 <td>${escapeHtml(sp.installAddress || '-')}</td>
+//                 <td>${escapeHtml(sp.phone || '-')}</td>
+//                 <td>
+//                   <span class="status-badge ${
+//                     sp.connStat === '01' ? 'status-success' :
+//                     sp.connStat === '00' ? 'status-primary' : 'status-warning'
+//                   }">
+//                     ${sp.connStat === '01' ? '연결' : sp.connStat === '00' ? '미연결' : '알수없음'}
+//                   </span>
+//                 </td>
+//                 <td><small class="text-muted">${escapeHtml(sp.createdAt ? String(sp.createdAt).substring(0, 19) : '-')}</small></td>
+//               </tr>
+//             `).join('')}
+//           </tbody>
+//         </table>
+//       </div>
+//     </div>
+//   `;
+// }
 function renderSpeakerTable(schedule) {
   const speakers = Array.isArray(schedule.speakers) ? schedule.speakers : [];
+
   if (speakers.length === 0) {
     return `
-      <hr class="my-3">
-      <div class="alert alert-info mb-0" role="alert">
+      <hr class="my-3" style="border-color:#30363D;">
+      <div class="p-3 rounded-3 border" style="background:#0D1117;border-color:#30363D;color:#8B949E;">
         <i class="bi bi-info-circle me-2"></i>할당된 단말이 없습니다.
       </div>
     `;
   }
 
   return `
-    <hr class="my-3">
+    <hr class="my-3" style="border-color:#30363D;">
     <div>
-      <h6 class="fw-bold mb-3 text-muted">할당된 스피커 (${speakers.length}개)</h6>
-      <div class="table-responsive rounded-3">
-        <table class="table align-middle mb-0">
-          <thead class="table-light">
+      <h6 class="fw-bold mb-3" style="color:#8B949E;">
+        할당된 스피커 (${speakers.length}개)
+      </h6>
+
+      <!-- 다크 테이블 컨테이너 -->
+      <div class="table-responsive rounded-3 schedule-table-wrap">
+        <table class="table table-dark align-middle mb-0 w-100">
+          <colgroup>
+            <col style="width: 12%;">
+            <col style="width: 16%;">
+            <col style="width: 22%;">
+            <col style="width: 16%;">
+            <col style="width: 12%;">
+            <col style="width: 22%;">
+          </colgroup>
+          <thead>
             <tr>
-              <th>코드</th><th>단말명</th><th>설치주소</th><th>연락처</th><th>연결상태</th><th>등록시간</th>
+              <th>코드</th>
+              <th>단말명</th>
+              <th>설치주소</th>
+              <th>연락처</th>
+              <th>연결상태</th>
+              <th>등록시간</th>
             </tr>
           </thead>
+
           <tbody>
-            ${speakers.map(sp => `
-              <tr>
-                <td><small class="text-muted">${escapeHtml(sp.speakerCode || '-')}</small></td>
-                <td>${escapeHtml(sp.speakerName || '-')}</td>
-                <td>${escapeHtml(sp.installAddress || '-')}</td>
-                <td>${escapeHtml(sp.phone || '-')}</td>
-                <td>
-                  <span class="status-badge ${
-                    sp.connStat === '01' ? 'status-success' :
-                    sp.connStat === '00' ? 'status-primary' : 'status-warning'
-                  }">
-                    ${sp.connStat === '01' ? '연결' : sp.connStat === '00' ? '미연결' : '알수없음'}
-                  </span>
-                </td>
-                <td><small class="text-muted">${escapeHtml(sp.createdAt ? String(sp.createdAt).substring(0, 19) : '-')}</small></td>
-              </tr>
-            `).join('')}
+            ${speakers.map(sp => {
+              const statClass =
+                sp.connStat === '01' ? 'status-success' :
+                sp.connStat === '00' ? 'status-primary' : 'status-warning';
+
+              const statText =
+                sp.connStat === '01' ? '연결' :
+                sp.connStat === '00' ? '미연결' : '알수없음';
+
+              const createdAt = sp.createdAt ? String(sp.createdAt).substring(0, 19) : '-';
+
+              return `
+                <tr style="border-color:#30363D;">
+                  <td style="border-color:#30363D;">
+                    <small style="color:#8B949E;">${escapeHtml(sp.speakerCode || '-')}</small>
+                  </td>
+                  <td style="border-color:#30363D;">${escapeHtml(sp.speakerName || '-')}</td>
+                  <td style="border-color:#30363D;">${escapeHtml(sp.installAddress || '-')}</td>
+                  <td style="border-color:#30363D;">${escapeHtml(sp.phone || '-')}</td>
+                  <td style="border-color:#30363D;">
+                    <span class="status-badge ${statClass}">${statText}</span>
+                  </td>
+                  <td style="border-color:#30363D;">
+                    <small style="color:#8B949E;">${escapeHtml(createdAt)}</small>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
           </tbody>
         </table>
       </div>
@@ -760,6 +836,39 @@ function escapeHtml(str) {
 }
 function getVal(id) { return document.getElementById(id)?.value ?? ''; }
 function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = v; }
+
+/* ===============================
+ * TEST: scheduleListDataRaw (1건)
+ * =============================== */
+window.scheduleListDataRaw = [
+  {
+    scheduleId: 1,
+    scheduleName: '테스트 BGM 스케줄',
+    startTime: '09:00',
+    endTime: '18:00',
+    playType: 'BGM',
+    folderName: 'DEFAULT_BGM',
+    repeatEnabled: true,
+    weekSchedule: {
+      mon: true,
+      tue: true,
+      wed: true,
+      thu: true,
+      fri: true,
+      sat: false,
+      sun: false
+    },
+    recvTime: '2026-01-11T09:00:00',
+    createdAt: '2026-01-11T09:00:00',
+
+    /* 스피커 1대 */
+    speakerCode: 'SPK-001',
+    speakerName: '테스트 스피커',
+    installAddress: '본청 1층',
+    phone: '010-1234-5678',
+    connStat: '01'
+  }
+];
 
 /* ======================================================
  * ✅ Entry

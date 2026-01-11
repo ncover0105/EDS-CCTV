@@ -47,7 +47,7 @@
         <!-- Tab Content -->
         <div class="tab-content text-nowrap" id="equipmentTabContent">
             <!-- Speaker Management -->
-            <div class="tab-pane fade"
+            <div class="tab-pane fade speaker-dark"
                 id="speaker-content"
                 th:classappend="${view == null or view == 'speaker'} ? 'show active' : ''">
                 <div class="row g-3 px-4 py-2 justify-content-center align-content-center">
@@ -57,7 +57,7 @@
                             <div class="card-header mb-0">
                                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 w-100">
                                     <div class="section-title">
-                                        <h5 class="fw-semibold mb-0 text-dark">등록된 스피커 목록</h5>
+                                        <h5 class="fw-semibold mb-0">등록된 스피커 목록</h5>
                                         <span class="status-badge status-primary d-flex">
                                             <span id="speakerCount">0건</span>
                                         </span>
@@ -125,12 +125,12 @@
                     <!-- Speaker Detail Panel -->
                     <div class="col-xl-4 d-flex flex-column h-100 gap-2">
                         <!-- 스피커 정보 카드 -->
-                        <div class="card" style="flex: 0 0 auto;">
+                        <div class="card bor" style="flex: 0 0 auto;">
                             <div class="card-header">
                                 <h6 class="card-title">스피커 상세정보</h6>
                             </div>
                             <div class="card-body m-1">
-                                <div class="info-item ">
+                                <div class="info-item">
                                     <div class="info-label">스피커명</div>
                                     <div class="info-value" id="selectedSpeakerTitle">스피커를 선택하세요</div>
                                 </div>

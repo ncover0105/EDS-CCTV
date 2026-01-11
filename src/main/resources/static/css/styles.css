@@ -8061,6 +8061,7 @@ textarea.form-control-lg-dark {
   border-top: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color) !important;
 }
 
+
 .border-top-0 {
   border-top: 0 !important;
 }
@@ -8135,7 +8136,7 @@ textarea.form-control-lg-dark {
 }
 
 .border-1 {
-  --bs-border-width: 1px;
+  --bs-border-width: 1px !important;
 }
 
 .border-2 {
@@ -12840,14 +12841,18 @@ body {
 }
 
 .status-info {
-  background: rgba(96, 165, 250, 0.2);
-  color: #2563eb;
+  /* background: rgba(96, 165, 250, 0.2);
+  color: #2563eb; */
+  background: rgba(56, 139, 253, 0.15);
+  color: #58A6FF;
 }
 
 .status-success {
-  background: rgba(52, 199, 89, 0.2);
-  color: #28a745;
+  /* background: rgba(52, 199, 89, 0.2);
+  color: #28a745; */
   /* border: 1px solid rgba(52, 199, 89, 0.3); */
+  background: rgba(46, 160, 67, 0.15);
+  color: #3FB950;
 }
 
 .status-error {
@@ -12869,14 +12874,18 @@ body {
 }
 
 .status-primary {
-  background: rgba(128, 128, 128, 0.2);
-  color: #5e6470;
+  /* background: rgba(128, 128, 128, 0.2);
+  color: #5e6470; */
+  background: rgba(139, 148, 158, 0.15);
+  color: #8B949E;
   /* border: 1px solid rgba(128, 128, 128, 0.3); */
 }
 
 .status-purple {
-  background: rgba(168, 85, 247, 0.2);
-  color: #7e22ce;
+  /* background: rgba(168, 85, 247, 0.2);
+  color: #7e22ce; */
+  background: rgba(163, 113, 247, 0.15);
+  color: #A371F7;
 }
 
 /* CCTV Overlay - Dark Theme */
@@ -15690,38 +15699,6 @@ body {
   box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
 }
 
-.info-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.info-item {
-  display: flex;
-  gap: 8px;
-  padding: 8px;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.info-item i {
-  font-size: 1.1rem;
-  margin-top: 2px;
-}
-
-.info-label {
-  font-size: 0.7rem;
-  color: #6c757d;
-  font-weight: 500;
-  margin-bottom: 2px;
-}
-
-.info-value {
-  font-size: 0.85rem;
-  color: #212529;
-  font-weight: 600;
-}
-
 @media (max-width: 768px) {
   .info-grid {
       grid-template-columns: 1fr;
@@ -16154,6 +16131,20 @@ html, body {
   min-height: 0;
 }
 
+.menu-table-container {
+    background: #161B22;
+    min-height: 77vh;
+    max-height: 77vh;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+/* 테이블이 항상 컨테이너 폭에 맞게 */
+.menu-table-container > table {
+    width: 100%;
+    table-layout: fixed;
+}
+
 .navbar-logo-wrap {
   height: 48px;
   display: flex;
@@ -16177,4 +16168,228 @@ html, body {
   .navbar-logo {
       max-width: 90px;
   }
+}
+
+.dark-bg {
+    background: #161B22;
+}
+
+/* ===============================
+ * Schedule Dark Theme
+ * =============================== */
+.dark-bg {
+  background: #161B22;
+  color: #E6EDF3;
+}
+
+/* 카드 */
+.schedule-card {
+  background: #161B22;
+  border: 1px solid #30363D;
+  border-radius: 10px;
+}
+
+/* 상단 아이콘 버튼 */
+.schedule-card .btn-light {
+  background: #21262D;
+  border-color: #30363D;
+  color: #C9D1D9;
+}
+.schedule-card .btn-light:hover {
+  background: #30363D;
+}
+
+/* 시간 / 보조 텍스트 */
+.schedule-card .text-secondary,
+.schedule-card .text-muted,
+.schedule-card small {
+  color: #8B949E !important;
+}
+
+/* 상태 배지 */
+/* .status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: 12px;
+  border-radius: 999px;
+  font-weight: 600;
+} */
+
+/* .status-info {
+  background: rgba(56, 139, 253, 0.15);
+  color: #58A6FF;
+}
+.status-purple {
+  background: rgba(163, 113, 247, 0.15);
+  color: #A371F7;
+}
+.status-success {
+  background: rgba(46, 160, 67, 0.15);
+  color: #3FB950;
+}
+.status-primary {
+  background: rgba(139, 148, 158, 0.15);
+  color: #8B949E;
+}
+.status-warning {
+  background: rgba(210, 153, 34, 0.15);
+  color: #D29922;
+} */
+
+.schedule-table-wrap {
+  background: #0D1117;
+  border-radius: 12px;
+
+  /* 체감 0.5px 느낌 */
+  border: 1px solid rgba(240, 246, 252, 0.12);
+
+  /* 다크 UI에서 튀지 않게 */
+  box-shadow: inset 0 0 0 0.5px rgba(240, 246, 252, 0.05);
+}
+
+/* 내부 테이블 */
+.schedule-card table {
+  color: #E6EDF3;
+}
+.schedule-card thead {
+  background: #21262D;
+}
+.schedule-card thead th {
+  color: #C9D1D9;
+  border-color: #30363D;
+}
+.schedule-card tbody td {
+  border-color: #30363D;
+}
+
+/* ======================================================
+ * Speaker Management – Dark Theme
+ * ====================================================== */
+
+/* 카드 공통 */
+.speaker-dark .card {
+  background: var(--apple-bg-secondary); /* #161B22 */
+  border: 1px solid var(--apple-border); /* #30363D */
+  border-radius: 12px;
+  box-shadow: var(--apple-shadow);
+  color: var(--text-primary);
+}
+
+/* card-header */
+.speaker-dark .card-header {
+  background: transparent;
+  border-bottom: 1px solid var(--apple-border);
+}
+
+/* 제목 */
+.speaker-dark .card-header h5,
+.speaker-dark .card-header h6,
+.speaker-dark .card-title {
+  color: var(--text-primary);
+}
+
+/* card-body */
+.speaker-dark .card-body {
+  background: transparent;
+  color: var(--text-primary);
+}
+
+/* Speaker table */
+.speaker-dark table {
+  color: var(--text-primary);
+}
+
+/* thead */
+.speaker-dark thead th {
+  background: var(--apple-surface);       /* #21262D */
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--apple-border);
+  font-weight: 600;
+}
+
+/* tbody */
+.speaker-dark tbody tr {
+  border-bottom: 1px solid var(--apple-border);
+}
+
+.speaker-dark tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* td */
+.speaker-dark td {
+  color: var(--text-primary);
+}
+
+/* 정보 라벨 / 값 */
+.speaker-dark .info-label,
+.speaker-dark .monitor-label {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.speaker-dark .info-value,
+.speaker-dark .monitor-value {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* 모니터링 그리드 아이템 */
+.speaker-dark .monitor-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+/* Speaker control buttons */
+.speaker-dark .control-btn-panel {
+  background: var(--apple-bg-secondary);
+  border: 1px solid var(--apple-border);
+  border-radius: 12px;
+}
+
+.speaker-dark .control-btn {
+  background: var(--apple-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--apple-border);
+}
+
+.speaker-dark .control-btn:hover {
+  background: var(--apple-surface-hover);
+}
+
+/* ======================================================
+ * Speaker Detail Info – Dark Override
+ * ====================================================== */
+
+/* 카드 내부 info-item 다크 배경 */
+.speaker-dark .info-item {
+  background: rgba(255, 255, 255, 0.03); /* 기존 #f8fafc 대체 */
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0.625rem;
+  border-radius: 8px;
+  margin-bottom: 0.625rem;
+}
+
+/* 라벨 (secondary 톤) */
+.speaker-dark .info-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #9BA3AF; /* 다크용 secondary */
+}
+
+/* 값 (primary 톤) */
+.speaker-dark .info-value {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #E6EDF3; /* 다크용 primary */
+}
+
+/* JS에서 text-dark / text-muted 붙어도 강제 */
+.speaker-dark .info-value.text-dark,
+.speaker-dark .info-value.text-muted {
+  color: #E6EDF3 !important;
 }

@@ -24,8 +24,52 @@
     <div class="container-fluid p-3 text-nowrap" layout:fragment="content">
         <!-- 상황발생이력 -->
         <div th:if="${view == 'situation'}" class="d-flex flex-column h-100">
-            <div class="container">
-                <div class="bg-white rounded shadow-sm p-4 mb-3 flex-shrink-0">
+            <div class="container d-flex flex-column h-100">
+                <div class="top-panel p-4 mb-3">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pb-3">
+                        <div>
+                            <h4 class="top-panel-title mb-3">상황 발생 이력</h4>
+                            <p class="top-panel-desc mb-0 small" id="situationCount">상황 발생 이력 총 0개 | 상황 발생 이력을 관리하세요</p>
+                        </div>
+                    </div>
+                    <div class="border-top pt-3">
+                        <form class="row g-3 align-items-end">
+                            <div class="col-12 col-sm-6 col-lg-3">
+                                <label for="startDateTime" class="form-label small fw-semibold mb-1">시작 일시</label>
+                                <input type="datetime-local" class="form-control form-control-sm" id="startDateTime">
+                            </div>
+                            
+                            <div class="col-auto d-none d-lg-flex align-items-end pb-1">
+                                <span class="fw-bold text-secondary">~</span>
+                            </div>
+                            
+                            <div class="col-12 col-sm-6 col-lg-3">
+                                <label for="endDateTime" class="form-label small fw-semibold mb-1">종료 일시</label>
+                                <input type="datetime-local" class="form-control form-control-sm" id="endDateTime">
+                            </div>
+                            
+                            <div class="col-12 col-sm-6 col-lg-2">
+                                <label for="situationType" class="form-label small fw-semibold mb-1">상황 종류</label>
+                                <select class="form-select form-select-sm" id="modeType">
+                                    <option value="">전체</option>
+                                    <option value="화재">화재</option>
+                                    <option value="홍수">홍수</option>
+                                    <option value="지진">지진</option>
+                                    <option value="태풍">태풍</option>
+                                    <option value="기타">기타</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-12 col-lg-auto">
+                                <button type="button" class="btn btn-primary btn-sm w-100" onclick="situationSearch()">
+                                    <i class="bi bi-search me-1"></i>
+                                    검색
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <!-- <div class="bg-white rounded shadow-sm p-4 mb-3 flex-shrink-0">
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pb-3">
                         <div>
                             <h4 class="fw-bold text-dark mb-3">상황 발생 이력</h4>
@@ -68,12 +112,12 @@
                             </div>
                         </form>
                     </div>
-                </div>
+                </div> -->
 
-                <div class="bg-white rounded shadow-sm mb-3" style="min-height: 70vh; max-height: 70vh; overflow-x: auto; overflow-y: hidden;">
-                    <div style="display: flex; flex-direction: column; min-width: 800px; height: 70vh;">
+                <div class="bg-dark rounded-3 shadow-sm bottom-panel">
+                    <div class="bottom-panel-scroll">
                         <div style="flex-shrink: 0;">
-                            <table class="table table-hover mb-0" style="table-layout: fixed; width: 100%;">
+                            <table class="table table-dark table-hover mb-0" style="table-layout: fixed; width: 100%;">
                                 <colgroup>
                                     <col style="width: 10%;">
                                     <col style="width: 30%;">
@@ -93,7 +137,7 @@
                             </table>
                         </div>
                         <div style="overflow-y: auto; flex: 1; min-height: 0;">
-                            <table class="table table-hover mb-0" style="table-layout: fixed; width: 100%;">
+                            <table class="table table-dark table-hover mb-0" style="table-layout: fixed; width: 100%;">
                                 <colgroup>
                                     <col style="width: 10%;">
                                     <col style="width: 30%;">
@@ -220,12 +264,34 @@
         <!-- 특보이력 -->
         <div th:if="${view == 'special'}" class="d-flex flex-column h-100">
             <div class="container d-flex flex-column h-100">
-        
+                <!-- <div class="top-panel p-4 mb-3">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                        <div>
+                            <h4 class="top-panel-title mb-3">특보 이력</h4>
+                            <p class="top-panel-desc mb-0 small" id="specialCount"
+                            th:text="'등록된 사용자 총 ' + ${userCount} + '명 | SMS 알림을 관리하세요'">등록된 사용자 총 0명 | SMS 알림을 관리하세요</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button id="sms_btn_register" class="btn btn-primary">
+                                <i class="bi bi-person-plus"></i>
+                                <span class="d-none d-md-inline ms-1">등록</span>
+                            </button>
+                            <button id="sms_btn_edit" class="btn btn-primary">
+                                <i class="bi bi-pencil-square"></i>
+                                <span class="d-none d-md-inline ms-1">수정</span>
+                            </button>
+                            <button id="sms_btn_disable" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i>
+                                <span class="d-none d-md-inline ms-1">미사용</span>
+                            </button>
+                        </div>
+                    </div>
+                </div> -->
                 <!-- 상단 필터 영역 (변경 없음) -->
-                <div class="bg-white rounded shadow-sm p-4 mb-3">
+                <div class="dark-bg rounded shadow-sm p-4 mb-3">
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pb-3">
                         <div>
-                            <h4 class="fw-bold text-dark mb-3">특보 이력</h4>
+                            <h4 class="fw-bold mb-3">특보 이력</h4>
                             <p class="text-secondary mb-0 small" id="specialCount">
                                 총 0건 | 특보 이력을 조회하세요
                             </p>
