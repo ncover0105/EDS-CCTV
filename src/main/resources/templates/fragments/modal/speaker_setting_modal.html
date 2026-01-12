@@ -551,7 +551,7 @@
                                     <div class="setting-card overflow-auto tab-pane-card p-3">
 
                                     <div class="row g-3">
-                                        <div class="col-12 col-md-4">
+                                        <div class="col-12">
                                             <label class="form-label">통제서버 IP</label>
                                             <input id="bi_serverip" class="form-control form-control-sm" type="text" placeholder="예: 192.168.0.10">
                                         </div>
@@ -598,6 +598,46 @@
                                         <div class="col-6 col-md-4">
                                             <label class="form-label">RadioFrequencyRegion(0~5)</label>
                                             <input id="bi_RadioFrequencyRegion" class="form-control form-control-sm" type="number" min="0" max="5">
+                                        </div>
+
+                                        <div class="col-12">
+                                            <div class="text-light fw-semibold my-1">채널 사용</div>
+                                        </div>
+
+                                        <div class="col-6 col-md-3">
+                                            <label class="form-label small text-light opacity-75">CH1</label>
+                                            <select id="bi_useCh1" class="form-select form-select-sm">
+                                                <option value="1">사용</option>
+                                                <option value="2">미사용</option>
+                                                <option value="3">없음</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-6 col-md-3">
+                                            <label class="form-label small text-light opacity-75">CH2</label>
+                                            <select id="bi_useCh2" class="form-select form-select-sm">
+                                                <option value="1">사용</option>
+                                                <option value="2">미사용</option>
+                                                <option value="3">없음</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-6 col-md-3">
+                                            <label class="form-label small text-light opacity-75">CH3</label>
+                                            <select id="bi_useCh3" class="form-select form-select-sm">
+                                                <option value="1">사용</option>
+                                                <option value="2">미사용</option>
+                                                <option value="3">없음</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-6 col-md-3">
+                                            <label class="form-label small text-light opacity-75">CH4</label>
+                                            <select id="bi_useCh4" class="form-select form-select-sm">
+                                                <option value="1">사용</option>
+                                                <option value="2">미사용</option>
+                                                <option value="3">없음</option>
+                                            </select>
                                         </div>
 
                                         <!-- 입력 볼륨 -->
@@ -800,46 +840,6 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-
-                                        <div class="col-12 mt-2">
-                                            <div class="text-light fw-semibold my-1">채널 사용</div>
-                                        </div>
-
-                                        <div class="col-6 col-md-3">
-                                            <label class="form-label small text-light opacity-75">CH1</label>
-                                            <select id="bi_useCh1" class="form-select form-select-sm">
-                                                <option value="1">사용</option>
-                                                <option value="2">미사용</option>
-                                                <option value="3">없음</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="col-6 col-md-3">
-                                            <label class="form-label small text-light opacity-75">CH2</label>
-                                            <select id="bi_useCh2" class="form-select form-select-sm">
-                                                <option value="1">사용</option>
-                                                <option value="2">미사용</option>
-                                                <option value="3">없음</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="col-6 col-md-3">
-                                            <label class="form-label small text-light opacity-75">CH3</label>
-                                            <select id="bi_useCh3" class="form-select form-select-sm">
-                                                <option value="1">사용</option>
-                                                <option value="2">미사용</option>
-                                                <option value="3">없음</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="col-6 col-md-3">
-                                            <label class="form-label small text-light opacity-75">CH4</label>
-                                            <select id="bi_useCh4" class="form-select form-select-sm">
-                                                <option value="1">사용</option>
-                                                <option value="2">미사용</option>
-                                                <option value="3">없음</option>
-                                            </select>
                                         </div>
 
                                         <!-- <div class="col-12"><hr class="border-light"></div>

@@ -49,7 +49,7 @@
     tbody.innerHTML = rowsHTML + emptyRowsHTML;
 
     const countEl = document.getElementById('situationCount');
-    if (countEl) countEl.innerText = `총 ${situationData.length}건 | 상황 발생 목록`;
+    if (countEl) countEl.innerText = `총 ${situationData.length}건 | 상황 발생 이력을 관리하세요`;
 
     renderSituationPagination();
     }
@@ -68,13 +68,12 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-    // view 체크는 필요 없지만, 안전장치로 유지 가능
-    if (window.currentView && window.currentView !== 'situation') return;
+        if (window.currentView && window.currentView !== 'situation') return;
 
-    renderSituationTable(currentPage);
+        renderSituationTable(currentPage);
 
-    if (window.App?.utils?.fillDateTimeInputs) {
-        window.App.utils.fillDateTimeInputs();
-    }
+        if (window.App?.utils?.fillDateTimeInputs) {
+            window.App.utils.fillDateTimeInputs();
+        }
     });
 })();

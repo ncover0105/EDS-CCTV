@@ -2,11 +2,10 @@
  * equipment_speaker.js (API Only)
  *  - GET  /config/speakers           -> List<SpeakerRowDto>
  *  - GET  /status/{speakerKey}       -> SpkStatusResponse
- *  - window.speakerList 사용 ❌ (전역 상태 제거)
  * ================================ */
 
 /* ------------------------------
-   API endpoints
+  API endpoints
 ------------------------------ */
 const SPEAKER_LIST_API = "/api/btype/query/config/speakers";
 const SPEAKER_STATUS_API = (speakerKey) => `/api/btype/query/status/${encodeURIComponent(speakerKey)}`;
@@ -14,14 +13,11 @@ const SPEAKER_STATUS_API = (speakerKey) => `/api/btype/query/status/${encodeURIC
 // 선택: 목록 자동 갱신(초). 0이면 비활성
 const SPEAKER_POLL_SECONDS = 0;
 
-/* ------------------------------
-   Local state (전역 아님)
------------------------------- */
 let speakerListState = [];
 let pollTimer = null;
 
 /* ------------------------------
-   Utils
+  Utils
 ------------------------------ */
 function safe(v, empty = "-") {
   if (v === null || v === undefined) return empty;
@@ -69,7 +65,7 @@ function alertMsg(msg, type) {
 }
 
 /* ------------------------------
-   API calls
+  API calls
 ------------------------------ */
 async function fetchSpeakerList() {
   const res = await fetch(SPEAKER_LIST_API, { headers: { "Accept": "application/json" } });
@@ -87,11 +83,11 @@ async function fetchSpeakerStatus(speakerKey) {
 }
 
 /* ------------------------------
-   Render table
-   SpeakerRowDto 필드 기대:
-   - speakerKey, speakerId, speakerName, connectStatus, receiveTime
-   - cdmaNumber, locationName, speakerLatitude, speakerLongitude, saveDivi
-   - (선택) speakerAdr : 있으면 상세패널 주소 표시
+  Render table
+  SpeakerRowDto 필드 기대:
+  - speakerKey, speakerId, speakerName, connectStatus, receiveTime
+  - cdmaNumber, locationName, speakerLatitude, speakerLongitude, saveDivi
+  - (선택) speakerAdr : 있으면 상세패널 주소 표시
 ------------------------------ */
 function renderSpeakerTable() {
   const tbody = document.getElementById("speakerTableBody");
@@ -171,7 +167,7 @@ function renderSpeakerTable() {
 }
 
 /* ------------------------------
-   Detail panel reset
+  Detail panel reset
 ------------------------------ */
 function resetDetail() {
   const titleEl = document.getElementById("selectedSpeakerTitle");
@@ -201,7 +197,7 @@ function resetDetail() {
 }
 
 /* ------------------------------
-   Button click helper (HTML onclick 호환)
+  Button click helper (HTML onclick 호환)
 ------------------------------ */
 function handleButtonClick(_, actionFn) {
   const checked = document.querySelector('input[name="selectedIds"]:checked');
@@ -214,10 +210,10 @@ function handleButtonClick(_, actionFn) {
 }
 
 /* ------------------------------
-   Request status (GET /status/{speakerKey})
-   SpkStatusResponse 기대 필드:
-   - connectionStatus, acStatus, dcStatus, batteryStatus
-   - solarStatus, lteStatus, cpuTemp, mcuVersion, receiveTime
+  Request status (GET /status/{speakerKey})
+  SpkStatusResponse 기대 필드:
+  - connectionStatus, acStatus, dcStatus, batteryStatus
+  - solarStatus, lteStatus, cpuTemp, mcuVersion, receiveTime
 ------------------------------ */
 async function requestStatus(selectedCheckbox) {
   const speakerKey = selectedCheckbox.dataset.key || selectedCheckbox.value;
@@ -288,7 +284,7 @@ async function requestStatus(selectedCheckbox) {
 }
 
 /* ------------------------------
-   Refresh list + render (no global)
+  Refresh list + render (no global)
 ------------------------------ */
 async function refreshSpeakerListAndRender({ preserveSelection = true } = {}) {
   let selectedKey = null;
@@ -307,9 +303,6 @@ async function refreshSpeakerListAndRender({ preserveSelection = true } = {}) {
   }
 }
 
-/* ------------------------------
-   Polling (optional)
------------------------------- */
 function stopPolling() {
   if (pollTimer) {
     clearInterval(pollTimer);

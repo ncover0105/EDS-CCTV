@@ -1,5 +1,6 @@
 package com.edscorp.eds.speaker.typeb.repository;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -38,4 +39,6 @@ public interface SpkConfigRepository extends JpaRepository<SpkConfig, Integer> {
                 order by c.speakerKey desc
             """)
     List<SpeakerRowDto> findSpeakerRows();
+
+    List<SpkConfig> findBySpeakerKeyIn(Collection<Integer> ids);
 }

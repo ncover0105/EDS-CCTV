@@ -13,11 +13,14 @@
 <body>
     <div class="container-fluid p-3 text-nowrap" layout:fragment="content">
         <div class="d-flex flex-column h-100">
-            <div class="container">
+            <div class="container animate-fade-in">
                 <div class="top-panel p-4 mb-3">
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                         <div>
-                            <h4 class="top-panel-title mb-3">CCTV 목록</h4>
+                            <h4 class="top-panel-title mb-3">
+                                <i class="bi bi-camera-video title-icon"></i>
+                                CCTV 목록
+                            </h4>
                             <p class="top-panel-desc mb-0 small" id="userCount"
                                 th:text="'등록된 CCTV 총 ' + ${#lists.size(cctvList)}  + '건 | 등록된 CCTV를 관리하세요'">등록된 CCTV 총 0명 | 등록된 CCTV를 관리하세요</p>
                         </div>
@@ -236,7 +239,7 @@
             </div>
         </div>
         
-        <div class="modal fade" id="addCctvModal" tabindex="-1" aria-labelledby="addCctvModalLabel" aria-hidden="true">
+        <div class="modal fade modal-dark" id="addCctvModal" tabindex="-1" aria-labelledby="addCctvModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -271,13 +274,23 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="cctvLat" class="form-label">위도</label>
-                                <input type="number" step="any" class="form-control" id="cctvLat">
+                                <label for="editCctvLat" class="form-label">위도</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="editCctvLat"
+                                    placeholder="예: 37.5665"
+                                >
                             </div>
-
+                            
                             <div class="mb-3">
-                                <label for="cctvLng" class="form-label">경도</label>
-                                <input type="number" step="any" class="form-control" id="cctvLng">
+                                <label for="editCctvLng" class="form-label">경도</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="editCctvLng"
+                                    placeholder="예: 126.9780"
+                                >
                             </div>
                         </form>
                     </div>
@@ -290,7 +303,7 @@
         </div>
 
         <!-- ✅ CCTV 수정 모달 -->
-        <div class="modal fade" id="editCctvModal" tabindex="-1" aria-labelledby="editCctvModalLabel" aria-hidden="true">
+        <div class="modal fade modal-dark" id="editCctvModal" tabindex="-1" aria-labelledby="editCctvModalLabel" aria-hidden="true">
             <div class="modal-dialog">
             <div class="modal-content">
         
