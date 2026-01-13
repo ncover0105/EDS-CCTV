@@ -117,6 +117,29 @@ if (firstTab) {
 }
 });
 
+function refreshActiveTabIndicator() {
+    const active = document.querySelector('.modern-nav-tab.active');
+    if (!active) return;
+
+    const targetId = active.dataset.target;
+    const indicatorId = active.dataset.indicator;
+    const indicator = document.getElementById(`indicator${indicatorId}`);
+    if (!indicator) return;
+
+    const rect = active.getBoundingClientRect();
+    const parentRect = active.parentElement.getBoundingClientRect();
+    indicator.style.width = `${rect.width}px`;
+    indicator.style.left = `${rect.left - parentRect.left}px`;
+}
+
+// 리사이즈/줌/폰트 로딩 대응
+window.addEventListener("resize", refreshActiveTabIndicator);
+window.addEventListener("orientationchange", refreshActiveTabIndicator);
+document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) refreshActiveTabIndicator();
+});
+
+
 /* ------------------------------
     단축키
 ------------------------------ */

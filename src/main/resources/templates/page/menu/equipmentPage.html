@@ -5,760 +5,720 @@
     xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
     layout:decorate="~{layout/layout}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EDS - Equipment Management</title>
-    <script th:inline="javascript">
-        /*<![CDATA[*/
-        const currentView = /*[[${view}]]*/ 'speaker';
-        // const speakerList = /*[[${speakerList}]]*/ [];
-        const broadcastList = /*[[${broadcastList}]]*/ [];
-        /*]]>*/
-    </script>
-    <!-- <script src="/js/menu/equipment.js?v=1"></script> -->
-    
-    <script src="/js/page/equipment_init.js?v=1"></script>
-    <script src="/js/page/equipment_speaker.js?v=1"></script>
-    <script src="/js/page/equipment_broadcast.js?v=1"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EDS - Equipment Management</title>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const currentView = /*[[${view}]]*/ 'speaker';
+    const broadcastList = /*[[${broadcastList}]]*/ [];
+    /*]]>*/
+</script>
+
+<script src="/js/page/equipment_init.js?v=1"></script>
+<script src="/js/page/equipment_speaker.js?v=1"></script>
+<script src="/js/page/equipment_broadcast.js?v=1"></script>
 </head>
+
 <body>
     <div class="container-fluid" layout:fragment="content">
         <div th:replace="~{fragments/modal/eds_modal :: edsConfirmModal}"></div>
 
-        <div class="modern-nav-container">
-            <div class="modern-nav-tabs">
-                <div class="nav-indicator" id="indicator1"></div>
-                <button class="modern-nav-tab active"
-                    onclick="switchTab(this, 'speaker', 1)"
-                    data-target="speaker"
-                    data-indicator="1">
-                    <i class="bi bi-speaker-fill"></i><span>스피커 관리</span>
-                </button>
-        
-                <button class="modern-nav-tab"
-                    onclick="switchTab(this, 'broadcast', 1)"
-                    data-target="broadcast"
-                    data-indicator="1">
-                    <i class="bi bi-camera-video-fill"></i><span>방송</span>
-                </button>
-            </div>
-        </div>
+        <div class="page-shell equipment-shell">
 
-        <!-- Tab Content -->
-        <div class="tab-content text-nowrap" id="equipmentTabContent">
-            <!-- Speaker Management -->
-            <div class="tab-pane fade speaker-dark"
-                id="speaker-content"
-                th:classappend="${view == null or view == 'speaker'} ? 'show active' : ''">
+            <!-- Page Toolbar -->
+            <header class="page-toolbar glass-toolbar">
+                <div class="toolbar-left">
+                    <div class="page-title-wrap">
+                        <div class="page-eyebrow">EDS</div>
+                        <h4 class="page-title mb-0">장비 관리</h4>
+                        <div class="page-subtitle">스피커 관리 및 방송 제어</div>
+                    </div>
 
-                <!-- 중요: row가 남은 높이를 가져가야 h-100이 의미가 있음 -->
-                <div class="row g-3 animate-fade-in" style="min-height:0;">
+                    <!-- Segmented Tabs (keeps existing classes for JS compatibility) -->
+                    <div class="segmented-tabs modern-nav-tabs" role="tablist" aria-label="장비 관리 탭">
+                        <div class="nav-indicator" id="indicator1" aria-hidden="true"></div>
 
-                    <!-- 좌측: Speaker List -->
-                    <div class="col-12 col-xl-9 d-flex" style="min-height:0;">
-                        <div class="card h-100 d-flex flex-column w-100" style="min-height:0;">
-                            <div class="card-header mb-0 flex-shrink-0">
-                                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 w-100">
-                                    <div class="section-title">
-                                        <h5 class="fw-semibold mb-0">스피커 목록</h5>
-                                        <span class="status-badge status-primary d-flex">
-                                            <span id="speakerCount">0건</span>
-                                        </span>
-                                    </div>
-                                    <div class="d-flex flex-wrap gap-3 align-items-end">
-                                        <button class="btn btn-primary" onclick="speakerUpdate()">스피커 수정</button>
-                                        <button class="btn btn-danger" onclick="speakerDeleted()">스피커 삭제</button>
-                                    </div>
+                        <button class="segmented-tab modern-nav-tab active is-active"
+                                type="button"
+                                onclick="switchTab(this, 'speaker', 1)"
+                                data-target="speaker"
+                                data-indicator="1"
+                                aria-selected="true">
+                            <i class="bi bi-speaker-fill"></i><span>스피커 관리</span>
+                        </button>
+
+                        <button class="segmented-tab modern-nav-tab"
+                                type="button"
+                                onclick="switchTab(this, 'broadcast', 1)"
+                                data-target="broadcast"
+                                data-indicator="1"
+                                aria-selected="false">
+                            <i class="bi bi-broadcast-pin"></i><span>방송</span>
+                        </button>
+                        </div>
+                </div>
+
+                <div class="toolbar-right">
+                    <div class="toolbar-hints">
+                        <span class="hint-pill d-none d-md-inline-flex">
+                            <i class="bi bi-mouse me-1"></i>행을 선택하면 우측 패널이 갱신됩니다
+                        </span>
+                        <!-- <span class="hint-pill d-none d-xl-inline-flex">
+                            <i class="bi bi-shield-check me-1"></i>내부망 운영 최적화
+                        </span> -->
+                    </div>
+                </div>
+            </header>
+
+            <main class="page-content equipment-viewport">
+
+                <div class="tab-content" id="equipmentTabContent">
+
+                    <!-- Speaker Management -->
+                    <div class="tab-pane fade speaker-dark"
+                        id="speaker-content"
+                        th:classappend="${view == null or view == 'speaker'} ? 'show active' : ''">
+
+                    <div class="row g-3" style="min-height:0;">
+
+                        <!-- Left: Data table card -->
+                        <div class="col-12 col-xxl-9 d-flex" style="min-height:0;">
+                        <section class="card card-surface h-100 d-flex flex-column w-100" style="min-height:0;">
+
+                            <div class="card-header surface-header flex-shrink-0 surface-header--stack">
+                                <!-- 1) Title only -->
+                                <div class="surface-header__title">
+                                  <h5 class="fw-semibold mb-0">스피커 목록</h5>
                                 </div>
-                            </div>
-
-                            <!-- 테이블만 스크롤 -->
-                            <div class="card-body d-flex flex-column flex-grow-1 p-0" style="min-height:0;">
-                                <div class="table-responsive flex-grow-1 overflow-auto" style="min-height:0;">
-                                    <table class="table table-dark table-hover w-100 mb-0">
-                                    <thead>
-                                        <tr>
-                                        <th>선택</th>
-                                        <th>ID</th>
-                                        <th>스피커 이름</th>
-                                        <th>연결상태</th>
-                                        <th>수신 시간</th>
-                                        <th>단말 전화 번호</th>
-                                        <th>설치 지역</th>
-                                        <th>위도</th>
-                                        <th>경도</th>
-                                        </tr>
+                              
+                                <!-- 2) Count (moved under title) -->
+                                <div class="surface-header__meta mt-2">
+                                  <span class="status-badge status-primary">
+                                    <span id="speakerCount">0건</span>
+                                  </span>
+                                </div>
+                              
+                                <!-- 3) Search + Actions -->
+                                <div class="surface-header__controls mt-3">
+                                  <div class="surface-search surface-search--compact flex-grow-1">
+                                    <i class="bi bi-search"></i>
+                                    <input id="speakerSearchInput" type="text" class="surface-search-input"
+                                           placeholder="검색: 이름 / ID / 지역 / 전화번호" autocomplete="off">
+                                    <button type="button" class="surface-icon-btn" id="speakerSearchClear" title="지우기" aria-label="지우기">
+                                      <i class="bi bi-x-lg"></i>
+                                    </button>
+                                  </div>
+                              
+                                  <div class="surface-actions">
+                                    <button class="btn-action-pill" type="button" onclick="speakerUpdate()" title="수정">
+                                      <i class="bi bi-pencil-square"></i><span class="d-none d-lg-inline">수정</span>
+                                    </button>
+                              
+                                    <button class="btn-action-pill danger" type="button" onclick="speakerDeleted()" title="삭제">
+                                      <i class="bi bi-trash"></i><span class="d-none d-lg-inline">삭제</span>
+                                    </button>
+                              
+                                    <button class="btn-action-pill ghost d-none d-md-inline-flex" type="button" onclick="listSpeakers?.()" title="새로고침">
+                                      <i class="bi bi-arrow-clockwise"></i><span class="d-none d-lg-inline">새로고침</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              
+                                <!-- 4) Filter chips -->
+                                <div class="chip-row mt-2 d-none d-lg-flex">
+                                  <button class="chip" type="button" data-chip="all">전체</button>
+                                  <button class="chip" type="button" data-chip="online">연결</button>
+                                  <button class="chip" type="button" data-chip="offline">미연결</button>
+                                  <button class="chip" type="button" data-chip="alert">점검필요</button>
+                                </div>
+                              </div>
+                              
+                            <div class="card-body p-0 d-flex flex-column flex-grow-1 speaker-table-body">
+                                <div class="table-scroll flex-grow-1">
+                                <table class="table table-dark table-hover table-modern w-100 mb-0">
+                                    <thead class="table-sticky-head">
+                                    <tr>
+                                        <th class="col-select">선택</th>
+                                        <th class="col-id">ID</th>
+                                        <th class="col-name">스피커 이름</th>
+                                        <th class="col-state">연결상태</th>
+                                        <th class="col-time">수신 시간</th>
+                                        <th class="col-phone d-none d-xl-table-cell">단말 전화 번호</th>
+                                        <th class="col-area">설치 지역</th>
+                                        <th class="col-lat d-none d-xxl-table-cell">위도</th>
+                                        <th class="col-lng d-none d-xxl-table-cell">경도</th>
+                                    </tr>
                                     </thead>
                                     <tbody id="speakerTableBody"></tbody>
-                                    </table>
+                                </table>
                                 </div>
-
-                                <nav class="px-3 pt-2 d-none flex-shrink-0">
-                                    <ul class="pagination justify-content-end align-items-center gap-2" id="speakerPagination"></ul>
+                            
+                                <nav class="px-3 py-2 d-none flex-shrink-0">
+                                <ul class="pagination justify-content-end align-items-center gap-2" id="speakerPagination"></ul>
                                 </nav>
                             </div>
-                        </div>
-                    </div>
+                            
 
-                    <!-- 우측: Detail + Monitoring + Controls -->
-                    <div class="col-12 col-xl-3 d-flex flex-column" style="min-height:0;">
-
-                        <!-- 상세정보 (고정 높이) -->
-                        <div class="card flex-shrink-0 mb-2">
-                            <div class="card-header border-0">
-                            <h6 class="card-title mb-0">스피커 상세정보</h6>
-                            </div>
-                            <div class="card-body m-1">
-                            <div class="info-item">
-                                <div class="info-label">스피커</div>
-                                <div class="info-value" id="selectedSpeakerTitle">스피커를 선택하세요</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label">설치위치</div>
-                                <div class="info-value" id="selectedSpeakeraddress">-</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label">최종수신</div>
-                                <div class="info-value" id="selectedSpeakerLastUpdate">-</div>
-                            </div>
-                            </div>
+                        </section>
                         </div>
 
-                        <!-- 상태 모니터링 (남은 공간 차지 + 내부 스크롤) -->
-                        <div class="card d-flex flex-column flex-grow-1 mb-2" style="min-height:0;">
-                            <div class="card-header flex-shrink-0 border-0">
+                        <!-- Right: Inspector -->
+                        <div class="col-12 col-xxl-3 d-flex flex-column" style="min-height:0;">
+
+                        <section class="card card-surface flex-shrink-0">
+                            <div class="card-header surface-header border-0">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <h6 class="card-title mb-0">선택 장비</h6>
+                                <span class="pill-muted">
+                                <i class="bi bi-dot"></i><span id="connectionStatusPill">대기</span>
+                                </span>
+                            </div>
+                            </div>
+                            <div class="card-body">
+                            <div class="inspector-title" id="selectedSpeakerTitle">스피커를 선택하세요</div>
+
+                            <div class="inspector-grid mt-3">
+                                <div class="inspector-item">
+                                <div class="inspector-label">설치위치</div>
+                                <div class="inspector-value" id="selectedSpeakeraddress">-</div>
+                                </div>
+                                <div class="inspector-item">
+                                <div class="inspector-label">최종수신</div>
+                                <div class="inspector-value" id="selectedSpeakerLastUpdate">-</div>
+                                </div>
+                            </div>
+
+                            <div class="divider-soft my-3"></div>
+
+                            <div class="quick-actions">
+                                <button class="quick-btn" onclick="handleButtonClick(this, requestStatus)">
+                                <i class="bi bi-info-circle"></i><span>상태</span>
+                                </button>
+                                <button class="quick-btn" onclick="handleButtonClick(this, setTime)">
+                                <i class="bi bi-clock"></i><span>시간</span>
+                                </button>
+                                <button class="quick-btn" onclick="handleButtonClick(this, remoteUpdate)">
+                                <i class="bi bi-arrow-up-circle"></i><span>업데이트</span>
+                                </button>
+                                <button class="quick-btn" onclick="handleButtonClick(this, mcuResetRequest)">
+                                <i class="bi bi-arrow-clockwise"></i><span>MCU</span>
+                                </button>
+                            </div>
+                            </div>
+                        </section>
+
+                        <section class="card card-surface d-flex flex-column flex-grow-1 mt-2" style="min-height:0;">
+                            <div class="card-header surface-header flex-shrink-0 border-0">
+                            <div class="d-flex align-items-center justify-content-between">
                                 <h6 class="card-title mb-0">상태 모니터링</h6>
+                                <button class="btn btn-sm btn-outline-light" type="button" onclick="requestStatus?.()">
+                                <i class="bi bi-lightning-charge me-1"></i>즉시 갱신
+                                </button>
                             </div>
+                            </div>
+
                             <div class="card-body overflow-auto" style="min-height:0;">
-                                <div class="monitoring-grid">
-                                    <div class="monitor-item">
-                                        <div class="monitor-label">연결상태</div>
-                                        <div class="monitor-value" id="connectionStatus">-</div>
+                                <div class="row g-2">
+                            
+                                    <!-- 연결상태 -->
+                                    <div class="col-6">
+                                        <div class="metric">
+                                        <div class="metric-top">
+                                            <div class="metric-label">연결상태</div>
+                                            <div class="metric-value" id="connectionStatus">-</div>
+                                        </div>
+                                        <div class="metric-sub">통신 및 수신 상태</div>
+                                        </div>
                                     </div>
-                                    <div class="monitor-item">
-                                        <div class="monitor-label">AC 상태</div>
-                                        <div class="monitor-value" id="acStatus">-</div>
+                                
+                                    <!-- AC -->
+                                    <div class="col-6">
+                                        <div class="metric">
+                                        <div class="metric-top">
+                                            <div class="metric-label">AC</div>
+                                            <div class="metric-value" id="acStatus">-</div>
+                                        </div>
+                                        <div class="metric-sub">외부 전원</div>
+                                        </div>
                                     </div>
-                                    <div class="monitor-item">
-                                        <div class="monitor-label">DC 상태</div>
-                                        <div class="monitor-value" id="dcStatus">-</div>
+                                
+                                    <!-- DC -->
+                                    <div class="col-6">
+                                        <div class="metric">
+                                        <div class="metric-top">
+                                            <div class="metric-label">DC</div>
+                                            <div class="metric-value" id="dcStatus">-</div>
+                                        </div>
+                                        <div class="metric-sub">배터리 전원</div>
+                                        </div>
                                     </div>
-                                    <div class="monitor-item">
-                                        <div class="monitor-label">배터리</div>
-                                        <div class="monitor-value" id="batteryStatus">-</div>
+                                
+                                    <!-- 배터리 -->
+                                    <div class="col-6">
+                                        <div class="metric">
+                                        <div class="metric-top">
+                                            <div class="metric-label">배터리</div>
+                                            <div class="metric-value" id="batteryStatus">-</div>
+                                        </div>
+                                        <div class="metric-sub">잔량 및 상태</div>
+                                        </div>
                                     </div>
-                                    <div class="monitor-item">
-                                        <div class="monitor-label">태양열</div>
-                                        <div class="monitor-value" id="solarChargerStatus">-</div>
+                                
+                                    <!-- 태양열 -->
+                                    <div class="col-6">
+                                        <div class="metric">
+                                        <div class="metric-top">
+                                            <div class="metric-label">태양열</div>
+                                            <div class="metric-value" id="solarChargerStatus">-</div>
+                                        </div>
+                                        <div class="metric-sub">충전기</div>
+                                        </div>
                                     </div>
-                                    <div class="monitor-item">
-                                        <div class="monitor-label">LTE</div>
-                                        <div class="monitor-value" id="lteAntennaStatus">-</div>
+                                
+                                    <!-- LTE -->
+                                    <div class="col-6">
+                                        <div class="metric">
+                                        <div class="metric-top">
+                                            <div class="metric-label">LTE</div>
+                                            <div class="metric-value" id="lteAntennaStatus">-</div>
+                                        </div>
+                                        <div class="metric-sub">안테나</div>
+                                        </div>
                                     </div>
-                                    <div class="monitor-item">
-                                        <div class="monitor-label">CPU 온도</div>
-                                        <div class="monitor-value" id="cpuTemperature">-</div>
+                                
+                                    <!-- CPU 온도 -->
+                                    <div class="col-6">
+                                        <div class="metric">
+                                        <div class="metric-top">
+                                            <div class="metric-label">CPU 온도</div>
+                                            <div class="metric-value" id="cpuTemperature">-</div>
+                                        </div>
+                                        <div class="metric-sub">센서</div>
+                                        </div>
                                     </div>
-                                    <div class="monitor-item">
-                                        <div class="monitor-label">MCU 버전</div>
-                                        <div class="monitor-value" id="mcuVersion">-</div>
+                                
+                                    <!-- MCU 버전 -->
+                                    <div class="col-6">
+                                        <div class="metric">
+                                        <div class="metric-top">
+                                            <div class="metric-label">MCU 버전</div>
+                                            <div class="metric-value" id="mcuVersion">-</div>
+                                        </div>
+                                        <div class="metric-sub">펌웨어</div>
+                                        </div>
                                     </div>
+                            
                                 </div>
                             </div>
-                        </div>
+                            
+                        </section>
 
-                        <!-- 제어 버튼 (항상 아래 고정) -->
-                        <div class="control-btn-panel flex-shrink-0">
-                            <button class="control-btn" onclick="handleButtonClick(this, requestStatus)">
-                            <i class="bi bi-info-circle me-2"></i>상태 요청
-                            </button>
-                            <button class="control-btn" onclick="handleButtonClick(this, setTime)">
-                            <i class="bi bi-clock me-2"></i>시간 설정
-                            </button>
-                            <button class="control-btn" onclick="handleButtonClick(this, remoteUpdate)">
-                            <i class="bi bi-arrow-up-circle me-2"></i>원격 업데이트
-                            </button>
-                            <button class="control-btn" onclick="handleButtonClick(this, mcuResetRequest)">
-                            <i class="bi bi-arrow-clockwise me-2"></i>MCU 리셋
-                            </button>
                         </div>
-
                     </div>
-                </div>
-            </div>
+                    </div>
 
+                    <!-- Broadcast -->
+                    <div class="tab-pane fade"
+                        id="broadcast-content"
+                        th:classappend="${view == 'broadcast'} ? 'show active' : ''">
 
-            <!-- Broadcast Management Content -->
-            <div class="tab-pane fade"
-                id="broadcast-content"
-                th:classappend="${view == 'broadcast'} ? 'show active' : ''">
-                <div class="container">
-                    <div class="row flex-grow-1 g-3">
-                        <div class="col-12 col-xl-4 h-100">
-                            <div class="glass-card card-dark animate-fade-in d-flex flex-column h-100">
-                                <div class="section-header">
-                                    <span class="section-title pt-2 fw-semibold">
-                                        스피커 리스트
-                                    </span>
+                    <div class="container-fluid px-0">
+                        <div class="row g-3" style="min-height:0;">
+
+                        <div class="col-12 col-xxl-4 d-flex" style="min-height:0;">
+                            <section class="card card-surface card-dark d-flex flex-column w-100" style="min-height:0;">
+                            <div class="card-header surface-header">
+                                <div class="d-flex align-items-center justify-content-between gap-2">
+                                <h6 class="mb-0">대상 스피커</h6>
+                                <span class="status-badge status-secondary">
+                                    선택 <span id="selectedTargetSpeakerCount">0</span>대
+                                </span>
                                 </div>
-                                <!-- <div class="speaker-grid h-100 overflow-auto text-wrap" id="speaker-card-container"></div> -->
-                                <!-- ✅ 추가: 대상 선택 UI -->
-                                <div class="d-flex flex-column flex-grow-1 pt-1 pb-3" style="min-height:0;">
-                                    <!-- 검색/전체선택 -->
-                                    <div class="d-flex gap-2 align-items-center mb-2 p-3">
-                                        <input id="targetSpeakerSearch"
-                                            type="text"
-                                            class="form-control form-control-sm"
-                                            placeholder="스피커 검색 (이름/ID/지역)">
 
-                                        <div class="form-check ms-1 flex-shrink-0">
-                                            <input class="form-check-input" type="checkbox" id="targetSpeakerSelectAll">
-                                            <label class="form-check-label small text-white-50" for="targetSpeakerSelectAll">
-                                                전체
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    <!-- 리스트 영역(스크롤) -->
-                                    <div class="flex-grow-1 overflow-auto ps-3 py-2" style="min-height:0;">
-                                        <div id="targetSpeakerList" class="d-flex flex-column gap-2 pe-3">
-                                            <!-- JS로 렌더링: 체크박스 리스트 -->
-                                        </div>
-
-                                        <!-- 빈 상태 -->
-                                        <div id="targetSpeakerEmpty" class="text-center py-5 text-white-50 d-none">
-                                            <i class="bi bi-inbox fs-1 opacity-50"></i>
-                                            <div class="mt-2">표시할 스피커가 없습니다</div>
-                                        </div>
-                                    </div>
-
-                                    <!-- 선택 정보 -->
-                                    <!-- <div class="mt-2 pt-2 border-top border-white-10 d-flex justify-content-between align-items-center"> -->
-                                    <div class="mt-2 pt-2 d-flex justify-content-between align-items-center d-none">
-                                        <small class="text-white-50">
-                                            선택: <span id="selectedTargetSpeakerCount">0</span>대
-                                        </small>
-                                        <button class="btn btn-sm btn-outline-light" type="button" onclick="clearTargetSpeakers()">
-                                            선택 해제
-                                        </button>
-                                    </div>
+                                <div class="surface-search mt-3">
+                                <i class="bi bi-search"></i>
+                                <input id="targetSpeakerSearch"
+                                        type="text"
+                                        class="surface-search-input"
+                                        placeholder="검색: 이름 / ID / 지역" autocomplete="off">
+                                <div class="form-check ms-2 flex-shrink-0">
+                                    <input class="form-check-input" type="checkbox" id="targetSpeakerSelectAll">
+                                    <label class="form-check-label small text-white-50" for="targetSpeakerSelectAll">전체</label>
+                                </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-12 col-xl-8 h-100 d-flex">
-                            <!-- Broadcast Controls -->
-                            <div class="glass-card card-dark animate-fade-in d-flex flex-column h-100" style="min-height:0;">
-                                <div class="section-header d-flex flex-wrap flex-shrink-0">
-                                    <span class="section-title fw-semibold flex-grow-1 mb-2 mb-md-0">
-                                        방송 설정
-                                    </span>
-    
-                                    <div class="d-flex flex-wrap gap-2">
-                                        <button class="btn btn-primary d-flex align-items-center" onclick="showAddBroadcastModal()">
-                                            <i class="bi bi-plus"></i>
-                                            <span class="ms-1 d-none d-sm-inline">추가</span>
-                                        </button>
-                                        <button class="btn btn-primary d-flex align-items-center" onclick="showEditBroadcastModal()">
-                                            <i class="bi bi-pencil"></i>
-                                            <span class="ms-1 d-none d-sm-inline">수정</span>
-                                        </button>
-                                        <button class="btn btn-danger d-flex align-items-center" onclick="deleteSelectedBroadcast()">
-                                            <i class="bi bi-trash"></i>
-                                            <span class="ms-1 d-none d-sm-inline">삭제</span>
-                                        </button>
-                                        <!-- <button class="btn btn-outline-light d-flex align-items-center" onclick="openBroadcastLogModal()">
-                                            <i class="bi bi-journal-text"></i>
-                                            <span class="ms-1 d-none d-sm-inline">방송 로그</span>
-                                        </button> -->
-                                    </div>
-                                    
+
+                            <div class="card-body p-0 d-flex flex-column flex-grow-1" style="min-height:0;">
+                                <div class="flex-grow-1 overflow-auto px-3 py-3" style="min-height:0;">
+                                <div id="targetSpeakerList" class="list-stack"></div>
+
+                                <div id="targetSpeakerEmpty" class="empty-state d-none">
+                                    <i class="bi bi-inbox fs-1 opacity-50"></i>
+                                    <div class="mt-2">표시할 스피커가 없습니다</div>
                                 </div>
-                                <div class="flex-grow-1 overflow-auto" style="min-height:0;">
-                                    <!-- 상단: 방송 종류 + 설정을 2열로 배치 -->
-                                    <div class="px-3 pb-2">
-                                        <div class="row g-3" id="broadcastTypeRow">
+                                </div>
 
-                                            <!-- 방송 종류 -->
-                                            <div id="broadcastTypeCol" class="col-12">
-                                                <div class="broadcast-types" id="broadcastTypesContainer"></div>
-                                            </div>
-                                        
-                                            <!-- 선택된 방송 상세 -->
-                                            <div id="broadcastInfoCol" class="col-12 col-lg-5 d-none">
-                                                <div id="selectedBroadcastInfo">
-                                                    <div class="rounded-3 p-3">
-                                                        <h6 class="text-accent mb-2" id="selectedBroadcastTitle">-</h6>
-                                                        <p class="text-white-50 mb-1" id="selectedBroadcastMessage">-</p>
-                                                        <small class="text-info" id="selectedBroadcastAudio">-</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div> 
-
-                                    <!-- 수동 발령 설정 (전체 너비로 customMessageArea 위에 이동) -->
-                                    <div class="px-3 pb-2 d-flex">
-                                        <div class="row g-3 d-flex flex-grow-1">
-                                            <div class="col-12">
-                                                <div class="row g-3">
-                                                <!-- 실제/시험 -->
-                                                <div class="col-12 col-lg-6">
-                                                    <label class="form-label text-white-50 small">방송 모드</label>
-                                                    <select id="bc_mode" class="form-select-dark">
-                                                        <option value="0">시험 방송</option>
-                                                        <option value="1" selected>실제 방송</option>
-                                                    </select>
-                                                </div>
-                                        
-                                                <!-- 방송 종류 -->
-                                                <div class="col-12 col-lg-6">
-                                                    <label class="form-label text-white-50 small">방송 종류</label>
-                                                    <select id="bc_broadcast_type" class="form-select-dark">
-                                                        <option value="1" selected>TTS</option>
-                                                        <option value="2">저장메시지</option>
-                                                        <option value="3">기타</option>
-                                                    </select>
-                                                </div>
-                                        
-                                                <!-- (필요 시) 숨김 항목들은 그대로 유지 -->
-                                                <div class="col-12 col-md-6 d-none">
-                                                    <label class="form-label text-white-50">경보 종류</label>
-                                                    <select id="bc_alert_type" class="form-select form-select-sm">
-                                                        <option value="0" selected>CFW</option>
-                                                        <option value="1">ACL</option>
-                                                    </select>
-                                                </div>
-                                        
-                                                <div class="col-12 col-md-6 d-none">
-                                                    <label class="form-label text-white-50">우선순위</label>
-                                                    <select id="bc_priority" class="form-select form-select-sm">
-                                                        <option value="0">없음</option>
-                                                        <option value="1">주의</option>
-                                                        <option value="2">경계</option>
-                                                        <option value="3" selected>위험</option>
-                                                    </select>
-                                                </div>
-                                        
-                                                <div class="col-12 col-md-6 d-none">
-                                                    <label class="form-label text-white-50">방송 범위</label>
-                                                    <select id="bc_scope" class="form-select form-select-sm">
-                                                        <option value="1">시/도</option>
-                                                        <option value="2">군/구</option>
-                                                        <option value="3" selected>스피커</option>
-                                                    </select>
-                                                </div>
-                                        
-                                                <div class="col-12 col-md-6 d-none">
-                                                    <label class="form-label text-white-50">재난 선택</label>
-                                                    <select id="bc_disaster" class="form-select-dark">
-                                                        <option value="" selected>재난을 선택하세요</option>
-                                                    </select>
-                                                </div>
-                                        
-                                                <div class="col-12 d-none">
-                                                    <label class="form-label text-white-50">TTS 메시지</label>
-                                                    <textarea id="bc_tts" class="form-control-dark" rows="6"
-                                                    placeholder="예: 현재 ○○지역에 호우경보가 발효되었습니다. 안전한 장소로 이동하세요."></textarea>
-                                                </div>
-                                        
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Custom Message Input -->
-                                    <div class="p-3" id="customMessageArea" style="display: none;">
-                                        <label class="form-label">TTS 메시지</label>
-                                        <textarea class="custom-message" placeholder="방송할 내용을 입력하세요." id="customMessageText"></textarea>
-                                    </div>
-        
-                                    <!-- Progress Bar -->
-                                    <div id="broadcastProgress" class="d-none p-3">
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <span>방송 진행 중...</span>
-                                            <span id="progressText">0%</span>
-                                        </div>
-                                        <div class="progress-bar-custom">
-                                            <div class="progress-fill" id="progressFill"></div>
-                                        </div>
-                                    </div>
-        
-                                    <!-- Broadcast Actions -->
-                                    <div class="broadcast-actions">
-                                        <div class="row g-2">
-
-                                            <div class="col-12 col-lg-6">
-                                                <div class="row g-2">
-                                                    <div class="col-6 d-none">
-                                                        <button class="btn-apple info d-none" onclick="showUploadModal()">
-                                                            <i class="bi bi-upload me-2"></i>음원 파일 전송
-                                                        </button>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <button class="btn-apple info" onclick="startBroadcast()">
-                                                            <i class="bi bi-play-fill me-2"></i>방송 시작
-                                                        </button>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <button class="btn-apple danger" onclick="stopBroadcast()">
-                                                            <i class="bi bi-stop-fill me-2"></i>방송 중지
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        
-                                            <div class="col-12 col-lg-6">
-                                                <div class="row g-2">
-                                                    <div class="col-6">
-                                                        <button class="btn-apple warning" onclick="testBroadcast()">
-                                                            <i class="bi bi-volume-up-fill me-2"></i>테스트 방송
-                                                        </button>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <button class="btn-apple secondary" onclick="resetSelection()">
-                                                            <i class="bi bi-arrow-clockwise me-2"></i>선택 초기화
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Broadcast Log -->
-                                    <div id="broadcastLogSection"
-                                        class="d-flex flex-column flex-grow-1 overflow-hidden"
-                                        style="min-height:220px;">
-
-                                        <!-- 로그 헤더 -->
-                                        <div class="d-flex align-items-center justify-content-between px-3 py-2 flex-shrink-0">
-                                            <h6 class="mb-0">
-                                                <span class="text-white-50 small">방송 로그</span>
-                                                <span id="broadcastLogBadge" class="badge bg-danger ms-2 d-none">0</span>
-                                            </h6>
-
-                                            <button type="button"
-                                                    class="btn btn-sm btn-outline-light"
-                                                    id="toggleBroadcastLogBtn">
-                                                펼치기
-                                            </button>
-                                        </div>
-
-                                        <!-- ✅ 로그 패널 (이 안에서만 스크롤) -->
-                                        <div id="broadcastLogPanel"
-                                            class="broadcast-log flex-grow-1"
-                                            style="overflow-y:auto;">
-                                            <!-- <div class="log-entry success">
-                                                <div class="log-timestamp">2025-06-25 14:30:15</div>
-                                                <div class="log-message">스피커A에 장비테스트 방송이 성공적으로 전송되었습니다.</div>
-                                            </div>
-                                            
-                                            <div class="log-entry">
-                                                <div class="log-timestamp">2025-06-25 14:28:42</div>
-                                                <div class="log-message">전체 스피커에 홍수주의보 방송을 시작합니다.</div>
-                                            </div>
-                                            
-                                            <div class="log-entry warning">
-                                                <div class="log-timestamp">2025-06-25 14:25:33</div>
-                                                <div class="log-message">스피커B 연결 상태 확인이 필요합니다.</div>
-                                            </div>
-                                            
-                                            <div class="log-entry error">
-                                                <div class="log-timestamp">2025-06-25 14:22:18</div>
-                                                <div class="log-message">스피커C 방송 전송에 실패했습니다. 네트워크 연결을 확인하세요.</div>
-                                            </div>
-                                            
-                                            <div class="log-entry success">
-                                                <div class="log-timestamp">2025-06-25 14:20:05</div>
-                                                <div class="log-message">계곡대피경보 방송이 모든 스피커에 성공적으로 전송되었습니다.</div>
-                                            </div>
-                                            
-                                            <div class="log-entry">
-                                                <div class="log-timestamp">2025-06-25 14:15:22</div>
-                                                <div class="log-message">사용자 정의 메시지 방송을 준비합니다.</div>
-                                            </div>
-
-                                            <div class="log-entry success">
-                                                <div class="log-timestamp">2025-06-25 14:20:05</div>
-                                                <div class="log-message">계곡대피경보 방송이 모든 스피커에 성공적으로 전송되었습니다.</div>
-                                            </div>
-                                            <div class="log-entry success">
-                                                <div class="log-timestamp">2025-06-25 14:20:05</div>
-                                                <div class="log-message">계곡대피경보 방송이 모든 스피커에 성공적으로 전송되었습니다.</div>
-                                            </div>
-                                            <div class="log-entry success">
-                                                <div class="log-timestamp">2025-06-25 14:20:05</div>
-                                                <div class="log-message">계곡대피경보 방송이 모든 스피커에 성공적으로 전송되었습니다.</div>
-                                            </div>
-                                            <div class="log-entry success">
-                                                <div class="log-timestamp">2025-06-25 14:20:05</div>
-                                                <div class="log-message">계곡대피경보 방송이 모든 스피커에 성공적으로 전송되었습니다.</div>
-                                            </div>
-                                            <div class="log-entry success">
-                                                <div class="log-timestamp">2025-06-25 14:20:05</div>
-                                                <div class="log-message">계곡대피경보 방송이 모든 스피커에 성공적으로 전송되었습니다.</div>
-                                            </div>
-                                            <div class="log-entry success">
-                                                <div class="log-timestamp">2025-06-25 14:20:05</div>
-                                                <div class="log-message">계곡대피경보 방송이 모든 스피커에 성공적으로 전송되었습니다.</div>
-                                            </div>
-                                            <div class="log-entry success">
-                                                <div class="log-timestamp">2025-06-25 14:20:05</div>
-                                                <div class="log-message">계곡대피경보 방송이 모든 스피커에 성공적으로 전송되었습니다.</div>
-                                            </div>
-                                            <div class="log-entry success">
-                                                <div class="log-timestamp">2025-06-25 14:20:05</div>
-                                                <div class="log-message">계곡대피경보 방송이 모든 스피커에 성공적으로 전송되었습니다.</div>
-                                            </div> -->
-                                        </div>
-
-                                    </div>
-                                    <!-- <div class="d-flex flex-column flex-grow-1">
-                                        <h6 class="flex-shrink-0">
-                                            <span class="px-3 text-white-50">방송 로그</span>
-                                        </h6>
-            
-                                        <div class="broadcast-log flex-grow-1">
-                                            <div class="log-entry success">
-                                                <div class="log-timestamp">2025-06-25 14:30:15</div>
-                                                <div class="log-message">스피커A에 장비테스트 방송이 성공적으로 전송되었습니다.</div>
-                                            </div>
-                                            
-                                            <div class="log-entry">
-                                                <div class="log-timestamp">2025-06-25 14:28:42</div>
-                                                <div class="log-message">전체 스피커에 홍수주의보 방송을 시작합니다.</div>
-                                            </div>
-                                            
-                                            <div class="log-entry warning">
-                                                <div class="log-timestamp">2025-06-25 14:25:33</div>
-                                                <div class="log-message">스피커B 연결 상태 확인이 필요합니다.</div>
-                                            </div>
-                                            
-                                            <div class="log-entry error">
-                                                <div class="log-timestamp">2025-06-25 14:22:18</div>
-                                                <div class="log-message">스피커C 방송 전송에 실패했습니다. 네트워크 연결을 확인하세요.</div>
-                                            </div>
-                                            
-                                            <div class="log-entry success">
-                                                <div class="log-timestamp">2025-06-25 14:20:05</div>
-                                                <div class="log-message">계곡대피경보 방송이 모든 스피커에 성공적으로 전송되었습니다.</div>
-                                            </div>
-                                            
-                                            <div class="log-entry">
-                                                <div class="log-timestamp">2025-06-25 14:15:22</div>
-                                                <div class="log-message">사용자 정의 메시지 방송을 준비합니다.</div>
-                                            </div>
-        
-                                            <div class="log-entry success">
-                                                <div class="log-timestamp">2025-06-25 14:20:05</div>
-                                                <div class="log-message">계곡대피경보 방송이 모든 스피커에 성공적으로 전송되었습니다.</div>
-                                            </div>
-                                            <div class="log-entry success">
-                                                <div class="log-timestamp">2025-06-25 14:20:05</div>
-                                                <div class="log-message">계곡대피경보 방송이 모든 스피커에 성공적으로 전송되었습니다.</div>
-                                            </div>
-                                            <div class="log-entry success">
-                                                <div class="log-timestamp">2025-06-25 14:20:05</div>
-                                                <div class="log-message">계곡대피경보 방송이 모든 스피커에 성공적으로 전송되었습니다.</div>
-                                            </div>
-                                            <div class="log-entry success">
-                                                <div class="log-timestamp">2025-06-25 14:20:05</div>
-                                                <div class="log-message">계곡대피경보 방송이 모든 스피커에 성공적으로 전송되었습니다.</div>
-                                            </div>
-                                            <div class="log-entry success">
-                                                <div class="log-timestamp">2025-06-25 14:20:05</div>
-                                                <div class="log-message">계곡대피경보 방송이 모든 스피커에 성공적으로 전송되었습니다.</div>
-                                            </div>
-                                            <div class="log-entry success">
-                                                <div class="log-timestamp">2025-06-25 14:20:05</div>
-                                                <div class="log-message">계곡대피경보 방송이 모든 스피커에 성공적으로 전송되었습니다.</div>
-                                            </div>
-                                            <div class="log-entry success">
-                                                <div class="log-timestamp">2025-06-25 14:20:05</div>
-                                                <div class="log-message">계곡대피경보 방송이 모든 스피커에 성공적으로 전송되었습니다.</div>
-                                            </div>
-                                            <div class="log-entry success">
-                                                <div class="log-timestamp">2025-06-25 14:20:05</div>
-                                                <div class="log-message">계곡대피경보 방송이 모든 스피커에 성공적으로 전송되었습니다.</div>
-                                            </div>
-                                        </div>
-                                    </div> -->
+                                <div class="px-3 pb-3 pt-2 border-top border-white-10 d-flex justify-content-between align-items-center">
+                                <button class="btn btn-sm btn-outline-light" type="button" onclick="clearTargetSpeakers()">
+                                    <i class="bi bi-x-circle me-1"></i>선택 해제
+                                </button>
+                                <button class="btn btn-sm btn-outline-light" type="button" onclick="resetSelection()">
+                                    <i class="bi bi-arrow-clockwise me-1"></i>초기화
+                                </button>
                                 </div>
                             </div>
+                            </section>
+                        </div>
+
+                        <div class="col-12 col-xxl-8 d-flex" style="min-height:0;">
+                            <section class="card card-surface card-dark d-flex flex-column w-100" style="min-height:0;">
+
+                            <div class="card-header surface-header flex-shrink-0">
+                                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                                <div>
+                                    <h6 class="mb-0">방송 설정</h6>
+                                    <div class="text-white-50 small mt-1">방송 유형 선택 → 설정 → 실행 → 로그 확인</div>
+                                </div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button class="btn btn-primary btn-sm d-flex align-items-center" onclick="showAddBroadcastModal()">
+                                    <i class="bi bi-plus"></i><span class="ms-1 d-none d-sm-inline">추가</span>
+                                    </button>
+                                    <button class="btn btn-primary btn-sm d-flex align-items-center" onclick="showEditBroadcastModal()">
+                                    <i class="bi bi-pencil"></i><span class="ms-1 d-none d-sm-inline">수정</span>
+                                    </button>
+                                    <button class="btn btn-danger btn-sm d-flex align-items-center" onclick="deleteSelectedBroadcast()">
+                                    <i class="bi bi-trash"></i><span class="ms-1 d-none d-sm-inline">삭제</span>
+                                    </button>
+                                </div>
+                                </div>
+
+                                <div class="stepper mt-3">
+                                <div class="step is-active"><span class="step-dot"></span><span class="step-label">유형</span></div>
+                                <div class="step"><span class="step-dot"></span><span class="step-label">설정</span></div>
+                                <div class="step"><span class="step-dot"></span><span class="step-label">실행</span></div>
+                                <div class="step"><span class="step-dot"></span><span class="step-label">로그</span></div>
+                                </div>
+                            </div>
+
+                            <div class="card-body p-0 d-flex flex-column flex-grow-1" style="min-height:0;">
+                                <div class="composer-scroll flex-grow-1 overflow-auto" style="min-height:0;">
+
+                                <div class="composer-block">
+                                    <div class="composer-title">
+                                    <span>방송 유형</span>
+                                    <span class="text-white-50 small">목록에서 선택하면 상세가 표시됩니다</span>
+                                    </div>
+
+                                    <div class="row g-3" id="broadcastTypeRow">
+                                    <div id="broadcastTypeCol" class="col-12">
+                                        <div class="broadcast-types modern-broadcast-types" id="broadcastTypesContainer"></div>
+                                    </div>
+
+                                    <div id="broadcastInfoCol" class="col-12 col-xl-5 d-none">
+                                        <div id="selectedBroadcastInfo" class="selected-broadcast-card">
+                                        <div class="selected-broadcast-title" id="selectedBroadcastTitle">-</div>
+                                        <div class="selected-broadcast-msg" id="selectedBroadcastMessage">-</div>
+                                        <div class="selected-broadcast-audio" id="selectedBroadcastAudio">-</div>
+                                        </div>
+                                    </div>
+                                    </div>
+                                </div>
+
+                                <div class="composer-block">
+                                    <div class="composer-title">
+                                    <span>수동 발령 설정</span>
+                                    <span class="text-white-50 small">모드/방송종류 선택 후 메시지를 입력하세요</span>
+                                    </div>
+
+                                    <div class="row g-3">
+                                    <div class="col-12 col-xl-6">
+                                        <label class="form-label text-white-50 small">방송 모드</label>
+                                        <select id="bc_mode" class="form-select-dark">
+                                        <option value="0">시험 방송</option>
+                                        <option value="1" selected>실제 방송</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-12 col-xl-6">
+                                        <label class="form-label text-white-50 small">방송 종류</label>
+                                        <select id="bc_broadcast_type" class="form-select-dark">
+                                        <option value="1" selected>TTS</option>
+                                        <option value="2">저장메시지</option>
+                                        <option value="3">기타</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-12 col-md-6 d-none">
+                                        <label class="form-label text-white-50">경보 종류</label>
+                                        <select id="bc_alert_type" class="form-select form-select-sm">
+                                        <option value="0" selected>CFW</option>
+                                        <option value="1">ACL</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-12 col-md-6 d-none">
+                                        <label class="form-label text-white-50">우선순위</label>
+                                        <select id="bc_priority" class="form-select form-select-sm">
+                                        <option value="0">없음</option>
+                                        <option value="1">주의</option>
+                                        <option value="2">경계</option>
+                                        <option value="3" selected>위험</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-12 col-md-6 d-none">
+                                        <label class="form-label text-white-50">방송 범위</label>
+                                        <select id="bc_scope" class="form-select form-select-sm">
+                                        <option value="1">시/도</option>
+                                        <option value="2">군/구</option>
+                                        <option value="3" selected>스피커</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-12 col-md-6 d-none">
+                                        <label class="form-label text-white-50">재난 선택</label>
+                                        <select id="bc_disaster" class="form-select-dark">
+                                        <option value="" selected>재난을 선택하세요</option>
+                                        </select>
+                                    </div>
+                                    </div>
+
+                                    <div class="mt-3" id="customMessageArea" style="display:none;">
+                                    <label class="form-label text-white-50 small">TTS 메시지</label>
+                                    <textarea class="custom-message modern-textarea"
+                                                placeholder="방송할 내용을 입력하세요."
+                                                id="customMessageText"></textarea>
+                                    </div>
+
+                                    <div id="broadcastProgress" class="d-none mt-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-white-50 small">방송 진행 중</span>
+                                        <span class="small" id="progressText">0%</span>
+                                    </div>
+                                    <div class="progress-bar-custom">
+                                        <div class="progress-fill" id="progressFill"></div>
+                                    </div>
+                                    </div>
+                                </div>
+
+                                <div class="composer-block">
+                                    <div class="composer-title">
+                                    <span>실행</span>
+                                    <span class="text-white-50 small">대상 선택 후 실행하세요</span>
+                                    </div>
+
+                                    <div class="action-grid">
+                                    <button class="btn-apple info" onclick="startBroadcast()">
+                                        <i class="bi bi-play-fill me-2"></i>방송 시작
+                                    </button>
+                                    <button class="btn-apple danger" onclick="stopBroadcast()">
+                                        <i class="bi bi-stop-fill me-2"></i>방송 중지
+                                    </button>
+                                    <button class="btn-apple warning" onclick="testBroadcast()">
+                                        <i class="bi bi-volume-up-fill me-2"></i>테스트 방송
+                                    </button>
+                                    <button class="btn-apple secondary" onclick="resetSelection()">
+                                        <i class="bi bi-arrow-clockwise me-2"></i>선택 초기화
+                                    </button>
+                                    </div>
+                                </div>
+
+                                <div class="composer-block">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                    <div class="composer-title m-0">
+                                        <span>방송 로그</span>
+                                        <span class="text-white-50 small">최근 로그만 표시하고 펼치기/접기</span>
+                                    </div>
+
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span id="broadcastLogBadge" class="badge bg-danger d-none">0</span>
+                                        <button type="button" class="btn btn-sm btn-outline-light" id="toggleBroadcastLogBtn">펼치기</button>
+                                    </div>
+                                    </div>
+
+                                    <div id="broadcastLogSection" class="log-shell mt-2">
+                                    <div id="broadcastLogPanel" class="broadcast-log" style="overflow-y:auto;"></div>
+                                    </div>
+                                </div>
+
+                                </div>
+                            </div>
+                            </section>
+                        </div>
+
                         </div>
                     </div>
+                    </div>
+
                 </div>
 
-            </div>
-        </div>
+                <!-- Toast -->
+                <div class="position-fixed top-0 end-0 p-3" style="z-index:1080;">
+                    <div id="broadcastToast" class="toast align-items-center text-white bg-primary border-0"
+                        role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body" id="broadcastToastBody"></div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                                data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    </div>
+                </div>
 
-        <div class="position-fixed top-0 end-0 p-3" style="z-index: 1080;">
-            <div id="broadcastToast" class="toast align-items-center text-white bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="d-flex">
-                <div class="toast-body" id="broadcastToastBody">
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-            </div>
-        </div>
+                <!-- Modals: kept to avoid JS breakage -->
+                <div class="modal fade" id="addBroadcastModal" tabindex="-1" aria-labelledby="addBroadcastLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                        <h5 class="modal-title" id="addBroadcastLabel">방송 추가</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+                        </div>
+                        <div class="modal-body">
+                        <form id="addBroadcastForm">
+                            <div class="mb-3">
+                            <label class="form-label">코드</label>
+                            <input type="text" class="form-control" id="broadcastCode" placeholder="예: BR001" required>
+                            </div>
 
-        <!-- 방송 추가 모달 -->
-        <div class="modal fade" id="addBroadcastModal" tabindex="-1" aria-labelledby="addBroadcastLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                <h5 class="modal-title" id="addBroadcastLabel">방송 추가</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
-                </div>
-                <div class="modal-body">
-                <form id="addBroadcastForm">
-                    <div class="mb-3">
-                    <label class="form-label">코드</label>
-                    <input type="text" class="form-control" id="broadcastCode" placeholder="예: BR001" required>
-                    </div>
-        
-                    <div class="mb-3">
-                    <label class="form-label">유형</label>
-                    <select class="form-select" id="broadcastType" required>
-                        <option value="NORMAL">일반 방송</option>
-                        <option value="EMERGENCY">긴급 방송</option>
-                        <option value="TEST">테스트 방송</option>
-                    </select>
-                    </div>
-        
-                    <div class="mb-3">
-                    <label class="form-label">제목</label>
-                    <input type="text" class="form-control" id="broadcastTitle" placeholder="방송 제목 입력" required>
-                    </div>
-        
-                    <div class="mb-3">
-                    <label class="form-label">내용</label>
-                    <textarea class="form-control" id="broadcastText" rows="3" placeholder="방송 내용 입력" required></textarea>
-                    </div>
-        
-                    <div class="mb-3">
-                        <label class="form-label">사용 여부</label>
-                        <select class="form-select" id="broadcastUseInfo" required>
-                            <option value="1">사용</option>
-                            <option value="0">미사용</option>
-                        </select>
-                    </div>
-        
-                    <div class="mb-3">
-                        <label class="form-label">오디오 파일명</label>
-                        <input type="text" class="form-control" id="broadcastAudio" placeholder="예: alert.mp3">
-                        <input type="file" id="audioFileInput" accept=".mp3,.wav" style="display: none;">
-                    </div>
-                </form>
-                </div>
-                <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-                <button type="button" class="btn btn-primary" onclick="submitAddBroadcast()">등록</button>
-                </div>
-            </div>
-            </div>
-        </div>
+                            <div class="mb-3">
+                            <label class="form-label">유형</label>
+                            <select class="form-select" id="broadcastType" required>
+                                <option value="NORMAL">일반 방송</option>
+                                <option value="EMERGENCY">긴급 방송</option>
+                                <option value="TEST">테스트 방송</option>
+                            </select>
+                            </div>
 
-        <!-- 🔹 모달창 -->
-        <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-            
-                    <div class="modal-header">
+                            <div class="mb-3">
+                            <label class="form-label">제목</label>
+                            <input type="text" class="form-control" id="broadcastTitle" placeholder="방송 제목 입력" required>
+                            </div>
+
+                            <div class="mb-3">
+                            <label class="form-label">내용</label>
+                            <textarea class="form-control" id="broadcastText" rows="3" placeholder="방송 내용 입력" required></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                            <label class="form-label">사용 여부</label>
+                            <select class="form-select" id="broadcastUseInfo" required>
+                                <option value="1">사용</option>
+                                <option value="0">미사용</option>
+                            </select>
+                            </div>
+
+                            <div class="mb-3">
+                            <label class="form-label">오디오 파일명</label>
+                            <input type="text" class="form-control" id="broadcastAudio" placeholder="예: alert.mp3">
+                            <input type="file" id="audioFileInput" accept=".mp3,.wav" style="display:none;">
+                            </div>
+                        </form>
+                        </div>
+                        <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-primary" onclick="submitAddBroadcast()">등록</button>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
                         <h5 class="modal-title" id="uploadModalLabel">
                             <i class="bi bi-upload me-3"></i>음원 파일 전송
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-            
-                    <div class="modal-body mx-3">
-                        <!-- 대상 스피커 -->
+                        </div>
+
+                        <div class="modal-body mx-3">
                         <div class="mb-3">
                             <label class="form-label small text-muted">대상 스피커</label>
-                            <div id="targetSpeakerName" class="fw-semibold text-muted">
-                                (선택된 스피커가 없습니다)
-                            </div>
+                            <div id="targetSpeakerName" class="fw-semibold text-muted">(선택된 스피커가 없습니다)</div>
                         </div>
-                
+
                         <form id="uploadForm" enctype="multipart/form-data" novalidate>
                             <div class="mb-3">
-                                <label class="form-label">음원 파일 선택</label>
-                                <input type="file" class="form-control" name="file" accept=".mp3,.wav" required>
+                            <label class="form-label">음원 파일 선택</label>
+                            <input type="file" class="form-control" name="file" accept=".mp3,.wav" required>
                             </div>
-                
+
                             <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">스피커 IP</label>
-                                    <input type="text" class="form-control fs-7" name="host" id="speakerHost"
-                                        placeholder="예: 192.168.0.11" required>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">포트</label>
-                                    <input type="number" class="form-control fs-7" name="port" placeholder="22" required>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">사용자</label>
-                                    <input type="text" class="form-control fs-7" name="user" required>
-                                </div>
+                            <div class="col-md-6">
+                                <label class="form-label">스피커 IP</label>
+                                <input type="text" class="form-control fs-7" name="host" id="speakerHost"
+                                    placeholder="예: 192.168.0.11" required>
                             </div>
-                
+                            <div class="col-md-3">
+                                <label class="form-label">포트</label>
+                                <input type="number" class="form-control fs-7" name="port" placeholder="22" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">사용자</label>
+                                <input type="text" class="form-control fs-7" name="user" required>
+                            </div>
+                            </div>
+
                             <div class="mt-3">
-                                <label class="form-label">비밀번호</label>
-                                <input type="password" class="form-control fs-7" name="password" placeholder="비밀번호를 입력하세요" required>
+                            <label class="form-label">비밀번호</label>
+                            <input type="password" class="form-control fs-7" name="password" placeholder="비밀번호를 입력하세요" required>
                             </div>
                         </form>
-                
+
                         <div id="uploadResult" class="mt-3 small text-center text-muted"></div>
-                    </div>
-            
-                    <div class="modal-footer">
+                        </div>
+
+                        <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
                         <button type="button" class="btn btn-primary" onclick="sendAudioToSpeaker()">전송</button>
+                        </div>
                     </div>
-            
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- 🔹 방송 로그 모달 -->
-        <div class="modal fade" id="broadcastLogModal" tabindex="-1" aria-labelledby="broadcastLogModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
+                <div class="modal fade" id="broadcastLogModal" tabindex="-1" aria-labelledby="broadcastLogModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
                         <h5 class="modal-title" id="broadcastLogModalLabel">
                             <i class="bi bi-journal-text me-2"></i>방송 로그
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
+                        </div>
 
-                    <div class="modal-body">
+                        <div class="modal-body">
                         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                             <small class="text-muted" id="broadcastLogCount">0건</small>
                             <div class="d-flex gap-2">
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearBroadcastLogs()">
-                                    <i class="bi bi-trash3"></i> 비우기
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="refreshBroadcastLogs()">
-                                    <i class="bi bi-arrow-clockwise"></i> 새로고침
-                                </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearBroadcastLogs()">
+                                <i class="bi bi-trash3"></i> 비우기
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="refreshBroadcastLogs()">
+                                <i class="bi bi-arrow-clockwise"></i> 새로고침
+                            </button>
                             </div>
                         </div>
 
-                        <div class="border rounded-3 p-2" style="max-height: 55vh; overflow:auto;">
+                        <div class="border rounded-3 p-2" style="max-height:55vh; overflow:auto;">
                             <div id="broadcastLogList" class="d-flex flex-column gap-2"></div>
                             <div id="broadcastLogEmpty" class="text-center py-5 text-muted d-none">
-                                <i class="bi bi-inbox fs-1 opacity-50"></i>
-                                <div class="mt-2">표시할 로그가 없습니다.</div>
+                            <i class="bi bi-inbox fs-1 opacity-50"></i>
+                            <div class="mt-2">표시할 로그가 없습니다.</div>
                             </div>
                         </div>
-                    </div>
+                        </div>
 
-                    <div class="modal-footer">
+                        <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                        </div>
+                    </div>
                     </div>
                 </div>
-            </div>
+
+            </main>
         </div>
-        
     </div>
 </body>
 </html>
