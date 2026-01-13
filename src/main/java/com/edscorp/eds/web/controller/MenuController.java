@@ -1,8 +1,11 @@
 package com.edscorp.eds.web.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.edscorp.eds.cctv.service.CctvService;
+import com.edscorp.eds.mqtt.dto.EmergencyLogRowDTO;
+import com.edscorp.eds.mqtt.service.EmergencyService;
 import com.edscorp.eds.speaker.domain.BroadcastListEntity;
 import com.edscorp.eds.speaker.domain.SpeakerStatusEntity;
 import com.edscorp.eds.speaker.dto.ScheduleDetailDTO;
@@ -37,6 +42,7 @@ public class MenuController {
     private final BroadcastScheduleService broadcastScheduleService;
     private final SpkDisasterService spkDisasterService;
     private final SpkConfigService spkConfigService;
+    private final EmergencyService emergencyService;
 
     @GetMapping("/dashboard")
     public String showMainPage(Model model) {
@@ -109,6 +115,23 @@ public class MenuController {
                 break;
         }
         return "page/menu/situationPage";
+    }
+
+    @GetMapping("/situation/emergency/search")
+    @ResponseBody
+    public Map<String, Object> searchEmergency(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "15") int size,
+            @RequestParam(required = false) Integer boundaryNum,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") LocalDateTime from,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") LocalDateTime to) {
+        Page<EmergencyLogRowDTO> result = emergencyService.search(boundaryNum, from, to, page, size);
+
+        return Map.of(
+                "page", page,
+                "pageSize", size,
+                "totalCount", result.getTotalElements(),
+                "items", result.getContent());
     }
 
     @GetMapping("/settings")

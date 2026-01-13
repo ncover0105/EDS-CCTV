@@ -1,35 +1,50 @@
-// Pagination
-export function renderPagination({ 
-    containerId, 
-    currentPage, 
-    totalItems, 
-    itemsPerPage, 
-    onPageChange 
-}) {
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
+// Pagination (modern UX + backward compatible)
+//
+// 지원 형태
+// 1) renderPagination({ containerId, currentPage, totalItems, itemsPerPage, onPageChange })
+// 2) renderPagination(containerId, currentPage, totalItems, itemsPerPage, onPageChange)
+export function renderPagination(...args) {
+    let containerId, currentPage, totalItems, itemsPerPage, onPageChange;
+
+    // Backward compatibility: positional args
+    if (typeof args[0] === 'string') {
+        [containerId, currentPage, totalItems, itemsPerPage, onPageChange] = args;
+    } else {
+        // Object style
+        const opt = args[0] || {};
+        containerId = opt.containerId;
+        currentPage = opt.currentPage;
+        totalItems = opt.totalItems;
+        itemsPerPage = opt.itemsPerPage;
+        onPageChange = opt.onPageChange;
+    }
+
     const pagination = document.getElementById(containerId);
+    if (!pagination) return;
+
+    const safeTotalItems = Math.max(0, Number(totalItems) || 0);
+    const safePerPage = Math.max(1, Number(itemsPerPage) || 10);
+    const totalPages = Math.max(1, Math.ceil(safeTotalItems / safePerPage));
+    const safeCurrent = Math.min(Math.max(1, Number(currentPage) || 1), totalPages);
+
     pagination.innerHTML = '';
+    pagination.classList.add('pagination-modern'); // 스타일 훅
 
-    console.log(`[Pagination] containerId: ${containerId}`);
-    console.log(`[Pagination] currentPage: ${currentPage}`);
-    console.log(`[Pagination] totalItems: ${totalItems}`);
-    console.log(`[Pagination] itemsPerPage: ${itemsPerPage}`);
-    console.log(`[Pagination] totalPages: ${totalPages}`);
+    // 데이터 0건이면 버튼 비활성 상태로 "1/1"만 표시
+    const isEmpty = safeTotalItems === 0;
 
-    const createPageItem = ({ disabled, onClick, iconClass, label, isLeft }) => {
+    // 내부 유틸
+    const createLi = (html, { disabled = false, active = false, onClick } = {}) => {
         const li = document.createElement('li');
-        li.classList.add('page-item');
+        li.className = 'page-item';
         if (disabled) li.classList.add('disabled');
+        if (active) li.classList.add('active');
 
-        const icon = `<i class="bi ${iconClass}"></i>`;
-        const text = `<small class="fw-semibold d-none d-sm-inline">${label}</small>`;
-        const inner = isLeft
-            ? `${icon}${text}`
-            : `${text}${icon}`;
+        li.innerHTML = html;
 
-        li.innerHTML = `<a class="page-link d-flex align-items-center rounded-3 gap-1" href="#">${inner}</a>`;
-        if (!disabled && typeof onClick === 'function') {
-            li.querySelector('a').addEventListener('click', (e) => {
+        const a = li.querySelector('a,button');
+        if (a && !disabled && typeof onClick === 'function') {
+            a.addEventListener('click', (e) => {
                 e.preventDefault();
                 onClick();
             });
@@ -37,33 +52,115 @@ export function renderPagination({
         return li;
     };
 
-    // 이전 버튼
-    pagination.appendChild(createPageItem({
-        disabled: currentPage === 1,
-        onClick: () => onPageChange(currentPage - 1),
-        iconClass: 'bi-chevron-left',
+    const iconBtn = ({ icon, label, disabled, onClick, ariaLabel }) => {
+        const html = `
+            <a class="page-link page-btn" href="#" aria-label="${ariaLabel || label}">
+                <i class="bi ${icon}"></i>
+                <span class="d-none d-sm-inline">${label}</span>
+            </a>
+        `;
+        return createLi(html, { disabled, onClick });
+    };
+
+    const numberBtn = ({ page, active, disabled, onClick }) => {
+        const html = `
+            <a class="page-link page-num" href="#" aria-label="page ${page}">
+                ${page}
+            </a>
+        `;
+        return createLi(html, { active, disabled, onClick });
+    };
+
+    const ellipsis = () => {
+        const html = `
+            <span class="page-link page-ellipsis" aria-hidden="true">…</span>
+        `;
+        const li = document.createElement('li');
+        li.className = 'page-item disabled';
+        li.innerHTML = html;
+        return li;
+    };
+
+    // 표시할 페이지 번호 계산 (Google 스타일)
+    const getPageWindow = (cur, total) => {
+        // 1, total은 항상 노출
+        // cur 주변으로 2칸씩
+        const set = new Set([1, total, cur, cur - 1, cur - 2, cur + 1, cur + 2]);
+        const pages = [...set].filter(p => p >= 1 && p <= total).sort((a, b) => a - b);
+        return pages;
+    };
+
+    const go = (p) => {
+        if (typeof onPageChange === 'function') onPageChange(p);
+    };
+
+    // ---- First / Prev
+    pagination.appendChild(iconBtn({
+        icon: 'bi-chevron-double-left',
+        label: '처음',
+        ariaLabel: 'First page',
+        disabled: isEmpty || safeCurrent === 1,
+        onClick: () => go(1),
+    }));
+
+    pagination.appendChild(iconBtn({
+        icon: 'bi-chevron-left',
         label: '이전',
-        isLeft: true
+        ariaLabel: 'Previous page',
+        disabled: isEmpty || safeCurrent === 1,
+        onClick: () => go(safeCurrent - 1),
     }));
 
-    // 현재 페이지 표시
-    const infoLi = document.createElement('li');
-    infoLi.classList.add('page-item', 'disabled', 'd-flex', 'align-items-center');
-    infoLi.innerHTML = `
-        <small class="page-link fw-semibold bg-transparent border-0">
-            ${currentPage} / ${totalPages}
-        </small>`;
-    pagination.appendChild(infoLi);
+    // ---- Numbers + Ellipsis
+    const pages = getPageWindow(safeCurrent, totalPages);
 
-    // 다음 버튼
-    pagination.appendChild(createPageItem({
-        disabled: currentPage === totalPages,
-        onClick: () => onPageChange(currentPage + 1),
-        iconClass: 'bi-chevron-right',
+    let prev = 0;
+    pages.forEach((p) => {
+        if (prev && p - prev > 1) {
+            pagination.appendChild(ellipsis());
+        }
+        pagination.appendChild(numberBtn({
+            page: p,
+            active: p === safeCurrent,
+            disabled: isEmpty,
+            onClick: () => go(p),
+        }));
+        prev = p;
+    });
+
+    // ---- Next / Last
+    pagination.appendChild(iconBtn({
+        icon: 'bi-chevron-right',
         label: '다음',
-        isLeft: false
+        ariaLabel: 'Next page',
+        disabled: isEmpty || safeCurrent === totalPages,
+        onClick: () => go(safeCurrent + 1),
     }));
+
+    pagination.appendChild(iconBtn({
+        icon: 'bi-chevron-double-right',
+        label: '마지막',
+        ariaLabel: 'Last page',
+        disabled: isEmpty || safeCurrent === totalPages,
+        onClick: () => go(totalPages),
+    }));
+
+    // ---- Info (range)
+    const startIdx = isEmpty ? 0 : (safeCurrent - 1) * safePerPage + 1;
+    const endIdx = isEmpty ? 0 : Math.min(safeCurrent * safePerPage, safeTotalItems);
+
+    const infoHtml = `
+        <span class="page-link page-info">
+            <span class="d-none d-md-inline">${startIdx}-${endIdx} / ${safeTotalItems}</span>
+            <span class="d-md-none">${safeCurrent}/${totalPages}</span>
+        </span>
+    `;
+    const infoLi = document.createElement('li');
+    infoLi.className = 'page-item disabled ms-1';
+    infoLi.innerHTML = infoHtml;
+    pagination.appendChild(infoLi);
 }
+
 
 export function safeValue(value, isNumber = false, suffix = '', digits = 0) {
     try {

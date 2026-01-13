@@ -16631,7 +16631,8 @@ html, body {
   border: 1px solid rgba(240, 246, 252, 0.10);
   box-shadow: 0 12px 30px rgba(0,0,0,0.35);
   border-radius: 16px;
-  padding: 2rem;
+  padding: 1rem;
+  margin: 0.5rem;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
@@ -17134,15 +17135,84 @@ section.card.card-surface{ min-height:0; }
   border-color: rgba(255,255,255,.10);
 }
 
-.surface-search-compact{
+.surface-search--compact{
   padding: 7px 10px;
   border-radius: 14px;
 }
 
-.surface-search-compact .surface-search-input{
+.surface-search--compact .surface-search-input{
   width: 100%;
   max-width: none;
 }
+
+/* =========================
+   Equipment Page: viewport fit
+   ========================= */
+   .page-content.equipment-viewport{
+    display:flex;
+    flex-direction:column;
+    height: calc(100dvh - var(--topbar-h, 0px)); /* topbar 있으면 CSS 변수로 보정 */
+    min-height:0;
+    overflow:hidden;
+  }
+  
+  .page-content.equipment-viewport > .tab-content{
+    flex:1 1 auto;
+    min-height:0;
+    overflow:hidden;
+  }
+  
+  /* tab-pane 자체가 높이를 가지도록 */
+  .page-content.equipment-viewport .tab-pane{
+    height:100%;
+    min-height:0;
+  }
+  
+  /* 스피커 탭 내부 row/col이 "남은 높이"를 먹도록 */
+  #speaker-content .row.g-3{
+    height:100%;
+    min-height:0;
+  }
+  
+  /* 좌측 테이블 카드: 헤더 고정 + 바디만 스크롤 */
+  #speaker-content .card.card-surface{
+    min-height:0;
+  }
+  #speaker-content .card.card-surface .card-body{
+    min-height:0;
+  }
+  #speaker-content .card.card-surface .table-responsive{
+    min-height:0;
+    overflow:auto;
+  }
+  
+  /* 헤더 검색 폭/정렬 개선 */
+  .header-search{
+    min-width: 320px;
+    flex: 1 1 520px;
+    max-width: 760px;
+  }
+  
+  /* 액션 버튼 스타일(“수정/삭제/새로고침” 디자인 변경) */
+.btn-action-pill.btn-action-primary{
+  border-color: rgba(79,195,247,.35);
+  background: rgba(79,195,247,.12);
+}
+
+.btn-action-pill.btn-action-danger{
+  border-color: rgba(255,69,58,.35);
+  background: rgba(255,69,58,.12);
+}
+
+.btn-action-pill.btn-action-ghost{
+  background: transparent;
+  border-color: rgba(255,255,255,.12);
+}
+
+.btn-action-pill:hover{
+  background: rgba(255,255,255,.10);
+}
+
 
 /* ======================================================================
    Equipment Page Hotfix Pack (2026-01)
@@ -17205,16 +17275,16 @@ section.card.card-surface{ min-height:0; }
 }
 
 /* 6) speaker list card-header: force stacking */
-.surface-header-stack{
+.surface-header--stack{
   display: flex;
   flex-direction: column;
   gap: 0;
 }
 
-.surface-header-controls{
+.surface-header__controls{
   display: flex;
   gap: 10px;
-  /* align-items: center; */
+  align-items: center;
   justify-content: space-between;
 }
 
@@ -17263,87 +17333,147 @@ section.card.card-surface{ min-height:0; }
   #speaker-content .metric-sub{ display:none; }
 }
 
-/* Note:
-   - Keep only ONE base definition of .btn-action-pill in your CSS.
-   - Use variants: .btn-action-pill.danger / .btn-action-pill.ghost (as used in HTML).
-*/
+/* ======================================================
+ * Pagination – Modern (Dark / Apple-like)
+ * ====================================================== */
+ .pagination-modern {
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
 
+.pagination-modern .page-link {
+  background: var(--apple-surface);
+  border: 1px solid var(--apple-border);
+  color: var(--text-primary);
+  border-radius: 12px;
+  padding: 0.45rem 0.65rem !important;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color .15s ease, border-color .15s ease, transform .08s ease;
+}
 
-/* ======================================================================
-   Equipment Page UI Fix (2026-01-13)
-   - Speaker list card-header: left aligned (no centering)
-   - Header controls: consistent layout (search + actions)
-   - Monitoring metrics: larger, more readable
-   ====================================================================== */
+.pagination-modern .page-link:hover {
+  background: var(--apple-surface-hover);
+  border-color: rgba(255,255,255,0.18);
+}
 
-#speaker-content .card-header.surface-header.surface-header--stack{
+.pagination-modern .page-item.active .page-link {
+  background: rgba(79,195,247,0.18);
+  border-color: rgba(79,195,247,0.55);
+  color: #E6EDF3;
+  box-shadow: 0 0 0 3px rgba(79,195,247,0.10);
+}
+
+.pagination-modern .page-item.disabled .page-link {
+  opacity: 0.45;
+  pointer-events: none;
+  background: rgba(255,255,255,0.03);
+}
+
+.pagination-modern .page-btn i {
+  font-size: 0.95rem;
+}
+
+.pagination-modern .page-num {
+  min-width: 40px;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.pagination-modern .page-ellipsis {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+  padding: 0.45rem 0.5rem !important;
+}
+
+.pagination-modern .page-info {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+  padding: 0.45rem 0.4rem !important;
+}
+
+/* 모바일에서 버튼 텍스트 숨길 때 균형 */
+@media (max-width: 576px) {
+  .pagination-modern .page-btn .d-none.d-sm-inline {
+    display: none !important;
+  }
+}
+
+/* 상황발생이력(페이지네이션 버전): 테이블 내부 세로 스크롤 제거 */
+.situation-panel-paged .situation-table-responsive{
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* sticky thead 해제(스크롤 전용) */
+.situation-panel-paged .situation-table thead th{
+  position: static !important;
+}
+
+/* ======================================================
+ * Situation History (Paged Layout)
+ * - 패널 내부: header(옵션) / table(scroll) / footer(pagination)
+ * - 테이블 영역이 남은 높이를 모두 사용
+ * ====================================================== */
+
+ .situation-panel-paged {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  text-align: left;
-  gap: 0;
+
+  /* ✅ 방법 A(권장): 뷰포트 기준으로 높이 지정
+     상단(헤더/탭/검색영역) 높이에 맞춰 px만 조정하세요.
+     - 예: 상단이 더 크면 320px로 늘리기
+     - 예: 상단이 더 작으면 220px로 줄이기
+  */
+  height: calc(100vh - 280px);
+
+  /* 기존 bottom-panel max-height를 사용하고 싶으면 height 대신 아래를 선택
+     height: 62vh;
+  */
+  min-height: 320px; /* 너무 작아지는 경우 방지(원하면 조정) */
 }
 
-#speaker-content .surface-header--stack > *{
-  width: 100%;
+/* (선택) 패널 헤더가 있을 때만 사용 */
+.situation-panel-paged .situation-panel-header {
+  flex: 0 0 auto;
 }
 
-#speaker-content .surface-header--stack .surface-header__title h5,
-#speaker-content .surface-header--stack .surface-header__title{
-  margin: 0;
-  text-align: left;
+/* ✅ 핵심: 테이블 영역이 남은 높이를 모두 차지 + 여기서만 세로 스크롤 */
+.situation-panel-paged .situation-table-area {
+  flex: 1 1 auto;
+  min-height: 0;       /* overflow가 제대로 작동하는 핵심 */
+  overflow-y: auto;    /* 세로 스크롤은 여기서 발생 */
 }
 
-#speaker-content .surface-header--stack .surface-header__meta{
-  display: flex;
-  justify-content: flex-start;
+/* 가로 스크롤만 table-responsive에서 처리 */
+.situation-panel-paged .situation-table-responsive {
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
-#speaker-content .surface-header--stack .surface-header__controls{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+/* 페이지네이션 footer는 항상 아래 */
+.situation-panel-paged .situation-panel-footer {
+  flex: 0 0 auto;
+  padding: 10px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-#speaker-content .surface-header--stack .surface-search{
-  min-width: 280px;
+/* 테이블 헤더를 스크롤에 맞춰 sticky 처리(테이블이 스크롤될 때 UX 개선) */
+.situation-panel-paged .situation-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #0b1220; /* 프로젝트 다크톤과 맞추고 싶으면 조정 */
 }
 
-#speaker-content .surface-header--stack .surface-actions{
-  display: inline-flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-@media (max-width: 768px){
-  #speaker-content .surface-header--stack .surface-header__controls{
-    flex-direction: column;
-    align-items: stretch;
-  }
-  #speaker-content .surface-header--stack .surface-actions{
-    justify-content: flex-end;
-  }
-}
-
-/* Metrics: upscale for readability */
-#speaker-content .metric{
-  padding: 12px 12px;
-}
-
-#speaker-content .metric-label{
-  font-size: 12.5px;
-}
-
-#speaker-content .metric-value{
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.2px;
-}
-
-#speaker-content .metric-sub{
-  font-size: 12px;
-  margin-top: 6px;
-  line-height: 1.2;
+/* 로그 컬럼이 길어질 수 있으니 말줄임(원하면 유지) */
+.situation-panel-paged .situation-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
