@@ -180,82 +180,12 @@
                         </div>
                     </div>
                 </div>
-                <!-- <div class="row flex-wrap h-100 g-3">
-                    <div class="col-12 d-flex align-items-center">
-                        <div class="section-title">
-                            <h5 class="fw-semibold">사용자 설정</h5>
-                        </div>
-                    </div>
-                    <div class="col-12 pb-3">
-                        <div class="bg-dark text-light p-3 rounded mb-3">
-                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3 w-100">
-                                <div class="section-title">
-                                    <span class="fw-semibold mb-0">등록된 사용자 목록</span>
-                                    <span class="status-badge status-primary ms-2">
-                                        <span id="userCount" th:text="'총 ' + ${userCount} + '건'">0건</span>
-                                    </span>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-primary" onclick="settingInsert()">등록</button>
-                                    <button class="btn btn-primary" onclick="settingUpdate()">수정</button>
-                                    <button class="btn btn-danger" onclick="settingDeprecated()">사용중지</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div
-                        class="bg-dark rounded"
-                        style="min-height: 70vh; max-height: 70vh; overflow-x: auto; overflow-y: auto;">
-                            <table class="table table-dark table-hover mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>선택</th>
-                                        <th>번호</th>
-                                        <th>ID</th>
-                                        <th>이름</th>
-                                        <th>전화번호</th>
-                                        <th>권한</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="userList">
-                                    <tr th:if="${#lists.isEmpty(userList)}" class="text-center">
-                                        <td colspan="7" style="height: 60vh;">
-                                            <div class="d-flex align-items-center justify-content-center h-100">
-                                                <span class="text-muted">
-                                                    <i class="bi bi-inbox me-2"></i>
-                                                    등록된 사용자가 없습니다.
-                                                </span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr th:each="user, iterStat : ${userList}">
-                                        <td><input type="checkbox" name="selectedIds" value="${iterStat.count}"></td>
-                                        <td th:text="${iterStat.count}"></td>
-                                        <td th:text="${user.id}"></td>
-                                        <td th:text="${user.name}"></td>
-                                        <td th:text="${user.phnNo}"></td>
-                                        <td>
-                                            <span class="status-badge status-info" th:if="${user.role == 'USER'}">
-                                                <i class="bi bi-person"></i>
-                                                <span>사용자</span>
-                                            </span>
-                                            <span class="status-badge status-warning" th:if="${user.role == 'MANAGER'}">
-                                                <i class="bi bi-shield-check"></i>
-                                                <span>관리자</span>
-                                            </span>
-                                            <span th:if="${#strings.isEmpty(user.role)}">-</span>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div> -->
             </div>
             <!-- 사용자 수정 모달 -->
-            <div class="modal fade" id="userEditModal" tabindex="-1" aria-labelledby="userEditModalLabel" aria-hidden="true">
+            <div class="modal modal-dark fade" id="userEditModal" tabindex="-1" aria-labelledby="userEditModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content">
-                        <div class="modal-header border-bottom">
+                        <div class="modal-header">
                             <h5 class="modal-title fw-semibold" id="userEditModalLabel">사용자 정보 수정</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
@@ -290,7 +220,7 @@
                                 </div>
                             </form>
                         </div>
-                        <div class="modal-footer bg-light">
+                        <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
                             <button type="button" class="btn btn-primary" id="saveUserBtn">저장</button>
                         </div>
@@ -302,7 +232,7 @@
     
         <!-- ment -->
         <div th:if="${view == 'ment'}" class="d-flex flex-column h-100">
-            <div class="container animate-fade-in">
+            <div class="container-fluid animate-fade-in">
                 <div class="top-panel p-4 mb-3">
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                         <div>
@@ -363,7 +293,12 @@
                                 </colgroup>
                                 <tbody id="mentList">
                                     <tr th:each="disaster, iterStat : ${disasterList}">
-                                        <td><input type="checkbox" name="selectedIds" value="${disaster.dstCode}"></td>
+                                        <td><input type="checkbox"
+                                                    name="selectedIds"
+                                                    th:value="${disaster.dstCode}"
+                                                    th:data-name="${disaster.dstName}"
+                                                    th:data-content="${disaster.dstStoreMsg}"
+                                                    th:data-useflag="${disaster.dstUseFlag}"></td>
                                         <td th:text="${iterStat.count}"></td>
                                         <td th:text="${#strings.isEmpty(disaster.dstName) ? '-' : disaster.dstName}"></td>
                                         <td th:text="${#strings.isEmpty(disaster.dstStoreMsg) ? '-' : disaster.dstStoreMsg}" class="text-wrap"></td>
@@ -388,10 +323,10 @@
                     </div>
                 </div>
             </div>
-            <div class="modal fade" id="mentUpdateModal" tabindex="-1" aria-hidden="true">
+            <div class="modal modal-dark fade" id="mentUpdateModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content">
-                        <div class="modal-header border-bottom">
+                        <div class="modal-header">
                             <h5 class="modal-title fw-semibold">멘트 수정</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
@@ -421,7 +356,7 @@
                                 <input type="hidden" id="mentUpdateId">
                             </form>
                         </div>
-                        <div class="modal-footer bg-light">
+                        <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
                             <button type="button" class="btn btn-primary" id="mentSaveUpdateBtn">저장</button>
                         </div>
@@ -432,7 +367,7 @@
 
         <!-- SMS -->
         <div th:if="${view == 'sms'}" class="d-flex flex-column h-100">
-            <div class="container animate-fade-in">
+            <div class="container-fluid animate-fade-in">
                 <div class="top-panel p-4 mb-3">
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                         <div>
@@ -548,7 +483,7 @@
                     </div>
                 </div>
             </div>
-            <div class="modal fade" id="smsEditModal" tabindex="-1" aria-labelledby="smsEditModalLabel" aria-hidden="true">
+            <div class="modal modal-dark fade" id="smsEditModal" tabindex="-1" aria-labelledby="smsEditModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -635,7 +570,7 @@
                 </div>
             </div>
             <!-- 스케줄 모달 -->
-            <div class="modal fade modal-dark" id="scheduleModal" tabindex="-1" aria-hidden="true">
+            <div class="modal modal-dark fade" id="scheduleModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
                     <form id="schedule-form" class="modal-content">
                 
@@ -833,11 +768,10 @@
                             </div>
                         </div>
                 
-                        <div class="modal-footer border-0">
+                        <div class="modal-footer">
                             <button type="submit" class="btn btn-primary flex-fill" id="submitBtn">저장</button>
                             <button type="button" class="btn btn-secondary flex-fill" data-bs-dismiss="modal">취소</button>
                         </div>
-                
                     </form>
                 </div>
             </div>
@@ -846,7 +780,7 @@
 
         <!-- SETTING -->
         <div th:if="${view == 'set'}" class="d-flex flex-column h-100">
-            <div class="container animate-fade-in">
+            <div class="container-fluid animate-fade-in">
                 <div class="top-panel p-4 mb-3">
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                         <div>

@@ -13368,14 +13368,14 @@ body {
 @media (min-width: 1200px) {
   #logContainer,
   #speakerContainer {
-      max-height: 10vh;
+      max-height: 6vh;
   }
 }
 
 @media (max-width: 1200px) {
   #logContainer,
   #speakerContainer {
-      max-height: 50vh;
+      max-height: 40vh;
   }
 }
 
@@ -16116,17 +16116,17 @@ body {
 }
 
 /* ✅ 1920x1080 대시보드 고정: 그보다 작으면 전체 스크롤 */
-html, body {
+/* html, body {
   width: 100%;
   height: 100%;
-  overflow: auto; /* 전체 스크롤 허용 */
-}
+  overflow: auto;
+} */
 
 /* 핵심: 최소 해상도 고정 */
-.main-container {
+/* .main-container {
   min-width: 1920px;
   min-height: 1080px;
-}
+} */
 
 /* 콘텐츠가 넘쳐도 내부가 아니라 body에서 스크롤 되게 */
 .main-layout,
@@ -16581,6 +16581,11 @@ html, body {
 .modal.modal-dark .modal-header {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding: 1rem 1.25rem;
+}
+
+.modal.modal-dark  .modal-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding: 1rem 1.25rem !important;
 }
 
 .modal.modal-dark .modal-title {

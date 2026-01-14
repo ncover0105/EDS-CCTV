@@ -599,7 +599,7 @@
   // -------------------------
   // Modal: open / fill
   // -------------------------
-  function openScheduleModal(mode, schedule) {
+  async function openScheduleModal(mode, schedule) {
     const modalEl = document.getElementById('scheduleModal');
     const form = document.getElementById('schedule-form');
     if (!modalEl || !form) return;
@@ -665,7 +665,7 @@
     if (sc_broadcast_type) sc_broadcast_type.value = (mode === 'edit' && schedule) ? (schedule.bcBroadcastType ?? 'TTS') : 'TTS';
     if (sc_priority) sc_priority.value = (mode === 'edit' && schedule) ? (schedule.bcPriority ?? 'NONE') : 'NONE';
     if (sc_scope) sc_scope.value = (mode === 'edit' && schedule) ? (schedule.bcScope ?? 'SPEAKER') : 'SPEAKER';
-    if (sc_disaster) sc_disaster.value = (mode === 'edit' && schedule) ? (schedule.disasterCode ?? '') : '';
+    await loadDisastersToSelect((mode === 'edit' && schedule) ? (schedule.disasterCode ?? '') : '');
     if (sc_tts) sc_tts.value = (mode === 'edit' && schedule) ? (schedule.ttsMessage ?? '') : '';
 
     // ttsSection show/hide
@@ -932,9 +932,59 @@
     bindBroadcastTypeToggle();
   }
 
+    // -------------------------
+  // API: Disaster (재난 목록)
+  // -------------------------
+  let disastersCache = null;   // 한번 로드 후 캐싱
+
+  async function fetchDisasters() {
+    if (Array.isArray(disastersCache)) return disastersCache;
+
+    const res = await fetch('/api/btype/query/disaster');
+    const data = res.ok ? await res.json() : [];
+    disastersCache = Array.isArray(data) ? data : [];
+    return disastersCache;
+  }
+
+  async function loadDisastersToSelect(selectedValue = '') {
+    const sel = document.getElementById('sc_disaster'); // ✅ setting_bgm.js는 sc_disaster 사용
+    if (!sel) return;
+
+    const items = await fetchDisasters();
+
+    // 기본 옵션
+    sel.innerHTML = `<option value="" selected>재난을 선택하세요</option>`;
+
+    // 서버 필드명 유연 처리 + 사용중만
+    items
+      .filter(m => {
+        // useInfo(1/0), enabledYn(Y/N), dstUseFlag(Use/Unuse) 등 케이스 대응
+        if (m.useInfo != null) return Number(m.useInfo) === 1;
+        if (m.enabledYn != null) return String(m.enabledYn).toUpperCase() === 'Y';
+        if (m.dstUseFlag != null) return String(m.dstUseFlag) === 'Use';
+        if (m.useFlag != null) return String(m.useFlag) === 'Use';
+        return true; // 기준 없으면 일단 표시
+      })
+      .forEach(m => {
+        const code = m.dstCode ?? m.code ?? m.id ?? '';
+        const name = m.dstName ?? m.name ?? m.title ?? String(code);
+
+        const opt = document.createElement('option');
+        opt.value = String(code);
+        opt.textContent = `${name} (${code})`;
+        sel.appendChild(opt);
+      });
+
+    // 선택값 반영
+    if (selectedValue != null && String(selectedValue).trim() !== '') {
+      sel.value = String(selectedValue);
+    }
+  }
+
   // DOM ready
   document.addEventListener('DOMContentLoaded', () => {
     initScheduleManager().catch(console.error);
+    loadDisastersToSelect('');
   });
 
 })();

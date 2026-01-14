@@ -53,8 +53,9 @@ function bindMentEvents() {
     const tbody = document.getElementById('mentList');
     if (!tbody) return;
 
-    // 행 클릭 → 체크 토글
+    // ✅ 행 클릭 → 해당 행만 선택(단일)
     tbody.addEventListener('click', (e) => {
+        // 체크박스 직접 클릭은 change에서 처리
         if (e.target.matches('input[type="checkbox"]')) return;
 
         const row = e.target.closest('tr');
@@ -63,15 +64,14 @@ function bindMentEvents() {
         const cb = row.querySelector('input[name="selectedIds"]');
         if (!cb) return;
 
-        cb.checked = !cb.checked;
-        row.classList.toggle('table-active', cb.checked);
+        cb.checked = true;           // ✅ 토글 금지, 무조건 선택
+        selectSingleMent(cb);        // ✅ 나머지 해제 + 하이라이트 정리
     });
 
-    // 체크 변경 → 하이라이트
+    // ✅ 체크 변경 → 단일 선택 강제
     tbody.addEventListener('change', (e) => {
         if (!e.target.matches('input[name="selectedIds"]')) return;
-        const row = e.target.closest('tr');
-        if (row) row.classList.toggle('table-active', e.target.checked);
+        selectSingleMent(e.target);
     });
 
     // 모달 저장
@@ -111,19 +111,20 @@ function mentInsert() {
  * 수정
  * =============================== */
 function mentUpdate() {
-    const ids = getSelectedMentIds();
-    if (ids.length !== 1) {
-        alert('수정은 1개만 선택하세요.');
-        return;
-    }
+  const checked = document.querySelector('#mentList input[name="selectedIds"]:checked');
+  if (!checked) {
+    alert('수정할 문안을 1개 선택하세요.');
+    return;
+  }
 
-    const item = mentData.find(x => String(x.id) === String(ids[0]));
-    if (!item) {
-        alert('선택한 문안을 찾을 수 없습니다.');
-        return;
-    }
+  const item = {
+    id: checked.value,
+    name: checked.dataset.name ?? '',
+    content: checked.dataset.content ?? '',
+    useFlag: checked.dataset.useflag ?? ''
+  };
 
-    openMentModal('update', item);
+  openMentModal('update', item);
 }
 
 /* ===============================
@@ -155,6 +156,7 @@ function mentDeprecated() {
  * 모달 처리
  * =============================== */
 function openMentModal(mode, item = null) {
+    console.log("ment 선택 item : " + item);
     const modalEl = document.getElementById('mentUpdateModal');
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
 
@@ -251,6 +253,27 @@ function updateMentCountText() {
     const el = document.getElementById('mentCount');
     if (!el) return;
     el.textContent = `총 ${mentData.length}개의 문안 | 문안 내용과 문안 정보를 관리하세요`;
+}
+
+function selectSingleMent(targetCb) {
+    if (!targetCb) return;
+
+    // 체크 해제면 하이라이트만 정리
+    if (!targetCb.checked) {
+        const row = targetCb.closest('tr');
+        if (row) row.classList.remove('table-active');
+        return;
+    }
+
+    // ✅ 다른 체크 전부 해제 + 하이라이트 제거
+    document.querySelectorAll('#mentList input[name="selectedIds"]').forEach(cb => {
+        if (cb !== targetCb) cb.checked = false;
+    });
+    document.querySelectorAll('#mentList tr').forEach(tr => tr.classList.remove('table-active'));
+
+    // ✅ 현재 행만 활성화
+    const row = targetCb.closest('tr');
+    if (row) row.classList.add('table-active');
 }
 
 /* ===============================
