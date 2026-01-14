@@ -28,7 +28,7 @@
   <div class="page-shell equipment-shell">
 
     <!-- Page Toolbar -->
-    <header class="page-toolbar glass-toolbar">
+    <header class="page-toolbar top-panel">
       <div class="toolbar-left">
         <div class="page-title-wrap">
           <div class="page-eyebrow">EDS</div>
@@ -65,35 +65,34 @@
           <span class="hint-pill d-none d-md-inline-flex">
             <i class="bi bi-mouse me-1"></i>행을 선택하면 우측 패널이 갱신됩니다
           </span>
-          <span class="hint-pill d-none d-xl-inline-flex">
+          <!-- <span class="hint-pill d-none d-xl-inline-flex">
             <i class="bi bi-shield-check me-1"></i>내부망 운영 최적화
-          </span>
+          </span> -->
         </div>
       </div>
     </header>
 
-    <main class="page-content">
+    <main class="page-content equipment-viewport">
 
       <div class="tab-content" id="equipmentTabContent">
 
         <!-- Speaker Management -->
         <div class="tab-pane fade speaker-dark"
-             id="speaker-content"
-             th:classappend="${view == null or view == 'speaker'} ? 'show active' : ''">
+            id="speaker-content"
+            th:classappend="${view == null or view == 'speaker'} ? 'show active' : ''">
 
-          <div class="row g-3" style="min-height:0;">
+          <div class="row h-100 overflow-y-auto" style="min-height:0;">
 
             <!-- Left: Data table card -->
-            <div class="col-12 col-xxl-9 d-flex" style="min-height:0;">
+            <div class="col-12 col-xxl-9 d-flex h-100" style="min-height:0;">
               <section class="card card-surface h-100 d-flex flex-column w-100" style="min-height:0;">
 
                 <div class="card-header surface-header flex-shrink-0">
-                  <div class="d-flex flex-wrap gap-3 align-items-start justify-content-between">
-
+                  <div class="d-flex flex-column align-items-start gap-3">
                     <div class="d-flex align-items-center gap-2">
                       <div class="section-title">
-                        <h5 class="fw-semibold mb-0">스피커 목록</h5>
-                        <div class="text-white-50 small mt-1">장비를 검색/선택하고 상태와 제어를 확인하세요</div>
+                        <h5 class="fw-semibold">스피커 목록</h5>
+                        <!-- <div class="text-white-50 small mt-1">장비를 검색/선택하고 상태와 제어를 확인하세요</div> -->
                       </div>
                       <span class="status-badge status-primary">
                         <span id="speakerCount">0건</span>
@@ -104,28 +103,27 @@
                       <div class="surface-search d-none d-md-flex">
                         <i class="bi bi-search"></i>
                         <input id="speakerSearchInput" type="text" class="surface-search-input"
-                               placeholder="검색: 이름 / ID / 지역 / 전화번호" autocomplete="off">
+                              placeholder="검색: 이름 / ID / 지역 / 전화번호" autocomplete="off">
                         <button type="button" class="surface-icon-btn" id="speakerSearchClear" title="지우기" aria-label="지우기">
                           <i class="bi bi-x-lg"></i>
                         </button>
                       </div>
 
-                      <div class="btn-group">
-                        <button class="btn btn-primary btn-sm px-3" onclick="speakerUpdate()">
+                      <div class="btn-group gap-3">
+                        <button class="btn-action-pill" type="button" onclick="speakerUpdate()" title="수정">
                           <i class="bi bi-pencil-square me-1"></i>수정
                         </button>
-                        <button class="btn btn-danger btn-sm px-3" onclick="speakerDeleted()">
+                        <button class="btn-action-pill danger" type="button" onclick="speakerDeleted()" title="삭제">
                           <i class="bi bi-trash me-1"></i>삭제
                         </button>
+                        <button class="btn-action-pill" type="button" onclick="listSpeakers?.()">
+                          <i class="bi bi-arrow-clockwise me-1"></i>새로고침
+                        </button>
                       </div>
-
-                      <button class="btn btn-outline-light btn-sm px-3 d-none d-lg-inline-flex" type="button" onclick="listSpeakers?.()">
-                        <i class="bi bi-arrow-clockwise me-1"></i>새로고침
-                      </button>
                     </div>
                   </div>
 
-                  <div class="chip-row mt-3 d-none d-lg-flex">
+                  <div class="chip-row mt-3 d-none">
                     <button class="chip" type="button" data-chip="all">전체</button>
                     <button class="chip" type="button" data-chip="online">연결</button>
                     <button class="chip" type="button" data-chip="offline">미연결</button>
@@ -134,27 +132,39 @@
                 </div>
 
                 <div class="card-body p-0 d-flex flex-column flex-grow-1" style="min-height:0;">
-                  <div class="table-responsive flex-grow-1 overflow-auto datatable-wrap" style="min-height:0;">
+                  <div class="table-responsive overflow-auto datatable-wrapper" style="min-height:0;">
                     <table class="table table-dark table-hover table-modern w-100 mb-0">
+                      <colgroup>
+                        <col style="width:6%;">   <!-- 선택 -->
+                        <col style="width:9%;">   <!-- ID -->
+                        <col style="width:18%;">  <!-- 이름 -->
+                        <col style="width:10%;">  <!-- 상태 -->
+                        <col style="width:17%;">  <!-- 수신시간 -->
+                        <col style="width:16%;">  <!-- 전화 -->
+                        <col style="width:14%;">  <!-- 지역 -->
+                        <col style="width:5%;">   <!-- 위도 -->
+                        <col style="width:5%;">   <!-- 경도 -->
+                      </colgroup>
+                
                       <thead class="table-sticky-head">
-                      <tr>
-                        <th class="col-select">선택</th>
-                        <th class="col-id">ID</th>
-                        <th class="col-name">스피커 이름</th>
-                        <th class="col-state">연결상태</th>
-                        <th class="col-time">수신 시간</th>
-                        <th class="col-phone d-none d-xl-table-cell">단말 전화 번호</th>
-                        <th class="col-area">설치 지역</th>
-                        <th class="col-lat d-none d-xxl-table-cell">위도</th>
-                        <th class="col-lng d-none d-xxl-table-cell">경도</th>
-                      </tr>
+                        <tr>
+                          <th>선택</th>
+                          <th>ID</th>
+                          <th>스피커 이름</th>
+                          <th>연결상태</th>
+                          <th>수신 시간</th>
+                          <th>단말 전화 번호</th>
+                          <th>설치 지역</th>
+                          <th>위도</th>
+                          <th>경도</th>
+                        </tr>
                       </thead>
                       <tbody id="speakerTableBody"></tbody>
                     </table>
                   </div>
 
-                  <nav class="px-3 py-2 d-none flex-shrink-0">
-                    <ul class="pagination justify-content-end align-items-center gap-2" id="speakerPagination"></ul>
+                  <nav class="px-3 py-2 flex-shrink-0">
+                    <ul class="pagination pagination-modern mb-0" id="speakerPagination"></ul>
                   </nav>
                 </div>
 
@@ -162,18 +172,18 @@
             </div>
 
             <!-- Right: Inspector -->
-            <div class="col-12 col-xxl-3 d-flex flex-column" style="min-height:0;">
+            <div class="col-12 col-xxl-3 d-flex flex-column h-100" style="min-height:0;">
 
               <section class="card card-surface flex-shrink-0">
-                <div class="card-header surface-header border-0">
+                <div class="card-header surface-header border-0 mb-0">
                   <div class="d-flex align-items-center justify-content-between">
                     <h6 class="card-title mb-0">선택 장비</h6>
-                    <span class="pill-muted">
+                    <!-- <span class="pill-muted">
                       <i class="bi bi-dot"></i><span id="connectionStatusPill">대기</span>
-                    </span>
+                    </span> -->
                   </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body pt-0">
                   <div class="inspector-title" id="selectedSpeakerTitle">스피커를 선택하세요</div>
 
                   <div class="inspector-grid mt-3">
@@ -207,164 +217,200 @@
               </section>
 
               <section class="card card-surface d-flex flex-column flex-grow-1 mt-2" style="min-height:0;">
-                <div class="card-header surface-header flex-shrink-0 border-0">
+                <div class="card-header surface-header flex-shrink-0 border-0 mb-0">
                   <div class="d-flex align-items-center justify-content-between">
                     <h6 class="card-title mb-0">상태 모니터링</h6>
-                    <button class="btn btn-sm btn-outline-light" type="button" onclick="requestStatus?.()">
+                    <button class="btn btn-sm btn-outline-light d-none" type="button" onclick="requestStatus?.()">
                       <i class="bi bi-lightning-charge me-1"></i>즉시 갱신
                     </button>
                   </div>
                 </div>
 
-                <div class="card-body overflow-auto" style="min-height:0;">
-                  <div class="metric-grid">
-                    <div class="metric">
-                      <div class="metric-top">
-                        <div class="metric-label">연결상태</div>
-                        <div class="metric-value" id="connectionStatus">-</div>
-                      </div>
-                      <div class="metric-sub text-white-50">통신 및 수신 상태</div>
-                    </div>
+                <div class="card-body pt-0 d-flex flex-column gap-2" style="min-height:0;">
 
-                    <div class="metric">
-                      <div class="metric-top">
-                        <div class="metric-label">AC</div>
-                        <div class="metric-value" id="acStatus">-</div>
+                  <!-- Row 1 : 상단 50% -->
+                  <div class="row g-2 flex-fill min-h-0">
+                    <div class="col-12 col-md-6">
+                      <div class="metric h-100">
+                        <div class="metric-top">
+                          <div class="metric-label">연결상태</div>
+                          <div class="metric-value" id="connectionStatus">-</div>
+                        </div>
+                        <div class="metric-sub text-white-50">통신 및 수신 상태</div>
                       </div>
-                      <div class="metric-sub text-white-50">외부 전원</div>
                     </div>
-
-                    <div class="metric">
-                      <div class="metric-top">
-                        <div class="metric-label">DC</div>
-                        <div class="metric-value" id="dcStatus">-</div>
+                
+                    <div class="col-12 col-md-6">
+                      <div class="metric h-100">
+                        <div class="metric-top">
+                          <div class="metric-label">AC</div>
+                          <div class="metric-value" id="acStatus">-</div>
+                        </div>
+                        <div class="metric-sub text-white-50">외부 전원</div>
                       </div>
-                      <div class="metric-sub text-white-50">배터리 전원</div>
                     </div>
-
-                    <div class="metric">
-                      <div class="metric-top">
-                        <div class="metric-label">배터리</div>
-                        <div class="metric-value" id="batteryStatus">-</div>
+                
+                    <div class="col-12 col-md-6">
+                      <div class="metric h-100">
+                        <div class="metric-top">
+                          <div class="metric-label">DC</div>
+                          <div class="metric-value" id="dcStatus">-</div>
+                        </div>
+                        <div class="metric-sub text-white-50">배터리 전원</div>
                       </div>
-                      <div class="metric-sub text-white-50">잔량 및 상태</div>
                     </div>
-
-                    <div class="metric">
-                      <div class="metric-top">
-                        <div class="metric-label">태양열</div>
-                        <div class="metric-value" id="solarChargerStatus">-</div>
+                
+                    <div class="col-12 col-md-6">
+                      <div class="metric h-100">
+                        <div class="metric-top">
+                          <div class="metric-label">배터리</div>
+                          <div class="metric-value" id="batteryStatus">-</div>
+                        </div>
+                        <div class="metric-sub text-white-50">잔량 및 상태</div>
                       </div>
-                      <div class="metric-sub text-white-50">충전기</div>
-                    </div>
-
-                    <div class="metric">
-                      <div class="metric-top">
-                        <div class="metric-label">LTE</div>
-                        <div class="metric-value" id="lteAntennaStatus">-</div>
-                      </div>
-                      <div class="metric-sub text-white-50">안테나</div>
-                    </div>
-
-                    <div class="metric">
-                      <div class="metric-top">
-                        <div class="metric-label">CPU 온도</div>
-                        <div class="metric-value" id="cpuTemperature">-</div>
-                      </div>
-                      <div class="metric-sub text-white-50">센서</div>
-                    </div>
-
-                    <div class="metric">
-                      <div class="metric-top">
-                        <div class="metric-label">MCU 버전</div>
-                        <div class="metric-value" id="mcuVersion">-</div>
-                      </div>
-                      <div class="metric-sub text-white-50">펌웨어</div>
                     </div>
                   </div>
+                
+                  <!-- Row 2 : 하단 50% -->
+                  <div class="row g-2 flex-fill min-h-0">
+                    <div class="col-12 col-md-6">
+                      <div class="metric h-100">
+                        <div class="metric-top">
+                          <div class="metric-label">태양열</div>
+                          <div class="metric-value" id="solarChargerStatus">-</div>
+                        </div>
+                        <div class="metric-sub text-white-50">충전기</div>
+                      </div>
+                    </div>
+                
+                    <div class="col-12 col-md-6">
+                      <div class="metric h-100">
+                        <div class="metric-top">
+                          <div class="metric-label">LTE</div>
+                          <div class="metric-value" id="lteAntennaStatus">-</div>
+                        </div>
+                        <div class="metric-sub text-white-50">안테나</div>
+                      </div>
+                    </div>
+                
+                    <div class="col-12 col-md-6">
+                      <div class="metric h-100">
+                        <div class="metric-top">
+                          <div class="metric-label">CPU 온도</div>
+                          <div class="metric-value" id="cpuTemperature">-</div>
+                        </div>
+                        <div class="metric-sub text-white-50">센서</div>
+                      </div>
+                    </div>
+                
+                    <div class="col-12 col-md-6">
+                      <div class="metric h-100">
+                        <div class="metric-top">
+                          <div class="metric-label">MCU 버전</div>
+                          <div class="metric-value" id="mcuVersion">-</div>
+                        </div>
+                        <div class="metric-sub text-white-50">펌웨어</div>
+                      </div>
+                    </div>
+                  </div>
+                
                 </div>
               </section>
-
             </div>
           </div>
         </div>
 
         <!-- Broadcast -->
         <div class="tab-pane fade"
-             id="broadcast-content"
-             th:classappend="${view == 'broadcast'} ? 'show active' : ''">
+            id="broadcast-content"
+            th:classappend="${view == 'broadcast'} ? 'show active' : ''">
 
-          <div class="container-fluid px-0">
-            <div class="row g-3" style="min-height:0;">
+            <div class="row h-100 overflow-auto" style="min-height:0;">
 
-              <div class="col-12 col-xxl-4 d-flex" style="min-height:0;">
-                <section class="card card-surface card-dark d-flex flex-column w-100" style="min-height:0;">
-                  <div class="card-header surface-header">
-                    <div class="d-flex align-items-center justify-content-between gap-2">
+              <div class="col-12 col-xxl-4 d-flex h-100" style="min-height:0;">
+                <section class="card card-surface h-100 d-flex flex-column w-100" style="min-height:0;">
+                  <div class="card-header surface-header d-flex flex-column gap-2">
+
+                    <!-- 상단: 제목 + 배지 (왼쪽 정렬) -->
+                    <div class="d-flex align-items-center gap-3">
                       <h6 class="mb-0">대상 스피커</h6>
-                      <span class="status-badge status-secondary">
+                      <span class="status-badge status-primary flex-shrink-0">
                         선택 <span id="selectedTargetSpeakerCount">0</span>대
                       </span>
                     </div>
-
-                    <div class="surface-search mt-3">
-                      <i class="bi bi-search"></i>
-                      <input id="targetSpeakerSearch"
-                             type="text"
-                             class="surface-search-input"
-                             placeholder="검색: 이름 / ID / 지역" autocomplete="off">
-                      <div class="form-check ms-2 flex-shrink-0">
+                  
+                    <!-- 하단: 검색(좌) / 체크박스(우) -->
+                    <div class="d-flex align-items-center justify-content-between w-100 gap-2">
+                      <!-- 검색 영역 -->
+                      <div class="surface-search flex-grow-1">
+                        <i class="bi bi-search"></i>
+                        <input id="targetSpeakerSearch"
+                              type="text"
+                              class="surface-search-input"
+                              placeholder="검색: 이름 / ID / 지역"
+                              autocomplete="off">
+                      </div>
+                  
+                      <!-- 체크박스: 오른쪽 끝 -->
+                      <div class="form-check flex-shrink-0 ms-2">
                         <input class="form-check-input" type="checkbox" id="targetSpeakerSelectAll">
-                        <label class="form-check-label small text-white-50" for="targetSpeakerSelectAll">전체</label>
+                        <label class="form-check-label small text-white-50" for="targetSpeakerSelectAll">
+                          전체
+                        </label>
                       </div>
                     </div>
                   </div>
 
                   <div class="card-body p-0 d-flex flex-column flex-grow-1" style="min-height:0;">
-                    <div class="flex-grow-1 overflow-auto px-3 py-3" style="min-height:0;">
+                    <!-- ✅ 여기: broadcast-scroll 추가 -->
+                    <div class="flex-grow-1 overflow-auto px-3 py-3">
                       <div id="targetSpeakerList" class="list-stack"></div>
-
+                  
                       <div id="targetSpeakerEmpty" class="empty-state d-none">
                         <i class="bi bi-inbox fs-1 opacity-50"></i>
                         <div class="mt-2">표시할 스피커가 없습니다</div>
                       </div>
                     </div>
-
-                    <div class="px-3 pb-3 pt-2 border-top border-white-10 d-flex justify-content-between align-items-center">
+                  
+                    <!-- <div class="px-3 pb-3 pt-2 border-top border-white-10 d-flex justify-content-between align-items-center flex-shrink-0">
                       <button class="btn btn-sm btn-outline-light" type="button" onclick="clearTargetSpeakers()">
                         <i class="bi bi-x-circle me-1"></i>선택 해제
                       </button>
                       <button class="btn btn-sm btn-outline-light" type="button" onclick="resetSelection()">
                         <i class="bi bi-arrow-clockwise me-1"></i>초기화
                       </button>
-                    </div>
+                    </div> -->
                   </div>
+                  
                 </section>
               </div>
 
-              <div class="col-12 col-xxl-8 d-flex" style="min-height:0;">
-                <section class="card card-surface card-dark d-flex flex-column w-100" style="min-height:0;">
+              <div class="col-12 col-xxl-8 d-flex h-100" style="min-height:0;">
+                <section class="card card-surface d-flex flex-column w-100" style="min-height:0;">
 
-                  <div class="card-header surface-header flex-shrink-0">
-                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
-                      <div>
+                  <div class="card-header surface-header d-flex flex-column flex-shrink-0">
+                    <!-- ✅ w-100 추가 -->
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 w-100">
+                      <div class="me-2">
                         <h6 class="mb-0">방송 설정</h6>
                         <div class="text-white-50 small mt-1">방송 유형 선택 → 설정 → 실행 → 로그 확인</div>
                       </div>
-                      <div class="d-flex flex-wrap gap-2">
-                        <button class="btn btn-primary btn-sm d-flex align-items-center" onclick="showAddBroadcastModal()">
+                  
+                      <!-- ✅ 버튼 영역은 flex-shrink-0로 밀리지 않게 -->
+                      <div class="d-flex flex-wrap gap-2 flex-shrink-0">
+                        <button class="btn-action-pill" onclick="showAddBroadcastModal()">
                           <i class="bi bi-plus"></i><span class="ms-1 d-none d-sm-inline">추가</span>
                         </button>
-                        <button class="btn btn-primary btn-sm d-flex align-items-center" onclick="showEditBroadcastModal()">
+                        <button class="btn-action-pill btn-action-primary" onclick="showEditBroadcastModal()">
                           <i class="bi bi-pencil"></i><span class="ms-1 d-none d-sm-inline">수정</span>
                         </button>
-                        <button class="btn btn-danger btn-sm d-flex align-items-center" onclick="deleteSelectedBroadcast()">
+                        <button class="btn-action-pill btn-action-danger" onclick="deleteSelectedBroadcast()">
                           <i class="bi bi-trash"></i><span class="ms-1 d-none d-sm-inline">삭제</span>
                         </button>
                       </div>
                     </div>
-
-                    <div class="stepper mt-3">
+                  
+                    <div class="stepper mt-3 d-none">
                       <div class="step is-active"><span class="step-dot"></span><span class="step-label">유형</span></div>
                       <div class="step"><span class="step-dot"></span><span class="step-label">설정</span></div>
                       <div class="step"><span class="step-dot"></span><span class="step-label">실행</span></div>
@@ -373,7 +419,7 @@
                   </div>
 
                   <div class="card-body p-0 d-flex flex-column flex-grow-1" style="min-height:0;">
-                    <div class="composer-scroll flex-grow-1 overflow-auto" style="min-height:0;">
+                    <div class="composer-scroll flex-grow-1 overflow-auto broadcast-scroll" style="min-height:0;">
 
                       <div class="composer-block">
                         <div class="composer-title">
@@ -519,7 +565,6 @@
               </div>
 
             </div>
-          </div>
         </div>
 
       </div>
@@ -527,7 +572,7 @@
       <!-- Toast -->
       <div class="position-fixed top-0 end-0 p-3" style="z-index:1080;">
         <div id="broadcastToast" class="toast align-items-center text-white bg-primary border-0"
-             role="alert" aria-live="assertive" aria-atomic="true">
+            role="alert" aria-live="assertive" aria-atomic="true">
           <div class="d-flex">
             <div class="toast-body" id="broadcastToastBody"></div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto"

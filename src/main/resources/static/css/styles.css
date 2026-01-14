@@ -4406,15 +4406,16 @@ textarea.form-control-lg-dark {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
+  height: 100%;
   min-height: 0; /* 내부 스크롤 허용 */
-  padding-bottom: 1rem;
 }
 
 .tab-pane {
-  flex: 1 1 auto;
+  /* flex: 1 1 auto; */
   display: none;
   flex-direction: column;
-  min-height: 0; /* card 내부 스크롤 허용 */
+  height: 100%;
+  min-height: 0;
 }
 
 .tab-pane.show.active {
@@ -16095,7 +16096,7 @@ body {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
   flex: 1 1 auto;
   min-height: 360px;
-  max-height: 62vh;
+  max-height: 65vh;
   display: flex;
   flex-direction: column;
 }
@@ -16140,16 +16141,40 @@ html, body {
   height: calc(100vh - 140px);
 }
 
-/* 탭 pane이 부모 높이를 그대로 사용 */
-#broadcast-content {
-  height: 100%;
-}
-
-/* broadcast 내부 container/row도 높이 체인 유지 */
-#broadcast-content > .container,
-#broadcast-content .row {
+/* Broadcast 탭도 speaker 탭처럼 row가 남은 높이를 먹어야 함 */
+#broadcast-content{
   height: 100%;
   min-height: 0;
+  overflow: hidden;
+}
+
+/* broadcast-content 안쪽 래퍼들도 높이 체인 유지 */
+#broadcast-content > .container-fluid{
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#broadcast-content .row.g-3{
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 카드 자체/바디도 shrink 가능해야 내부 overflow가 동작함 */
+#broadcast-content .card{
+  min-height: 0;
+}
+
+#broadcast-content .card-body{
+  min-height: 0;
+  overflow: hidden; /* 바디는 숨기고, 내부 스크롤 영역에서만 스크롤 */
+}
+
+/* ✅ 실제 스크롤이 일어날 영역(두 카드 공통) */
+.broadcast-scroll{
+  min-height: 0 !important;
+  overflow: auto !important;
 }
 
 .menu-table-container {
@@ -16614,16 +16639,16 @@ html, body {
    Equipment Page – 2026 UI/UX refresh (content area included)
    ========================================================= */
 
-.page-shell.equipment-shell{
+/* .page-shell.equipment-shell{
   display:flex;
   flex-direction:column;
   min-height:calc(100vh - 0px);
-}
+} */
 
 .page-content{
   flex:1 1 auto;
   min-height:0;
-  padding: 14px 10px 18px;
+  padding: 14px 10px 10px;
 }
 
 .glass-toolbar{
@@ -16631,7 +16656,7 @@ html, body {
   border: 1px solid rgba(240, 246, 252, 0.10);
   box-shadow: 0 12px 30px rgba(0,0,0,0.35);
   border-radius: 16px;
-  padding: 1rem;
+  padding: 1.5rem;
   margin: 0.5rem;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -16748,11 +16773,6 @@ html, body {
   font-size: 16px;
 }
 
-/* Content spacing */
-.page-content{
-  min-height: 0;
-}
-
 /* Small screens: stack toolbar content */
 @media (max-width: 768px){
   .page-toolbar{
@@ -16787,6 +16807,7 @@ html, body {
   background: rgba(20, 22, 28, .80);
   box-shadow: 0 14px 40px rgba(0,0,0,.35);
   overflow:hidden;
+  color: white !important;
 }
 
 .surface-header{
@@ -17153,28 +17174,16 @@ section.card.card-surface{ min-height:0; }
     flex-direction:column;
     height: calc(100dvh - var(--topbar-h, 0px)); /* topbar 있으면 CSS 변수로 보정 */
     min-height:0;
-    overflow:hidden;
-  }
-  
-  .page-content.equipment-viewport > .tab-content{
-    flex:1 1 auto;
-    min-height:0;
-    overflow:hidden;
-  }
-  
-  /* tab-pane 자체가 높이를 가지도록 */
-  .page-content.equipment-viewport .tab-pane{
-    height:100%;
-    min-height:0;
+    /* overflow:hidden; */
+    overflow-y: auto;
   }
   
   /* 스피커 탭 내부 row/col이 "남은 높이"를 먹도록 */
-  #speaker-content .row.g-3{
+  /* #speaker-content .row.g-3{
     height:100%;
     min-height:0;
   }
   
-  /* 좌측 테이블 카드: 헤더 고정 + 바디만 스크롤 */
   #speaker-content .card.card-surface{
     min-height:0;
   }
@@ -17184,7 +17193,7 @@ section.card.card-surface{ min-height:0; }
   #speaker-content .card.card-surface .table-responsive{
     min-height:0;
     overflow:auto;
-  }
+  } */
   
   /* 헤더 검색 폭/정렬 개선 */
   .header-search{
@@ -17250,18 +17259,18 @@ section.card.card-surface{ min-height:0; }
   overflow: hidden;
 }
 
-.page-shell.equipment-shell .page-content.equipment-viewport .tab-pane{
+/* .page-shell.equipment-shell .page-content.equipment-viewport .tab-pane{
   height: 100%;
   min-height: 0;
   overflow: hidden;
-}
+} */
 
 /* speaker tab row should not overflow the viewport */
-#speaker-content .row.g-3{
+/* #speaker-content .row.g-3{
   height: 100%;
   min-height: 0;
   overflow: hidden;
-}
+} */
 
 /* 5) table: internal scroll only */
 #speaker-content .speaker-table-body,
@@ -17272,24 +17281,6 @@ section.card.card-surface{ min-height:0; }
 #speaker-content .speaker-table-body .table-scroll{
   overflow: auto;
   scrollbar-gutter: stable both-edges;
-}
-
-/* 6) speaker list card-header: force stacking */
-.surface-header--stack{
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.surface-header__controls{
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.surface-header__controls .surface-search{
-  min-width: 280px;
 }
 
 .surface-actions{
@@ -17307,30 +17298,6 @@ section.card.card-surface{ min-height:0; }
   .surface-actions{
     justify-content: flex-end;
   }
-}
-
-/* 7) monitoring metrics: dense */
-#speaker-content .metric{
-  padding: 8px 10px;
-}
-
-#speaker-content .metric-label{
-  font-size: 11px;
-}
-
-#speaker-content .metric-value{
-  font-size: 13px;
-  font-weight: 800;
-}
-
-#speaker-content .metric-sub{
-  font-size: 10.5px;
-  margin-top: 4px;
-  line-height: 1.15;
-}
-
-@media (max-width: 576px){
-  #speaker-content .metric-sub{ display:none; }
 }
 
 /* ======================================================
@@ -17395,6 +17362,23 @@ section.card.card-surface{ min-height:0; }
   border-color: transparent;
   color: var(--text-secondary);
   padding: 0.45rem 0.4rem !important;
+}
+
+.pagination-modern .page-info .page-mini{
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-decoration: none;
+  color: rgba(255,255,255,0.75);
+  border: 1px solid rgba(255,255,255,0.12);
+  line-height: 1.4;
+}
+
+.pagination-modern .page-info .page-mini.current{
+  color: #fff;
+  border-color: rgba(255,255,255,0.28);
+  background: rgba(255,255,255,0.08);
+  font-weight: 600;
 }
 
 /* 모바일에서 버튼 텍스트 숨길 때 균형 */

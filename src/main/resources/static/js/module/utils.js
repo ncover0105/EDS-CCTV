@@ -6,6 +6,9 @@
 export function renderPagination(...args) {
     let containerId, currentPage, totalItems, itemsPerPage, onPageChange;
 
+    // ✅ 추가 옵션(빈 데이터일 때 table row 채우기)
+    let emptyTargetTbodyId, emptyRowColspan, emptyRowHtml, emptyRowCount;
+
     // Backward compatibility: positional args
     if (typeof args[0] === 'string') {
         [containerId, currentPage, totalItems, itemsPerPage, onPageChange] = args;
@@ -17,6 +20,12 @@ export function renderPagination(...args) {
         totalItems = opt.totalItems;
         itemsPerPage = opt.itemsPerPage;
         onPageChange = opt.onPageChange;
+
+        // ✅ 추가 옵션 파싱
+        emptyTargetTbodyId = opt.emptyTargetTbodyId;
+        emptyRowColspan = opt.emptyRowColspan;
+        emptyRowHtml = opt.emptyRowHtml;
+        emptyRowCount = opt.emptyRowCount;
     }
 
     const pagination = document.getElementById(containerId);
@@ -28,25 +37,56 @@ export function renderPagination(...args) {
     const safeCurrent = Math.min(Math.max(1, Number(currentPage) || 1), totalPages);
 
     pagination.innerHTML = '';
-    pagination.classList.add('pagination-modern'); // 스타일 훅
+    pagination.classList.add('pagination-modern');
 
-    // 데이터 0건이면 버튼 비활성 상태로 "1/1"만 표시
     const isEmpty = safeTotalItems === 0;
 
-    // 내부 유틸
+    // ✅ (추가) 데이터 0건이면 tbody에 빈 row 생성
+    if (isEmpty && emptyTargetTbodyId && emptyRowColspan) {
+        const tbody = document.getElementById(emptyTargetTbodyId);
+        if (tbody) {
+            const col = Number(emptyRowColspan) || 1;
+            const msg = (typeof emptyRowHtml === 'string' && emptyRowHtml.trim().length > 0)
+            ? emptyRowHtml
+            : `조회된 데이터가 없습니다.`;
+
+            const rows = Math.max(1, Number(emptyRowCount) || 1);
+
+            // 첫 줄은 메시지
+            let html = `
+            <tr>
+                <td colspan="${col}" class="text-center text-white-50 py-5">
+                ${msg}
+                </td>
+            </tr>
+            `;
+
+            // 추가 filler row(선택): 테이블 높이 채우고 싶을 때
+            for (let i = 1; i < rows; i++) {
+                html += `
+                    <tr class="table-empty-row">
+                    <td colspan="${col}" class="py-3"></td>
+                    </tr>
+                `;
+            }
+
+            tbody.innerHTML = html;
+        }
+    }
+
+    // ---- 내부 유틸
     const createLi = (html, { disabled = false, active = false, onClick } = {}) => {
         const li = document.createElement('li');
         li.className = 'page-item';
         if (disabled) li.classList.add('disabled');
         if (active) li.classList.add('active');
-
         li.innerHTML = html;
 
         const a = li.querySelector('a,button');
         if (a && !disabled && typeof onClick === 'function') {
             a.addEventListener('click', (e) => {
-                e.preventDefault();
-                onClick();
+            e.preventDefault();
+            onClick();
             });
         }
         return li;
@@ -55,8 +95,8 @@ export function renderPagination(...args) {
     const iconBtn = ({ icon, label, disabled, onClick, ariaLabel }) => {
         const html = `
             <a class="page-link page-btn" href="#" aria-label="${ariaLabel || label}">
-                <i class="bi ${icon}"></i>
-                <span class="d-none d-sm-inline">${label}</span>
+            <i class="bi ${icon}"></i>
+            <span class="d-none d-sm-inline">${label}</span>
             </a>
         `;
         return createLi(html, { disabled, onClick });
@@ -65,29 +105,23 @@ export function renderPagination(...args) {
     const numberBtn = ({ page, active, disabled, onClick }) => {
         const html = `
             <a class="page-link page-num" href="#" aria-label="page ${page}">
-                ${page}
+            ${page}
             </a>
         `;
         return createLi(html, { active, disabled, onClick });
     };
 
     const ellipsis = () => {
-        const html = `
-            <span class="page-link page-ellipsis" aria-hidden="true">…</span>
-        `;
+        const html = `<span class="page-link page-ellipsis" aria-hidden="true">…</span>`;
         const li = document.createElement('li');
         li.className = 'page-item disabled';
         li.innerHTML = html;
         return li;
     };
 
-    // 표시할 페이지 번호 계산 (Google 스타일)
     const getPageWindow = (cur, total) => {
-        // 1, total은 항상 노출
-        // cur 주변으로 2칸씩
         const set = new Set([1, total, cur, cur - 1, cur - 2, cur + 1, cur + 2]);
-        const pages = [...set].filter(p => p >= 1 && p <= total).sort((a, b) => a - b);
-        return pages;
+        return [...set].filter(p => p >= 1 && p <= total).sort((a, b) => a - b);
     };
 
     const go = (p) => {
@@ -96,68 +130,90 @@ export function renderPagination(...args) {
 
     // ---- First / Prev
     pagination.appendChild(iconBtn({
-        icon: 'bi-chevron-double-left',
-        label: '처음',
-        ariaLabel: 'First page',
-        disabled: isEmpty || safeCurrent === 1,
-        onClick: () => go(1),
+    icon: 'bi-chevron-double-left',
+    label: '처음',
+    ariaLabel: 'First page',
+    disabled: isEmpty || safeCurrent === 1,
+    onClick: () => go(1),
     }));
 
     pagination.appendChild(iconBtn({
-        icon: 'bi-chevron-left',
-        label: '이전',
-        ariaLabel: 'Previous page',
-        disabled: isEmpty || safeCurrent === 1,
-        onClick: () => go(safeCurrent - 1),
+    icon: 'bi-chevron-left',
+    label: '이전',
+    ariaLabel: 'Previous page',
+    disabled: isEmpty || safeCurrent === 1,
+    onClick: () => go(safeCurrent - 1),
     }));
 
     // ---- Numbers + Ellipsis
     const pages = getPageWindow(safeCurrent, totalPages);
-
     let prev = 0;
     pages.forEach((p) => {
-        if (prev && p - prev > 1) {
-            pagination.appendChild(ellipsis());
-        }
-        pagination.appendChild(numberBtn({
-            page: p,
-            active: p === safeCurrent,
-            disabled: isEmpty,
-            onClick: () => go(p),
-        }));
-        prev = p;
+    if (prev && p - prev > 1) pagination.appendChild(ellipsis());
+    pagination.appendChild(numberBtn({
+        page: p,
+        active: p === safeCurrent,
+        disabled: isEmpty,
+        onClick: () => go(p),
+    }));
+    prev = p;
     });
 
     // ---- Next / Last
     pagination.appendChild(iconBtn({
-        icon: 'bi-chevron-right',
-        label: '다음',
-        ariaLabel: 'Next page',
-        disabled: isEmpty || safeCurrent === totalPages,
-        onClick: () => go(safeCurrent + 1),
+    icon: 'bi-chevron-right',
+    label: '다음',
+    ariaLabel: 'Next page',
+    disabled: isEmpty || safeCurrent === totalPages,
+    onClick: () => go(safeCurrent + 1),
     }));
 
     pagination.appendChild(iconBtn({
-        icon: 'bi-chevron-double-right',
-        label: '마지막',
-        ariaLabel: 'Last page',
-        disabled: isEmpty || safeCurrent === totalPages,
-        onClick: () => go(totalPages),
+    icon: 'bi-chevron-double-right',
+    label: '마지막',
+    ariaLabel: 'Last page',
+    disabled: isEmpty || safeCurrent === totalPages,
+    onClick: () => go(totalPages),
     }));
 
-    // ---- Info (range)
+    // ---- Info
     const startIdx = isEmpty ? 0 : (safeCurrent - 1) * safePerPage + 1;
     const endIdx = isEmpty ? 0 : Math.min(safeCurrent * safePerPage, safeTotalItems);
 
+    const aroundPages = [];
+    if (!isEmpty) {
+    if (safeCurrent - 1 >= 1) aroundPages.push(safeCurrent - 1);
+    aroundPages.push(safeCurrent);
+    if (safeCurrent + 1 <= totalPages) aroundPages.push(safeCurrent + 1);
+    }
+
+    const aroundHtml = isEmpty
+    ? `<span class="text-white-50">-</span>`
+    : aroundPages.map(p => {
+        if (p === safeCurrent) return `<span class="page-mini current" aria-current="page">${p}</span>`;
+        return `<a href="#" class="page-mini" data-page="${p}" aria-label="page ${p}">${p}</a>`;
+    }).join(' ');
+
     const infoHtml = `
-        <span class="page-link page-info">
-            <span class="d-none d-md-inline">${startIdx}-${endIdx} / ${safeTotalItems}</span>
-            <span class="d-md-none">${safeCurrent}/${totalPages}</span>
-        </span>
+    <span class="page-link page-info">
+        <span class="d-none d-md-inline">${startIdx}-${endIdx} / ${safeTotalItems}</span>
+        <span class="d-md-none">${aroundHtml}</span>
+    </span>
     `;
+
     const infoLi = document.createElement('li');
     infoLi.className = 'page-item disabled ms-1';
     infoLi.innerHTML = infoHtml;
+
+    infoLi.querySelectorAll('a.page-mini[data-page]').forEach(a => {
+    a.addEventListener('click', (e) => {
+        e.preventDefault();
+        const p = Number(a.dataset.page);
+        if (!Number.isFinite(p)) return;
+        go(p);
+    });
+    });
+
     pagination.appendChild(infoLi);
 }
 
