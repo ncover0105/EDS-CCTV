@@ -1,10 +1,10 @@
 /* ==========================================================
-* modal_speaker_broadcast.js (multi-select fixed)
-* - speaker-card 클릭: active 토글(개별), 다른 카드 active 유지
-* - 전체 선택/전체 해제(bc_toggle_all)
-* - HTML 값 기준: bc_mode=0/1, bc_broadcast_type=1/2/3
-* - 기존 단일 선택(bcSelectedSpeaker) 제거 -> Set 기반
-* ========================================================== */
+ * modal_speaker_broadcast.js (multi-select fixed)
+ * - speaker-card 클릭: active 토글(개별), 다른 카드 active 유지
+ * - 전체 선택/전체 해제(bc_toggle_all)
+ * - HTML 값 기준: bc_mode=0/1, bc_broadcast_type=1/2/3
+ * - 기존 단일 선택(bcSelectedSpeaker) 제거 -> Set 기반
+ * ========================================================== */
 
 /* ---------- Utils ---------- */
 function safe(v, fb = "-") {
@@ -47,8 +47,8 @@ function getActiveCards() {
 function getSelectedSpeakerIds() {
     // active 된 카드에서 speakerId 추출
     return getActiveCards()
-    .map(card => card.dataset.speakerId)
-    .filter(Boolean);
+        .map(card => card.dataset.speakerId)
+        .filter(Boolean);
 }
 
 function syncSelectionUI() {
@@ -60,10 +60,10 @@ function syncSelectionUI() {
         setText("bc_hint", "스피커 선택 후 설정 정보를 조회하면 발령 단계로 진행됩니다.");
         setText("bc_step_text", "스피커를 선택하세요.");
     } else if (count === 1) {
-    const oneName =
-        activeCards[0].dataset?.speakerName ||
-        activeCards[0].querySelector(".fw-semibold")?.textContent?.trim() ||
-        "선택됨";
+        const oneName =
+            activeCards[0].dataset?.speakerName ||
+            activeCards[0].querySelector(".fw-semibold")?.textContent?.trim() ||
+            "선택됨";
         setVal("bc_selected_speaker_name", oneName);
         setText("bc_hint", "발령 설정을 진행할 수 있습니다.");
         setText("bc_step_text", "발령 설정을 진행하세요.");
@@ -72,10 +72,6 @@ function syncSelectionUI() {
         setText("bc_hint", "발령 설정을 진행할 수 있습니다.");
         setText("bc_step_text", "발령 설정을 진행하세요.");
     }
-
-    // 발령 설정 버튼 활성/비활성
-    // const goBtn = document.getElementById("bc_go_manual");
-    // if (goBtn) goBtn.disabled = (count === 0);
 
     // 전체 선택/해제 버튼 텍스트
     const toggleBtn = document.getElementById("bc_toggle_all");
@@ -118,70 +114,70 @@ const BroadcastApi = {
 };
 
 /* ==========================================================
-* Modal
-* ========================================================== */
+ * Modal
+ * ========================================================== */
 const BroadcastModal = {
     speakers: [],
 
     async loadSpeakers() {
-    this.speakers = await BroadcastApi.listSpeakers();
+        this.speakers = await BroadcastApi.listSpeakers();
 
-    const listEl = document.getElementById("bc_speaker_list");
-    if (!listEl) return;
+        const listEl = document.getElementById("bc_speaker_list");
+        if (!listEl) return;
 
-    listEl.innerHTML = "";
-    setText("bc_speaker_count", `${this.speakers.length} 개`);
+        listEl.innerHTML = "";
+        setText("bc_speaker_count", `${this.speakers.length} 개`);
 
-    if (!this.speakers.length) {
-        show("bc_empty_speaker");
-        return;
-    }
-    hide("bc_empty_speaker");
+        if (!this.speakers.length) {
+            show("bc_empty_speaker");
+            return;
+        }
+        hide("bc_empty_speaker");
 
-    this.speakers.forEach((spk) => {
-        const speakerKey = spk?.speakerKey ?? "";
-        const speakerId = spk?.speakerId ?? "";
-        const name = safe(spk.speakerName ?? spk.name ?? speakerKey);
-        const desc = safe(spk.description, "");
+        this.speakers.forEach((spk) => {
+            const speakerKey = spk?.speakerKey ?? "";
+            const speakerId = spk?.speakerId ?? "";
+            const name = safe(spk.speakerName ?? spk.name ?? speakerKey);
+            const desc = safe(spk.description, "");
 
-        listEl.insertAdjacentHTML("beforeend", `
-        <div class="speaker-card overflow-hidden h-auto min-h-0 mb-2"
-            data-speaker-key="${String(speakerKey)}"
-            data-speaker-id="${String(speakerId)}"
-            data-speaker-name="${String(name)}">
-            <div class="d-flex justify-content-between align-items-start">
-            <div>
-                <div class="fw-semibold text-white mb-1">${name}</div>
-                <div class="small text-white-50">${desc}</div>
-            </div>
-            </div>
-        </div>
-        `);
-    });
+            listEl.insertAdjacentHTML("beforeend", `
+                <div class="speaker-card overflow-hidden h-auto min-h-0 mb-2"
+                    data-speaker-key="${String(speakerKey)}"
+                    data-speaker-id="${String(speakerId)}"
+                    data-speaker-name="${String(name)}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="fw-semibold text-white mb-1">${name}</div>
+                            <div class="small text-white-50">${desc}</div>
+                        </div>
+                    </div>
+                </div>
+            `);
+        });
 
-    bcSelectedSpeakerKeys.clear();
-    bcSelectedSpeakerIds.clear();
-    syncSelectionUI();
+        bcSelectedSpeakerKeys.clear();
+        bcSelectedSpeakerIds.clear();
+        syncSelectionUI();
     },
 
     async loadDisasters() {
-    const sel = document.getElementById("bc_disaster");
-    if (!sel) return;
+        const sel = document.getElementById("bc_disaster");
+        if (!sel) return;
 
-    const items = await BroadcastApi.listDisasters();
-    sel.innerHTML = `<option value="" selected>재난을 선택하세요</option>`;
+        const items = await BroadcastApi.listDisasters();
+        sel.innerHTML = `<option value="" selected>재난을 선택하세요</option>`;
 
-    items
-        .filter(m => (m.useInfo ?? 1) === 1)
-        .forEach((m) => {
-        const code = m.dstCode ?? m.code ?? m.id ?? "";
-        const name = m.dstName ?? m.name ?? m.title ?? String(code);
+        items
+            .filter(m => (m.useInfo ?? 1) === 1)
+            .forEach((m) => {
+                const code = m.dstCode ?? m.code ?? m.id ?? "";
+                const name = m.dstName ?? m.name ?? m.title ?? String(code);
 
-        const opt = document.createElement("option");
-        opt.value = String(code);
-        opt.textContent = `${name} (${code})`;
-        sel.appendChild(opt);
-        });
+                const opt = document.createElement("option");
+                opt.value = String(code);
+                opt.textContent = `${name} (${code})`;
+                sel.appendChild(opt);
+            });
     },
 
     getPayloadForPreview() {
@@ -211,12 +207,6 @@ const BroadcastModal = {
         setText("bc_step_text", "스피커를 선택하세요.");
         setVal("bc_selected_speaker_name", "");
 
-        // hide("bc_manual_area");
-        // show("bc_need_select");
-
-        // const goBtn = document.getElementById("bc_go_manual");
-        // if (goBtn) goBtn.disabled = true;
-
         // active 제거
         document.querySelectorAll("#bc_speaker_list .speaker-card.active")
             .forEach(el => el.classList.remove("active"));
@@ -225,20 +215,26 @@ const BroadcastModal = {
         this.applyBroadcastTypeUI();
     },
 
+    // ✅ 수정: 재난 선택 시 TTS 숨김 + (TTS는 type=1 이고 재난 미선택일 때만)
     applyBroadcastTypeUI() {
-        const type = document.getElementById("bc_broadcast_type")?.value ?? "1"; // "1"=TTS
-        const wrap = document.getElementById("bc_tts_wrap");
-        const tts = document.getElementById("bc_tts");
-    
-        const isTts = (type === "1");
-    
-        // 1) TTS일 때만 보이게
-        if (wrap) wrap.classList.toggle("d-none", !isTts);
-    
-        // 2) 비-TTS일 때는 값 비우고 편집도 막기(안 보이더라도 안전하게)
+        const typeEl = document.getElementById("bc_broadcast_type");
+        const disEl  = document.getElementById("bc_disaster");
+        const wrap   = document.getElementById("bc_tts_wrap");
+        const tts    = document.getElementById("bc_tts");
+
+        const type = typeEl?.value ?? "1";          // 1=TTS, 2=저장메시지, 3=기타
+        const disaster = disEl?.value ?? "";        // 재난 선택 값
+        const hasDisaster = !!String(disaster).trim();
+
+        // TTS 입력은 "방송종류=TTS(1)" + "재난 미선택"일 때만 표시
+        const shouldShowTts = (type === "1") && !hasDisaster;
+
+        if (wrap) wrap.classList.toggle("d-none", !shouldShowTts);
+
+        // 숨겨질 때 값 초기화 + 비활성화(잘못 전송 방지)
         if (tts) {
-            if (!isTts) tts.value = "";
-                tts.disabled = !isTts;
+            if (!shouldShowTts) tts.value = "";
+            tts.disabled = !shouldShowTts;
         }
     },
 
@@ -278,7 +274,7 @@ const BroadcastModal = {
                 bcSelectedSpeakerKeys.clear();
                 bcSelectedSpeakerIds.clear();
             } else {
-            // 전체 선택
+                // 전체 선택
                 cards.forEach(c => {
                     c.classList.add("active");
                     const k = String(c.dataset.speakerKey ?? "");
@@ -315,31 +311,43 @@ const BroadcastModal = {
             syncSelectionUI();
         });
 
-        // 발령 설정 버튼
-        // modalEl.addEventListener("click", (e) => {
-        //     if (!e.target.closest("#bc_go_manual")) return;
-
-        //     const selected = getSelectedSpeakerIds();
-        //     if (selected.length === 0) {
-        //         notify("스피커를 먼저 선택해주세요.", "warning");
-        //         return;
-        //     }
-
-        //     hide("bc_need_select");
-        //     show("bc_manual_area");
-        //     showTab("tab-bc-manual");
-        //     this.refreshPreview();
-        // });
-
-        // 폼 변경 -> 미리보기 갱신
         modalEl.addEventListener("change", (e) => {
-            if ([
-                "bc_mode", "bc_alert_type", "bc_broadcast_type",
-                "bc_priority", "bc_scope", "bc_disaster"
-                ].includes(e.target?.id)) {
-                if (e.target?.id === "bc_broadcast_type") this.applyBroadcastTypeUI();
-                this.refreshPreview();
+        const id = e.target?.id;
+        if (![
+            "bc_mode", "bc_alert_type", "bc_broadcast_type",
+            "bc_priority", "bc_scope", "bc_disaster"
+        ].includes(id)) return;
+
+        const typeEl = document.getElementById("bc_broadcast_type");
+        const disEl  = document.getElementById("bc_disaster");
+
+        // 1) 재난 선택 시: 저장메시지(2) 강제
+        if (id === "bc_disaster") {
+            const disVal = disEl?.value ?? "";
+            if (String(disVal).trim()) {
+            if (typeEl) typeEl.value = "2"; // 저장메시지
             }
+            this.applyBroadcastTypeUI();
+            this.refreshPreview();
+            return;
+        }
+
+        // 2) 방송종류 변경 시: TTS(1)면 재난 선택 해제 + TTS 표시
+        if (id === "bc_broadcast_type") {
+            const typeVal = typeEl?.value ?? "1";
+
+            if (typeVal === "1") {
+            // ✅ TTS 선택 → 재난 해제
+            if (disEl) disEl.value = "";
+            }
+
+            this.applyBroadcastTypeUI();
+            this.refreshPreview();
+            return;
+        }
+
+        // 그 외 항목 변경: 미리보기만 갱신
+        this.refreshPreview();
         });
 
         modalEl.addEventListener("input", (e) => {

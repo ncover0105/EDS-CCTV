@@ -1,7 +1,9 @@
 /* ================================
- * equipment_speaker.js (API Only)
- *  - GET  /config/speakers           -> List<SpeakerRowDto>
- *  - GET  /status/{speakerKey}       -> SpkStatusResponse
+ * equipment_speaker.js (API Only + Search/Update/Delete)
+ *  - GET  /api/btype/query/config/speakers         -> List<SpeakerRowDto>
+ *  - GET  /api/btype/query/status/{speakerKey}     -> SpkStatusResponse
+ *
+ *  - (추가) PUT/DELETE 엔드포인트는 아래 상수만 프로젝트에 맞게 지정
  * ================================ */
 
 /* ------------------------------
@@ -9,6 +11,14 @@
 ------------------------------ */
 const SPEAKER_LIST_API = "/api/btype/query/config/speakers";
 const SPEAKER_STATUS_API = (speakerKey) => `/api/btype/query/status/${encodeURIComponent(speakerKey)}`;
+
+/**
+ * TODO: 프로젝트에 맞게 수정/삭제 API를 정확히 맞추세요.
+ * - UPDATE: 선택 스피커 1건 수정(PUT)
+ * - DELETE: 선택 스피커 1건 삭제(DELETE)
+ */
+const SPEAKER_UPDATE_API = "/api/btype/cmd/config/speakers"; // 예시: PUT body로 갱신
+const SPEAKER_DELETE_API = (speakerKey) => `/api/btype/cmd/config/speakers/${encodeURIComponent(speakerKey)}`;
 
 // 선택: 목록 자동 갱신(초). 0이면 비활성
 const SPEAKER_POLL_SECONDS = 0;
@@ -71,17 +81,7 @@ function connectBadge(connectStatus) {
               <i class="bi bi-exclamation-triangle-fill me-1"></i>이상
             </span>`;
   }
-  return `<span class="status-badge status-primary bg-transparent">
-            미수신
-          </span>`;
-}
-
-function useBadge(saveDivi) {
-  // saveDivi: 00 사용(미삭제), 01 미사용(삭제) - 정책에 따라 조정
-  const isUse = (!saveDivi || saveDivi === "00");
-  const cls = isUse ? "status-success" : "status-primary";
-  const text = isUse ? "사용" : "미사용";
-  return `<span class="status-badge ${cls}">${text}</span>`;
+  return `<span class="status-badge status-primary bg-transparent">미수신</span>`;
 }
 
 function alertMsg(msg, type) {
@@ -90,6 +90,10 @@ function alertMsg(msg, type) {
   } else {
     console.log(`[${type}] ${msg}`);
   }
+}
+
+function getSelectedSpeakerCheckbox() {
+  return document.querySelector('input[name="selectedIds"]:checked');
 }
 
 /* ------------------------------
@@ -111,11 +115,67 @@ async function fetchSpeakerStatus(speakerKey) {
 }
 
 /* ------------------------------
+  SEARCH (추가)
+  - 입력값(이름/ID/지역/전화번호) 포함 시 viewList 필터
+------------------------------ */
+function normalizeText(v) {
+  return String(v ?? "").trim().toLowerCase();
+}
+
+function applySpeakerSearch(query) {
+  const q = normalizeText(query);
+  if (!q) {
+    setViewList(speakerListState, { resetPage: true });
+    renderSpeakerTable(1);
+    return;
+  }
+
+  const filtered = (speakerListState || []).filter(x => {
+    const speakerId = normalizeText(x?.speakerId);
+    const speakerName = normalizeText(x?.speakerName);
+    const locationName = normalizeText(x?.locationName);
+    const cdmaNumber = normalizeText(x?.cdmaNumber);
+    const speakerKey = normalizeText(x?.speakerKey);
+    return (
+      speakerId.includes(q) ||
+      speakerName.includes(q) ||
+      locationName.includes(q) ||
+      cdmaNumber.includes(q) ||
+      speakerKey.includes(q)
+    );
+  });
+
+  setViewList(filtered, { resetPage: true });
+  renderSpeakerTable(1);
+}
+
+function bindSpeakerSearchUI() {
+  const input = document.getElementById("speakerSearchInput");
+  const clearBtn = document.getElementById("speakerSearchClear");
+
+  if (input && !input.dataset.bound) {
+    input.addEventListener("input", () => applySpeakerSearch(input.value));
+    input.addEventListener("keydown", (e) => {
+      // ESC로 초기화
+      if (e.key === "Escape") {
+        input.value = "";
+        applySpeakerSearch("");
+      }
+    });
+    input.dataset.bound = "1";
+  }
+
+  if (clearBtn && !clearBtn.dataset.bound) {
+    clearBtn.addEventListener("click", () => {
+      if (input) input.value = "";
+      applySpeakerSearch("");
+    });
+    clearBtn.dataset.bound = "1";
+  }
+}
+
+/* ------------------------------
   Render table
-  SpeakerRowDto 필드 기대:
-  - speakerKey, speakerId, speakerName, connectStatus, receiveTime
-  - cdmaNumber, locationName, speakerLatitude, speakerLongitude, saveDivi
-  - (선택) speakerAdr : 있으면 상세패널 주소 표시
 ------------------------------ */
 function renderSpeakerTable(page = speakerPageState.currentPage) {
   const tbody = document.getElementById("speakerTableBody");
@@ -123,7 +183,6 @@ function renderSpeakerTable(page = speakerPageState.currentPage) {
 
   // viewList가 비어있으면 기본 상태를 사용
   if (!Array.isArray(speakerPageState.viewList) || speakerPageState.viewList.length === 0) {
-    // speakerListState가 있을 때(초기 렌더) viewList를 기본으로 셋
     if (Array.isArray(speakerListState) && speakerListState.length > 0) {
       setViewList(speakerListState);
     }
@@ -150,7 +209,6 @@ function renderSpeakerTable(page = speakerPageState.currentPage) {
     const cnt0 = document.getElementById("speakerCount");
     if (cnt0) cnt0.innerText = "0건";
 
-    // pagination도 0건 상태로 갱신
     if (window.App && App.utils && typeof App.utils.renderPagination === "function") {
       App.utils.renderPagination({
         containerId: "speakerPagination",
@@ -189,18 +247,15 @@ function renderSpeakerTable(page = speakerPageState.currentPage) {
       <td>${safe(item.speakerLongitude)}</td>
     `;
 
-    // 행 클릭 시 단일 선택
     tr.addEventListener("click", (e) => {
       const cb = tr.querySelector('input[type="checkbox"]');
       if (!cb) return;
 
       if (e.target && e.target.type === "checkbox") {
-        // 체크박스 직접 클릭: 다중 선택 허용(기존 정책 유지)
         document.querySelectorAll('input[name="selectedIds"]').forEach(x => {
           if (x !== cb) x.checked = false;
         });
       } else {
-        // 행 클릭: 단일 선택 토글
         const was = cb.checked;
         document.querySelectorAll('input[name="selectedIds"]').forEach(x => x.checked = false);
         cb.checked = !was;
@@ -211,7 +266,6 @@ function renderSpeakerTable(page = speakerPageState.currentPage) {
         return;
       }
 
-      // 선택 즉시 기본 정보 반영 (상태는 버튼에서 호출)
       const titleEl = document.getElementById("selectedSpeakerTitle");
       const adrEl = document.getElementById("selectedSpeakeraddress");
       const lastEl = document.getElementById("selectedSpeakerLastUpdate");
@@ -224,11 +278,9 @@ function renderSpeakerTable(page = speakerPageState.currentPage) {
     tbody.appendChild(tr);
   });
 
-  // 전체 건수는 전체 리스트 기준
   const cnt = document.getElementById("speakerCount");
   if (cnt) cnt.innerText = `${totalItems}건`;
 
-  // Pagination 렌더
   if (window.App && App.utils && typeof App.utils.renderPagination === "function") {
     App.utils.renderPagination({
       containerId: "speakerPagination",
@@ -237,27 +289,10 @@ function renderSpeakerTable(page = speakerPageState.currentPage) {
       itemsPerPage: speakerPageState.itemsPerPage,
       onPageChange: (p) => {
         speakerPageState.currentPage = p;
-        // 페이지 이동 시 기존 선택은 보통 UX상 리셋하는게 안전
         resetDetail();
         renderSpeakerTable(p);
       }
     });
-  } else {
-    // utils 미로딩 시: 최소 동작(이전/다음만)
-    const ul = document.getElementById("speakerPagination");
-    if (ul) {
-      ul.innerHTML = "";
-      const mk = (label, disabled, onClick) => {
-        const li = document.createElement("li");
-        li.className = "page-item" + (disabled ? " disabled" : "");
-        li.innerHTML = `<a class="page-link" href="#">${label}</a>`;
-        if (!disabled) li.querySelector("a").addEventListener("click", (e) => { e.preventDefault(); onClick(); });
-        return li;
-      };
-      ul.appendChild(mk("이전", speakerPageState.currentPage === 1, () => renderSpeakerTable(speakerPageState.currentPage - 1)));
-      ul.appendChild(mk(`${speakerPageState.currentPage}/${totalPages}`, true, () => {}));
-      ul.appendChild(mk("다음", speakerPageState.currentPage === totalPages, () => renderSpeakerTable(speakerPageState.currentPage + 1)));
-    }
   }
 }
 
@@ -295,7 +330,7 @@ function resetDetail() {
   Button click helper (HTML onclick 호환)
 ------------------------------ */
 function handleButtonClick(_, actionFn) {
-  const checked = document.querySelector('input[name="selectedIds"]:checked');
+  const checked = getSelectedSpeakerCheckbox();
   if (!checked) {
     resetDetail();
     alertMsg("스피커를 선택해주세요.", "warning");
@@ -305,10 +340,7 @@ function handleButtonClick(_, actionFn) {
 }
 
 /* ------------------------------
-  Request status (GET /status/{speakerKey})
-  SpkStatusResponse 기대 필드:
-  - connectionStatus, acStatus, dcStatus, batteryStatus
-  - solarStatus, lteStatus, cpuTemp, mcuVersion, receiveTime
+  Request status
 ------------------------------ */
 async function requestStatus(selectedCheckbox) {
   const speakerKey = selectedCheckbox.dataset.key || selectedCheckbox.value;
@@ -323,7 +355,6 @@ async function requestStatus(selectedCheckbox) {
       return;
     }
 
-    // 기본 정보
     const titleEl = document.getElementById("selectedSpeakerTitle");
     const adrEl = document.getElementById("selectedSpeakeraddress");
     const lastEl = document.getElementById("selectedSpeakerLastUpdate");
@@ -332,13 +363,11 @@ async function requestStatus(selectedCheckbox) {
     if (adrEl) adrEl.innerText = safe(speakerAdr);
     if (lastEl) lastEl.innerText = fmtDateTime(data.receiveTime);
 
-    // 상태 모니터링 값
     const set = (id, v) => {
       const el = document.getElementById(id);
       if (!el) return;
       el.innerText = safe(v);
       el.classList.remove("text-success", "text-danger", "text-warning", "text-muted", "text-primary", "fw-semibold");
-      // "정상/이상" 문자열이면 색을 간단히 주고 싶으면 아래 로직 유지
       const t = String(v ?? "").trim();
       if (!t || t === "-") el.classList.add("text-muted");
       else if (t.includes("정상") || t.includes("연결")) el.classList.add("text-success", "fw-semibold");
@@ -355,7 +384,6 @@ async function requestStatus(selectedCheckbox) {
     set("cpuTemperature", data.cpuTemperature);
     set("mcuVersion", data.mcuVersion);
 
-    // 선택된 행의 수신시간/연결 배지도 같이 갱신(선택 사항)
     const row = selectedCheckbox.closest("tr");
     if (row) {
       const receiveTd = row.querySelector('[data-col="receive"]');
@@ -379,31 +407,27 @@ async function requestStatus(selectedCheckbox) {
 }
 
 /* ------------------------------
-  Refresh list + render (no global)
+  Refresh list + render
 ------------------------------ */
 async function refreshSpeakerListAndRender({ preserveSelection = true } = {}) {
   let selectedKey = null;
 
   if (preserveSelection) {
-    const checked = document.querySelector('input[name="selectedIds"]:checked');
+    const checked = getSelectedSpeakerCheckbox();
     if (checked) selectedKey = checked.value;
   }
 
   await fetchSpeakerList();
 
-  // 기본 viewList = 전체 목록
-  setViewList(speakerListState, { resetPage: !preserveSelection });
-
-  // 선택 유지: 선택된 키가 있으면 해당 항목이 포함된 페이지로 점프
-  if (selectedKey && Array.isArray(speakerPageState.viewList) && speakerPageState.viewList.length > 0) {
-    const idx = speakerPageState.viewList.findIndex(x => String(x?.speakerKey) === String(selectedKey));
-    if (idx >= 0) {
-      const p = Math.floor(idx / speakerPageState.itemsPerPage) + 1;
-      speakerPageState.currentPage = p;
-    }
+  // 검색 상태 유지: 현재 검색어가 있으면 그 조건으로 viewList를 다시 계산
+  const searchInput = document.getElementById("speakerSearchInput");
+  const q = searchInput ? searchInput.value : "";
+  if (q && q.trim().length) {
+    applySpeakerSearch(q);
+  } else {
+    setViewList(speakerListState, { resetPage: !preserveSelection });
+    renderSpeakerTable(speakerPageState.currentPage);
   }
-
-  renderSpeakerTable(speakerPageState.currentPage);
 
   if (selectedKey) {
     const cb = document.querySelector(`input[name="selectedIds"][value="${CSS.escape(String(selectedKey))}"]`);
@@ -432,26 +456,126 @@ function startPolling() {
 }
 
 /* =========================
+   (추가) 검색/수정/삭제 이벤트
+========================= */
+
+// 검색은 UI 바인딩으로 처리(입력 즉시 필터)
+function listSpeakers() {
+  // 새로고침 버튼은 제거하지만, 수정/삭제 후 내부적으로 호출해야 하므로 함수는 유지
+  return refreshSpeakerListAndRender({ preserveSelection: false });
+}
+
+async function speakerUpdate() {
+  const checked = getSelectedSpeakerCheckbox();
+  if (!checked) {
+    alertMsg("수정할 스피커를 선택해주세요.", "warning");
+    return;
+  }
+
+  const speakerKey = checked.dataset.key || checked.value;
+  const current = (speakerListState || []).find(x => String(x?.speakerKey) === String(speakerKey));
+
+  if (!current) {
+    alertMsg("선택된 스피커 정보를 목록에서 찾지 못했습니다. 목록을 갱신하세요.", "warning");
+    return;
+  }
+
+  // 간단 수정 UI(프로젝트 모달이 있으면 여기만 교체하면 됩니다)
+  const newName = prompt("스피커 이름", safe(current.speakerName, ""));
+  if (newName === null) return;
+
+  const newPhone = prompt("단말 전화번호", safe(current.cdmaNumber, ""));
+  if (newPhone === null) return;
+
+  const newLocation = prompt("설치 지역", safe(current.locationName, ""));
+  if (newLocation === null) return;
+
+  const payload = {
+    speakerKey: current.speakerKey,
+    speakerId: current.speakerId,
+    speakerName: String(newName).trim(),
+    cdmaNumber: String(newPhone).trim(),
+    locationName: String(newLocation).trim(),
+    speakerLatitude: current.speakerLatitude,
+    speakerLongitude: current.speakerLongitude
+  };
+
+  try {
+    const res = await fetch(SPEAKER_UPDATE_API, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const t = await res.text().catch(() => "");
+      throw new Error(`update api failed: ${res.status} ${t}`);
+    }
+
+    alertMsg("수정이 완료되었습니다.", "success");
+
+    // ✅ 수정되면 항상 목록 새로고침(버튼 없이 자동)
+    await listSpeakers();
+    resetDetail();
+  } catch (e) {
+    console.error(e);
+    alertMsg("수정 실패(엔드포인트/권한/파라미터를 확인하세요).", "danger");
+  }
+}
+
+async function speakerDeleted() {
+  const checked = getSelectedSpeakerCheckbox();
+  if (!checked) {
+    alertMsg("삭제할 스피커를 선택해주세요.", "warning");
+    return;
+  }
+
+  const speakerKey = checked.dataset.key || checked.value;
+  const speakerName = checked.dataset.name || "";
+
+  const ok = confirm(`선택한 스피커를 삭제하시겠습니까?\n\n- ${speakerName} (${speakerKey})`);
+  if (!ok) return;
+
+  try {
+    const res = await fetch(SPEAKER_DELETE_API(speakerKey), {
+      method: "DELETE",
+      headers: { "Accept": "application/json" }
+    });
+
+    if (!res.ok) {
+      const t = await res.text().catch(() => "");
+      throw new Error(`delete api failed: ${res.status} ${t}`);
+    }
+
+    alertMsg("삭제가 완료되었습니다.", "success");
+
+    // ✅ 삭제되면 항상 목록 새로고침(버튼 없이 자동)
+    await listSpeakers();
+    resetDetail();
+  } catch (e) {
+    console.error(e);
+    alertMsg("삭제 실패(엔드포인트/권한/파라미터를 확인하세요).", "danger");
+  }
+}
+
+/* =========================
    Entry point for equipment_init.js
 ========================= */
 async function initSpeakerPage() {
   if (!document.getElementById("speakerTableBody")) return;
 
   try {
+    // 목록 조회 + 기본 viewList 설정
     await refreshSpeakerListAndRender({ preserveSelection: false });
     resetDetail();
     startPolling();
+
+    // 검색 UI 바인딩(추가)
+    bindSpeakerSearchUI();
   } catch (e) {
     console.error(e);
     resetDetail();
     alertMsg("스피커 목록 조회 실패", "danger");
-  }
-
-  // HTML에서 onclick으로도 호출되지만, 혹시 onclick 제거 시를 대비한 바인딩(안전)
-  const btn = document.querySelector("#btn-request-status");
-  if (btn && !btn.dataset.bound) {
-    btn.addEventListener("click", () => handleButtonClick(btn, requestStatus));
-    btn.dataset.bound = "1";
   }
 }
 
@@ -463,3 +587,8 @@ window.handleButtonClick = handleButtonClick;
 window.requestStatus = requestStatus;
 window.resetDetail = resetDetail;
 window.renderSpeakerTable = renderSpeakerTable;
+
+// 추가 exports (HTML onclick과 호환)
+window.listSpeakers = listSpeakers;
+window.speakerUpdate = speakerUpdate;
+window.speakerDeleted = speakerDeleted;

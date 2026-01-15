@@ -31,7 +31,7 @@
     <header class="page-toolbar glass-toolbar">
       <div class="toolbar-left">
         <div class="page-title-wrap">
-          <div class="page-eyebrow">EDS</div>
+          <!-- <div class="page-eyebrow">EDS</div> -->
           <h4 class="page-title mb-0">장비 관리</h4>
           <div class="page-subtitle">스피커 관리 및 방송 제어</div>
         </div>
@@ -116,7 +116,7 @@
                         <button class="btn-action-pill danger" type="button" onclick="speakerDeleted()" title="삭제">
                           <i class="bi bi-trash me-1"></i>삭제
                         </button>
-                        <button class="btn-action-pill" type="button" onclick="listSpeakers?.()">
+                        <button class="btn-action-pill d-none" type="button" onclick="listSpeakers?.()">
                           <i class="bi bi-arrow-clockwise me-1"></i>새로고침
                         </button>
                       </div>
@@ -397,7 +397,7 @@
                       </div>
                   
                       <!-- ✅ 버튼 영역은 flex-shrink-0로 밀리지 않게 -->
-                      <div class="d-flex flex-wrap gap-2 flex-shrink-0">
+                      <div class="d-flex flex-wrap gap-2 flex-shrink-0 d-none">
                         <button class="btn-action-pill" onclick="showAddBroadcastModal()">
                           <i class="bi bi-plus"></i><span class="ms-1 d-none d-sm-inline">추가</span>
                         </button>
@@ -444,7 +444,7 @@
 
                       <div class="composer-block">
                         <div class="composer-title">
-                          <span>수동 발령 설정</span>
+                          <span>방송 설정</span>
                           <span class="text-white-50 small">모드/방송종류 선택 후 메시지를 입력하세요</span>
                         </div>
 

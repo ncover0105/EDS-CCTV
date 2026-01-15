@@ -82,12 +82,24 @@
                         <div class="setting-card">
                             <div class="setting-title">
                                 <div class="d-flex flex-column">
-                                    <span class="fw-semibold">수동 발령</span>
+                                    <span class="fw-semibold">발령 설정</span>
                                     <small class="text-white-50" id="bc_step_text">스피커를 선택하세요.</small>
                                 </div>
 
                                 <div class="d-flex gap-2">
-                                    <button type="button" class="btn-apple info d-flex align-items-center gap-2" id="bc_go_manual" disabled>
+                                    <ul class="nav nav-pills mb-2" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active" id="tab-bc-manual"
+                                                    data-bs-toggle="pill" data-bs-target="#pane-bc-manual"
+                                                    type="button" role="tab">설정</button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="tab-bc-preview"
+                                                    data-bs-toggle="pill" data-bs-target="#pane-bc-preview"
+                                                    type="button" role="tab">미리보기</button>
+                                        </li>
+                                    </ul>
+                                    <button type="button" class="btn-apple info d-flex align-items-center gap-2 d-none" id="bc_go_manual" disabled>
                                         <i class="bi bi-gear"></i>발령 설정
                                     </button>
                                 </div>
@@ -96,7 +108,7 @@
                             <!-- 발령 폼 영역 -->
                             <div id="bc_manual_area">
 
-                                <ul class="nav nav-pills mb-2" role="tablist">
+                                <!-- <ul class="nav nav-pills mb-2" role="tablist">
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link active" id="tab-bc-manual"
                                                 data-bs-toggle="pill" data-bs-target="#pane-bc-manual"
@@ -107,7 +119,7 @@
                                                 data-bs-toggle="pill" data-bs-target="#pane-bc-preview"
                                                 type="button" role="tab">미리보기</button>
                                     </li>
-                                </ul>
+                                </ul> -->
 
                                 <div class="tab-content pb-0">
                                     <!-- 설정 -->
