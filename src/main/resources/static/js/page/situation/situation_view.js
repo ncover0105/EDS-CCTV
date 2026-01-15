@@ -1,4 +1,5 @@
 // /js/page/situation/situation_view.js
+// - 상황발생이력: 현재 입력된 시간/구역 값으로 검색
 (function () {
   'use strict';
 
@@ -6,65 +7,53 @@
   let currentPage = 1;
   let totalCount = 0;
 
-  /**
-   * ✅ 요구사항
-   * - 최초 로드: "오늘(년/월/일)" 기준으로 조회되게(서버 기본 로직 사용) => from/to 파라미터 전송 안 함
-   * - 검색 클릭: 입력한 시작/끝 "시간까지 포함"해서 조회(from/to 전송)
-   */
-  let useServerDefaultOnInit = true;
-
-  // ====== datetime-local 입력 기본값(표시용) ======
+  // ====== datetime-local 표시용 기본값(오늘) ======
   function pad2(n) { return String(n).padStart(2, '0'); }
 
-  // 화면에는 "오늘"이 보이도록 넣되, 최초 조회는 서버 기본값을 쓰므로 from/to는 전송하지 않음
-  function setTodayRangeInputs() {
+  function setTodayRangeInputsIfEmpty() {
     const startEl = document.getElementById('startDateTime');
     const endEl = document.getElementById('endDateTime');
     if (!startEl || !endEl) return;
+
+    // 이미 값이 있으면 건드리지 않음
+    if ((startEl.value && startEl.value.trim()) || (endEl.value && endEl.value.trim())) return;
 
     const now = new Date();
     const y = now.getFullYear();
     const m = pad2(now.getMonth() + 1);
     const d = pad2(now.getDate());
 
-    // datetime-local 특성상 날짜만 표시 불가 -> 기본 시간으로 세팅
     startEl.value = `${y}-${m}-${d}T00:00`;
     endEl.value = `${y}-${m}-${d}T23:59`;
   }
 
-  // ====== 필터 값 읽기 ======
+  // ====== 공백/미선택이면 null ======
+  function getTrimValue(id) {
+    const el = document.getElementById(id);
+    if (!el) return null;
+    const raw = el.value;
+    if (raw == null) return null;
+    const t = String(raw).trim();
+    return t.length ? t : null;
+  }
+
+  // ====== 필터 읽기: "현재 입력된 값" 그대로 사용 ======
   function getFilters() {
-    const startEl = document.getElementById('startDateTime');
-    const endEl = document.getElementById('endDateTime');
-    const boundaryEl = document.getElementById('boundaryFilter');
+    const startRaw = getTrimValue('startDateTime'); // "YYYY-MM-DDTHH:mm"
+    const endRaw   = getTrimValue('endDateTime');
+    const boundaryNum = getTrimValue('boundaryFilter'); // ""이면 null
 
-    // ✅ 최초 로딩은 입력값이 있더라도 서버 기본(오늘) 사용 => from/to 미전송
-    if (useServerDefaultOnInit) {
-      return {
-        from: '',
-        to: '',
-        boundaryNum: boundaryEl?.value ? boundaryEl.value.trim() : ''
-      };
-    }
-
-    // ===== 검색 시에는 시간 포함 입력값을 그대로 반영 =====
-    const startRaw = (startEl?.value || '').trim();
-    const endRaw = (endEl?.value || '').trim();
-
+    // parseInputDateTime / toLocalDateTimeParam 은 situation_common.js의 유틸 사용 가정
     const startDt = startRaw ? window.SituationCommon.parseInputDateTime(startRaw) : null;
-    const endDt = endRaw ? window.SituationCommon.parseInputDateTime(endRaw) : null;
+    const endDt   = endRaw ? window.SituationCommon.parseInputDateTime(endRaw) : null;
+
+    // ✅ 둘 다 비면 날짜조건 제외
+    if (!startDt && !endDt) {
+      return { from: '', to: '', boundaryNum: boundaryNum || '' };
+    }
 
     let fromDt = startDt;
     let toDt = endDt;
-
-    // 둘 다 비어있으면 서버 기본 사용(원하면 여기서 경고 처리 가능)
-    if (!fromDt && !toDt) {
-      return {
-        from: '',
-        to: '',
-        boundaryNum: boundaryEl?.value ? boundaryEl.value.trim() : ''
-      };
-    }
 
     // 시작만 있으면 종료 자동 보정(시작 + 1일)
     if (fromDt && !toDt) {
@@ -87,21 +76,21 @@
     }
 
     const from = fromDt ? window.SituationCommon.toLocalDateTimeParam(fromDt) : '';
-    const to = toDt ? window.SituationCommon.toLocalDateTimeParam(toDt) : '';
-    const boundaryNum = boundaryEl?.value ? boundaryEl.value.trim() : '';
+    const to   = toDt ? window.SituationCommon.toLocalDateTimeParam(toDt) : '';
 
-    return { from, to, boundaryNum };
+    return { from, to, boundaryNum: boundaryNum || '' };
   }
 
   // ====== API 호출 ======
   async function fetchEmergencyList(page) {
     const f = getFilters();
+
     const params = new URLSearchParams({
       page: String(page),
       size: String(pageSize),
     });
 
-    // 기간/구역은 선택값일 수 있음
+    // ✅ 선택(입력)된 항목만 전송 (미선택은 제외)
     if (f.from) params.set('from', f.from);
     if (f.to) params.set('to', f.to);
     if (f.boundaryNum) params.set('boundaryNum', f.boundaryNum);
@@ -119,10 +108,9 @@
     const tbody = document.getElementById('situationList');
     if (!tbody) return;
 
-    const cols = 6; // 번호, CCTV, 알림, 구역, 로그, 발생시각
+    const cols = 6;
     const list = Array.isArray(items) ? items : [];
 
-    // 0건: 메시지 행
     if (list.length === 0) {
       tbody.innerHTML = `
         <tr>
@@ -136,7 +124,7 @@
 
     const startNo = (page - 1) * pageSize;
 
-    const rowsHTML = list.map((it, idx) => {
+    tbody.innerHTML = list.map((it, idx) => {
       const no = startNo + idx + 1;
 
       const cctvCode = window.SituationCommon.escapeHtml(it.cctvCode ?? '-');
@@ -150,7 +138,6 @@
           ? `<span class="status-badge status-error">출입알림</span>`
           : alertCode;
 
-        
       return `
         <tr>
           <td class="text-center">${no}</td>
@@ -162,8 +149,6 @@
         </tr>
       `;
     }).join('');
-
-    tbody.innerHTML = rowsHTML;
   }
 
   function renderCount() {
@@ -172,9 +157,7 @@
 
     const f = getFilters();
     const boundaryLabel = f.boundaryNum ? `${f.boundaryNum}번 구역` : '전체 구역';
-
-    // ✅ 최초 로딩은 "오늘", 검색 모드에서는 "조건검색"
-    const dateLabel = (useServerDefaultOnInit || (!f.from && !f.to)) ? '오늘' : '조건검색';
+    const dateLabel = (f.from || f.to) ? '조건검색' : '전체기간';
 
     countEl.innerText = `${dateLabel} / ${boundaryLabel} / 총 ${totalCount}건 | 상황 발생 이력을 관리하세요`;
   }
@@ -195,26 +178,23 @@
   async function loadPage() {
     try {
       const data = await fetchEmergencyList(currentPage);
-
       totalCount = data.totalCount ?? 0;
+
       renderRows(data.items ?? [], currentPage);
       renderCount();
       renderPagination();
     } catch (e) {
       console.error('[situation_view] loadPage failed:', e);
-
       totalCount = 0;
+
       renderRows([], currentPage);
       renderCount();
       renderPagination();
     }
   }
 
-  // ====== HTML 버튼 onclick="situationSearch()" 연결 ======
+  // ====== 검색 버튼(onclick="situationSearch()") ======
   window.situationSearch = function () {
-    // ✅ 검색 클릭 순간부터는 입력값(시간 포함) 기반으로 조회
-    useServerDefaultOnInit = false;
-
     currentPage = 1;
     loadPage().catch(console.error);
   };
@@ -223,14 +203,10 @@
   document.addEventListener('DOMContentLoaded', () => {
     if (window.currentView && window.currentView !== 'situation') return;
 
-    // ✅ 화면 표시용: 오늘 날짜로 세팅(시간은 기본값)
-    setTodayRangeInputs();
+    // 입력값이 비어있으면 오늘 기본값 세팅(원치 않으면 이 줄을 제거)
+    setTodayRangeInputsIfEmpty();
 
-    // ❌ 기존 유틸이 현재시각을 넣어서 from==to가 될 수 있음 -> 사용 금지 권장
-    // if (window.App?.utils?.fillDateTimeInputs) window.App.utils.fillDateTimeInputs();
-
-    // ✅ 최초 조회: 서버 기본(오늘) 사용 => from/to 미전송
-    useServerDefaultOnInit = true;
+    // ✅ 최초 로딩도 "현재 입력된 값"으로 조회
     loadPage().catch(console.error);
   });
 

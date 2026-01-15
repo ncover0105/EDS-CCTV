@@ -932,7 +932,7 @@
     bindBroadcastTypeToggle();
   }
 
-    // -------------------------
+  // -------------------------
   // API: Disaster (재난 목록)
   // -------------------------
   let disastersCache = null;   // 한번 로드 후 캐싱
@@ -940,7 +940,7 @@
   async function fetchDisasters() {
     if (Array.isArray(disastersCache)) return disastersCache;
 
-    const res = await fetch('/api/btype/query/disaster');
+    const res = await fetch('/api/disaster');
     const data = res.ok ? await res.json() : [];
     disastersCache = Array.isArray(data) ? data : [];
     return disastersCache;

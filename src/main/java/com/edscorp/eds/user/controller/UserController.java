@@ -61,7 +61,7 @@ public class UserController {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable String id) {
         // 택1
-        // userService.deleteHard(id);
-        userService.disableSoft(id);
+        userService.deleteHard(id);
+        // userService.disableSoft(id);
     }
 }

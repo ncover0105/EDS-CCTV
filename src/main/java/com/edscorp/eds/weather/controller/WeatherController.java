@@ -102,12 +102,34 @@ public class WeatherController {
             @RequestParam(required = false) String wrn, // 예: "R"
             @RequestParam(required = false) String lvl, // 예: "2"
             @RequestParam(required = false) String cmd, // 예: "1"
+            @RequestParam(required = false) String regId, // 예: "L1070100"
 
-            @RequestParam(required = false) String regId, // 예: "11H10701"
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            // 프론트(special_view.js)가 쓰는 이름과 매핑
+            @RequestParam(required = false, name = "startDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+
+            @RequestParam(required = false, name = "endDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+
             @RequestParam(defaultValue = "300") int limit) {
-        return tbWeatherWarningListRepository.search(stn, wrn, lvl, cmd, regId, start, end, Math.min(limit, 1000));
+        int safeLimit = Math.min(Math.max(limit, 1), 1000);
+
+        // 선택: 공백이면 null 처리 (native query의 :param IS NULL 조건을 살리기 위함)
+        stn = emptyToNull(stn);
+        wrn = emptyToNull(wrn);
+        lvl = emptyToNull(lvl);
+        cmd = emptyToNull(cmd);
+        regId = emptyToNull(regId);
+
+        return tbWeatherWarningListRepository.search(
+                stn, wrn, lvl, cmd, regId,
+                start, end,
+                safeLimit);
+    }
+
+    private String emptyToNull(String v) {
+        if (v == null)
+            return null;
+        String t = v.trim();
+        return t.isEmpty() ? null : t;
     }
 
 }

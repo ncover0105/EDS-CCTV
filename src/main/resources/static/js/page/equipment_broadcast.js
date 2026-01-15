@@ -113,7 +113,7 @@ async function listSpeakers() {
 }
 
 async function listDisasters() {
-    const res = await fetch("/api/btype/query/disaster");
+    const res = await fetch("/api/disaster");
     if (!res.ok) return [];
     return (await res.json()) ?? [];
 }

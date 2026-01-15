@@ -135,62 +135,64 @@ public class SpkBroadcastScheduleService {
     }
 
     public SpkBroadcastSchedule saveSchedule(ScheduleSaveRequest req) {
-    SpkBroadcastSchedule sc = new SpkBroadcastSchedule();
-    applyRequest(sc, req);
-    sc.setCreatedAt(LocalDateTime.now());
-    sc.setUpdatedAt(LocalDateTime.now());
-    return scheduleRepo.save(sc);
-}
-
-public SpkBroadcastSchedule updateSchedule(Long id, ScheduleSaveRequest req) {
-    SpkBroadcastSchedule sc = scheduleRepo.findById(id)
-        .orElseThrow(() -> new IllegalArgumentException("schedule not found: " + id));
-    applyRequest(sc, req);
-    sc.setUpdatedAt(LocalDateTime.now());
-    return scheduleRepo.save(sc);
-}
-
-public void deleteSchedule(Long id) {
-    scheduleRepo.deleteById(id);
-}
-
-private void applyRequest(SpkBroadcastSchedule sc, ScheduleSaveRequest req) {
-    sc.setScheduleName(req.getScheduleName());
-    sc.setEnabledYn(req.getEnabledYn());
-    sc.setRepeatEnabled(req.getRepeatEnabled());
-
-    sc.setMon(req.getMon());
-    sc.setTue(req.getTue());
-    sc.setWed(req.getWed());
-    sc.setThu(req.getThu());
-    sc.setFri(req.getFri());
-    sc.setSat(req.getSat());
-    sc.setSun(req.getSun());
-
-    sc.setBcMode(req.getBcMode());
-    sc.setBcAlertType(req.getBcAlertType());
-    sc.setBcBroadcastType(req.getBcBroadcastType());
-    sc.setBcPriority(req.getBcPriority());
-    sc.setBcScope(req.getBcScope());
-    sc.setDisasterCode(req.getDisasterCode());
-    sc.setTtsMessage(req.getTtsMessage());
-
-    // "HH:mm:ss" 또는 "HH:mm" 모두 대응
-    sc.setStartTime(parseLocalTime(req.getStartTime()));
-    sc.setEndTime(parseLocalTime(req.getEndTime()));
-
-    // speakerIds(List<String>) -> JSON 문자열 저장
-    try {
-        sc.setSpeakerIds(objectMapper.writeValueAsString(req.getSpeakerIds()));
-    } catch (JsonProcessingException e) {
-        throw new IllegalArgumentException("Invalid speakerIds", e);
+        SpkBroadcastSchedule sc = new SpkBroadcastSchedule();
+        applyRequest(sc, req);
+        sc.setCreatedAt(LocalDateTime.now());
+        sc.setUpdatedAt(LocalDateTime.now());
+        return scheduleRepo.save(sc);
     }
-}
 
-private LocalTime parseLocalTime(String v) {
-    if (!StringUtils.hasText(v)) return null;
-    String s = v.trim();
-    if (s.length() == 5) s = s + ":00";
-    return LocalTime.parse(s);
-}
+    public SpkBroadcastSchedule updateSchedule(Long id, ScheduleSaveRequest req) {
+        SpkBroadcastSchedule sc = scheduleRepo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("schedule not found: " + id));
+        applyRequest(sc, req);
+        sc.setUpdatedAt(LocalDateTime.now());
+        return scheduleRepo.save(sc);
+    }
+
+    public void deleteSchedule(Long id) {
+        scheduleRepo.deleteById(id);
+    }
+
+    private void applyRequest(SpkBroadcastSchedule sc, ScheduleSaveRequest req) {
+        sc.setScheduleName(req.getScheduleName());
+        sc.setEnabledYn(req.getEnabledYn());
+        sc.setRepeatEnabled(req.getRepeatEnabled());
+
+        sc.setMon(req.getMon());
+        sc.setTue(req.getTue());
+        sc.setWed(req.getWed());
+        sc.setThu(req.getThu());
+        sc.setFri(req.getFri());
+        sc.setSat(req.getSat());
+        sc.setSun(req.getSun());
+
+        sc.setBcMode(req.getBcMode());
+        sc.setBcAlertType(req.getBcAlertType());
+        sc.setBcBroadcastType(req.getBcBroadcastType());
+        sc.setBcPriority(req.getBcPriority());
+        sc.setBcScope(req.getBcScope());
+        sc.setDisasterCode(req.getDisasterCode());
+        sc.setTtsMessage(req.getTtsMessage());
+
+        // "HH:mm:ss" 또는 "HH:mm" 모두 대응
+        sc.setStartTime(parseLocalTime(req.getStartTime()));
+        sc.setEndTime(parseLocalTime(req.getEndTime()));
+
+        // speakerIds(List<String>) -> JSON 문자열 저장
+        try {
+            sc.setSpeakerIds(objectMapper.writeValueAsString(req.getSpeakerIds()));
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Invalid speakerIds", e);
+        }
+    }
+
+    private LocalTime parseLocalTime(String v) {
+        if (!StringUtils.hasText(v))
+            return null;
+        String s = v.trim();
+        if (s.length() == 5)
+            s = s + ":00";
+        return LocalTime.parse(s);
+    }
 }

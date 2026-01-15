@@ -149,7 +149,7 @@ function initTargetSelector() {
     
         try {
             // const messages = await App.utils.fetchJson("/api/broadcast/list");
-            const messages = await App.utils.fetchJson("/api/btype/query/disaster");
+            const messages = await App.utils.fetchJson("/api/disaster");
             listEl.innerHTML = ""; // 기존 비우기
     
             messages

@@ -139,36 +139,7 @@ public class BtypeQueryController {
         return ResponseEntity.ok(spkConfigService.getActiveSpeakers());
     }
 
-    // ===================== 재난 코드 조회 =====================
-    // 전체 재난 코드
-    @GetMapping("/disaster")
-    public ResponseEntity<List<SpkDisaster>> getAllDisasterCodes() {
-        return ResponseEntity.ok(spkDisasterService.getAllDisasters());
-    }
-
-    // 특정 재난 코드 조회
-    @GetMapping("/disaster/{dstCode}")
-    public ResponseEntity<SpkDisaster> getDisasterByCode(@PathVariable String dstCode) {
-        SpkDisaster disaster = spkDisasterService.getDisaster(dstCode);
-        if (disaster == null)
-            return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(disaster);
-    }
-
-    // 사용 가능한 재난 코드(Y)
-    @GetMapping("/disaster/active")
-    public ResponseEntity<List<SpkDisaster>> getActiveDisasters() {
-        return ResponseEntity.ok(spkDisasterService.getActiveDisasters());
-    }
-
-    // 재난명 검색
-    @GetMapping("/disaster/search")
-    public ResponseEntity<List<SpkDisaster>> searchDisaster(@RequestParam String keyword) {
-        return ResponseEntity.ok(spkDisasterService.searchDisasterByName(keyword));
-    }
-
     // ===================== 스피커 설정 조회 =====================
-
     @GetMapping("/setting/{speakerKey}")
     public ResponseEntity<SpkSettingEntity> getSpeakerSetting(
             @PathVariable Integer speakerKey) {

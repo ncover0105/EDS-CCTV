@@ -83,120 +83,33 @@
                         </form>
                     </div>
                 </div>
-                <!-- <div class="bg-white rounded shadow-sm p-4 mb-3 flex-shrink-0">
-                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pb-3">
-                        <div>
-                            <h4 class="fw-bold text-dark mb-3">상황 발생 이력</h4>
-                            <p class="text-secondary mb-0 small" id="situationCount">상황 발생 이력 총 0개 | 상황 발생 이력을 관리하세요</p>
-                        </div>
-                    </div>
-                    <div class="border-top pt-3">
-                        <form class="row g-3 align-items-end">
-                            <div class="col-12 col-sm-6 col-lg-3">
-                                <label for="startDateTime" class="form-label small fw-semibold mb-1">시작 일시</label>
-                                <input type="datetime-local" class="form-control form-control-sm" id="startDateTime">
-                            </div>
-                            
-                            <div class="col-auto d-none d-lg-flex align-items-end pb-1">
-                                <span class="fw-bold text-secondary">~</span>
-                            </div>
-                            
-                            <div class="col-12 col-sm-6 col-lg-3">
-                                <label for="endDateTime" class="form-label small fw-semibold mb-1">종료 일시</label>
-                                <input type="datetime-local" class="form-control form-control-sm" id="endDateTime">
-                            </div>
-                            
-                            <div class="col-12 col-sm-6 col-lg-2">
-                                <label for="situationType" class="form-label small fw-semibold mb-1">상황 종류</label>
-                                <select class="form-select form-select-sm" id="modeType">
-                                    <option value="">전체</option>
-                                    <option value="화재">화재</option>
-                                    <option value="홍수">홍수</option>
-                                    <option value="지진">지진</option>
-                                    <option value="태풍">태풍</option>
-                                    <option value="기타">기타</option>
-                                </select>
-                            </div>
-                            
-                            <div class="col-12 col-lg-auto">
-                                <button type="button" class="btn btn-primary btn-sm w-100" onclick="situationSearch()">
-                                    <i class="bi bi-search me-1"></i>
-                                    검색
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div> -->
 
-                <!-- <div class="rounded-3 shadow-sm bottom-panel">
-                    <div class="bottom-panel-scroll">
-                        <div style="flex-shrink: 0;">
-                            <table class="table table-dark table-hover mb-0" style="table-layout: fixed; width: 100%;">
-                                <colgroup>
-                                    <col style="width: 10%;">
-                                    <col style="width: 30%;">
-                                    <col style="width: 20%;">
-                                    <col style="width: 20%;">
-                                    <col style="width: 20%;">
-                                </colgroup>
-                                <thead>
-                                    <tr>
-                                        <th>번호</th>
-                                        <th>상황 내용</th>
-                                        <th>상황 발생 시각</th>
-                                        <th>상황 승인 상태</th>
-                                        <th>상황 발생 지역</th>
-                                    </tr>
-                                </thead>
-                            </table>
-                        </div>
-                        <div style="overflow-y: auto; flex: 1; min-height: 0;">
-                            <table class="table table-dark table-hover mb-0" style="table-layout: fixed; width: 100%;">
-                                <colgroup>
-                                    <col style="width: 10%;">
-                                    <col style="width: 30%;">
-                                    <col style="width: 20%;">
-                                    <col style="width: 20%;">
-                                    <col style="width: 20%;">
-                                </colgroup>
-                                <tbody id="situationList"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div> -->
                 <!-- 상황발생이력 -->
                 <div class="bg-dark rounded-3 shadow-sm situation-panel situation-panel-paged">
-
-                    <!-- (선택) 상단 정보/검색 영역이 이 패널 안에 같이 들어가야 하면 여기 넣으세요 -->
-                    <!-- <div class="situation-panel-header px-3 py-2">
-                    <div id="situationCount" class="text-secondary small">총 0건 | 상황 발생 이력을 관리하세요</div>
-                    </div> -->
                 
                     <!-- 테이블 스크롤 영역: 패널의 남은 높이를 모두 차지 -->
                     <div class="situation-table-area d-flex flex-column flex-grow-1 min-vh-0">
                         <!-- 스크롤 컨테이너: Bootstrap 유틸로 구성 -->
                         <div class="flex-grow-1 overflow-auto">
-                            <table class="table table-dark table-hover mb-0 situation-table table-fixed w-100">
+                            <table class="table table-dark table-hover mb-0 situation-table w-100">
                                 <colgroup>
-                                <col style="width: 8%;">
-                                <col style="width: 14%;">
-                                <col style="width: 14%;">
-                                <col style="width: 10%;">
-                                <col style="width: 34%;">
-                                <col style="width: 20%;">
+                                    <col style="width: 8%;">
+                                    <col style="width: 14%;">
+                                    <col style="width: 14%;">
+                                    <col style="width: 10%;">
+                                    <col style="width: 34%;">
+                                    <col style="width: 20%;">
                                 </colgroup>
-                        
                                 <thead>
-                                <tr>
-                                    <th scope="col" class="text-center">번호</th>
-                                    <th scope="col">CCTV 코드</th>
-                                    <th scope="col">알림 코드</th>
-                                    <th scope="col" class="text-center">구역</th>
-                                    <th scope="col">내용</th>
-                                    <th scope="col">발생 시각</th>
-                                </tr>
+                                    <tr>
+                                        <th scope="col" class="text-center">번호</th>
+                                        <th scope="col">CCTV 코드</th>
+                                        <th scope="col">알림 코드</th>
+                                        <th scope="col" class="text-center">구역</th>
+                                        <th scope="col">내용</th>
+                                        <th scope="col">발생 시각</th>
+                                    </tr>
                                 </thead>
-                        
                                 <tbody id="situationList"></tbody>
                             </table>
                         </div>
@@ -468,15 +381,15 @@
                 </div>
         
                 <!-- 🔹 하단 공용 패널 (bottom-panel 적용) -->
-                <div class="bg-dark rounded-3 shadow-sm bottom-panel">
+                <div class="bg-dark shadow-sm bottom-panel">
         
-                    <div class="bottom-panel-scroll">
+                    <div class="bottom-panel-scroll rounded-3">
         
                         <div style="min-width: 800px;" class="d-flex flex-column h-100">
         
                             <!-- 테이블 헤더 (고정) -->
                             <div class="flex-shrink-0">
-                                <table class="table table-dark table-hover mb-0 border-top" style="table-layout: fixed; width: 100%;">
+                                <table class="table table-dark table-hover mb-0" style="table-layout: fixed; width: 100%;">
                                     <colgroup>
                                         <col style="width: 5%;">
                                         <col style="width: 10%;">
