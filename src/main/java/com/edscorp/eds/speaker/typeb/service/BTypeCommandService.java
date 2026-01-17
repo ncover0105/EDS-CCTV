@@ -162,7 +162,7 @@ public class BTypeCommandService {
 
         String clientIp = httpReq.getRemoteAddr();
 
-        SpkWebAlertLogEntity log = SpkWebAlertLogEntity.builder()
+        SpkWebAlertLogEntity alertLog = SpkWebAlertLogEntity.builder()
                 .deviceId(req.getDeviceId())
                 .commandCode(req.getCommandCode())
                 .alertMode(req.getAlertMode())
@@ -178,14 +178,22 @@ public class BTypeCommandService {
         try {
             // sendToPlayRadio(req.getDeviceId(), httpReq.getRemoteAddr(),
             // req.getCommandCode(), argumentStr);
-            sendToPlayRadio(req.getDeviceId(), clientIp, req.getCommandCode(), argumentStr);
 
-            log.setStatus("SENT");
+            // 실제 전송
+            // sendToPlayRadio(req.getDeviceId(), clientIp, req.getCommandCode(),
+            // argumentStr);
+
+            alertLog.setStatus("SENT");
         } catch (Exception e) {
-            log.setStatus("FAILED");
+            alertLog.setStatus("FAILED");
             throw e;
         } finally {
-            spkWebAlertLogQueryService.save(log);
+            try {
+                log.info("[WEB ALERT LOG] before save json={}", objectMapper.writeValueAsString(alertLog));
+            } catch (Exception ignore) {
+                log.info("[WEB ALERT LOG] before save (toString)={}", alertLog);
+            }
+            spkWebAlertLogQueryService.save(alertLog);
         }
         // sendToPlayRadio(req.getDeviceId(), clientIp, req.getCommandCode(),
         // argumentStr);

@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -43,12 +44,12 @@ public class WeatherImageService {
     @PostConstruct
     public void init() {
         try {
-            log.info("🚀 서버 시작 시 위성/레이더 최초 이미지 다운로드 시작");
+            log.info("서버 시작 시 위성/레이더 최초 이미지 다운로드 시작");
             cachedSatelliteImage = downloadSatelliteImageSafe().block();
             cachedRadarImage = downloadRadarImageSafe().block();
-            log.info("🚀 서버 시작 시 최초 이미지 다운로드 완료");
+            log.info("서버 시작 시 최초 이미지 다운로드 완료");
         } catch (Exception e) {
-            log.error("❌ 서버 시작 시 초기 다운로드 실패", e);
+            log.error("서버 시작 시 초기 다운로드 실패", e);
         }
     }
 
@@ -61,9 +62,9 @@ public class WeatherImageService {
                 .subscribe(
                         result -> {
                             cachedSatelliteImage = result;
-                            log.info("✅ 위성 이미지 캐시 갱신 완료");
+                            log.info("위성 이미지 캐시 갱신 완료");
                         },
-                        error -> log.error("❌ 위성 이미지 다운로드 실패, 이전 캐시 유지", error));
+                        error -> log.error("위성 이미지 다운로드 실패, 이전 캐시 유지", error));
     }
 
     /** 레이더 이미지 (15분마다) */
@@ -74,9 +75,9 @@ public class WeatherImageService {
                 .subscribe(
                         result -> {
                             cachedRadarImage = result;
-                            log.info("✅ 레이더 이미지 캐시 갱신 완료");
+                            log.info("레이더 이미지 캐시 갱신 완료");
                         },
-                        error -> log.error("❌ 레이더 이미지 다운로드 실패, 이전 캐시 유지", error));
+                        error -> log.error("레이더 이미지 다운로드 실패, 이전 캐시 유지", error));
     }
 
     public Map<String, Object> getCachedSatelliteImage() {
@@ -112,7 +113,11 @@ public class WeatherImageService {
                     String imageUrl = String.format(
                             "https://apihub.kma.go.kr/api/typ05/api/GK2A/LE1B/VI004/KO/image?date=%s&authKey=%s",
                             itemDate, APIHUB_KEY);
-                    String savePath = filePath + "/static/imgFiles/sailimg/Satellite" + itemDate + ".png";
+                    // String savePath = filePath + "/static/imgFiles/sailimg/Satellite" + itemDate
+                    // + ".png";
+                    String savePath = Paths
+                            .get(filePath, "static", "imgFiles", "sailimg", "Satellite" + itemDate + ".png")
+                            .toString();
 
                     log.info("[Satellite] 다운로드 URL → {}", imageUrl);
                     log.info("[Satellite] 저장 경로 → {}", savePath);
@@ -120,7 +125,7 @@ public class WeatherImageService {
                     boolean success = downloadImageSafe(imageUrl, savePath);
 
                     if (!success) {
-                        log.error("❌ [Satellite] 이미지 다운로드 실패. 기존 캐시 유지");
+                        log.error("[Satellite] 이미지 다운로드 실패. 기존 캐시 유지");
                         return cachedSatelliteImage;
                     }
 
@@ -135,7 +140,7 @@ public class WeatherImageService {
                     return result;
                 }))
                 .onErrorResume(e -> {
-                    log.error("❌ [Satellite] API 호출 중 오류", e);
+                    log.error("[Satellite] API 호출 중 오류", e);
                     return Mono.just(cachedSatelliteImage);
                 });
     }
@@ -164,7 +169,10 @@ public class WeatherImageService {
                     String imageUrl = String.format(
                             "https://apihub.kma.go.kr/api/typ04/url/rdr_cmp_file.php?tm=%s&data=img&cmp=cmc&authKey=%s",
                             itemDate, APIHUB_KEY);
-                    String savePath = filePath + "/static/imgFiles/radar/radar" + itemDate + ".png";
+                    // String savePath = filePath + "/static/imgFiles/radar/radar" + itemDate +
+                    // ".png";
+                    String savePath = Paths.get(filePath, "static", "imgFiles", "radar", "radar" + itemDate + ".png")
+                            .toString();
 
                     log.info("[Radar] 다운로드 URL → {}", imageUrl);
                     log.info("[Radar] 저장 경로 → {}", savePath);
@@ -185,7 +193,7 @@ public class WeatherImageService {
                     return result;
                 }))
                 .onErrorResume(e -> {
-                    log.error("❌ [Radar] API 호출 중 오류", e);
+                    log.error("[Radar] API 호출 중 오류", e);
                     return Mono.just(cachedRadarImage);
                 });
     }
@@ -196,13 +204,21 @@ public class WeatherImageService {
         File folder = destFile.getParentFile();
         try {
             if (folder.exists()) {
-                for (File file : folder.listFiles()) {
+                File[] files = folder.listFiles();
+                if (files == null) {
+                    log.error("폴더 접근 불가 또는 디렉터리 아님: {}", folder.getAbsolutePath());
+                    return false;
+                }
+                for (File file : files) {
                     if (!file.getName().equals(destFile.getName())) {
                         file.delete();
                     }
                 }
             } else {
-                folder.mkdirs();
+                if (!folder.mkdirs()) {
+                    log.error("폴더 생성 실패: {}", folder.getAbsolutePath());
+                    return false;
+                }
             }
 
             try (InputStream in = new URL(imageUrl).openStream();

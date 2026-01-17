@@ -31,7 +31,7 @@
     <header class="page-toolbar glass-toolbar">
       <div class="toolbar-left">
         <div class="page-title-wrap">
-          <div class="page-eyebrow">EDS</div>
+          <!-- <div class="page-eyebrow">EDS</div> -->
           <h4 class="page-title mb-0">장비 관리</h4>
           <div class="page-subtitle">스피커 관리 및 방송 제어</div>
         </div>
@@ -63,7 +63,7 @@
       <div class="toolbar-right">
         <div class="toolbar-hints">
           <span class="hint-pill d-none d-md-inline-flex">
-            <i class="bi bi-mouse me-1"></i>행을 선택하면 우측 패널이 갱신됩니다
+            <i class="bi bi-mouse me-1"></i>스피커 선택 후 우측 패널의 상태 버튼을 통해 상태 모니터링이 가능합니다.
           </span>
           <!-- <span class="hint-pill d-none d-xl-inline-flex">
             <i class="bi bi-shield-check me-1"></i>내부망 운영 최적화
@@ -72,7 +72,7 @@
       </div>
     </header>
 
-    <main class="page-content equipment-viewport">
+    <main class="page-content equipment-viewport animate-fade-in">
 
       <div class="tab-content" id="equipmentTabContent">
 
@@ -90,7 +90,7 @@
                 <div class="card-header surface-header flex-shrink-0">
                   <div class="d-flex flex-column align-items-start gap-3">
                     <div class="d-flex align-items-center gap-2">
-                      <div class="section-title">
+                      <div class="section-title mb-0">
                         <h6 class="fw-semibold">스피커 목록</h6>
                         <!-- <div class="text-white-50 small mt-1">장비를 검색/선택하고 상태와 제어를 확인하세요</div> -->
                       </div>
@@ -110,13 +110,19 @@
                       </div>
 
                       <div class="btn-group gap-3">
-                        <button class="btn-action-pill" type="button" onclick="speakerUpdate()" title="수정">
+                        <!-- <button class="btn-action-pill" type="button" onclick="speakerUpdate()" title="수정">
                           <i class="bi bi-pencil-square me-1"></i>수정
                         </button>
                         <button class="btn-action-pill danger" type="button" onclick="speakerDeleted()" title="삭제">
                           <i class="bi bi-trash me-1"></i>삭제
+                        </button> -->
+                        <button class="btn-apple-light" type="button" onclick="speakerUpdate()" title="수정">
+                          <i class="bi bi-pencil-square me-1"></i>수정
                         </button>
-                        <button class="btn-action-pill" type="button" onclick="listSpeakers?.()">
+                        <button class="btn-apple-danger" type="button" onclick="speakerDeleted()" title="삭제">
+                          <i class="bi bi-trash me-1"></i>삭제
+                        </button>
+                        <button class="btn-action-pill d-none" type="button" onclick="listSpeakers?.()">
                           <i class="bi bi-arrow-clockwise me-1"></i>새로고침
                         </button>
                       </div>
@@ -397,7 +403,7 @@
                       </div>
                   
                       <!-- ✅ 버튼 영역은 flex-shrink-0로 밀리지 않게 -->
-                      <div class="d-flex flex-wrap gap-2 flex-shrink-0">
+                      <div class="d-flex flex-wrap gap-2 flex-shrink-0 d-none">
                         <button class="btn-action-pill" onclick="showAddBroadcastModal()">
                           <i class="bi bi-plus"></i><span class="ms-1 d-none d-sm-inline">추가</span>
                         </button>
@@ -444,7 +450,7 @@
 
                       <div class="composer-block">
                         <div class="composer-title">
-                          <span>수동 발령 설정</span>
+                          <span>방송 설정</span>
                           <span class="text-white-50 small">모드/방송종류 선택 후 메시지를 입력하세요</span>
                         </div>
 
@@ -526,16 +532,16 @@
                         </div>
 
                         <div class="action-grid">
-                          <button class="btn-apple info" onclick="startBroadcast()">
+                          <button class="btn-apple-light" onclick="startBroadcast()">
                             <i class="bi bi-play-fill me-2"></i>방송 시작
                           </button>
-                          <button class="btn-apple danger" onclick="stopBroadcast()">
+                          <button class="btn-apple-danger" onclick="stopBroadcast()">
                             <i class="bi bi-stop-fill me-2"></i>방송 중지
                           </button>
-                          <button class="btn-apple warning" onclick="testBroadcast()">
+                          <button class="btn-apple-light" onclick="testBroadcast()">
                             <i class="bi bi-volume-up-fill me-2"></i>테스트 방송
                           </button>
-                          <button class="btn-apple secondary" onclick="resetSelection()">
+                          <button class="btn-apple-secondary" onclick="resetSelection()">
                             <i class="bi bi-arrow-clockwise me-2"></i>선택 초기화
                           </button>
                         </div>
@@ -550,7 +556,7 @@
 
                           <div class="d-flex align-items-center gap-2">
                             <span id="broadcastLogBadge" class="badge bg-danger d-none">0</span>
-                            <button type="button" class="btn btn-sm btn-outline-light" id="toggleBroadcastLogBtn">펼치기</button>
+                            <button type="button" class="quick-btn" id="toggleBroadcastLogBtn">펼치기</button>
                           </div>
                         </div>
 
