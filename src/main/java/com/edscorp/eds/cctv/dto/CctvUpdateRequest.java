@@ -6,7 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class CctvUpdateRequest {
-    private String cctvCode;
+    // private String cctvCode;
     private String name;
     private Integer mountpointId;
     private Integer videoPort;

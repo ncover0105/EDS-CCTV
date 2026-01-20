@@ -226,11 +226,11 @@ public class CctvService {
         e.setLatitude(req.getLatitude());
         e.setLongitude(req.getLongitude());
 
-        CctvEntity saved = cctvRepository.save(e);
+        // CctvEntity saved = cctvRepository.save(e);
 
         refreshCache();
 
-        return saved;
+        return e;
     }
 
     @Transactional

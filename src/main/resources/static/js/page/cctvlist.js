@@ -1,15 +1,22 @@
-/**
- * cctvlist.js (핵심 수정본)
- * - 추가: POST /api/cctv/add
- * - 수정: PUT /api/cctv/update/{cctvCode}
- * - 삭제: DELETE /api/cctv/delete/{cctvCode}
- */
-
 document.addEventListener("DOMContentLoaded", () => {
   bindRowSelectEvents();
   bindTopButtons();
   // 화면 진입 시 최신 목록 동기화
   loadCctvList();
+
+  const editModalEl = document.getElementById("editCctvModal");
+  if (!editModalEl) return;
+
+  editModalEl.addEventListener("hidden.bs.modal", () => {
+    setVal("editCctvCode", "");
+    setVal("editCctvName", "");
+    setVal("editCctvLoginId", "");
+    setVal("editCctvLoginPassword", "");
+    setVal("editCctvUrl", "");
+    setVal("editCctvLat", "");
+    setVal("editCctvLng", "");
+    clearSelection(); // 선택도 같이 초기화하고 싶으면
+  });
 });
 
 function bindTopButtons() {
@@ -78,6 +85,9 @@ function openAddModal() {
   setVal("cctvLoginId", "");
   setVal("cctvLoginPassword", "");
   setVal("cctvUrl", "");
+  setVal("cctvMountpointId", "");
+  setVal("cctvVideoPort", "");
+  setVal("cctvWsPort", "");
   setVal("cctvLat", "");
   setVal("cctvLng", "");
 
@@ -93,11 +103,13 @@ window.submitAddCctv = function submitAddCctv() {
   const lng = getVal("cctvLng").trim();
   const loginId = getVal("cctvLoginId").trim();
   const loginPw = getVal("cctvLoginPassword").trim();
+  const mountpointId = getVal("cctvMountpointId").trim();
+  const videoPort = getVal("cctvVideoPort").trim();
+  const wsPort = getVal("cctvWsPort").trim();
 
   if (!code) return alert("CCTV 코드는 필수입니다.");
   if (!name) return alert("CCTV 이름은 필수입니다.");
 
-  // ✅ 백엔드 DTO/엔티티 필드명에 맞춰 name으로 전송
   const payload = {
     cctvCode: code,
     name: name,
@@ -106,8 +118,10 @@ window.submitAddCctv = function submitAddCctv() {
     longitude: lng || null,
     id: loginId || null,
     password: loginPw || null,
-    // locationCode가 PK이면 서버에서 기본 세팅하거나, 여기서 같이 보낼 수도 있음
-    // locationCode: code,
+  
+    mountpointId: mountpointId ? Number(mountpointId) : null,
+    videoPort: videoPort ? Number(videoPort) : null,
+    wsPort: wsPort || null,
   };
 
   fetch("/api/cctv/add", {
@@ -150,6 +164,9 @@ function openEditModal() {
   setVal("editCctvLoginPassword", ""); // 변경시에만 입력
 
   setVal("editCctvUrl", row.dataset.rtspUrl || "");
+  setVal("editCctvMountpointId", row.dataset.mountpointId || "");
+  setVal("editCctvVideoPort", row.dataset.videoPort || "");
+  setVal("editCctvWsPort", row.dataset.wsPort || "");
   setVal("editCctvLat", row.dataset.latitude || "");
   setVal("editCctvLng", row.dataset.longitude || "");
 
@@ -278,6 +295,9 @@ function renderCctvTable(list) {
     tr.dataset.longitude = (lng === "-" ? "" : lng);
     tr.dataset.loginId = cctv.id ?? "";
     tr.dataset.loginPw = cctv.password ?? "";
+    tr.dataset.mountpointId = (cctv.mountpointId ?? "");
+    tr.dataset.videoPort = (cctv.videoPort ?? "");
+    tr.dataset.wsPort = (cctv.wsPort ?? "");
 
     const statusHtml =
       statusCam === "1"
