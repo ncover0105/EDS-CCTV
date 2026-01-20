@@ -144,8 +144,14 @@
     
         // 2) 행 클릭: 체크 ON + 단일 선택 강제
         tr.addEventListener("click", () => {
+        const willCheck = !cb.checked;
+        if (willCheck) {
             cb.checked = true;
             selectOnlyThisCheckbox(cb);
+        } else {
+            cb.checked = false;
+            applyRowSelectionStyles();
+        }
         });
     
         tbody.appendChild(tr);

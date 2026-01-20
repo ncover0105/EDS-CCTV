@@ -112,10 +112,10 @@ public class BTypeCommandService {
     // 발령 (JS sendAlert 포팅)
     // =========================
     public void sendAlert(BTypeAlertRequest req, HttpServletRequest httpReq) throws Exception {
+        final String commandCode = "41";
 
         log.info("[BTYPE ALERT] request received");
         log.info("[BTYPE ALERT] deviceId        = {}", req.getDeviceId());
-        log.info("[BTYPE ALERT] commandCode     = {}", req.getCommandCode());
         log.info("[BTYPE ALERT] alertMode       = {}", req.getAlertMode());
         log.info("[BTYPE ALERT] disasterCode    = {}", req.getDisasterCode());
         log.info("[BTYPE ALERT] alertKind       = {}", req.getAlertKind());
@@ -197,7 +197,7 @@ public class BTypeCommandService {
         SpkWebAlertLogEntity alertLog = SpkWebAlertLogEntity.builder()
                 .deviceId(req.getDeviceId())
                 .userId(userId)
-                .commandCode(req.getCommandCode())
+                .commandCode(commandCode)
                 .alertMode(req.getAlertMode())
                 .disasterCode(req.getDisasterCode())
                 .alertKind(alertKind)

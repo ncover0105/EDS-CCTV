@@ -10,9 +10,6 @@ public class BTypeAlertRequest {
     /** 대상 디바이스 ID */
     private String deviceId;
 
-    /** 명령 코드 (예 : "41") */
-    private String commandCode;
-
     /** 발령 파라미터 */
     private Integer alertMode; // 경보 모드
     private String disasterCode; // 재난 코드

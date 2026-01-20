@@ -40,26 +40,26 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public UserEntity get(@PathVariable String id) {
+    public UserEntity get(@PathVariable("id") String id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
     }
 
     // ✅ 비번/전화만 수정 (로그인 사용자 정책은 SecurityConfig에서 제어)
     @PutMapping("/{id}")
-    public UserEntity updateBasic(@PathVariable String id, @RequestBody UserUpdateRequest req) {
+    public UserEntity updateBasic(@PathVariable("id") String id, @RequestBody UserUpdateRequest req) {
         return userService.updateBasic(id, req);
     }
 
     // ✅ 권한 변경은 관리자만
     @PutMapping("/{id}/role")
     @PreAuthorize("hasRole('MANAGER')")
-    public UserEntity updateRole(@PathVariable String id, @RequestBody UserRoleUpdateRequest req) {
+    public UserEntity updateRole(@PathVariable("id") String id, @RequestBody UserRoleUpdateRequest req) {
         return userService.updateRole(id, req);
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable String id) {
+    public void delete(@PathVariable("id") String id) {
         // 택1
         userService.deleteHard(id);
         // userService.disableSoft(id);

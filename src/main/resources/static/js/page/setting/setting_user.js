@@ -42,28 +42,47 @@
   /* ------------------------------
    * 1) Row click -> checkbox toggle
    * ------------------------------ */
-  function bindRowToggle(tbody) {
-    tbody.addEventListener("click", (e) => {
-      const tr = e.target.closest("tr");
-      if (!tr) return;
+function bindRowToggle(tbody) {
+  const selector = 'input[type="checkbox"][name="selectedUserIds"]';
 
-      const cb = tr.querySelector('input[type="checkbox"][name="selectedUserIds"]');
-      if (!cb) return;
-
-      // checkbox 자체 클릭이면 change에서 처리
-      if (e.target === cb) return;
-
-      cb.checked = !cb.checked;
-      tr.classList.toggle("table-active", cb.checked);
-    });
-
-    tbody.addEventListener("change", (e) => {
-      if (!e.target.matches('input[type="checkbox"][name="selectedUserIds"]')) return;
-      const tr = e.target.closest("tr");
-      if (!tr) return;
-      tr.classList.toggle("table-active", e.target.checked);
+  function clearOthers(keepCb) {
+    tbody.querySelectorAll(selector).forEach(cb => {
+      if (cb !== keepCb) {
+        cb.checked = false;
+        const tr = cb.closest("tr");
+        if (tr) tr.classList.remove("table-active");
+      }
     });
   }
+
+  tbody.addEventListener("click", (e) => {
+    const tr = e.target.closest("tr");
+    if (!tr) return;
+
+    const cb = tr.querySelector(selector);
+    if (!cb) return;
+
+    // checkbox 자체 클릭이면 change에서 처리
+    if (e.target === cb) return;
+
+    const willCheck = !cb.checked;
+
+    if (willCheck) clearOthers(cb);   // ✅ 다른 선택 해제
+    cb.checked = willCheck;
+    tr.classList.toggle("table-active", cb.checked);
+  });
+
+  tbody.addEventListener("change", (e) => {
+    if (!e.target.matches(selector)) return;
+
+    const cb = e.target;
+    const tr = cb.closest("tr");
+    if (!tr) return;
+
+    if (cb.checked) clearOthers(cb);  // ✅ 다른 선택 해제
+    tr.classList.toggle("table-active", cb.checked);
+  });
+}
 
   /* ------------------------------
    * 2) Buttons

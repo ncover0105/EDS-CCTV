@@ -22,12 +22,9 @@ public class SpeakerSettingController {
     private final SpeakerSettingService speakerSettingService;
 
     @GetMapping("/{speakerKey}/setting")
-    public ResponseEntity<SpeakerSettingDTO> getOne(
-            @PathVariable Integer speakerKey) {
-
+    public ResponseEntity<SpeakerSettingDTO> getOne(@PathVariable("speakerKey") Integer speakerKey) {
         SpeakerSettingDTO dto = speakerSettingService.findBySpeakerKey(speakerKey);
-        if (dto == null)
-            return ResponseEntity.notFound().build();
+        if (dto == null) return ResponseEntity.notFound().build();
         return ResponseEntity.ok(dto);
     }
 

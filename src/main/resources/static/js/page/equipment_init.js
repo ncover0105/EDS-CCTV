@@ -43,59 +43,68 @@ btn.addEventListener('click', function (e) {
     상단 네비 탭
 ------------------------------ */
 function switchTab(button, targetId, indicatorId) {
-// 탭 버튼 active 처리
-document.querySelectorAll('.modern-nav-tab')
-    .forEach(tab => tab.classList.remove('active'));
-button.classList.add('active');
+    // 탭 버튼 active 처리
+    document.querySelectorAll('.modern-nav-tab')
+        .forEach(tab => tab.classList.remove('active'));
+    button.classList.add('active');
 
-// 컨텐츠 show/active 처리
-document.querySelectorAll('.tab-pane')
-    .forEach(content => content.classList.remove('show', 'active'));
+    // 컨텐츠 show/active 처리
+    document.querySelectorAll('.tab-pane')
+        .forEach(content => content.classList.remove('show', 'active'));
 
-const content = document.getElementById(`${targetId}-content`);
-if (content) content.classList.add('show', 'active');
+    const content = document.getElementById(`${targetId}-content`);
+    if (content) content.classList.add('show', 'active');
 
-// 인디케이터 이동
-const indicator = document.getElementById(`indicator${indicatorId}`);
-if (indicator) {
-    const rect = button.getBoundingClientRect();
-    const parentRect = button.parentElement.getBoundingClientRect();
-    indicator.style.width = `${rect.width}px`;
-    indicator.style.left = `${rect.left - parentRect.left}px`;
-}
-
-// URL view 파라미터 유지
-try {
-    const url = new URL(window.location);
-    url.searchParams.set("view", targetId);
-    window.history.replaceState({}, '', url);
-} catch (e) {}
-
-// ✅ 탭별 초기화 호출
-if (targetId === 'speaker') {
-    // 스피커 탭은 목록/상세 UI가 있으므로 탭 진입 시 보장 초기화
-    if (typeof window.initSpeakerPage === 'function') {
-    window.initSpeakerPage();
-    } else if (typeof window.renderSpeakerTable === 'function') {
-    // fallback
-    window.renderSpeakerTable();
-    if (typeof window.resetDetail === 'function') window.resetDetail();
+    // 인디케이터 이동
+    const indicator = document.getElementById(`indicator${indicatorId}`);
+    if (indicator) {
+        const rect = button.getBoundingClientRect();
+        const parentRect = button.parentElement.getBoundingClientRect();
+        indicator.style.width = `${rect.width}px`;
+        indicator.style.left = `${rect.left - parentRect.left}px`;
     }
-}
 
-if (targetId === 'broadcast') {
-    // 방송 탭은 최초 1회만 초기화(원하면 매 진입마다로 변경 가능)
-    if (!window.broadcastTabCache.isInitialized) {
-    if (typeof window.initBroadcastPage === 'function') {
-        window.initBroadcastPage();
-    } else {
+    // URL view 파라미터 유지
+    try {
+        const url = new URL(window.location);
+        url.searchParams.set("view", targetId);
+        window.history.replaceState({}, '', url);
+    } catch (e) {}
+
+    // ✅ 탭별 초기화 호출
+    if (targetId === 'speaker') {
+        // 스피커 탭은 목록/상세 UI가 있으므로 탭 진입 시 보장 초기화
+        if (typeof window.initSpeakerPage === 'function') {
+        window.initSpeakerPage();
+        } else if (typeof window.renderSpeakerTable === 'function') {
         // fallback
-        if (typeof window.renderSpeakerCards === 'function') window.renderSpeakerCards();
-        if (typeof window.renderBroadcastTypes === 'function') window.renderBroadcastTypes();
+        window.renderSpeakerTable();
+        if (typeof window.resetDetail === 'function') window.resetDetail();
+        }
     }
-    window.broadcastTabCache.isInitialized = true;
+
+    if (targetId === 'broadcast') {
+        // 방송 탭은 최초 1회만 초기화(원하면 매 진입마다로 변경 가능)
+        if (!window.broadcastTabCache.isInitialized) {
+        if (typeof window.initBroadcastPage === 'function') {
+            window.initBroadcastPage();
+        } else {
+            // fallback
+            if (typeof window.renderSpeakerCards === 'function') window.renderSpeakerCards();
+            if (typeof window.renderBroadcastTypes === 'function') window.renderBroadcastTypes();
+        }
+        window.broadcastTabCache.isInitialized = true;
+        }
     }
-}
+
+    const hintText = document.getElementById("equipmentHintText");
+    if (hintText) {
+        if (targetId === "speaker") {
+            hintText.textContent = "스피커 선택 후 우측 패널의 상태 버튼을 통해 상태 모니터링이 가능합니다.";
+        } else if (targetId === "broadcast") {
+            hintText.textContent = "대상 스피커 선택 → 방송 유형 선택 → 실행 버튼으로 발령을 전송할 수 있습니다.";
+        }
+    }
 }
 
 /* ------------------------------

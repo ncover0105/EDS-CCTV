@@ -100,9 +100,9 @@ const BroadcastApi = {
 
   async send(payload) {
     const res = await fetch("/api/btype/command/alert", {
-      method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
       });
 
       if (!res.ok) {
@@ -237,6 +237,20 @@ const BroadcastModal = {
           tts.disabled = !shouldShowTts;
       }
   },
+    buildServerPayload(deviceId) {
+        const ui = this.getPayloadForPreview();
+
+        // ✅ 서버가 요구하는 키로 변환
+        return {
+            deviceId: String(deviceId),
+            alertMode: String(ui.mode ?? ""),
+            alertKind: String(ui.broadcastType ?? ""),
+            alertRange: String(ui.scope ?? ""),
+            alertPriority: String(ui.priority ?? ""),
+            disasterCode: String(ui.disasterCode ?? ""),
+            ttsMessage: String(ui.tts ?? "")
+        };
+    },
 
   init() {
       const modalEl = document.getElementById("speaker_broadcast_modal");
@@ -354,32 +368,39 @@ const BroadcastModal = {
           if (e.target?.id === "bc_tts") this.refreshPreview();
       });
 
-      // 발령(여기서는 선택 검증만 정리. 실제 전송은 기존 코드 유지/연결하면 됨)
-      modalEl.addEventListener("click", async (e) => {
-          const btn = e.target.closest("#bc_send");
-          if (!btn) return;
+        modalEl.addEventListener("click", async (e) => {
+            const btn = e.target.closest("#bc_send");
+            if (!btn) return;
 
-          const payloadUI = this.getPayloadForPreview();
+            const payloadUI = this.getPayloadForPreview();
+            const selectedIds = [...new Set(payloadUI.speakerIds)]; // ✅ 중복 제거
 
-          if (payloadUI.speakerIds.length === 0) {
-              notify("스피커를 먼저 선택해주세요.", "warning");
-              return;
-          }
-          if (!payloadUI.disasterCode) {
-              notify("재난 코드를 선택해주세요.", "warning");
-              return;
-          }
+            if (selectedIds.length === 0) {
+                notify("스피커를 먼저 선택해주세요.", "warning");
+                return;
+            }
+            if (!payloadUI.disasterCode) {
+                notify("재난 코드를 선택해주세요.", "warning");
+                return;
+            }
 
-          // 방송 종류(HTML 값): 1 = TTS 일 때만 메시지 필수
-          if (payloadUI.broadcastType === "1" && !payloadUI.tts.trim()) {
-              notify("TTS 메시지를 입력해주세요.", "warning");
-              return;
-          }
+            btn.disabled = true;
+            try {
+                for (const id of selectedIds) {
+                const serverPayload = this.buildServerPayload(id);
 
-          console.log("[BC SEND PREVIEW]", payloadUI);
-          BroadcastApi.send(payloadUI);
-          notify(`선택된 스피커 ${payloadUI.speakerIds.length}대 기준으로 발령 payload 준비 완료`, "info");
-      });
+                console.log("[BC SEND]", serverPayload);
+                await BroadcastApi.send(serverPayload); // ✅ 개별 전송 + await
+                }
+
+                notify(`발령 전송 완료 (${selectedIds.length}대)`, "success");
+            } catch (err) {
+                console.error(err);
+                notify(`발령 전송 실패`, "danger");
+            } finally {
+                btn.disabled = false;
+            }
+        });
   }
 };
 
