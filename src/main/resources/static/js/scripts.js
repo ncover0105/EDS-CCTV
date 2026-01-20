@@ -103,8 +103,44 @@ document.addEventListener("DOMContentLoaded", function () {
     // generateRandomSpeakers();
     
     // loadSpeakerList();
-    renderSpeakerPanel();
+    // renderSpeakerPanel();
+
+    const testBtn = document.getElementById("testEmergencyBtn");
+    if (!testBtn) return;
+
+    testBtn.addEventListener("click", () => {
+        // 테스트용 더미 데이터
+        const camName = "CAM-01";
+        const msg = "출입 금지 구역에 사람이 감지되었습니다.";
+        const boundaryNum = 1;
+
+        showEmergencyToastr(camName, msg, boundaryNum);
+    });
 });
+
+function showEmergencyToastr(camName, msg, boundaryNum) {
+    const box = document.querySelector(".notification");
+
+    document.getElementById("notification-title").innerText =
+        `${camName}\n위험구역 출입 발생`;
+
+    document.getElementById("notification-message").innerText = msg;
+
+    box.classList.add("show");
+
+    box.onclick = () => {
+        openSpeakerBroadcastModal(); // ✅ 수동발령 모달 오픈
+        box.classList.remove("show");
+    };
+}
+
+function openSpeakerBroadcastModal() {
+    const modalEl = document.getElementById("speaker_broadcast_modal");
+    if (!modalEl) return;
+
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+}
 
 window.onload = function(){
 

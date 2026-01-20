@@ -63,20 +63,20 @@ public class BTypeSpkService {
                 .build();
     }
 
-    private String mapNormalAbnormal(Integer value) {
-        if (value == null)
+    private String mapNormalAbnormal(Integer v) {
+        if (v == null)
             return "-";
-        return value == 0 ? "정상" : "이상";
+        return v == 0 ? "정상" : "이상";
     }
 
-    private String mapAntennaStatus(Integer value) {
-        if (value == null)
+    private String mapAntennaStatus(Integer v) {
+        if (v == null)
             return "-";
-        if (value == 6)
+        if (v == 6)
             return "통화권 이탈";
-        if (value >= 0 && value <= 5)
-            return "안테나 " + value;
-        return "알수없음(" + value + ")";
+        if (v >= 0 && v <= 5)
+            return "안테나 " + v;
+        return "상태(" + v + ")";
     }
 
     // alertKey 기준 이력 조회

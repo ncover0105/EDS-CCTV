@@ -57,6 +57,7 @@ window.CCTVJanus = (function () {
             old.send({ message: { request: "stop" } });
             old.detach();
             delete pluginHandles[cam.mountpointId];
+            window.CCTVLayout?.syncLayoutToConnectedCameras?.();
         }
     
         return new Promise((resolve) => {
@@ -125,11 +126,12 @@ window.CCTVJanus = (function () {
                         const stream = new MediaStream([track]);
                         CCTVLayout.attachStreamToVideo(cam, stream);
                         handle._hasVideo = true;
-    
+                        window.CCTVLayout?.syncLayoutToConnectedCameras?.();
                     } else {
                         console.log(`⚠️ 스트림 OFF (${cam.name})`);
                         handle._hasVideo = false;
                         CCTVLayout.showPlaceholder(cam);
+                        window.CCTVLayout?.syncLayoutToConnectedCameras?.();
                     }
                 },
     
@@ -138,6 +140,7 @@ window.CCTVJanus = (function () {
                     CCTVLayout.showPlaceholder(cam);
     
                     delete pluginHandles[cam.mountpointId];
+                    window.CCTVLayout?.syncLayoutToConnectedCameras?.();
                 }
             });
         });

@@ -21,13 +21,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@ToString
 public class BTypeCommandService {
 
     private final RestTemplate restTemplate;
@@ -40,6 +45,21 @@ public class BTypeCommandService {
     private static final String PLAYRADIO_URL = "http://localhost:3000/playradio";
 
     private final SpkWebAlertLogQueryService spkWebAlertLogQueryService;
+
+    private String getCurrentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated())
+            return null;
+
+        Object principal = auth.getPrincipal();
+        if (principal instanceof UserDetails ud)
+            return ud.getUsername();
+        if (principal instanceof String s) {
+            // 보통 "anonymousUser"가 올 수 있음
+            return "anonymousUser".equalsIgnoreCase(s) ? null : s;
+        }
+        return null;
+    }
 
     /**
      * 데몬 서버로 실제 명령 전송
@@ -93,13 +113,21 @@ public class BTypeCommandService {
     // =========================
     public void sendAlert(BTypeAlertRequest req, HttpServletRequest httpReq) throws Exception {
 
-        // 필수 값 체크
-        if (req.getAlertMode() == null ||
-                req.getDisasterCode() == null ||
-                req.getAlertKind() == null ||
-                req.getAlertRange() == null ||
-                req.getAlertPriority() == null ||
-                req.getTtsMessage() == null) {
+        log.info("[BTYPE ALERT] request received");
+        log.info("[BTYPE ALERT] deviceId        = {}", req.getDeviceId());
+        log.info("[BTYPE ALERT] commandCode     = {}", req.getCommandCode());
+        log.info("[BTYPE ALERT] alertMode       = {}", req.getAlertMode());
+        log.info("[BTYPE ALERT] disasterCode    = {}", req.getDisasterCode());
+        log.info("[BTYPE ALERT] alertKind       = {}", req.getAlertKind());
+        log.info("[BTYPE ALERT] alertRange      = {}", req.getAlertRange());
+        log.info("[BTYPE ALERT] alertPriority   = {}", req.getAlertPriority());
+        log.info("[BTYPE ALERT] ttsMessage      = {}", req.getTtsMessage());
+
+        if (req.getAlertMode() == null
+                || req.getDisasterCode() == null
+                || req.getAlertKind() == null
+                || req.getAlertRange() == null
+                || req.getAlertPriority() == null) {
             throw new IllegalArgumentException("필수 발령 필드가 누락되었습니다.");
         }
 
@@ -161,9 +189,14 @@ public class BTypeCommandService {
         String argumentStr = objectMapper.writeValueAsString(argumentJson);
 
         String clientIp = httpReq.getRemoteAddr();
+        String userId = getCurrentUserId();
+
+        if (alertTTSmessage == null)
+            alertTTSmessage = "";
 
         SpkWebAlertLogEntity alertLog = SpkWebAlertLogEntity.builder()
                 .deviceId(req.getDeviceId())
+                .userId(userId)
                 .commandCode(req.getCommandCode())
                 .alertMode(req.getAlertMode())
                 .disasterCode(req.getDisasterCode())
@@ -173,6 +206,7 @@ public class BTypeCommandService {
                 .ttsMessage(alertTTSmessage)
                 .alertStoCd(alertStoCd)
                 .alertSirenCd(alertSirenCd)
+                .clientIp(clientIp)
                 .build();
 
         try {

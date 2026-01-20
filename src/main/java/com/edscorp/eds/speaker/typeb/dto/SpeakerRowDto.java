@@ -4,15 +4,16 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record SpeakerRowDto(
-        Integer speakerKey,
-        String speakerId,
-        String speakerName,
-        Integer connectStatus,
-        LocalDateTime receiveTime,
-        String cdmaNumber,
-        String locationName,
-        BigDecimal speakerLatitude,
-        BigDecimal speakerLongitude,
-        String saveDivi) {
+                Integer speakerKey,
+                String speakerId,
+                String speakerName,
+                Integer connectStatus,
+                LocalDateTime receiveTime,
+                String cdmaNumber,
+                String locationName,
+                BigDecimal speakerLatitude,
+                BigDecimal speakerLongitude,
+                String description,
+                String saveDivi) {
 
 }

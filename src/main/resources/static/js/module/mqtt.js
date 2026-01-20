@@ -4,7 +4,7 @@ window.SSE_MQTT = (function () {
     let retryCount = 0;
 
     function connect() {
-        console.log("[SSE] MQTT 이벤트 스트림 연결 시도...");
+        // console.log("[SSE] MQTT 이벤트 스트림 연결 시도...");
 
         evt = new EventSource("/api/events");
 
@@ -16,26 +16,26 @@ window.SSE_MQTT = (function () {
         evt.onmessage = (e) => {
             try {
                 const data = JSON.parse(e.data);
-                console.log("[SSE] MQTT 메시지 수신:", data.topic, data.message);
+                // console.log("[SSE] MQTT 메시지 수신:", data.topic, data.message);
                 routeMQTT(data.topic, data.message);
             } catch (err) {
-                console.error("[SSE] JSON 파싱 오류:", err, e.data);
+                // console.error("[SSE] JSON 파싱 오류:", err, e.data);
             }
         };
 
         evt.onerror = () => {
-            console.error("[SSE] MQTT 연결 오류 -> 연결 종료");
+            // console.error("[SSE] MQTT 연결 오류 -> 연결 종료");
             evt.close();
 
             retryCount++;
-            console.log(`⏳ [SSE] 재연결 시도 (${retryCount})...`);
+            // console.log(`⏳ [SSE] 재연결 시도 (${retryCount})...`);
 
             setTimeout(connect, 3000);
         };
     }
 
     function routeMQTT(topic, message) {
-        console.log("➡️ [MQTT] Topic:", topic, "Message:", message);
+        // console.log("➡️ [MQTT] Topic:", topic, "Message:", message);
 
         switch (topic) {
             case "send/emergency":
@@ -44,11 +44,11 @@ window.SSE_MQTT = (function () {
 
             case "cctv/req":
                 // App.utils.showToast("CCTV 요청 감지", "알림");
-                App.utils.showGlobalAlert("CCTV 요청 감지", "Info");
+                // App.utils.showGlobalAlert("CCTV 요청 감지", "Info");
                 break;
 
             case "cctv/resetIP":
-                App.utils.showToast("CCTV IP 초기화됨", "알림");
+                // App.utils.showToast("CCTV IP 초기화됨", "알림");
                 break;
 
             default:
@@ -56,6 +56,7 @@ window.SSE_MQTT = (function () {
         }
     }
 
+    // 위험구역 출입 알림
     function handleEmergency(msg) {
         const data = JSON.parse(msg);
         const camName = getCameraNameByCode(data.cctvCode);

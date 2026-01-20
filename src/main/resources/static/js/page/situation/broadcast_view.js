@@ -2,9 +2,168 @@
 (function () {
     'use strict';
 
+    // ✅ 당신 컨트롤러 기준 (Page / Slice 형태든 content 배열만 있으면 됨)
+    const API_LIST = '/api/spk/web/alert-logs';
+
     let broadcastData = [];
     let broadcastFiltered = [];
 
+    /* ---------------------------
+    * 공통 유틸
+    * --------------------------- */
+    function pad2(n) {
+    return String(n).padStart(2, '0');
+    }
+
+    // datetime-local 값 "YYYY-MM-DDTHH:mm" → "YYYY-MM-DD"
+    function toYmdFromDatetimeLocal(v) {
+    if (!v) return '';
+    return String(v).split('T')[0];
+    }
+
+    // Date → "YYYY-MM-DDTHH:mm" (datetime-local용)
+    function toDatetimeLocalValue(d) {
+    if (!(d instanceof Date)) return '';
+    const y = d.getFullYear();
+    const m = pad2(d.getMonth() + 1);
+    const day = pad2(d.getDate());
+    const hh = pad2(d.getHours());
+    const mm = pad2(d.getMinutes());
+    return `${y}-${m}-${day}T${hh}:${mm}`;
+    }
+
+    // 우선순위(문자열) → 숫자(서버 alertPriority)
+    // 프로젝트에서 priority 숫자 정책이 다르면 여기만 바꾸면 됩니다.
+    function mapPriorityToNumber(v) {
+    if (v === null || v === undefined) return null;
+    const s = String(v).trim().toUpperCase();
+    if (!s) return null;
+
+    // 이미 숫자로 오면 그대로 사용
+    const asNum = parseInt(s, 10);
+    if (!Number.isNaN(asNum) && String(asNum) === s) return asNum;
+
+    // 문자열 매핑(예시)
+    switch (s) {
+        case 'NONE': return 1;
+        case 'CAUTION': return 2;
+        case 'WARNING': return 3;
+        case 'DANGER': return 4;
+        default: return null;
+    }
+    }
+
+    // 방송모드(REAL/TEST) → 숫자(서버 alertMode)
+    // 프로젝트에서 alertMode 정책이 다르면 여기만 바꾸면 됩니다.
+    function mapModeToNumber(v) {
+    if (v === null || v === undefined) return null;
+    const s = String(v).trim().toUpperCase();
+    if (!s) return null;
+
+    // 이미 숫자로 오면 그대로 사용
+    const asNum = parseInt(s, 10);
+    if (!Number.isNaN(asNum) && String(asNum) === s) return asNum;
+
+    if (s === 'REAL') return 1;
+    if (s === 'TEST') return 0;
+    return null;
+    }
+
+    function kindToText(kind) {
+    const n = parseInt(kind, 10);
+    if (n === 1) return 'TTS';
+    if (n === 2) return '사이렌';
+    if (n === 3) return '혼합';
+    return '-';
+    }
+
+    function modeToText(mode) {
+    const n = parseInt(mode, 10);
+    if (n === 1) return 'REAL';
+    if (n === 0) return 'TEST';
+    return '-';
+    }
+
+    function priorityToText(priority) {
+    const n = parseInt(priority, 10);
+    if (n === 4) return 'DANGER';
+    if (n === 3) return 'WARNING';
+    if (n === 2) return 'CAUTION';
+    if (n === 1) return 'NONE';
+    return '-';
+    }
+
+    function extractRowsFromResponse(data) {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;            // List 형태
+    if (Array.isArray(data.content)) return data.content; // Page/Slice 형태
+    if (Array.isArray(data.items)) return data.items;
+    return [];
+    }
+
+    async function fetchAlertLogs(params) {
+    const qs = new URLSearchParams();
+    Object.entries(params || {}).forEach(([k, v]) => {
+        if (v === null || v === undefined) return;
+        if (typeof v === 'string' && v.trim() === '') return;
+        qs.set(k, String(v));
+    });
+
+    const url = `${API_LIST}?${qs.toString()}`;
+    const res = await fetch(url, { method: 'GET' });
+    if (!res.ok) throw new Error(`alert logs http ${res.status}`);
+    return await res.json();
+    }
+
+    /* ---------------------------
+    * 데이터 → 화면 모델 매핑
+    * (SpkWebAlertLogResponseDTO 기반)
+    * --------------------------- */
+    function mapRowToItem(row) {
+    // createdAt: "2026-01-18T18:47:54.105" 형태라고 가정(스프링 기본)
+    const dt = row?.createdAt ? new Date(row.createdAt) : new Date();
+
+    const deviceId = row?.deviceId ?? '-';
+    const disasterCode = row?.disasterCode ?? '-';
+
+    const alertKind = row?.alertKind;
+    const alertRange = row?.alertRange;
+    const alertMode = row?.alertMode;
+    const alertPriority = row?.alertPriority;
+
+    const status = String(row?.status ?? '').toUpperCase() || '-';
+    const commandCode = row?.commandCode ?? '';
+
+    const title = `${disasterCode} · ${kindToText(alertKind)}`;
+
+    return {
+        id: row?.id ?? 0,
+        dt,
+        time: window.SituationCommon?.formatDateTime
+        ? window.SituationCommon.formatDateTime(dt)
+        : dt.toLocaleString(),
+
+        title,
+        deviceId,
+        disasterCode,
+
+        alertKind,
+        alertRange,
+        alertMode,
+        alertPriority,
+
+        status,
+        commandCode,
+
+        ttsMessage: (row?.ttsMessage ?? '').toString(),
+        alertStoCd: row?.alertStoCd ?? '',
+        alertSirenCd: row?.alertSirenCd ?? '',
+    };
+    }
+
+    /* ---------------------------
+    * 통계/카드 렌더
+    * --------------------------- */
     function updateBroadcastStats(list) {
     const totalEl = document.getElementById('broadcast_stat_total');
     const todayEl = document.getElementById('broadcast_stat_today');
@@ -14,9 +173,14 @@
 
     const today = new Date();
     const total = list.length;
-    const todayCount = list.filter(x => window.SituationCommon.isSameYmd(x.dt, today)).length;
-    const realCount = list.filter(x => x.isReal).length;
-    const testCount = list.filter(x => !x.isReal).length;
+
+    const todayCount = list.filter(x => window.SituationCommon?.isSameYmd
+        ? window.SituationCommon.isSameYmd(x.dt, today)
+        : true
+    ).length;
+
+    const realCount = list.filter(x => parseInt(x.alertMode, 10) === 1).length;
+    const testCount = list.filter(x => parseInt(x.alertMode, 10) === 0).length;
 
     totalEl.textContent = total;
     todayEl.textContent = todayCount;
@@ -25,138 +189,6 @@
 
     const countEl = document.getElementById('broadcastCount');
     if (countEl) countEl.textContent = `총 ${total}건 | 발령 내역을 조회합니다.`;
-    }
-
-    async function fetchBroadcastLogsFromServer(params) {
-    const qs = new URLSearchParams();
-    Object.entries(params || {}).forEach(([k, v]) => {
-        if (v === null || v === undefined) return;
-        if (typeof v === 'string' && v.trim() === '') return;
-        qs.set(k, String(v));
-    });
-
-    const url = `/api/web/dispatch/loglist?${qs.toString()}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`loglist http ${res.status}`);
-    return await res.json();
-    }
-
-    function extractRowsFromResponse(data) {
-    if (!data) return [];
-    if (Array.isArray(data.items)) return data.items;
-    if (Array.isArray(data.content)) return data.content;
-    return [];
-    }
-
-    function normalizePriority(p) {
-    const v = (p ?? '').toString().trim().toUpperCase();
-    if (!v) return 'NONE';
-    if (['NONE', 'CAUTION', 'WARNING', 'DANGER'].includes(v)) return v;
-
-    const n = parseInt(v, 10);
-    if (!Number.isNaN(n)) {
-        if (n >= 4) return 'DANGER';
-        if (n === 3) return 'WARNING';
-        if (n === 2) return 'CAUTION';
-        return 'NONE';
-    }
-    return 'NONE';
-    }
-
-    function formatSpeakerIds(raw) {
-    const s = String(raw).trim();
-    if (!s) return '';
-
-    try {
-        const arr = JSON.parse(s);
-        if (Array.isArray(arr)) {
-        if (arr.length === 0) return '-';
-        if (arr.length <= 2) return arr.join(', ');
-        return `${arr[0]}, ${arr[1]} 외 ${arr.length - 2}대 (총 ${arr.length}대)`;
-        }
-    } catch (_) {}
-
-    if (s.length > 40) return `${s.slice(0, 40)}...`;
-    return s;
-    }
-
-    function mapRowToBroadcastItem(row) {
-    const dt = row.dispatchTime ? new Date(row.dispatchTime) : new Date();
-
-    const mode = (row.mode || '').toUpperCase();
-    const dispatchType = (row.dispatchType || 'MANUAL').toUpperCase();
-    const broadcastType = (row.broadcastType || 'ETC').toUpperCase();
-    const scope = (row.scope || '').toUpperCase();
-    const priority = normalizePriority(row.priority);
-
-    const disasterCode = row.disasterCode || '';
-    const disasterName = row.disasterName || disasterCode || 'UNKNOWN';
-
-    let speakerText = row.speakerId || '';
-    if (!speakerText && row.speakerIds) {
-        speakerText = formatSpeakerIds(row.speakerIds);
-    }
-    if (!speakerText) speakerText = '-';
-
-    const message = (row.ttsMessage ?? '').toString().trim();
-    const title = `${disasterName} · ${broadcastType}`;
-
-    return {
-        no: row.logKey ?? 0,
-        dt,
-        time: window.SituationCommon.formatDateTime(dt),
-
-        title,
-        mode,
-        isReal: mode === 'REAL',
-        dispatchType,
-        broadcastType,
-        priority,
-
-        speakerName: speakerText,
-        location: scope || '-',
-        senderName: row.requestUserId || 'unknown',
-        code: row.commandCode || '',
-
-        disasterCode,
-        disasterName,
-        requestIp: row.requestIp || '',
-        memo: row.memo || '',
-        message,
-
-        // 원문 보존이 필요하면 여기에 추가
-        speakerIdsRaw: row.speakerIds || ''
-    };
-    }
-
-    function getPriorityChipStyle(priority) {
-    const p = (priority || 'NONE').toUpperCase();
-    switch (p) {
-        case 'DANGER':  return { bg: '#111827', color: '#ffffff', border: '#111827' };
-        case 'WARNING': return { bg: '#fee2e2', color: '#b91c1c', border: '#fecaca' };
-        case 'CAUTION': return { bg: '#fef3c7', color: '#b45309', border: '#fde68a' };
-        case 'NONE':
-        default:        return { bg: '#dcfce7', color: '#15803d', border: '#bbf7d0' };
-    }
-    }
-
-    function getDispatchTypeChipStyle(t) {
-    const v = (t || 'MANUAL').toUpperCase();
-    switch (v) {
-        case 'AUTO':   return { bg: '#ede9fe', color: '#5b21b6', border: '#ddd6fe' };
-        case 'SYSTEM': return { bg: '#e5e7eb', color: '#374151', border: '#d1d5db' };
-        case 'MANUAL':
-        default:       return { bg: '#cffafe', color: '#155e75', border: '#a5f3fc' };
-    }
-    }
-
-    function getTypeMeta(type) {
-    switch ((type || 'ETC').toUpperCase()) {
-        case 'TTS':   return { icon: 'bi bi-chat-dots', bg: '#e0f2fe', color: '#0369a1', border: '#bae6fd' };
-        case 'BGM':   return { icon: 'bi bi-music-note-beamed', bg: '#ecfccb', color: '#3f6212', border: '#d9f99d' };
-        case 'SIREN': return { icon: 'bi bi-exclamation-triangle', bg: '#ffedd5', color: '#9a3412', border: '#fed7aa' };
-        default:      return { icon: 'bi bi-broadcast', bg: '#f3f4f6', color: '#374151', border: '#e5e7eb' };
-    }
     }
 
     function renderBroadcastCards() {
@@ -181,146 +213,108 @@
     itemsEl.classList.remove('d-none');
 
     broadcastFiltered.forEach((item, index) => {
-        const card = createBroadcastCard(item, index);
-        itemsEl.appendChild(card);
+        itemsEl.appendChild(createBroadcastCard(item, index));
     });
 
     updateBroadcastStats(broadcastFiltered);
     }
 
-    function createBroadcastCard(item, index) {
-    const esc = window.SituationCommon.escapeHtml;
-
-    const card = document.createElement('div');
-    card.className = 'fade-in mb-3';
-    card.dataset.id = item.no;
-
-    card.style.cssText = `
-        animation-delay: ${index * 0.05}s;
-        border: 1px solid rgba(0,0,0,0.08);
-        border-radius: 12px;
-        background: #fff;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-        overflow: hidden;
+    function chip(text, style) {
+    const esc = window.SituationCommon?.escapeHtml || ((s) => String(s));
+    const t = esc(text ?? '-');
+    const bg = style?.bg ?? '#f3f4f6';
+    const color = style?.color ?? '#374151';
+    const border = style?.border ?? '#e5e7eb';
+    return `
+        <span style="padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800;
+        background:${bg};color:${color};border:1px solid ${border};">${t}</span>
     `;
+    }
 
-    const modeText = item.isReal ? 'REAL' : 'TEST';
-    const modeStyle = item.isReal
-        ? { bg: '#fee2e2', color: '#b91c1c', border: '#fecaca' }
-        : { bg: '#dbeafe', color: '#1d4ed8', border: '#bfdbfe' };
+function createBroadcastCard(item) {
+    const esc = window.SituationCommon?.escapeHtml || ((s) => String(s));
 
-    const p = (item.priority || 'NONE').toUpperCase();
-    const priorityStyle = getPriorityChipStyle(p);
+    const card = document.createElement("div");
+    card.className = "broadcast-card-dark fade-in";
+    card.dataset.id = item.id;
 
-    const type = (item.broadcastType || 'ETC').toUpperCase();
-    const typeMeta = getTypeMeta(type);
+    const modeText = modeToText(item.alertMode);
+    const priorityText = priorityToText(item.alertPriority);
+    const kindText = kindToText(item.alertKind);
+    const statusText = String(item.status || "-").toUpperCase();
 
-    const dispatchType = (item.dispatchType || 'MANUAL').toUpperCase();
-    const dispatchTypeChip = getDispatchTypeChipStyle(dispatchType);
-
-    const title = esc(item.title || 'UNKNOWN');
-    const speakerText = esc(item.speakerName || '-');
-    const scopeText = esc(item.location || '-');
-    const senderText = esc(item.senderName || '-');
-    const timeText = esc(item.time || '-');
-    const codeText = esc(item.code || '');
-
-    const preview = (item.message || '').trim();
-    const previewHtml = preview ? esc(preview) : '<span class="text-secondary">메시지 없음</span>';
+    const msg = (item.ttsMessage || "").trim() || "메시지 없음";
 
     card.innerHTML = `
-        <div style="padding: 14px 16px;">
-        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-            <div style="min-width:0; flex: 1 1 360px;">
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-                <span style="
-                width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;
-                border-radius:8px;background:${typeMeta.bg};color:${typeMeta.color};
-                border:1px solid ${typeMeta.border};
-                "><i class="${typeMeta.icon}"></i></span>
-                <div style="min-width:0;">
-                <div style="font-weight:800; color:#111827; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                    ${title}
-                </div>
-                <div style="font-size:12px; color:#6b7280; margin-top:2px;">
-                    <span style="font-weight:700; color:#374151;">대상</span> ${speakerText}
-                    <span style="margin:0 6px; color:#d1d5db;">|</span>
-                    <span style="font-weight:700; color:#374151;">범위</span> ${scopeText}
-                </div>
-                </div>
-            </div>
-            </div>
-
-            <div style="flex: 1 1 260px; margin-left:auto;">
-            <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;">
-                <span style="padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800;
-                background:${modeStyle.bg};color:${modeStyle.color};border:1px solid ${modeStyle.border};">${modeText}</span>
-
-                <span style="padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800;
-                background:${dispatchTypeChip.bg};color:${dispatchTypeChip.color};border:1px solid ${dispatchTypeChip.border};">${esc(dispatchType)}</span>
-
-                <span style="padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800;
-                background:${priorityStyle.bg};color:${priorityStyle.color};border:1px solid ${priorityStyle.border};">${p}</span>
-
-                <span style="padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800;
-                background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;">${esc(type)}</span>
-
-                ${codeText ? `
-                <span style="padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800;
-                    background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;">CMD ${codeText}</span>` : ''}
-            </div>
-
-            <div style="margin-top:6px; font-size:12px; color:#6b7280; text-align:right;">
-                <i class="bi bi-clock"></i> ${timeText}
-            </div>
-            </div>
+    <div class="broadcast-card-header">
+        <div class="broadcast-card-title">
+        <i class="bi bi-broadcast-pin"></i>
+        <span>${esc(item.disasterCode)} · ${esc(kindText)}</span>
         </div>
-
-        <div style="
-            margin-top:10px;
-            padding:10px 12px;
-            background:#f8fafc;
-            border:1px solid #e5e7eb;
-            border-radius:10px;
-            color:#374151;
-            font-size:13px;
-            line-height:1.55;
-            display:-webkit-box;
-            -webkit-line-clamp:2;
-            -webkit-box-orient:vertical;
-            overflow:hidden;
-        ">${previewHtml}</div>
-
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px;">
-            <div style="font-size:12px; color:#6b7280; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-            <i class="bi bi-person-circle"></i>
-            <span style="font-weight:700; color:#374151;">요청자</span> ${senderText}
-            </div>
-
-            <div style="display:flex; gap:8px; flex-shrink:0;">
-            <button type="button" class="btn btn-outline-primary btn-sm" data-action="detail"
-                style="border-radius:8px; font-weight:700;">
-                <i class="bi bi-eye me-1"></i>상세
-            </button>
-            </div>
+        <div class="broadcast-card-time">
+        <i class="bi bi-clock"></i>
+        ${esc(item.time)}
         </div>
-        </div>
+    </div>
+
+    <div class="broadcast-card-meta">
+        <span class="chip chip-mode">${esc(modeText)}</span>
+        <span class="chip chip-priority">${esc(priorityText)}</span>
+        <span class="chip chip-kind">${esc(kindText)}</span>
+        <span class="chip chip-status ${statusText === "SENT" ? "success" : "failed"}">
+        ${esc(statusText)}
+        </span>
+    </div>
+
+    <div class="broadcast-card-meta">
+        <span class="chip chip-info">
+        <i class="bi bi-hdd-network me-1"></i>
+        ${esc(item.deviceId)}
+        </span>
+
+        <span class="chip chip-info">
+        <i class="bi bi-diagram-3 me-1"></i>
+        범위 ${esc(item.alertRange ?? "-")}
+        </span>
+
+        <span class="chip chip-info">
+        <i class="bi bi-terminal me-1"></i>
+        CMD ${esc(item.commandCode || "-")}
+        </span>
+    </div>
+
+    <!-- MESSAGE -->
+    <div class="broadcast-card-message">
+        ${esc(msg)}
+    </div>
+
+    <!-- ACTION -->
+    <div class="broadcast-card-actions">
+        <button type="button" class="btn-apple-secondary" data-action="detail">
+        <i class="bi bi-eye"></i> 상세
+        </button>
+    </div>
     `;
 
-    card.querySelector('button[data-action="detail"]')?.addEventListener('click', (e) => {
+    card
+    .querySelector('[data-action="detail"]')
+    ?.addEventListener("click", (e) => {
         e.stopPropagation();
         openBroadcastDetail(item);
     });
 
     return card;
-    }
+}
 
+    /* ---------------------------
+    * 상세 모달
+    * --------------------------- */
     function ensureBroadcastDetailModal() {
     if (document.getElementById('broadcastDetailModal')) return;
 
     const wrap = document.createElement('div');
     wrap.innerHTML = `
-        <div class="modal fade" id="broadcastDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal modal-dark fade" id="broadcastDetailModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
             <div class="modal-header">
@@ -331,30 +325,43 @@
             </div>
 
             <div class="modal-body">
-                <div class="d-flex flex-wrap gap-2 mb-3" id="bd_badges"></div>
+                <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <div class="composer-block p-3 h-100">
+                    <div class="small text-secondary mb-1">장비 ID</div>
+                    <div class="fw-semibold" id="bd_device">-</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="composer-block p-3 h-100">
+                    <div class="small text-secondary mb-1">발령 범위</div>
+                    <div class="fw-semibold" id="bd_range">-</div>
+                    </div>
+                </div>
+                </div>
 
                 <div class="row g-3 mb-3">
                 <div class="col-md-6">
-                    <div class="border rounded-3 p-3 h-100">
-                    <div class="small text-secondary mb-1">대상</div>
-                    <div class="fw-semibold" id="bd_speakers">-</div>
+                    <div class="composer-block p-3 h-100">
+                    <div class="small text-secondary mb-1">STO 코드</div>
+                    <div class="fw-semibold" id="bd_sto">-</div>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="border rounded-3 p-3 h-100">
-                    <div class="small text-secondary mb-1">범위</div>
-                    <div class="fw-semibold" id="bd_scope">-</div>
+                    <div class="composer-block p-3 h-100">
+                    <div class="small text-secondary mb-1">사이렌 코드</div>
+                    <div class="fw-semibold" id="bd_siren">-</div>
                     </div>
                 </div>
                 </div>
 
-                <div class="border rounded-3 p-3">
-                <div class="fw-semibold mb-2">메시지</div>
+                    <div class="composer-block p-3 h-100">
+                <div class="fw-semibold mb-2">TTS 메시지</div>
                 <pre class="mb-0" id="bd_message"
                     style="white-space:pre-wrap; word-break:break-word; max-height:220px; overflow:auto;"></pre>
                 </div>
 
-                <div class="accordion mt-3" id="bd_acc">
+                <div class="accordion accordion-dark mt-3" id="bd_acc">
                 <div class="accordion-item">
                     <h2 class="accordion-header">
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#bd_more">
@@ -365,32 +372,28 @@
                     <div class="accordion-body">
                         <div class="row g-2">
                         <div class="col-md-6">
-                            <div class="small text-secondary">요청자</div>
-                            <div class="fw-semibold" id="bd_user">-</div>
+                            <div class="small text-secondary">방송모드</div>
+                            <div class="fw-semibold" id="bd_mode">-</div>
                         </div>
                         <div class="col-md-6">
-                            <div class="small text-secondary">요청 IP</div>
-                            <div class="fw-semibold" id="bd_ip">-</div>
+                            <div class="small text-secondary">우선순위</div>
+                            <div class="fw-semibold" id="bd_priority">-</div>
+                        </div>
+                        <div class="col-md-6 mt-2">
+                            <div class="small text-secondary">발령 유형</div>
+                            <div class="fw-semibold" id="bd_kind">-</div>
                         </div>
                         <div class="col-md-6 mt-2">
                             <div class="small text-secondary">CMD</div>
                             <div class="fw-semibold" id="bd_cmd">-</div>
                         </div>
                         <div class="col-md-6 mt-2">
-                            <div class="small text-secondary">재난코드</div>
-                            <div class="fw-semibold" id="bd_dst">-</div>
+                            <div class="small text-secondary">상태</div>
+                            <div class="fw-semibold" id="bd_status">-</div>
                         </div>
-
-                        <div class="col-12 mt-3">
-                            <div class="small text-secondary mb-1">speakerIds 원문</div>
-                            <pre class="mb-0" id="bd_speaker_ids_raw"
-                            style="white-space:pre-wrap; word-break:break-word; max-height:160px; overflow:auto;"></pre>
-                        </div>
-
-                        <div class="col-12 mt-3">
-                            <div class="small text-secondary mb-1">메모</div>
-                            <pre class="mb-0" id="bd_memo"
-                            style="white-space:pre-wrap; word-break:break-word;"></pre>
+                        <div class="col-md-6 mt-2">
+                            <div class="small text-secondary">재난 코드</div>
+                            <div class="fw-semibold" id="bd_disaster">-</div>
                         </div>
                         </div>
                     </div>
@@ -410,152 +413,144 @@
     document.body.appendChild(wrap.firstElementChild);
     }
 
-    function badgeHtml(text, bg, color, border) {
-    const esc = window.SituationCommon.escapeHtml;
-    return `<span class="px-2 py-1 rounded-pill small fw-bold"
-        style="background:${bg};color:${color};border:1px solid ${border};">${esc(text)}</span>`;
-    }
-
     function openBroadcastDetail(item) {
-    const esc = window.SituationCommon.escapeHtml;
-
     ensureBroadcastDetailModal();
 
-    const title = `${item.disasterName || item.disasterCode || 'UNKNOWN'} · ${(item.broadcastType || 'ETC').toUpperCase()}`;
-    const subtitle = `${item.time || '-'} · ${item.disasterCode ? 'CODE ' + item.disasterCode : ''}`;
+    const title = item.title || '발령 상세';
+    const subtitle = item.time || '-';
 
     document.getElementById('bd_title').textContent = title;
     document.getElementById('bd_subtitle').textContent = subtitle;
 
-    const pStyle = getPriorityChipStyle(item.priority);
-    const mStyle = item.isReal
-        ? { bg:'#fee2e2', color:'#b91c1c', border:'#fecaca' }
-        : { bg:'#dbeafe', color:'#1d4ed8', border:'#bfdbfe' };
-    const dStyle = getDispatchTypeChipStyle(item.dispatchType);
+    document.getElementById('bd_device').textContent = item.deviceId || '-';
+    document.getElementById('bd_range').textContent = (item.alertRange ?? '-') + '';
 
-    const badges = [
-        badgeHtml((item.isReal ? 'REAL' : 'TEST'), mStyle.bg, mStyle.color, mStyle.border),
-        badgeHtml((item.dispatchType || 'MANUAL').toUpperCase(), dStyle.bg, dStyle.color, dStyle.border),
-        badgeHtml((item.priority || 'NONE').toUpperCase(), pStyle.bg, pStyle.color, pStyle.border),
-        badgeHtml((item.broadcastType || 'ETC').toUpperCase(), '#f3f4f6', '#374151', '#e5e7eb'),
-    ];
-    document.getElementById('bd_badges').innerHTML = badges.join('');
+    document.getElementById('bd_sto').textContent = item.alertStoCd || '-';
+    document.getElementById('bd_siren').textContent = item.alertSirenCd || '-';
 
-    document.getElementById('bd_speakers').textContent = item.speakerName || '-';
-    document.getElementById('bd_scope').textContent = item.location || '-';
-
-    const msg = (item.message || '').trim();
+    const msg = (item.ttsMessage || '').trim();
     document.getElementById('bd_message').textContent = msg || '메시지 없음';
 
-    document.getElementById('bd_user').textContent = item.senderName || '-';
-    document.getElementById('bd_ip').textContent = item.requestIp || '-';
-    document.getElementById('bd_cmd').textContent = item.code ? `CMD ${item.code}` : '-';
-    document.getElementById('bd_dst').textContent = item.disasterCode || '-';
-
-    document.getElementById('bd_speaker_ids_raw').textContent = (item.speakerIdsRaw || '').toString();
-    document.getElementById('bd_memo').textContent = (item.memo || '').toString();
+    document.getElementById('bd_mode').textContent = modeToText(item.alertMode);
+    document.getElementById('bd_priority').textContent = priorityToText(item.alertPriority);
+    document.getElementById('bd_kind').textContent = kindToText(item.alertKind);
+    document.getElementById('bd_cmd').textContent = item.commandCode ? `CMD ${item.commandCode}` : '-';
+    document.getElementById('bd_status').textContent = item.status || '-';
+    document.getElementById('bd_disaster').textContent = item.disasterCode || '-';
 
     const modalEl = document.getElementById('broadcastDetailModal');
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
     }
 
-    async function applyBroadcastFilters(isInitialLoad = false) {
+    /* ---------------------------
+    * 조회(검색 버튼 기준)
+    * --------------------------- */
+    async function loadBroadcastListFromUi() {
     const startEl = document.getElementById('broadcastStartDateTime');
     const endEl = document.getElementById('broadcastEndDateTime');
+
+    // 고급필터로 옮겨도 id만 유지하면 정상 작동  [oai_citation:2‡situationPage.html](sediment://file_00000000ea8471fab458d65e1faa98ed)
     const modeEl = document.getElementById('broadcastModeFilter');
     const priorityEl = document.getElementById('broadcastPriorityFilter');
+
+    // 스피커 검색(고급필터에 있어도 됨)
     const speakerEl = document.getElementById('broadcastSpeakerSearch');
-    const messageEl = document.getElementById('broadcastMessageSearch');
 
-    const startDt = isInitialLoad ? null : window.SituationCommon.parseInputDateTime(startEl?.value);
-    const endDt   = isInitialLoad ? null : window.SituationCommon.parseInputDateTime(endEl?.value);
+    const startYmd = toYmdFromDatetimeLocal(startEl?.value);
+    const endYmd = toYmdFromDatetimeLocal(endEl?.value);
 
-    const mode = modeEl?.value;
-    const priority = priorityEl?.value;
-    const speakerQ = speakerEl?.value?.trim();
-    const messageQ = messageEl?.value?.trim();
+    const modeNum = mapModeToNumber(modeEl?.value);
+    const priorityNum = mapPriorityToNumber(priorityEl?.value);
+    const deviceId = (speakerEl?.value || '').trim();
+
+    // ✅ 서버 파라미터 구성 (SpkWebAlertLogSearchRequest 바인딩용)
+    // - 같은 날짜면 date 사용
+    // - 다르면 from/to 사용
+    const params = {
+        page: 0,
+        size: 200
+    };
+
+    if (startYmd && endYmd && startYmd === endYmd) {
+        params.date = startYmd;
+    } else {
+        if (startYmd) params.from = startYmd;
+        if (endYmd) params.to = endYmd;
+        // 둘 다 없으면 서버쪽 기본(오늘) 적용되도록 비워둠
+    }
+
+    if (modeNum !== null) params.alertMode = modeNum;
+    if (priorityNum !== null) params.alertPriority = priorityNum;
+    if (deviceId) params.deviceId = deviceId;
 
     try {
-        const params = {
-        page: 0,
-        size: 50,
-        mode,
-        priority,
-        speakerQ,
-        messageQ
-        };
-
-        if (!isInitialLoad) {
-        const s = window.SituationCommon.toLocalDateTimeParam(startDt);
-        const e = window.SituationCommon.toLocalDateTimeParam(endDt);
-        if (s) params.start = s;
-        if (e) params.end = e;
-        }
-
-        const data = await fetchBroadcastLogsFromServer(params);
+        const data = await fetchAlertLogs(params);
         const rows = extractRowsFromResponse(data);
 
-        broadcastData = rows.map(mapRowToBroadcastItem);
+        broadcastData = rows.map(mapRowToItem);
         broadcastFiltered = broadcastData;
 
         renderBroadcastCards();
     } catch (err) {
-        console.error('broadcast log load error:', err);
+        console.error('broadcast load error:', err);
         broadcastData = [];
         broadcastFiltered = [];
         renderBroadcastCards();
     }
     }
 
-    function bindBroadcastEventsOnce() {
+    function setDefaultTodayRange() {
+    const startEl = document.getElementById('broadcastStartDateTime');
+    const endEl = document.getElementById('broadcastEndDateTime');
+    if (!startEl || !endEl) return;
+
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 0, 0);
+
+    startEl.value = toDatetimeLocalValue(start);
+    endEl.value = toDatetimeLocalValue(end);
+    }
+
+    function bindEventsOnce() {
     const searchBtn = document.getElementById('broadcastSearchBtn');
     if (searchBtn?.dataset.bound === '1') return;
 
-    const resetBtn = document.getElementById('broadcastResetBtn');
+    if (searchBtn) {
+        searchBtn.dataset.bound = '1';
+        searchBtn.addEventListener('click', loadBroadcastListFromUi);
+    }
+
+    // ✅ “선택해서 검색” 요구사항: change/input 자동 조회 제거
+    // (기존 코드에서 liveApply 제거)  [oai_citation:3‡broadcast_view.js](sediment://file_000000004f0071fa9d9cf8fb1af8000d)
+
+    // Enter 키로 검색
     const startEl = document.getElementById('broadcastStartDateTime');
     const endEl = document.getElementById('broadcastEndDateTime');
     const modeEl = document.getElementById('broadcastModeFilter');
     const priorityEl = document.getElementById('broadcastPriorityFilter');
     const speakerEl = document.getElementById('broadcastSpeakerSearch');
-    const messageEl = document.getElementById('broadcastMessageSearch');
 
-    if (searchBtn) {
-        searchBtn.dataset.bound = '1';
-        searchBtn.addEventListener('click', () => applyBroadcastFilters(false));
-    }
-
-    if (resetBtn) {
-        resetBtn.addEventListener('click', async () => {
-        if (startEl) startEl.value = '';
-        if (endEl) endEl.value = '';
-        if (modeEl) modeEl.value = '';
-        if (priorityEl) priorityEl.value = '';
-        if (speakerEl) speakerEl.value = '';
-        if (messageEl) messageEl.value = '';
-        await applyBroadcastFilters(true); // 다시 “오늘 기본”
-        });
-    }
-
-    const liveApply = () => applyBroadcastFilters(false);
-    [startEl, endEl, modeEl, priorityEl].forEach(el => {
-        if (el) el.addEventListener('change', liveApply);
-    });
-
-    [speakerEl, messageEl].forEach(el => {
-        if (el) {
-        el.addEventListener('input', () => {
-            clearTimeout(el.t);
-            el.t = setTimeout(liveApply, 250);
-        });
+    [startEl, endEl, modeEl, priorityEl, speakerEl].forEach((el) => {
+        if (!el) return;
+        el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            loadBroadcastListFromUi();
         }
+        });
     });
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
     if (window.currentView && window.currentView !== 'broadcast') return;
 
-    bindBroadcastEventsOnce();
-    await applyBroadcastFilters(true); // 최초 로드: start/end 미전송 → 서버 “오늘 기본”
+    bindEventsOnce();
+
+    // ✅ 최초 로드: 오늘 날짜로 세팅 후, 오늘 전체 리스트 자동 조회
+    setDefaultTodayRange();
+    await loadBroadcastListFromUi();
     });
+
 })();

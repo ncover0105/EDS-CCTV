@@ -116,6 +116,9 @@
                         <button class="btn-action-pill danger" type="button" onclick="speakerDeleted()" title="삭제">
                           <i class="bi bi-trash me-1"></i>삭제
                         </button> -->
+                        <button class="btn-apple-light" type="button" onclick="speakerAdd()" title="추가">
+                          <i class="bi bi-plus me-1"></i>추가
+                        </button>                        
                         <button class="btn-apple-light" type="button" onclick="speakerUpdate()" title="수정">
                           <i class="bi bi-pencil-square me-1"></i>수정
                         </button>
@@ -324,6 +327,131 @@
               </section>
             </div>
           </div>
+
+          <!-- 추가 모달 -->
+          <div class="modal modal-dark fade" id="speaker_add_modal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+              <div class="modal-content">
+          
+                <div class="modal-header">
+                  <h5 class="modal-title">스피커 추가</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+          
+                <div class="modal-body">
+                  <div class="row g-2">
+                    <div class="col-md-6">
+                      <label class="form-label">단말 ID</label>
+                      <input class="form-control" id="add_speakerId" placeholder="예: SPK-001">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">단말명</label>
+                      <input class="form-control" id="add_speakerName" placeholder="예: 대구역 스피커">
+                    </div>
+          
+                    <div class="col-md-6">
+                      <label class="form-label">전화번호(CDMA)</label>
+                      <input class="form-control" id="add_cdmaNumber">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">지역명</label>
+                      <input class="form-control" id="add_locationName">
+                    </div>
+          
+                    <div class="col-md-12">
+                      <label class="form-label">접속주소</label>
+                      <input class="form-control" id="add_speakerAdr" placeholder="예: http://... 또는 IP:PORT">
+                    </div>
+          
+                    <div class="col-md-6">
+                      <label class="form-label">위도</label>
+                      <input class="form-control" id="add_speakerLatitude">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">경도</label>
+                      <input class="form-control" id="add_speakerLongitude">
+                    </div>
+          
+                    <div class="col-md-12">
+                      <label class="form-label">비고</label>
+                      <textarea class="form-control" id="add_description" rows="2"></textarea>
+                    </div>
+                  </div>
+                </div>
+          
+                <div class="modal-footer">
+                  <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">닫기</button>
+                  <button class="btn btn-primary" type="button" id="btnSpeakerAddSave">등록</button>
+                </div>
+          
+              </div>
+            </div>
+          </div>
+
+          
+          <!-- 수정 모달 -->
+          <div class="modal modal-dark fade" id="speaker_update_modal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+              <div class="modal-content">
+
+                <div class="modal-header">
+                  <h5 class="modal-title">스피커 정보 수정</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                  <!-- PK는 숨김 -->
+                  <input type="hidden" id="edit_speakerKey">
+
+                  <div class="row g-2">
+                    <div class="col-md-6">
+                      <label class="form-label">단말 ID</label>
+                      <input class="form-control" id="edit_speakerId" readonly>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">단말명</label>
+                      <input class="form-control" id="edit_speakerName">
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label">전화번호(CDMA)</label>
+                      <input class="form-control" id="edit_cdmaNumber">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">지역명</label>
+                      <input class="form-control" id="edit_locationName">
+                    </div>
+
+                    <div class="col-md-12">
+                      <label class="form-label">접속주소</label>
+                      <input class="form-control" id="edit_speakerAdr">
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label">위도</label>
+                      <input class="form-control" id="edit_speakerLatitude">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">경도</label>
+                      <input class="form-control" id="edit_speakerLongitude">
+                    </div>
+
+                    <div class="col-md-12">
+                      <label class="form-label">비고</label>
+                      <textarea class="form-control" id="edit_description" rows="2"></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="modal-footer">
+                  <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">닫기</button>
+                  <button class="btn btn-primary" type="button" id="btnSpeakerSave">저장</button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
         </div>
 
         <!-- Broadcast -->

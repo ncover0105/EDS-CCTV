@@ -98,18 +98,18 @@ public class WeatherController {
 
     @GetMapping("/warning/history")
     public List<TbWeatherWarningList> history(
-            @RequestParam(required = false) String stn, // 예: "143"
-            @RequestParam(required = false) String wrn, // 예: "R"
-            @RequestParam(required = false) String lvl, // 예: "2"
-            @RequestParam(required = false) String cmd, // 예: "1"
-            @RequestParam(required = false) String regId, // 예: "L1070100"
+            @RequestParam(name = "stn", required = false) String stn, // 예: "143"
+            @RequestParam(name = "wrn", required = false) String wrn, // 예: "R"
+            @RequestParam(name = "lvl", required = false) String lvl, // 예: "2"
+            @RequestParam(name = "cmd", required = false) String cmd, // 예: "1"
+            @RequestParam(name = "regId", required = false) String regId, // 예: "L1070100"
 
             // 프론트(special_view.js)가 쓰는 이름과 매핑
-            @RequestParam(required = false, name = "startDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam(name = "startDateTime", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
 
-            @RequestParam(required = false, name = "endDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            @RequestParam(name = "endDateTime", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
 
-            @RequestParam(defaultValue = "300") int limit) {
+            @RequestParam(name = "limit", defaultValue = "300") int limit) {
         int safeLimit = Math.min(Math.max(limit, 1), 1000);
 
         // 선택: 공백이면 null 처리 (native query의 :param IS NULL 조건을 살리기 위함)

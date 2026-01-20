@@ -120,11 +120,11 @@ public class MenuController {
     @GetMapping("/situation/emergency/search")
     @ResponseBody
     public Map<String, Object> searchEmergency(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "15") int size,
-            @RequestParam(required = false) Integer boundaryNum,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") LocalDateTime from,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") LocalDateTime to) {
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "15") int size,
+            @RequestParam(name = "boundaryNum", required = false) Integer boundaryNum,
+            @RequestParam(name = "from", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") LocalDateTime from,
+            @RequestParam(name = "to", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") LocalDateTime to) {
         Page<EmergencyLogRowDTO> result = emergencyService.search(boundaryNum, from, to, page, size);
 
         return Map.of(

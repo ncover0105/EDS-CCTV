@@ -29,7 +29,9 @@ import com.edscorp.eds.speaker.typeb.service.SpkSystemConfigService;
 import com.edscorp.eds.speaker.typeb.service.SpkTestResultService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/btype/query")
@@ -47,13 +49,16 @@ public class BtypeQueryController {
     // B 타입 스피커 상태 조회
     @GetMapping("/status/{speakerKey}")
     public ResponseEntity<SpkStatusResponse> getBtypeSpkStauts(
-            @PathVariable Integer speakerKey) {
-
-        SpkStatusResponse response = btypeSpkService.getBtypeSpkStauts(speakerKey);
-        if (response == null) {
-            return ResponseEntity.notFound().build();
+            @PathVariable(value = "speakerKey") Integer speakerKey) {
+        try {
+            SpkStatusResponse response = btypeSpkService.getBtypeSpkStauts(speakerKey);
+            if (response == null)
+                return ResponseEntity.notFound().build();
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("[STATUS API] speakerKey={}", speakerKey, e);
+            throw e; // 또는 ResponseEntity.status(500)...
         }
-        return ResponseEntity.ok(response);
     }
 
     // ===================== 발령 이력 =====================
@@ -105,7 +110,7 @@ public class BtypeQueryController {
     // GET /api/btype/config
     @GetMapping("/config/list")
     public ResponseEntity<List<SpkConfig>> getAllSpeakers() {
-        return ResponseEntity.ok(spkConfigService.getList());
+        return ResponseEntity.ok(spkConfigService.getActiveSpeakers());
     }
 
     @GetMapping("/config/speakers")

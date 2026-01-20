@@ -6,6 +6,10 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 // import org.springframework.data.jpa.repository.Query;
 // import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.edscorp.eds.cctv.domain.CctvEntity;
 
@@ -23,7 +27,10 @@ public interface CctvRepository extends JpaRepository<CctvEntity, String> {
 
     boolean existsByCctvCode(String cctvCode);
 
-    void deleteByCctvCode(String cctvCode);
+    @Modifying
+    @Transactional
+    @Query("delete from CctvEntity c where c.cctvCode = :cctvCode")
+    void deleteByCctvCode(@Param("cctvCode") String cctvCode);
 
     // List<CctvEntity> findByPortStatusAndVideoPortIsNotNull(String portStatus);
 

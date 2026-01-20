@@ -1,78 +1,106 @@
 package com.edscorp.eds.cctv.stream;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Duration;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
 
-import java.io.*;
+import java.time.Duration;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class GstProcessManager {
 
-    // gstreamer.base-path:/usr/bin/gst-launch-1.0
-    @Value("${gstreamer.base-path}")
-    private String gstBasePath;
+    @Value("${gstreamer.api-base-url}")
+    private String gstApiBaseUrl;
 
-    private final WebClient webClient = WebClient.create();
+    @Value("${gstreamer.api-key:}")
+    private String gstApiKey;
 
-    @Value("${janus.host:}")
+    // WSL2 단일 머신이면 기본 127.0.0.1 유지 권장
+    @Value("${janus.host:127.0.0.1}")
     private String janusHost;
 
-    private final Map<String, Boolean> runningProcesses = new ConcurrentHashMap<>();
+    private final WebClient webClient;
+
+    private final Map<String, Boolean> running = new ConcurrentHashMap<>();
 
     public boolean start(String key, String rtspUrl, int port, String type) {
+        // stop은 "시도"만. 실패하더라도 start 진행.
+        stop(key);
+
+        Map<String, Object> body = Map.of(
+                "id", key,
+                "url", rtspUrl,
+                "port", port,
+                "type", type,
+                "udpHost", janusHost);
+
         try {
-            log.info("[{}] GStreamer start 요청: RTSP={} → UDP:{}", key, rtspUrl, port, type);
-            stop(key);
-
-            Map<String, Object> requestBody = Map.of(
-                    "id", key,
-                    "url", rtspUrl,
-                    "port", port,
-                    "type", type);
-
-            webClient.post()
-                    .uri(gstBasePath + "/start")
-                    .bodyValue(requestBody)
+            String resp = webClient.post()
+                    .uri(gstApiBaseUrl + "/start")
+                    .headers(h -> applyAuth(h))
+                    .bodyValue(body)
                     .retrieve()
                     .bodyToMono(String.class)
-                    .doOnError(e -> log.error("[{}] GStreamer API 호출 오류", key, e))
-                    .subscribe(response -> log.info("[{}] GStreamer API start 응답: {}", key, response));
+                    .timeout(Duration.ofSeconds(5))
+                    .block();
 
-            runningProcesses.put(key, true);
-            log.info("[{}] GStreamer start 요청 완료: RTSP={} → UDP:{}", key, rtspUrl, port, type);
+            running.put(key, true);
+            log.info("[{}] gstreamer started: {}", key, resp);
             return true;
         } catch (Exception e) {
-            log.error("[{}] GStreamer start 요청 실패", key, e);
+            running.remove(key);
+            log.error("[{}] gstreamer start failed", key, e);
             return false;
         }
     }
 
-    /**
-     * Node.js gstreamer-server에 stop 요청
-     */
-    public void stop(String key) {
-        if (!runningProcesses.containsKey(key))
-            return;
+    public boolean stop(String key) {
+        try {
+            // Node 수정본은 DELETE /stop/{id} 지원
+            String resp = webClient.delete()
+                    .uri(gstApiBaseUrl + "/stop/" + key)
+                    .headers(h -> applyAuth(h))
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .timeout(Duration.ofSeconds(3))
+                    .onErrorReturn("") // 404/네트워크 등은 정책상 무시 가능
+                    .block();
 
-        Map<String, Object> requestBody = Map.of("key", key);
+            running.remove(key);
+            log.info("[{}] gstreamer stop requested: {}", key, resp);
+            return true;
+        } catch (Exception e) {
+            running.remove(key);
+            log.warn("[{}] gstreamer stop error", key, e);
+            return false;
+        }
+    }
 
-        webClient.post()
-                .uri(gstBasePath + "/stop")
-                .bodyValue(requestBody)
-                .retrieve()
-                .bodyToMono(String.class)
-                .doOnError(e -> log.error("[{}] GStreamer API stop 호출 오류", key, e))
-                .subscribe(response -> log.info("[{}] GStreamer API stop 응답: {}", key, response));
+    public boolean isRunning(String key) {
+        return running.getOrDefault(key, false);
+    }
 
-        runningProcesses.remove(key);
-        log.info("[{}] GStreamer stop 요청 완료", key);
+    private void applyAuth(HttpHeaders headers) {
+        if (gstApiKey != null && !gstApiKey.isBlank()) {
+            headers.set("x-api-key", gstApiKey);
+        }
     }
 }

@@ -2,6 +2,7 @@ package com.edscorp.eds.speaker.service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -27,13 +28,46 @@ public class SpkWebAlertLogQueryService {
     private final SpkWebAlertLogRepository spkWebAlertLogRepository;
 
     private Specification<SpkWebAlertLogEntity> buildSpec(SpkWebAlertLogSearchRequest req) {
-        // date가 있으면 date 우선(하루 조회)
-        LocalDate fromDate = req.getDate() != null ? req.getDate() : req.getFrom();
-        LocalDate toDate = req.getDate() != null ? req.getDate().plusDays(1)
-                : (req.getTo() != null ? req.getTo().plusDays(1) : null);
 
-        LocalDateTime from = fromDate != null ? fromDate.atStartOfDay() : null;
-        LocalDateTime toExclusive = toDate != null ? toDate.atStartOfDay() : null;
+        LocalDate date = req.getDate();
+        LocalDate fromReq = req.getFrom();
+        LocalDate toReq = req.getTo();
+
+        // ✅ 날짜 해석 규칙
+        // 1) date 있으면 date 하루
+        // 2) from/to 둘 다 있으면 기간
+        // 3) from만 있으면 from 하루
+        // 4) to만 있으면 to 하루
+        // 5) 모두 없으면 오늘 하루(기본)
+        LocalDate fromDate;
+        LocalDate toExclusiveDate;
+
+        if (date != null) {
+            fromDate = date;
+            toExclusiveDate = date.plusDays(1);
+        } else if (fromReq != null && toReq != null) {
+            // 순서 보정
+            if (fromReq.isAfter(toReq)) {
+                LocalDate tmp = fromReq;
+                fromReq = toReq;
+                toReq = tmp;
+            }
+            fromDate = fromReq;
+            toExclusiveDate = toReq.plusDays(1);
+        } else if (fromReq != null) {
+            fromDate = fromReq;
+            toExclusiveDate = fromReq.plusDays(1);
+        } else if (toReq != null) {
+            fromDate = toReq;
+            toExclusiveDate = toReq.plusDays(1);
+        } else {
+            // 기본: 오늘
+            fromDate = LocalDate.now(ZoneId.of("Asia/Seoul"));
+            toExclusiveDate = fromDate.plusDays(1);
+        }
+
+        LocalDateTime from = fromDate.atStartOfDay();
+        LocalDateTime toExclusive = toExclusiveDate.atStartOfDay();
 
         return Specification.where(SpkWebAlertLogSpecs.deviceIdEq(req.getDeviceId()))
                 .and(SpkWebAlertLogSpecs.alertModeEq(req.getAlertMode()))

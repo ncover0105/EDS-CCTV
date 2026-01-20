@@ -1,24 +1,11 @@
-/* ================================
- * equipment_speaker.js (API Only + Search/Update/Delete)
- *  - GET  /api/btype/query/config/speakers         -> List<SpeakerRowDto>
- *  - GET  /api/btype/query/status/{speakerKey}     -> SpkStatusResponse
- *
- *  - (추가) PUT/DELETE 엔드포인트는 아래 상수만 프로젝트에 맞게 지정
- * ================================ */
-
-/* ------------------------------
-  API endpoints
------------------------------- */
 const SPEAKER_LIST_API = "/api/btype/query/config/speakers";
 const SPEAKER_STATUS_API = (speakerKey) => `/api/btype/query/status/${encodeURIComponent(speakerKey)}`;
 
-/**
- * TODO: 프로젝트에 맞게 수정/삭제 API를 정확히 맞추세요.
- * - UPDATE: 선택 스피커 1건 수정(PUT)
- * - DELETE: 선택 스피커 1건 삭제(DELETE)
- */
-const SPEAKER_UPDATE_API = "/api/btype/cmd/config/speakers"; // 예시: PUT body로 갱신
-const SPEAKER_DELETE_API = (speakerKey) => `/api/btype/cmd/config/speakers/${encodeURIComponent(speakerKey)}`;
+
+const SPEAKER_BASE_API = "/api/btype/query/config/speaker";
+const SPEAKER_CREATE_API = SPEAKER_BASE_API; // POST
+const SPEAKER_UPDATE_API = (speakerKey) => `${SPEAKER_BASE_API}/${speakerKey}`; // PUT
+const SPEAKER_DELETE_API = (speakerKey) => `${SPEAKER_BASE_API}/${speakerKey}`; // DELETE
 
 // 선택: 목록 자동 갱신(초). 0이면 비활성
 const SPEAKER_POLL_SECONDS = 0;
@@ -107,10 +94,15 @@ async function fetchSpeakerList() {
   return speakerListState;
 }
 
+const API_BASE = window.location.origin;
+
 async function fetchSpeakerStatus(speakerKey) {
-  const res = await fetch(SPEAKER_STATUS_API(speakerKey), { headers: { "Accept": "application/json" } });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`status api failed: ${res.status}`);
+  const url = `${API_BASE}/api/btype/query/status/${encodeURIComponent(speakerKey)}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    throw new Error(`HTTP ${res.status} ${t}`);
+  }
   return await res.json();
 }
 
@@ -455,18 +447,123 @@ function startPolling() {
   }, SPEAKER_POLL_SECONDS * 1000);
 }
 
-/* =========================
-   (추가) 검색/수정/삭제 이벤트
-========================= */
-
 // 검색은 UI 바인딩으로 처리(입력 즉시 필터)
 function listSpeakers() {
   // 새로고침 버튼은 제거하지만, 수정/삭제 후 내부적으로 호출해야 하므로 함수는 유지
   return refreshSpeakerListAndRender({ preserveSelection: false });
 }
 
+
+async function initSpeakerPage() {
+  if (!document.getElementById("speakerTableBody")) return;
+
+  try {
+    // 목록 조회 + 기본 viewList 설정
+    await refreshSpeakerListAndRender({ preserveSelection: false });
+    resetDetail();
+    startPolling();
+
+    // 검색 UI 바인딩(추가)
+    bindSpeakerSearchUI();
+  } catch (e) {
+    console.error(e);
+    resetDetail();
+    alertMsg("스피커 목록 조회 실패", "danger");
+  }
+}
+
+function openModal(modalId) {
+  const el = document.getElementById(modalId);
+  if (!el) {
+    alertMsg(`모달(${modalId})을 찾지 못했습니다.`, "warning");
+    return null;
+  }
+  const m = bootstrap.Modal.getOrCreateInstance(el);
+  m.show();
+  return m;
+}
+
+function closeModal(modalId) {
+  const el = document.getElementById(modalId);
+  if (!el) return;
+  const m = bootstrap.Modal.getInstance(el);
+  if (m) m.hide();
+}
+
+function setVal(id, v) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.value = (v === null || v === undefined) ? "" : String(v);
+}
+function getVal(id) {
+  const el = document.getElementById(id);
+  return el ? String(el.value ?? "").trim() : "";
+}
+
+function speakerAdd() {
+  setVal("add_speakerId", "");
+  setVal("add_speakerName", "");
+  setVal("add_cdmaNumber", "");
+  setVal("add_locationName", "");
+  setVal("add_speakerAdr", "");
+  setVal("add_speakerLatitude", "");
+  setVal("add_speakerLongitude", "");
+  setVal("add_description", "");
+
+  openModal("speaker_add_modal");
+
+  const saveBtn = document.getElementById("btnSpeakerAddSave");
+  if (saveBtn && !saveBtn.dataset.bound) {
+    saveBtn.addEventListener("click", speakerAddSubmit);
+    saveBtn.dataset.bound = "1";
+  }
+}
+
+async function speakerAddSubmit() {
+  const speakerId = getVal("add_speakerId");
+  if (!speakerId) {
+    alertMsg("speakerId(단말 ID)는 필수입니다.", "warning");
+    return;
+  }
+
+  const payload = {
+    speakerId,
+    speakerName: getVal("add_speakerName"),
+    cdmaNumber: getVal("add_cdmaNumber"),
+    locationName: getVal("add_locationName"),
+    speakerAdr: getVal("add_speakerAdr"),
+    speakerLatitude: getVal("add_speakerLatitude") || null,
+    speakerLongitude: getVal("add_speakerLongitude") || null,
+    description: getVal("add_description")
+  };
+
+  try {
+    const res = await fetch(SPEAKER_CREATE_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const t = await res.text().catch(() => "");
+      throw new Error(`create failed: ${res.status} ${t}`);
+    }
+
+    alertMsg("스피커가 등록되었습니다.", "success");
+    closeModal("speaker_add_modal");
+
+    // 리스트 API를 빼셨으므로, 여기서는 화면 갱신 함수를 프로젝트에 맞게 호출하세요.
+    // 예: listSpeakers(); 또는 location.reload();
+    if (typeof listSpeakers === "function") await listSpeakers();
+    if (typeof resetDetail === "function") resetDetail();
+  } catch (e) {
+    console.error(e);
+    alertMsg("추가 실패(엔드포인트/필수값/중복ID 확인)", "danger");
+  }
+}
+
 async function speakerUpdate() {
-  const checked = getSelectedSpeakerCheckbox();
+  const checked = getSelectedSpeakerCheckbox?.();
   if (!checked) {
     alertMsg("수정할 스피커를 선택해주세요.", "warning");
     return;
@@ -476,32 +573,49 @@ async function speakerUpdate() {
   const current = (speakerListState || []).find(x => String(x?.speakerKey) === String(speakerKey));
 
   if (!current) {
-    alertMsg("선택된 스피커 정보를 목록에서 찾지 못했습니다. 목록을 갱신하세요.", "warning");
+    alertMsg("선택된 스피커 정보를 찾지 못했습니다. 목록을 갱신하세요.", "warning");
     return;
   }
 
-  // 간단 수정 UI(프로젝트 모달이 있으면 여기만 교체하면 됩니다)
-  const newName = prompt("스피커 이름", safe(current.speakerName, ""));
-  if (newName === null) return;
+  setVal("edit_speakerKey", current.speakerKey);
+  setVal("edit_speakerId", current.speakerId);
+  setVal("edit_speakerName", current.speakerName);
+  setVal("edit_cdmaNumber", current.cdmaNumber);
+  setVal("edit_locationName", current.locationName);
+  setVal("edit_speakerAdr", current.speakerAdr);
+  setVal("edit_speakerLatitude", current.speakerLatitude);
+  setVal("edit_speakerLongitude", current.speakerLongitude);
+  setVal("edit_description", current.description);
 
-  const newPhone = prompt("단말 전화번호", safe(current.cdmaNumber, ""));
-  if (newPhone === null) return;
+  openModal("speaker_update_modal");
 
-  const newLocation = prompt("설치 지역", safe(current.locationName, ""));
-  if (newLocation === null) return;
+  const saveBtn = document.getElementById("btnSpeakerSave");
+  if (saveBtn && !saveBtn.dataset.bound) {
+    saveBtn.addEventListener("click", speakerUpdateSubmit);
+    saveBtn.dataset.bound = "1";
+  }
+}
+
+async function speakerUpdateSubmit() {
+  const speakerKey = getVal("edit_speakerKey");
+  if (!speakerKey) {
+    alertMsg("speakerKey가 없습니다. 모달 바인딩을 확인하세요.", "warning");
+    return;
+  }
 
   const payload = {
-    speakerKey: current.speakerKey,
-    speakerId: current.speakerId,
-    speakerName: String(newName).trim(),
-    cdmaNumber: String(newPhone).trim(),
-    locationName: String(newLocation).trim(),
-    speakerLatitude: current.speakerLatitude,
-    speakerLongitude: current.speakerLongitude
+    speakerId: getVal("edit_speakerId"), // 서버에서 변경 불가여도 보내는 건 문제 없음
+    speakerName: getVal("edit_speakerName"),
+    cdmaNumber: getVal("edit_cdmaNumber"),
+    locationName: getVal("edit_locationName"),
+    speakerAdr: getVal("edit_speakerAdr"),
+    speakerLatitude: getVal("edit_speakerLatitude") || null,
+    speakerLongitude: getVal("edit_speakerLongitude") || null,
+    description: getVal("edit_description")
   };
 
   try {
-    const res = await fetch(SPEAKER_UPDATE_API, {
+    const res = await fetch(SPEAKER_UPDATE_API(speakerKey), {
       method: "PUT",
       headers: { "Content-Type": "application/json", "Accept": "application/json" },
       body: JSON.stringify(payload)
@@ -509,22 +623,22 @@ async function speakerUpdate() {
 
     if (!res.ok) {
       const t = await res.text().catch(() => "");
-      throw new Error(`update api failed: ${res.status} ${t}`);
+      throw new Error(`update failed: ${res.status} ${t}`);
     }
 
     alertMsg("수정이 완료되었습니다.", "success");
+    closeModal("speaker_update_modal");
 
-    // ✅ 수정되면 항상 목록 새로고침(버튼 없이 자동)
-    await listSpeakers();
-    resetDetail();
+    if (typeof listSpeakers === "function") await listSpeakers();
+    if (typeof resetDetail === "function") resetDetail();
   } catch (e) {
     console.error(e);
-    alertMsg("수정 실패(엔드포인트/권한/파라미터를 확인하세요).", "danger");
+    alertMsg("수정 실패(엔드포인트/파라미터 확인)", "danger");
   }
 }
 
 async function speakerDeleted() {
-  const checked = getSelectedSpeakerCheckbox();
+  const checked = getSelectedSpeakerCheckbox?.();
   if (!checked) {
     alertMsg("삭제할 스피커를 선택해주세요.", "warning");
     return;
@@ -544,38 +658,16 @@ async function speakerDeleted() {
 
     if (!res.ok) {
       const t = await res.text().catch(() => "");
-      throw new Error(`delete api failed: ${res.status} ${t}`);
+      throw new Error(`delete failed: ${res.status} ${t}`);
     }
 
     alertMsg("삭제가 완료되었습니다.", "success");
 
-    // ✅ 삭제되면 항상 목록 새로고침(버튼 없이 자동)
-    await listSpeakers();
-    resetDetail();
+    if (typeof listSpeakers === "function") await listSpeakers();
+    if (typeof resetDetail === "function") resetDetail();
   } catch (e) {
     console.error(e);
-    alertMsg("삭제 실패(엔드포인트/권한/파라미터를 확인하세요).", "danger");
-  }
-}
-
-/* =========================
-   Entry point for equipment_init.js
-========================= */
-async function initSpeakerPage() {
-  if (!document.getElementById("speakerTableBody")) return;
-
-  try {
-    // 목록 조회 + 기본 viewList 설정
-    await refreshSpeakerListAndRender({ preserveSelection: false });
-    resetDetail();
-    startPolling();
-
-    // 검색 UI 바인딩(추가)
-    bindSpeakerSearchUI();
-  } catch (e) {
-    console.error(e);
-    resetDetail();
-    alertMsg("스피커 목록 조회 실패", "danger");
+    alertMsg("삭제 실패(엔드포인트/권한 확인)", "danger");
   }
 }
 
@@ -590,5 +682,6 @@ window.renderSpeakerTable = renderSpeakerTable;
 
 // 추가 exports (HTML onclick과 호환)
 window.listSpeakers = listSpeakers;
+window.speakerAdd = speakerAdd;
 window.speakerUpdate = speakerUpdate;
 window.speakerDeleted = speakerDeleted;

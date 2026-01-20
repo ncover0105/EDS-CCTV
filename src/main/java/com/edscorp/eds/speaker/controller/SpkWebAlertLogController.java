@@ -32,8 +32,8 @@ public class SpkWebAlertLogController {
     @GetMapping
     public Slice<SpkWebAlertLogResponseDTO> list(
             @ModelAttribute SpkWebAlertLogSearchRequest req,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
         return queryService.page(req, page, size);
     }
 
