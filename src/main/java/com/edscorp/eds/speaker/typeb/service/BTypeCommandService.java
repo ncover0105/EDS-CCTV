@@ -42,7 +42,7 @@ public class BTypeCommandService {
     // 데몬 서버 playradio 주소 (application.properties 에서 설정 가능)
     // private static final String PLAYRADIO_URL =
     // "http://192.168.0.42:3000/playradio";
-    private static final String PLAYRADIO_URL = "http://localhost:3000/playradio";
+    private static final String PLAYRADIO_URL = "http://192.168.0.42:3000/playradio";
 
     private final SpkWebAlertLogQueryService spkWebAlertLogQueryService;
 

@@ -148,7 +148,7 @@ const BroadcastModal = {
                   <div class="d-flex justify-content-between align-items-start">
                       <div>
                           <div class="fw-semibold text-white mb-1">${name}</div>
-                          <div class="small text-white-50">${desc}</div>
+                          <div class="small text-white-50">${speakerId}</div>
                       </div>
                   </div>
               </div>
@@ -374,12 +374,18 @@ const BroadcastModal = {
 
             const payloadUI = this.getPayloadForPreview();
             const selectedIds = [...new Set(payloadUI.speakerIds)]; // ✅ 중복 제거
+            const isTTS = (payloadUI.broadcastType === "1");
 
             if (selectedIds.length === 0) {
                 notify("스피커를 먼저 선택해주세요.", "warning");
                 return;
             }
-            if (!payloadUI.disasterCode) {
+
+            if (isTTS) {
+                payloadUI.disasterCode = "CFW";
+            }
+
+            if (!isTTS && !payloadUI.disasterCode) {
                 notify("재난 코드를 선택해주세요.", "warning");
                 return;
             }

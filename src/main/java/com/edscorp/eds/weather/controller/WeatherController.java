@@ -17,7 +17,10 @@ import com.edscorp.eds.weather.service.WeatherImageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 
@@ -123,6 +126,32 @@ public class WeatherController {
                 stn, wrn, lvl, cmd, regId,
                 start, end,
                 safeLimit);
+    }
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
+    @GetMapping("/special/latest")
+    public Map<String, Object> latest() {
+
+        LocalDate today = LocalDate.now(KST);
+        LocalDateTime start = today.atStartOfDay();
+        LocalDateTime end = today.atTime(LocalTime.MAX);
+
+        return tbWeatherWarningListRepository.findFirstByCreatedAtBetweenOrderByCreatedAtDesc(start, end)
+                .<Map<String, Object>>map(row -> Map.of(
+                        "exists", true,
+                        "data", Map.of(
+                                "regId", row.getId().getRegId(),
+                                "wrn", row.getId().getWrn(),
+                                "tmIn", row.getId().getTmIn(),
+                                "tmFc", row.getTmFc(),
+                                "tmEf", row.getTmEf(),
+                                "lvl", row.getLvl(),
+                                "cmd", row.getCmd(),
+                                "createdAt", row.getCreatedAt())))
+                .orElseGet(() -> Map.of(
+                        "exists", false,
+                        "message", "오늘 특보 없음"));
     }
 
     private String emptyToNull(String v) {

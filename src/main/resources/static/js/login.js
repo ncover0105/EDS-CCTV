@@ -41,6 +41,40 @@
       el.style.display = "none";
       el.innerHTML = "";
     }
+
+    // ----------------------------
+    // 공용: 폼 입력/상태 초기화
+    // ----------------------------
+    function resetForm(formEl) {
+      if (!formEl) return;
+
+      // 1) 기본 입력 초기화
+      if (typeof formEl.reset === "function") formEl.reset();
+
+      // 2) 혹시 reset으로 안 지워지는 값(커스텀/hidden/readonly 등)이 있으면 보완
+      formEl.querySelectorAll("input, textarea, select").forEach((el) => {
+        const type = (el.getAttribute("type") || "").toLowerCase();
+
+        // checkbox/radio는 reset으로 보통 처리되지만, 안전하게 보완 가능
+        if (type === "checkbox" || type === "radio") {
+          el.checked = false;
+          return;
+        }
+
+        // file input
+        if (type === "file") {
+          el.value = "";
+          return;
+        }
+
+        // 나머지 입력
+        // (disabled는 건드릴 필요 없지만, 원하면 제외 처리 가능)
+        el.value = "";
+      });
+
+      // 3) 로딩 상태 제거
+      formEl.querySelectorAll(".loading").forEach((el) => el.classList.remove("loading"));
+    }
   
     // ----------------------------
     // 폼 전환 (전역 필요)
@@ -49,23 +83,29 @@
       const signinForm = document.querySelector(".signin-form");
       const signupForm = document.querySelector(".signup-form");
       if (!signinForm || !signupForm) return;
-  
+    
       // 전환 시 에러 숨김
       hideError("loginError");
       hideError("signupError");
-  
+    
       const isSigninActive = signinForm.classList.contains("active");
-  
+    
       if (isSigninActive) {
+        // 로그인 -> 회원가입으로 갈 때: 로그인 폼 초기화
+        resetForm(signinForm);
+    
         signinForm.classList.remove("active");
         signinForm.style.display = "none";
-  
+    
         signupForm.classList.add("active");
         signupForm.style.display = "block";
       } else {
+        // 회원가입 -> 로그인으로 갈 때: 회원가입 폼 초기화
+        resetForm(signupForm);
+    
         signupForm.classList.remove("active");
         signupForm.style.display = "none";
-  
+    
         signinForm.classList.add("active");
         signinForm.style.display = "block";
       }
@@ -217,5 +257,31 @@
         });
       }
     });
+
+    // ===== particles 생성 =====
+    const particlesHost = document.querySelector(".particles");
+    if (particlesHost) {
+      const COUNT = 70;
+
+      // 기존 파티클이 있으면 중복 생성 방지
+      if (particlesHost.querySelectorAll(".particle").length === 0) {
+        for (let i = 0; i < COUNT; i++) {
+          const p = document.createElement("span");
+          p.className = "particle";
+
+          // CSS에서 쓰는 --i (animation-delay 계산용)
+          p.style.setProperty("--i", String(i));
+
+          // 위치/속도 랜덤화
+          p.style.left = Math.random() * 100 + "%";
+          p.style.top = Math.random() * 100 + "%";
+          p.style.animationDuration = (15 + Math.random() * 25) + "s";
+          p.style.animationDelay = (-Math.random() * 25) + "s";
+
+          particlesHost.appendChild(p);
+        }
+      }
+    }
+
   })();
   

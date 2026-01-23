@@ -3,6 +3,7 @@ package com.edscorp.eds.weather.service;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -34,9 +35,9 @@ public class AirQualityService {
         refreshAirQuality();
     }
 
-    // @Scheduled(fixedRate = 300000) // 5분마다(하루 288회)
+    @Scheduled(fixedRate = 900000)
     public void refreshAirQuality() {
-        sidoName = "대구";
+        sidoName = "경북";
 
         log.info("🔧 Air API 호출 준비 - serviceKey={}, sidoName={}",
                 serviceKey, sidoName);

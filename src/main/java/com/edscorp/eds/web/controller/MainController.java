@@ -34,7 +34,7 @@ public class MainController {
 
         SystemSetting systemSetting = systemSettingService.getSetting();
 
-        model.addAttribute("title", "EDS-Home");
+        model.addAttribute("title", "Home");
         model.addAttribute("cameras", cameraCache.getCameras());
         model.addAttribute("currentPage", "main");
         model.addAttribute("mapApiKey", systemSetting.getMapApiKey());

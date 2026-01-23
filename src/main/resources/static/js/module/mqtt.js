@@ -56,10 +56,42 @@ window.SSE_MQTT = (function () {
         }
     }
 
+    window.triggerEmergencyScreenEffect = function() {
+        let overlay = document.getElementById("emergencyOverlay");
+        if (!overlay) return;
+    
+        overlay.classList.remove("active");
+        void overlay.offsetWidth;
+        overlay.classList.add("active");
+    
+        clearTimeout(overlay.__timer);
+            overlay.__timer = setTimeout(() => {
+            overlay.classList.remove("active");
+        }, 2300);
+
+        // const overlay = document.getElementById('overlay3');
+        // const ripple = document.getElementById('ripple');
+
+        // // 재트리거 안정화
+        // overlay.classList.remove('active');
+        // ripple.classList.remove('active');
+        // void overlay.offsetWidth;
+
+        // overlay.classList.add('active');
+        // ripple.classList.add('active');
+
+        // setTimeout(() => {
+        //     overlay.classList.remove('active');
+        //     ripple.classList.remove('active');
+        // }, 1100);
+    }
+
     // 위험구역 출입 알림
     function handleEmergency(msg) {
         const data = JSON.parse(msg);
         const camName = getCameraNameByCode(data.cctvCode);
+
+        triggerEmergencyScreenEffect();
 
         // 긴급 알림 표시
         showEmergencyToastr(camName, data.log, data.boundaryNum);
@@ -86,15 +118,17 @@ window.SSE_MQTT = (function () {
         box.classList.add("show");
 
         box.onclick = () => {
-            openConfirmModal(
-                "위험구역 출입",
-                `${camName} 카메라\n${boundaryNum}번 구역에 발령을 송출할까요?`,
-                () => {
-                    if (window.Speakers) {
-                        Speakers.sendBroadcast(boundaryNum);
-                    }
-                }
-            );
+
+            window.openBroadcastModal(camName, boundaryNum);
+            // openConfirmModal(
+            //     "위험구역 출입",
+            //     `${camName} 카메라\n${boundaryNum}번 구역에 발령을 송출할까요?`,
+            //     () => {
+            //         if (window.Speakers) {
+            //             Speakers.sendBroadcast(boundaryNum);
+            //         }
+            //     }
+            // );
             box.classList.remove("show");
         };
     }

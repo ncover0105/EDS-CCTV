@@ -2,6 +2,7 @@ package com.edscorp.eds.weather.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -55,6 +56,10 @@ public interface TbWeatherWarningListRepository extends JpaRepository<TbWeatherW
             String tmEf,
             String lvl,
             String cmd,
+            LocalDateTime start,
+            LocalDateTime end);
+
+    Optional<TbWeatherWarningList> findFirstByCreatedAtBetweenOrderByCreatedAtDesc(
             LocalDateTime start,
             LocalDateTime end);
 }

@@ -1,5 +1,7 @@
 package com.edscorp.eds.speaker.typeb.service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -85,4 +87,5 @@ public class SpkDisasterService {
     public List<SpkDisaster> searchDisasterByName(String keyword) {
         return disasterRepository.findByDstNameContaining(keyword);
     }
+
 }

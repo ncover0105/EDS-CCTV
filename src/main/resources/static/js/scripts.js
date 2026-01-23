@@ -39,8 +39,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // });
 
     Weather.init();          // AWS, 예보, 레이더, 위성 (2분 주기)
-    Weather.loadAirQuality(); // 대기질 1회 호출
-
+    loadTodayLatestDisasterOneLine();
     if (typeof Janus === "undefined") {
         alert("❌ Janus.js 라이브러리 로드 실패");
         return;
@@ -99,23 +98,31 @@ document.addEventListener("DOMContentLoaded", function () {
         showToast('설정이 저장되었습니다.', 'success');
     });
 
-    updateRangeValue('volumeRange', 'volumeValue');
+    // updateRangeValue('volumeRange', 'volumeValue');
     // generateRandomSpeakers();
     
     // loadSpeakerList();
     // renderSpeakerPanel();
 
-    const testBtn = document.getElementById("testEmergencyBtn");
-    if (!testBtn) return;
+    
+    const entryTestBtn = document.getElementById("entryTestBtn");
 
-    testBtn.addEventListener("click", () => {
-        // 테스트용 더미 데이터
-        const camName = "CAM-01";
-        const msg = "출입 금지 구역에 사람이 감지되었습니다.";
-        const boundaryNum = 1;
+    if (entryTestBtn) {
+        entryTestBtn.addEventListener("click", () => {
 
-        showEmergencyToastr(camName, msg, boundaryNum);
-    });
+            // ===== 테스트용 더미 데이터 =====
+            const camName = "CCTV-01";
+            const msg = "허가되지 않은 인원이 위험구역에 진입했습니다.";
+            const boundaryNum = 2;
+            
+            if (typeof window.triggerEmergencyScreenEffect === "function") {
+                window.triggerEmergencyScreenEffect();
+            }
+
+            showEmergencyToastr(camName, msg, boundaryNum);
+        });
+    }
+
 });
 
 function showEmergencyToastr(camName, msg, boundaryNum) {
@@ -129,18 +136,35 @@ function showEmergencyToastr(camName, msg, boundaryNum) {
     box.classList.add("show");
 
     box.onclick = () => {
-        openSpeakerBroadcastModal(); // ✅ 수동발령 모달 오픈
+        // 1) 발령 모달 오픈
+        window.openBroadcastModal(camName, boundaryNum);
+
+        // 2) 알림 닫기
         box.classList.remove("show");
     };
 }
 
-function openSpeakerBroadcastModal() {
+// 전역 함수 (어느 JS 파일에서든 호출 가능)
+window.openBroadcastModal = function (camName, boundaryNum) {
     const modalEl = document.getElementById("speaker_broadcast_modal");
     if (!modalEl) return;
 
+    // 힌트 문구 업데이트
+    const hintEl = document.getElementById("bc_hint");
+    if (hintEl) {
+        hintEl.innerText =
+            `${camName} / ${boundaryNum}번 구역 출입 이벤트 - 스피커 선택 후 발령을 진행하세요.`;
+    }
+
+    // boundaryNum / camName 저장 (bc_send 등에서 사용)
+    modalEl.dataset.boundaryNum = String(boundaryNum);
+    modalEl.dataset.camName = camName;
+
+    // Bootstrap 모달 오픈
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
-}
+};
+
 
 window.onload = function(){
 
@@ -341,37 +365,65 @@ async function renderSpeakerPanel() {
                 </div>
             </div>
         `;
-
-        // const html = `
-        //     <div class="speaker-item">
-        //         <div style="display: flex; align-items: center; justify-content: space-between;">
-        //             <div style="display: flex; align-items: center;">
-        //                 <span class="dot ${isOnline ? "dot-online" : "dot-offline"}"></span>
-        //                 <span>${(sp.speakerName || sp.name || "").trim() || "알수 없음"}</span>
-        //             </div>
-        //             <small style="opacity: 0.7; font-size: 0.75rem;">
-        //                 ${(sp.speakerAdr || sp.ip || "").trim() || "알수 없음"}
-        //             </small>
-        //         </div>
-        //     </div>
-        // `;
-
-        // const html = `
-        //     <div class="log-item d-flex align-items-center justify-content-between">
-        //         <div>
-        //             <div class="fw-semibold text-white">
-        //                 ${(sp.speakerName || sp.name || "").trim() || "알수 없음"}
-        //             </div>
-        //             <div class="small text-white opacity-75">
-        //                 ${(sp.speakerAdr || sp.ip || "").trim() || "알수 없음"}
-        //             </div>
-        //         </div>
-
-        //         <span class="status-badge rounded-4 ${isOnline ? "status-success " : "status-error"}">
-        //             ${isOnline ? "온라인" : "오프라인"}
-        //         </span>
-        //     </div>
-        // `;
         container.insertAdjacentHTML("beforeend", html);
     });
 }
+
+const DISASTER_LATEST_TODAY_API = "/api/btype/query/disasters/latest-today";
+
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+// 한 줄 표시용 (없으면 "오늘 특보 없음")
+function buildDisasterOneLine(d) {
+  if (!d) return "오늘 특보 없음";
+
+  const type = WRN_LABEL?.[d.dstCode] ?? d.dstName ?? "특보";
+  const level = LVL_LABEL?.[d.dstPriority] ?? "";
+  const command = CMD_LABEL?.[Number(d.dstSirenCode)] ?? "";
+  const region = REG_ID_TO_KO?.[d.dstStoCode] ?? "";
+
+  return [ `${type} ${level}`.trim(), region, command ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+async function loadTodayLatestDisasterOneLine() {
+    const lineEl = document.getElementById("disasterLine");
+    const dateEl = document.getElementById("disasterDate");
+    if (!lineEl || !dateEl) return;
+  
+    // 날짜 배지(클라이언트 기준)
+    const today = new Date().toISOString().slice(0, 10);
+    dateEl.textContent = today.replaceAll("-", ".");
+  
+    try {
+      const res = await fetch(DISASTER_LATEST_TODAY_API, { headers: { "Accept": "application/json" } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  
+      const data = await res.json(); // { today, item }
+      const oneLine = buildDisasterOneLine(data?.item);
+  
+      lineEl.textContent = oneLine;
+      lineEl.classList.remove("text-muted", "text-warning", "text-danger", "text-white-50");
+  
+      if (!data?.item) {
+        lineEl.classList.add("text-muted");
+      } else {
+        // 기본은 경고색으로 강조(원하면 조건부로 레벨별 색상도 가능)
+        lineEl.classList.add("text-warning");
+      }
+    } catch (e) {
+      console.error("[disaster latest]", e);
+      lineEl.textContent = "특보 정보 조회 실패";
+      lineEl.classList.remove("text-warning");
+      lineEl.classList.add("text-danger");
+    }
+  }
+  

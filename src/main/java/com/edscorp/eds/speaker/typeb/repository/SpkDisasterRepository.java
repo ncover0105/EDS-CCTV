@@ -1,5 +1,6 @@
 package com.edscorp.eds.speaker.typeb.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,4 +17,5 @@ public interface SpkDisasterRepository extends JpaRepository<SpkDisaster, String
 
     // 이름 포함 검색
     List<SpkDisaster> findByDstNameContaining(String keyword);
+
 }

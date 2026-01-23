@@ -7,7 +7,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EDS - Equipment Management</title>
+  <title>Equipment Management</title>
 
   <script th:inline="javascript">
     /*<![CDATA[*/
@@ -216,11 +216,11 @@
                     <button class="quick-btn" onclick="handleButtonClick(this, setTime)">
                       <i class="bi bi-clock"></i><span>시간 설정</span>
                     </button>
-                    <button class="quick-btn" onclick="handleButtonClick(this, remoteUpdate)">
+                    <!-- <button class="quick-btn" onclick="handleButtonClick(this, remoteUpdate)">
                       <i class="bi bi-arrow-up-circle"></i><span>원격 업데이트</span>
-                    </button>
-                    <button class="quick-btn" onclick="handleButtonClick(this, mcuResetRequest)">
-                      <i class="bi bi-arrow-clockwise"></i><span>MCU</span>
+                    </button> -->
+                    <button class="quick-btn" onclick="handleButtonClick(this, resetRequest)">
+                      <i class="bi bi-bootstrap-reboot text-danger"></i><span>스피커 리셋</span>
                     </button>
                   </div>
                 </div>
@@ -374,7 +374,7 @@
                     </div>
           
                     <div class="col-md-12">
-                      <label class="form-label">비고</label>
+                      <label class="form-label">설명</label>
                       <textarea class="form-control" id="add_description" rows="2"></textarea>
                     </div>
                   </div>
@@ -438,7 +438,7 @@
                     </div>
 
                     <div class="col-md-12">
-                      <label class="form-label">비고</label>
+                      <label class="form-label">설명</label>
                       <textarea class="form-control" id="edit_description" rows="2"></textarea>
                     </div>
                   </div>

@@ -5,84 +5,11 @@ window.CCTVLayout = (function () {
     let originalParent = null;
     let originalElement = null;
 
-    let currentLayout = 4;
-
     /* ============================
      *   공통 LOG 함수
      * ============================ */
     function log(action, detail = "") {
         console.log(`📌 [CCTVLayout] ${action}`, detail);
-    }
-
-    /* ============================
-     *   연결된 카메라 수 계산
-     *   - Janus handle._hasVideo(true) 기반
-     *   - 없으면 status(정상) 기반, 그것도 없으면 cameras.length
-     * ============================ */
-    function getConnectedCameraCount() {
-        try {
-            const handles = window.CCTVJanus?.pluginHandles;
-            if (handles && typeof handles === "object") {
-                const connected = Object.values(handles).filter(h => h && h._hasVideo === true).length;
-                return connected;
-            }
-        } catch (e) {
-            // ignore
-        }
-
-        // fallback 1) status === "1"
-        const statusBased = cameras.filter(c => c.status === "1").length;
-        if (statusBased > 0) return statusBased;
-
-        // fallback 2) 등록된 전체 카메라 수
-        return cameras.length;
-    }
-
-    function getMaxLayoutByCameraCount(count) {
-        if (count <= 4) return 4;
-        if (count <= 9) return 9;
-        return 16; // 10개 이상은 16까지
-    }
-
-    function clampLayout(layout, connectedCount = getConnectedCameraCount()) {
-        const maxLayout = getMaxLayoutByCameraCount(connectedCount);
-        const allowed = [4, 9, 16];
-
-        let normalized = allowed.includes(layout) ? layout : 4;
-        if (normalized > maxLayout) normalized = maxLayout;
-
-        return normalized;
-    }
-
-    function updateLayoutButtons(connectedCount = getConnectedCameraCount()) {
-        const maxLayout = getMaxLayoutByCameraCount(connectedCount);
-
-        document.querySelectorAll("[data-layout]").forEach(btn => {
-            const v = parseInt(btn.getAttribute("data-layout"), 10);
-            const disabled = v > maxLayout;
-
-            btn.disabled = disabled;
-            btn.classList.toggle("disabled", disabled);
-            btn.setAttribute("aria-disabled", disabled ? "true" : "false");
-        });
-    }
-
-    /* ============================
-     *   연결 수에 맞춰 레이아웃 자동 변경
-     * ============================ */
-    function syncLayoutToConnectedCameras() {
-        const connected = getConnectedCameraCount();
-        const desired = getMaxLayoutByCameraCount(connected);
-
-        updateLayoutButtons(connected);
-
-        // 현재 레이아웃이 연결수보다 크면 자동으로 내려줌
-        const clamped = clampLayout(currentLayout, connected);
-        if (clamped !== currentLayout || desired !== currentLayout) {
-            // 정책: "항상 연결 수 기준 최대 레이아웃으로 맞춘다"
-            // (원하시면: currentLayout 유지 + 초과만 clamp로만 동작하도록 변경 가능)
-            renderGrid(desired);
-        }
     }
 
     /* ============================
@@ -92,25 +19,18 @@ window.CCTVLayout = (function () {
         cameras = cameraList;
         log("init()", `카메라 개수 = ${cameras.length}`);
 
-        // 최초 렌더 (등록 카메라 수 기준 임시)
-        renderGrid(cameras.length > 4 ? 9 : 4);
+        // renderGrid(cameras.length > 4 ? 9 : 4);
+        renderGrid(4);
         bindEvents();
-
-        // 실제 연결(영상) 수 기준으로 한번 더 정렬
-        syncLayoutToConnectedCameras();
+        // updateStatusCounts();
     }
 
     function bindEvents() {
         document.querySelectorAll("[data-layout]").forEach(btn => {
             btn.addEventListener("click", () => {
-                const layout = parseInt(btn.getAttribute("data-layout"), 10);
-                log("Layout 변경(요청)", layout);
-
-                // 수동 클릭도 연결 수 기준으로 clamp
-                const connected = getConnectedCameraCount();
-                const clamped = clampLayout(layout, connected);
-
-                renderGrid(clamped);
+                const layout = parseInt(btn.getAttribute("data-layout"));
+                log("Layout 변경", layout);
+                renderGrid(layout);
             });
         });
 
@@ -126,13 +46,7 @@ window.CCTVLayout = (function () {
      *      GRID RENDERING
      * ============================ */
     function renderGrid(layout) {
-        const connected = getConnectedCameraCount();
-        const finalLayout = clampLayout(layout, connected);
-
-        currentLayout = finalLayout;
-        log("renderGrid()", `layout=${layout} -> final=${finalLayout} (connected=${connected})`);
-
-        updateLayoutButtons(connected);
+        log("renderGrid()", `layout = ${layout}`);
 
         const container = document.getElementById("cctv-container");
         container.innerHTML = "";
@@ -140,11 +54,12 @@ window.CCTVLayout = (function () {
         const grid = document.createElement("div");
         grid.className = "cctv-grid";
 
-        if (finalLayout === 4) grid.classList.add("grid-2x2");
-        else if (finalLayout === 9) grid.classList.add("grid-3x3");
-        else if (finalLayout === 16) grid.classList.add("grid-4x4");
+        if (layout === 1) grid.classList.add("grid-1x1");
+        else if (layout === 4) grid.classList.add("grid-2x2");
+        else if (layout === 9) grid.classList.add("grid-3x3");
+        else if (layout === 16) grid.classList.add("grid-4x4");
 
-        for (let i = 0; i < finalLayout; i++) {
+        for (let i = 0; i < layout; i++) {
             grid.appendChild(createFeed(i));
         }
 
@@ -215,7 +130,7 @@ window.CCTVLayout = (function () {
 
     function createPlaceholder(cam) {
         log("createPlaceholder()", `placeholder-${cam.mountpointId}`);
-
+    
         const placeholder = document.createElement("div");
         placeholder.id = `placeholder-${cam.mountpointId}`;
         placeholder.className = "cctv-placeholder";
@@ -230,10 +145,9 @@ window.CCTVLayout = (function () {
                 <small>연결없음</small>
             </div>
         `;
-
+    
         return placeholder;
     }
-
     function emptySlotHtml() {
         return CCTV_PLACEHOLDER_HTML;
     }
@@ -256,7 +170,7 @@ window.CCTVLayout = (function () {
         fullscreenBtn.addEventListener('click', e => {
             e.stopPropagation();
             console.log(`[FULLSCREEN BTN CLICK] camera: ${cam.name}`);
-
+        
             if (!video.classList.contains('d-none')) {
                 console.log(`[FULLSCREEN START] ${cam.name} 영상 표시 중`);
                 showFullscreen(video);
@@ -278,11 +192,10 @@ window.CCTVLayout = (function () {
         const statusClass = cam.status === "1" ? "online" : "offline";
 
         label.innerHTML = `
-            <div style="font-weight: 600; margin-bottom: 0.25rem;">${cam.name}</div>
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span class="dot dot-${statusClass}"></span>
-                <span>${statusText}</span>
-            </div>
+            <span class="cctv-name">${cam.name}</span>
+            <span class="cctv-status status-${statusClass} d-none">
+                ${statusText}
+            </span>
         `;
         return label;
     }
@@ -291,6 +204,7 @@ window.CCTVLayout = (function () {
      *   전체화면
      * ============================ */
     function showFullscreen(videoEl) {
+
         const fullscreenView = document.getElementById('fullscreenView');
         const fullscreenContent = fullscreenView.querySelector('.fullscreen-content');
 
@@ -315,35 +229,54 @@ window.CCTVLayout = (function () {
 
     function closeFullscreen() {
         log("closeFullscreen()");
-
+    
         const fullView = document.getElementById("fullscreenView");
         const content = fullView.querySelector(".fullscreen-content");
-
+    
         if (originalParent && originalElement) {
             const mountId = originalElement.id.replace("video-", "");
             const placeholder = document.getElementById(`placeholder-${mountId}`);
-
+    
             log("전체화면 → 원래 자리 복귀", originalElement.id);
-
+    
+            // 원래 자리 복귀
             originalParent.appendChild(originalElement);
-
+    
+            // video 표시 보장
             originalElement.classList.remove("d-none");
             originalElement.style.display = "block";
-
+    
+            // placeholder 숨기기
             if (placeholder) {
                 placeholder.classList.add("d-none");
                 placeholder.style.display = "none";
             }
         }
-
+    
+        // fullscreen 영역 초기화
         content.innerHTML = "";
         fullView.classList.add("d-none");
         fullView.classList.remove("active");
-
+    
         originalParent = null;
         originalElement = null;
-
+    
         log("전체화면 종료 완료");
+    }
+    
+
+    /* ============================
+     *   상태 카운트
+     * ============================ */
+    function updateStatusCounts() {
+        const online = cameras.filter(c => c.status === "1").length;
+        const offline = cameras.length - online;
+
+        log("updateStatusCounts()", `online=${online}, offline=${offline}`);
+
+        document.getElementById("online-count").textContent = online;
+        document.getElementById("warning-count").textContent = 0;
+        document.getElementById("offline-count").textContent = offline;
     }
 
     /* ============================
@@ -357,9 +290,6 @@ window.CCTVLayout = (function () {
 
         if (video) video.classList.add("d-none");
         if (placeholder) placeholder.classList.remove("d-none");
-
-        // 끊겼을 때도 자동 레이아웃 반영
-        syncLayoutToConnectedCameras();
     }
 
     /* ============================
@@ -387,28 +317,23 @@ window.CCTVLayout = (function () {
             log("영상 재생 성공", cam.name);
             videoEl.classList.remove("d-none");
             placeholder?.classList.add("d-none");
-
-            // 연결 성공 시 자동 레이아웃 반영
-            syncLayoutToConnectedCameras();
         }).catch(err => {
             console.warn("⚠️ 자동 재생 실패:", err);
         });
-    }
 
-    // confirm modal (기존 코드에서 사용 중이면 그대로 유지)
-    function showConfirmModal(title, message) {
-        alert(`${title}\n${message}`);
+        stream.getTracks().forEach(track => {
+            track.onended = () => {
+                log("track.onended", cam.name);
+                showPlaceholder(cam);
+            };
+        });
     }
 
     return {
         init,
         renderGrid,
         attachStreamToVideo,
-        showPlaceholder,
-
-        // 신규 공개 API
-        getConnectedCameraCount,
-        syncLayoutToConnectedCameras
+        showPlaceholder
     };
 
 })();

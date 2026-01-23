@@ -1,5 +1,8 @@
 package com.edscorp.eds.speaker.typeb.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,5 +37,35 @@ public class BtypeCommandController {
             HttpServletRequest httpReq) {
         bTypeCommandService.handleSpeakerAction(req, httpReq);
         return ResponseEntity.ok("B-Type control command sent.");
+    }
+
+    // 스피커 상태 발신
+    @PostMapping("/action")
+    public ResponseEntity<Map<String, Object>> action(
+            @RequestBody BTypeActionRequest req,
+            HttpServletRequest httpReq) {
+        // 기본 유효성(서비스에서도 체크하지만, 컨트롤러에서 1차로 막으면 응답이 깔끔)
+        if (req == null || req.getSpeakerIds() == null || req.getSpeakerIds().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "ok", false,
+                    "message", "speakerIds가 비어있습니다."));
+        }
+        if (req.getAction() == null || req.getAction().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "ok", false,
+                    "message", "action이 비어있습니다."));
+        }
+
+        // 서비스 호출
+        bTypeCommandService.handleSpeakerAction(req, httpReq);
+
+        // 프론트에서 json을 기대하므로 ok 응답 제공
+        Map<String, Object> result = new HashMap<>();
+        result.put("ok", true);
+        result.put("message", "sent");
+        result.put("action", req.getAction());
+        result.put("speakerCount", req.getSpeakerIds().size());
+
+        return ResponseEntity.ok(result);
     }
 }

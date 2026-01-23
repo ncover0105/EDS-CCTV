@@ -6,7 +6,7 @@
     layout:decorate="~{layout/layout}">
 <head>
     <meta charset="UTF-8">
-    <title th:text="${title}">EDS</title>
+    <title th:text="${title}">Home</title>
     <script src="/js/footer.js"></script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css">
@@ -71,6 +71,7 @@
                         <span class="d-none d-md-inline">레이아웃</span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-dark mt-2" aria-labelledby="viewDropdown">
+                        <li><a class="dropdown-item" href="#" data-layout="1">1x1</a></li>
                         <li><a class="dropdown-item" href="#" data-layout="4">2x2</a></li>
                         <li><a class="dropdown-item" href="#" data-layout="9">3x3</a></li>
                         <li><a class="dropdown-item" href="#" data-layout="16">4x4</a></li>
@@ -92,9 +93,13 @@
                     <i class="bi bi-arrow-up-right-square"></i>
                     <span class="d-none d-md-inline">스피커 테스트</span>
                 </button>
-                <button type="button" id="testEmergencyBtn" class="btn-apple-danger">
-                    <i class="bi bi-bell-fill"></i>
-                    <span class="d-none d-md-inline">비상알림 테스트</span>
+                <button type="button" data-bs-toggle="modal" data-bs-target="#btype_action_modal" class="btn-apple-warning d-none">
+                    <i class="bi bi-arrow-up-right-square"></i>
+                    <span class="d-none d-md-inline">출입 테스트</span>
+                </button>
+                <button class="btn-apple-warning" id="entryTestBtn">
+                    <i class="bi bi-door-open-fill"></i>
+                    <span class="d-none d-md-inline">출입 테스트</span>
                 </button>
             </div>
             <div class="current-time">
@@ -144,7 +149,7 @@
                 <div class="panel">
                     <div class="panel-header">
                         <span>출입기록</span>
-                        <span id="logCount" class="badge info">0건</span>
+                        <span id="logCount" class="status-badge status-info">0건</span>
                     </div>
                     <div class="panel-content">
                         <div id="logContainer"></div>
@@ -166,6 +171,24 @@
                             class="d-none d-flex flex-column align-items-center justify-content-center text-center flex-grow-1">
                             <i class="bi bi-exclamation-circle mb-2 fs-3 text-muted"></i>
                             <p class="mb-0 small text-muted">스피커 상태 정보가 없습니다.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel p-0" id="specialReportPanel">
+                    <div class="panel-header d-none">
+                        <span>특보</span>
+                        <span class="badge info" id="specialReportBadge">오늘</span>
+                    </div>
+                    
+                    <div class="panel-content p-0">
+                        <div id="specialReportLine" class="special-line" style="opacity:0.9;">
+                            불러오는 중...
+                        </div>
+                    
+                        <div id="specialReportEmpty" class="d-none d-flex flex-column align-items-center justify-content-center text-center flex-grow-1">
+                            <i class="bi bi-exclamation-circle mb-2 fs-3 text-muted"></i>
+                            <p class="mb-0 small text-muted">오늘 특보 없음</p>
                         </div>
                     </div>
                 </div>
@@ -212,10 +235,11 @@
                         <div class="air-quality-item">
                             <div class="air-quality-top">
                                 <span class="air-quality-label">미세먼지 (PM10)</span>
-                                <span class="air-quality-grade" id="pm10Grade">--</span>
                             </div>
                             <div class="air-quality-bottom">
-                                <span class="air-quality-value" id="pm10Value">--</span>
+                                <span class="air-quality-grade" id="pm10Grade">-</span>
+
+                                <span class="air-quality-value" id="pm10Value">-</span>
                             </div>
                         </div>
                     
@@ -223,10 +247,11 @@
                         <div class="air-quality-item">
                             <div class="air-quality-top">
                                 <span class="air-quality-label">초미세먼지 (PM2.5)</span>
-                                <span class="air-quality-grade" id="pm25Grade">--</span>
                             </div>
                             <div class="air-quality-bottom">
-                                <span class="air-quality-value" id="pm25Value">--</span>
+                                <span class="air-quality-grade" id="pm25Grade">-</span>
+
+                                <span class="air-quality-value" id="pm25Value">-</span>
                             </div>
                         </div>
                     </div>
@@ -289,6 +314,11 @@
                 <div id="notification-message" class="notification-message"></div>
             </div>
         </div>
+        <!-- Emergency Screen Overlay -->
+        <div id="emergencyOverlay" class="emergency-overlay" aria-hidden="true"></div>
+        <!-- <div class="overlay-3" id="overlay3"></div>
+        <div class="ripple" id="ripple"></div> -->
+        
         <!-- <script src="/js/notimodal.js"></script> -->
     </div>
 </body>

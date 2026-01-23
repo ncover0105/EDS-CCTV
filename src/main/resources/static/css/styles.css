@@ -12866,6 +12866,12 @@ body {
     background: #000;
     display: block;
 }
+
+.grid-1x1 {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+
 .grid-2x2 {
   grid-template-columns: repeat(2, 1fr);
   grid-template-rows: repeat(2, 1fr);
@@ -13460,6 +13466,7 @@ body {
 #speakerContainer,
 #emptyLogMessage,
 #emptySpeakerMessage {
+  padding-top: 5px;
     max-height: 10vh;
 }
 
@@ -13520,7 +13527,7 @@ body {
   color: var(--text-secondary);
 }
 
-.log-item, .speaker-item {
+/* .log-item, .speaker-item {
   background: rgba(255, 255, 255, 0.05);
   padding: 0.5rem 0.75rem;
   border-radius: 8px;
@@ -13535,7 +13542,64 @@ body {
 .log-item:hover, .speaker-item:hover {
   background: rgba(79, 195, 247, 0.1);
   border-color: rgba(79, 195, 247, 0.3);
+} */
+
+.log-item,
+.speaker-item {
+  position: relative;
+
+  padding: 8px 12px;
+  margin-bottom: 6px;
+
+  border-radius: 10px;
+  border: 1px solid rgba(231, 76, 60, 0.28);
+
+  background: rgba(231, 76, 60, 0.06);
+  backdrop-filter: blur(6px);
+
+  font-size: 12.5px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.92);
+
+  box-shadow:
+    0 4px 14px rgba(231, 76, 60, 0.18),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    transform 0.12s ease,
+    box-shadow 0.16s ease;
+
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
 }
+
+/* 좌측 출입 시그널 바 */
+.log-item::before,
+.speaker-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  bottom: 7px;
+  width: 3px;
+  border-radius: 999px;
+  background: rgba(231, 76, 60, 0.95);
+}
+
+/* hover – 출입 강조 */
+.log-item:hover,
+.speaker-item:hover {
+  background: rgba(231, 76, 60, 0.10);
+  border-color: rgba(231, 76, 60, 0.55);
+  box-shadow:
+    0 6px 20px rgba(231, 76, 60, 0.30),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+  transform: translateY(-1px);
+}
+
 
 /* .control-btn {
   background: white;
@@ -14028,7 +14092,7 @@ body {
   height: 100%;
   /* max-height: 100px; */
   /* object-fit: cover; */
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
 }
 
@@ -14228,6 +14292,48 @@ body {
   font-weight: 500;
   color: #e8eaed;
 }
+
+/* =========================
+   Weather Panel: 패널 밖으로 절대 안 나가게
+   ========================= */
+
+/* 1) 날씨 패널은 내부가 커져도 밖으로 튀어나가지 않게 */
+.panel.weather-panel {
+  overflow: hidden;      /* 패널 밖으로 못 나감 */
+  min-height: 0;         /* grid/flex 환경에서 필수 */
+}
+
+/* 2) weather-main / air-quality-main이 패널 높이에 눌려 겹치지 않도록 "내용 높이만큼" */
+.panel.weather-panel .weather-main {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+.panel.weather-panel .air-quality-main {
+  flex: 0 0 auto;         /* 기존 flex:1 제거 */
+  min-height: 0;
+  align-content: start;   /* 기존 center 제거(겹침 체감 줄임) */
+}
+
+/* 3) 그래도 내용이 많아지면, 패널 안에서 스크롤로 처리 */
+.panel.weather-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.panel.weather-panel .weather-main,
+.panel.weather-panel .air-quality-main {
+  overflow: hidden;       /* 각 섹션 자체는 튀어나오지 않게 */
+}
+
+/* @media (max-height: 900px) {
+  .panel.weather-panel .weather-temp { font-size: 1.5rem; }
+  .panel.weather-panel .weather-icon { width: 64px; height: 64px; }
+  .panel.weather-panel .weather-item { padding: 0.4rem; }
+  .panel.weather-panel .air-quality-item { padding: 0.4rem; }
+  .panel.weather-panel .weather-main { gap: 0.6rem; }
+  .panel.weather-panel .air-quality-main { margin-top: 0.4rem; gap: 0.4rem; }
+} */
 
 .weather-panel {
   background: linear-gradient(135deg, rgba(30, 60, 114, 0.3), rgba(42, 82, 152, 0.3));
@@ -15376,15 +15482,9 @@ body {
 }
 
 .speaker-list-container {
-  /* flex-grow: 1; */
-  /* height: 55vh;
-  overflow-y: auto; */
-  /* height: 75vh; */
-  /* max-height: 400px; */
-  max-height: 500px;
+  flex: 1 1 auto;   /* 남는 높이를 채움 */
+  min-height: 0;
   overflow-y: auto;
-  /* flex: 1 1 auto; */
-  /* min-height: 0; */
 }
 
 .info-card {
@@ -15636,6 +15736,14 @@ body {
   width: 100%;
 }
 
+.air-quality-bottom {
+  display: flex;
+  justify-content: space-between;
+  /* font-size: 0.75rem;
+  margin-bottom: 0.25rem; */
+  width: 100%;
+}
+
 /* 숫자 색상 (PM10, PM2.5 값) */
 .air-quality-value.good {
   color: #3b82f6; /* 파란색 */
@@ -15725,9 +15833,32 @@ body {
 }
 
 .logo {
-  font-size: 24px;
-  font-weight: bold;
-  color: #00d4ff;
+  font-family: "SUIT", system-ui, sans-serif;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+
+  color: #9be7ff;
+
+  position: relative;
+  padding-left: 14px;
+}
+
+/* 좌측 포인트 바 */
+.logo::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 70%;
+  border-radius: 999px;
+  background: linear-gradient(
+    to bottom,
+    #00d4ff,
+    #4fc3f7
+  );
 }
 
 .broadcast-card {
@@ -17057,7 +17188,7 @@ body {
 /* Quick actions */
 .quick-actions{
   display:grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -17651,5 +17782,310 @@ section.card.card-surface{ min-height:0; }
   /* 모바일에서 우측 카드가 아래로 내려갈 때 간격 */
   #speaker-content .col-12.col-xxl-3{
     margin-top: .75rem;
+  }
+}
+
+.alert-panel .alert-item {
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.04);
+}
+
+.alert-panel .alert-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.alert-panel .alert-name {
+  font-weight: 700;
+  color: #fff;
+}
+
+.alert-panel .alert-code {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.alert-panel .alert-msg {
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: 0.85;
+  line-height: 1.3;
+}
+
+/* ===== 특보 한 줄 기본 ===== */
+.special-line{
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  width: 100%;
+  min-height: 44px;
+  padding: 12px 14px;
+
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.10);
+
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(8px);
+
+  color: rgba(255,255,255,0.92);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+
+  box-shadow:
+    0 8px 22px rgba(0,0,0,0.25),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* 좌측 강조 바(레벨/상태 표시) */
+.special-line::before{
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 4px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.18);
+}
+
+/* hover 살짝만 */
+/* .special-line:hover{
+  border-color: rgba(255,255,255,0.16);
+  transform: translateY(-1px);
+  transition: all 0.18s ease;
+} */
+
+/* ===== 텍스트 구성 요소 ===== */
+.sr-time{
+  color: rgba(255,255,255,0.65);
+  font-variant-numeric: tabular-nums;
+}
+
+.sr-dot{
+  color: rgba(255,255,255,0.35);
+}
+
+.sr-region{
+  color: rgba(255,255,255,0.95);
+  font-weight: 650;
+}
+
+.sr-wrn-text{
+  color: rgba(255,255,255,0.88);
+  font-weight: 600;
+}
+
+.sr-cmd-text{
+  margin-left: auto; /* 오른쪽 끝으로 */
+  color: rgba(255,255,255,0.70);
+  font-weight: 600;
+}
+
+/* ===== 레벨별: 라인 전체 톤 변경 ===== */
+/* (lvl 없을 때 기본) */
+.special-line.lvl-0{
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.10);
+}
+.special-line.lvl-0::before{
+  background: rgba(255,255,255,0.18);
+}
+
+/* lvl-1: 관심(초록 톤) */
+.special-line.lvl-1{
+  background: rgba(46, 204, 113, 0.12);
+  border-color: rgba(46, 204, 113, 0.28);
+  box-shadow:
+    0 10px 26px rgba(0,0,0,0.25),
+    0 0 0 3px rgba(46, 204, 113, 0.10),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.special-line.lvl-1::before{
+  background: rgba(46, 204, 113, 0.85);
+}
+
+/* lvl-2: 주의(노랑 톤) */
+.special-line.lvl-2{
+  background: rgba(241, 196, 15, 0.13);
+  border-color: rgba(241, 196, 15, 0.30);
+  box-shadow:
+    0 10px 26px rgba(0,0,0,0.25),
+    0 0 0 3px rgba(241, 196, 15, 0.11),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.special-line.lvl-2::before{
+  background: rgba(241, 196, 15, 0.90);
+}
+
+/* lvl-3: 경보(빨강 톤) */
+.special-line.lvl-3{
+  background: rgba(231, 76, 60, 0.14);
+  border-color: rgba(231, 76, 60, 0.34);
+  box-shadow:
+    0 10px 26px rgba(0,0,0,0.25),
+    0 0 0 3px rgba(231, 76, 60, 0.12),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.special-line.lvl-3::before{
+  background: rgba(231, 76, 60, 0.92);
+}
+
+/* ===== Emergency overlay (stronger) ===== */
+.emergency-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  opacity: 0;
+
+  background:
+    radial-gradient(circle at center,
+      rgba(255, 0, 0, 0.12) 0%,
+      rgba(255, 0, 0, 0.16) 45%,
+      rgba(255, 0, 0, 0.34) 100%),
+    linear-gradient(0deg, rgba(255,0,0,0.14), rgba(255,0,0,0.14));
+
+  mix-blend-mode: screen;
+  filter: saturate(1.25) contrast(1.04);
+
+  /* 합성 레이어 힌트(버벅임 방지) */
+  will-change: opacity, transform;
+  transform: translateZ(0);
+}
+
+/* 기존: 1.1s * 3회 = 3.3s (체감상 끊김/반복 경계가 보일 수 있음)
+   개선: 2.2s 1회로 "연속 펄스"처럼 보이게 */
+.emergency-overlay.active {
+  animation: emergency-pulse-smooth 2.2s ease-in-out 0s 1,
+          emergency-shake-soft 0.55s ease-in-out 0s 2;
+}
+
+/* 급격한 점프(0.78 -> 0.30 등)를 완화한 곡선형 펄스 */
+@keyframes emergency-pulse-smooth {
+  0%   { opacity: 0; }
+  8%   { opacity: 0.22; }
+  16%  { opacity: 0.62; }
+  26%  { opacity: 0.35; }
+  36%  { opacity: 0.72; }
+  50%  { opacity: 0.40; }
+  62%  { opacity: 0.68; }
+  76%  { opacity: 0.32; }
+  90%  { opacity: 0.18; }
+  100% { opacity: 0; }
+}
+
+/* 흔들림은 "미세하게" + 횟수 줄임(끊김/피로 감소) */
+@keyframes emergency-shake-soft {
+  0%   { transform: translate3d(0,0,0); }
+  20%  { transform: translate3d(-1px, 0, 0); }
+  40%  { transform: translate3d( 1px, 0, 0); }
+  60%  { transform: translate3d(-0.5px, 0, 0); }
+  80%  { transform: translate3d( 0.5px, 0, 0); }
+  100% { transform: translate3d(0,0,0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .emergency-overlay.active {
+    animation: emergency-pulse-smooth 1.6s ease-in-out 0s 1;
+  }
+}
+
+.overlay-3 {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    circle at center,
+    rgba(239, 68, 68, 0.18) 0%,
+    rgba(220, 38, 38, 0.28) 100%
+  );
+  backdrop-filter: blur(2px); /* ↓ 대폭 감소 */
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9998;
+
+  will-change: opacity;
+}
+
+.overlay-3.active {
+  animation: softOverlay 1.1s ease-out;
+}
+
+.ripple {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  border: 3px solid rgba(220, 38, 38, 0.65);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0.3);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9999;
+
+  will-change: transform, opacity;
+}
+
+.ripple.active {
+  animation: rippleEffect 1.1s ease-out;
+}
+
+@keyframes minimalOverlay {
+  0% { opacity: 0; backdrop-filter: blur(0px); }
+  20% { opacity: 1; backdrop-filter: blur(4px); }
+  100% { opacity: 0; backdrop-filter: blur(0px); }
+}
+
+@keyframes borderFade {
+  0% { opacity: 0; transform: scale(0.95); }
+  15% { opacity: 1; transform: scale(1); }
+  85% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+
+@keyframes officialOverlay {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes iconPulse {
+  0% { opacity: 0; transform: scale(0.5) rotate(0deg); }
+  15% { opacity: 1; transform: scale(1.1) rotate(5deg); }
+  30% { opacity: 1; transform: scale(1) rotate(-5deg); }
+  45% { opacity: 1; transform: scale(1.05) rotate(0deg); }
+  85% { opacity: 1; transform: scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: scale(0.8) rotate(0deg); }
+}
+
+@keyframes softOverlay {
+  0%   { opacity: 0; }
+  25%  { opacity: 0.6; }
+  70%  { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+
+@keyframes rippleEffect {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3);
+  }
+  20% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(6);
   }
 }

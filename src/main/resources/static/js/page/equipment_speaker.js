@@ -7,6 +7,8 @@ const SPEAKER_CREATE_API = SPEAKER_BASE_API; // POST
 const SPEAKER_UPDATE_API = (speakerKey) => `${SPEAKER_BASE_API}/${speakerKey}`; // PUT
 const SPEAKER_DELETE_API = (speakerKey) => `${SPEAKER_BASE_API}/${speakerKey}`; // DELETE
 
+const SPEAKER_ACTION_API = "/api/btype/command/action";
+
 // 선택: 목록 자동 갱신(초). 0이면 비활성
 const SPEAKER_POLL_SECONDS = 0;
 
@@ -104,6 +106,21 @@ async function fetchSpeakerStatus(speakerKey) {
     throw new Error(`HTTP ${res.status} ${t}`);
   }
   return await res.json();
+}
+
+async function postSpeakerAction({ speakerIds, action, extraParam = "" }) {
+  const res = await fetch(SPEAKER_ACTION_API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Accept": "application/json" },
+    body: JSON.stringify({ speakerIds, action, extraParam })
+  });
+
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    throw new Error(`action failed: ${res.status} ${t}`);
+  }
+  // 필요 시 서버가 응답 JSON을 주면 여기서 파싱
+  return await res.json().catch(() => ({}));
 }
 
 /* ------------------------------
@@ -332,7 +349,7 @@ function handleButtonClick(_, actionFn) {
 }
 
 /* ------------------------------
-  Request status
+  Request
 ------------------------------ */
 async function requestStatus(selectedCheckbox) {
   const speakerKey = selectedCheckbox.dataset.key || selectedCheckbox.value;
@@ -340,6 +357,8 @@ async function requestStatus(selectedCheckbox) {
   const speakerAdr = selectedCheckbox.dataset.adr;
 
   try {
+    await postSpeakerAction({ speakerIds: [speakerKey], action: "status" });
+
     const data = await fetchSpeakerStatus(speakerKey);
     if (!data) {
       resetDetail();
@@ -395,6 +414,29 @@ async function requestStatus(selectedCheckbox) {
     console.error(e);
     resetDetail();
     alertMsg("스피커 상태 조회 실패", "danger");
+  }
+}
+
+async function setTime(selectedCheckbox) {
+  const speakerKey = selectedCheckbox.dataset.key || selectedCheckbox.value;
+  try {
+    await postSpeakerAction({ speakerIds: [speakerKey], action: "time" });
+    alertMsg("시간 동기화(발신) 요청을 전송했습니다.", "success");
+  } catch (e) {
+    console.error(e);
+    alertMsg("시간 동기화 요청 실패", "danger");
+  }
+}
+
+async function resetRequest(selectedCheckbox) {
+  const speakerKey = selectedCheckbox.dataset.key || selectedCheckbox.value;
+
+  try {
+    await postSpeakerAction({ speakerIds: [speakerKey], action: "reset" });
+    alertMsg("리셋(발신) 요청을 전송했습니다.", "success");
+  } catch (e) {
+    console.error(e);
+    alertMsg("리셋(발신) 요청 실패", "danger");
   }
 }
 
@@ -675,8 +717,12 @@ async function speakerDeleted() {
    Expose globals for HTML handlers
 ------------------------------ */
 window.initSpeakerPage = initSpeakerPage;
+
 window.handleButtonClick = handleButtonClick;
 window.requestStatus = requestStatus;
+window.setTime = setTime;
+window.resetRequest = resetRequest;
+
 window.resetDetail = resetDetail;
 window.renderSpeakerTable = renderSpeakerTable;
 
