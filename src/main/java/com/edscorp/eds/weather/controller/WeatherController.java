@@ -12,7 +12,6 @@ import com.edscorp.eds.weather.service.AirQualityService;
 import com.edscorp.eds.weather.service.SpecialReportService;
 import com.edscorp.eds.weather.service.WeatherDataService;
 import com.edscorp.eds.weather.service.WeatherImageService;
-// import com.edscorp.eds.weather.service.WeatherService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +32,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 @RequiredArgsConstructor
 @Slf4j
 public class WeatherController {
-    // private final WeatherService weatherService;
 
     private final WeatherDataService weatherDataService;
     private final WeatherImageService weatherImageService;

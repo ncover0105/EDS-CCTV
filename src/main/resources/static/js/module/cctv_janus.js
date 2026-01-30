@@ -14,7 +14,9 @@ window.CCTVJanus = (function () {
     const exports = {
         initSignaling,
         initJanusCam,
-        pluginHandles
+        pluginHandles,
+        reconnectAll,
+        reconnectOne
     };
 
     // ------------------------------
@@ -144,6 +146,46 @@ window.CCTVJanus = (function () {
                 }
             });
         });
+    }
+
+    async function reconnectAll(cameras) {
+        // Janus 세션이 아직 없으면 최초 연결부터
+        if (!janus) {
+            console.warn("janus 세션 없음 → initSignaling부터 실행");
+            return initSignaling(cameras);
+        }
+    
+        console.log("전체 재연결 시작");
+    for (const cam of cameras) {
+            try {
+                await initJanusCam(cam); // 내부에서 stop/detach 후 watch 재시작함
+            } catch (e) {
+                console.error("전체 재연결 중 오류:", cam?.mountpointId, e);
+            }
+        }
+        console.log("전체 재연결 완료");
+    }
+    
+    async function reconnectOne(cameras, key) {
+        // key: mountpointId 또는 cctvCode
+        const cam = cameras.find(c => String(c.mountpointId) === String(key) || String(c.cctvCode) === String(key));
+        if (!cam) {
+            console.warn("재연결 대상 카메라를 찾을 수 없음:", key);
+            return;
+        }
+    
+        if (!janus) {
+            console.warn("janus 세션 없음 → initSignaling부터 실행");
+            return initSignaling(cameras);
+        }
+    
+        console.log(`선택 재연결: ${cam.name} (mount=${cam.mountpointId})`);
+        try {
+            await initJanusCam(cam);
+            console.log("선택 재연결 완료:", cam.mountpointId);
+        } catch (e) {
+            console.error("선택 재연결 실패:", cam.mountpointId, e);
+        }
     }
     
 

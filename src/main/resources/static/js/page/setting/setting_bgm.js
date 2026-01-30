@@ -583,8 +583,8 @@
             <button class="icon-btn" type="button" data-action="edit" data-id="${s.id}" aria-label="edit">
               <i class="bi bi-pencil-square"></i>
             </button>
-            <button class="icon-btn" type="button" data-action="delete" data-id="${s.id}" aria-label="delete">
-              <i class="bi bi-trash3 text-danger"></i>
+            <button class="icon-btn delete" type="button" data-action="delete" data-id="${s.id}" aria-label="delete">
+              <i class="bi bi-trash3"></i>
             </button>
           </div>
         </div>

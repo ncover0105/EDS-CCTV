@@ -290,7 +290,7 @@ function createBroadcastCard(item) {
 
     <!-- ACTION -->
     <div class="broadcast-card-actions">
-        <button type="button" class="btn-apple-secondary" data-action="detail">
+        <button type="button" class="btn-apple-base btn-apple-secondary" data-action="detail">
         <i class="bi bi-eye"></i> 상세
         </button>
     </div>

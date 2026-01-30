@@ -64,10 +64,10 @@ window.SSE_MQTT = (function () {
         void overlay.offsetWidth;
         overlay.classList.add("active");
     
-        clearTimeout(overlay.__timer);
-            overlay.__timer = setTimeout(() => {
-            overlay.classList.remove("active");
-        }, 2300);
+        // clearTimeout(overlay.__timer);
+        //     overlay.__timer = setTimeout(() => {
+        //     overlay.classList.remove("active");
+        // }, 2300);
 
         // const overlay = document.getElementById('overlay3');
         // const ripple = document.getElementById('ripple');
@@ -130,6 +130,8 @@ window.SSE_MQTT = (function () {
             //     }
             // );
             box.classList.remove("show");
+            document.getElementById("emergencyOverlay").classList.remove("active");
+
         };
     }
 

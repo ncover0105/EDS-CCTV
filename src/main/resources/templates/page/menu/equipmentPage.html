@@ -105,7 +105,7 @@
                         <i class="bi bi-search"></i>
                         <input id="speakerSearchInput" type="text" class="surface-search-input"
                               placeholder="검색: 이름 / ID / 지역 / 전화번호" autocomplete="off">
-                        <button type="button" class="surface-icon-btn" id="speakerSearchClear" title="지우기" aria-label="지우기">
+                        <button type="button" class="icon-btn" id="speakerSearchClear" title="지우기" aria-label="지우기">
                           <i class="bi bi-x-lg"></i>
                         </button>
                       </div>
@@ -117,13 +117,13 @@
                         <button class="btn-action-pill danger" type="button" onclick="speakerDeleted()" title="삭제">
                           <i class="bi bi-trash me-1"></i>삭제
                         </button> -->
-                        <button class="btn-apple-light" type="button" onclick="speakerAdd()" title="추가">
+                        <button class="btn-apple-base btn-apple-light" type="button" onclick="speakerAdd()" title="추가">
                           <i class="bi bi-plus me-1"></i>추가
                         </button>                        
-                        <button class="btn-apple-light" type="button" onclick="speakerUpdate()" title="수정">
+                        <button class="btn-apple-base btn-apple-light" type="button" onclick="speakerUpdate()" title="수정">
                           <i class="bi bi-pencil-square me-1"></i>수정
                         </button>
-                        <button class="btn-apple-danger" type="button" onclick="speakerDeleted()" title="삭제">
+                        <button class="btn-apple-base btn-apple-danger" type="button" onclick="speakerDeleted()" title="삭제">
                           <i class="bi bi-trash me-1"></i>삭제
                         </button>
                         <button class="btn-action-pill d-none" type="button" onclick="listSpeakers?.()">
@@ -334,7 +334,7 @@
             <div class="modal-dialog modal-lg">
               <div class="modal-content">
           
-                <div class="modal-header">
+                <div class="modal-header border-0">
                   <h5 class="modal-title">스피커 추가</h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
@@ -380,7 +380,7 @@
                   </div>
                 </div>
           
-                <div class="modal-footer">
+                <div class="modal-footer border-0">
                   <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">닫기</button>
                   <button class="btn btn-primary" type="button" id="btnSpeakerAddSave">등록</button>
                 </div>
@@ -395,7 +395,7 @@
             <div class="modal-dialog modal-lg">
               <div class="modal-content">
 
-                <div class="modal-header">
+                <div class="modal-header border-0">
                   <h5 class="modal-title">스피커 정보 수정</h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -444,7 +444,7 @@
                   </div>
                 </div>
 
-                <div class="modal-footer">
+                <div class="modal-footer border-0">
                   <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">닫기</button>
                   <button class="btn btn-primary" type="button" id="btnSpeakerSave">저장</button>
                 </div>
@@ -660,16 +660,16 @@
                         </div>
 
                         <div class="action-grid">
-                          <button class="btn-apple-light" onclick="startBroadcast()">
+                          <button class="btn-apple-base btn-apple-light" onclick="startBroadcast()">
                             <i class="bi bi-play-fill me-2"></i>방송 시작
                           </button>
-                          <button class="btn-apple-danger" onclick="stopBroadcast()">
+                          <button class="btn-apple-base btn-apple-danger" onclick="stopBroadcast()">
                             <i class="bi bi-stop-fill me-2"></i>방송 중지
                           </button>
-                          <button class="btn-apple-light" onclick="testBroadcast()">
+                          <button class="btn-apple-base btn-apple-light" onclick="testBroadcast()">
                             <i class="bi bi-volume-up-fill me-2"></i>테스트 방송
                           </button>
-                          <button class="btn-apple-secondary" onclick="resetSelection()">
+                          <button class="btn-apple-base btn-apple-secondary" onclick="resetSelection()">
                             <i class="bi bi-arrow-clockwise me-2"></i>선택 초기화
                           </button>
                         </div>
@@ -719,7 +719,7 @@
       <div class="modal fade" id="addBroadcastModal" tabindex="-1" aria-labelledby="addBroadcastLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header border-0">
               <h5 class="modal-title" id="addBroadcastLabel">방송 추가</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
             </div>
@@ -764,7 +764,7 @@
                 </div>
               </form>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer border-0">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
               <button type="button" class="btn btn-primary" onclick="submitAddBroadcast()">등록</button>
             </div>
@@ -775,7 +775,7 @@
       <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header border-0">
               <h5 class="modal-title" id="uploadModalLabel">
                 <i class="bi bi-upload me-3"></i>음원 파일 전송
               </h5>
@@ -819,7 +819,7 @@
               <div id="uploadResult" class="mt-3 small text-center text-muted"></div>
             </div>
 
-            <div class="modal-footer">
+            <div class="modal-footer border-0">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
               <button type="button" class="btn btn-primary" onclick="sendAudioToSpeaker()">전송</button>
             </div>
@@ -830,7 +830,7 @@
       <div class="modal fade" id="broadcastLogModal" tabindex="-1" aria-labelledby="broadcastLogModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
           <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header border-0">
               <h5 class="modal-title" id="broadcastLogModalLabel">
                 <i class="bi bi-journal-text me-2"></i>방송 로그
               </h5>
@@ -859,7 +859,7 @@
               </div>
             </div>
 
-            <div class="modal-footer">
+            <div class="modal-footer border-0">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
             </div>
           </div>

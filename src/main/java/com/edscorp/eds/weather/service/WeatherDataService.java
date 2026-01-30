@@ -62,11 +62,13 @@ public class WeatherDataService {
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(this::parseAWSData)
+                .filter(this::isValidAws)
                 .doOnNext(data -> {
                     cachedAWSData = data;
-                    log.info("AWS 날씨 데이터 캐시 갱신 완료: {}", data);
+                    log.info("AWS 날씨 데이터 캐시 갱신 완료");
                 })
                 .doOnError(e -> log.error("AWS 날씨 데이터 갱신 실패", e))
+                .onErrorResume(e -> Mono.empty())
                 .subscribe();
     }
 
@@ -202,5 +204,15 @@ public class WeatherDataService {
         String[] directions = { "북", "북동", "동", "남동", "남", "남서", "서", "북서" };
         int index = (int) Math.round(degrees / 45.0) % 8;
         return directions[index];
+    }
+
+    private boolean isValidAws(WeatherResponseDTO dto) {
+        if (dto == null)
+            return false;
+
+        if (dto.getWinddirection() == null || dto.getWinddirection().isBlank() || "N/A".equals(dto.getWinddirection()))
+            return false;
+
+        return true;
     }
 }

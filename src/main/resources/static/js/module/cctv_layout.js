@@ -79,6 +79,24 @@ window.CCTVLayout = (function () {
         const cam = cameras[index];
         log("createFeed()", `카메라=${cam.name}`);
 
+        feed.dataset.mountpointId = cam.mountpointId;
+        feed.dataset.cctvCode = cam.cctvCode || "";
+        feed.dataset.camName = cam.name || "";
+
+        feed.addEventListener("click", (e) => {
+            if (e.target.closest(".cctv-controls")) return;
+        
+            const isActive = feed.classList.contains("active");
+        
+            // 일단 전부 해제
+            document.querySelectorAll(".cctv-feed.active")
+            .forEach(el => el.classList.remove("active"));
+        
+            if (isActive) return;
+        
+            feed.classList.add("active");
+        });
+
         const video = createVideo(cam);
         const placeholder = createPlaceholder(cam);
 
@@ -162,6 +180,26 @@ window.CCTVLayout = (function () {
         const div = document.createElement("div");
         div.className = "cctv-controls";
 
+        const reconnectBtn = document.createElement("button");
+        reconnectBtn.className = "cctv-control-btn";
+        reconnectBtn.innerHTML = `<i class="bi bi-arrow-repeat"></i>`;
+        reconnectBtn.title = "재연결";
+
+        reconnectBtn.addEventListener("click", async (e) => {
+            e.stopPropagation();
+        
+            // 프론트 재-watch 방식 (cctv_janus.js에 reconnectOne export 필요)
+            try {
+                await CCTVJanus.reconnectOne(cameras, cam.mountpointId);
+                // showToast(`${cam.name} 재연결 완료`, "success");
+                App.utils.showGlobalAlert(`${cam.name} 재연결 완료`, "success");
+            } catch (err) {
+                console.error("reconnectOne error", err);
+                // showToast(`${cam.name} 재연결 실패`, "danger");
+                App.utils.showGlobalAlert(`${cam.name} 재연결 실패`, "danger");
+            }
+        });
+
         const fullscreenBtn = document.createElement("button");
         fullscreenBtn.className = "cctv-control-btn";
         fullscreenBtn.innerHTML = `<i class="bi bi-arrows-fullscreen"></i>`;
@@ -180,6 +218,7 @@ window.CCTVLayout = (function () {
             }
         });
 
+        div.appendChild(reconnectBtn);
         div.appendChild(fullscreenBtn);
         return div;
     }

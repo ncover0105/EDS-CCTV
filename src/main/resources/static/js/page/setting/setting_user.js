@@ -158,7 +158,7 @@ function bindRowToggle(tbody) {
     modalEl.dataset.mode = mode;
 
     const titleEl = modalEl.querySelector(".modal-title");
-    if (titleEl) titleEl.textContent = (mode === "insert") ? "사용자 등록" : "사용자 수정";
+    if (titleEl) titleEl.textContent = (mode === "insert") ? "사용자 등록" : "사용자 정보 수정";
 
     const idEl = document.getElementById("editUserId");
     const pwEl = document.getElementById("editUserPw");

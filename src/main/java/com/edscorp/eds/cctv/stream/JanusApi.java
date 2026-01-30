@@ -178,6 +178,22 @@ public class JanusApi {
         }
     }
 
+    public JsonNode destroySession(long sessionId) {
+        String url = JANUS_URL + "/" + sessionId;
+
+        String body = Jsons.toString(Map.of(
+                "janus", "destroy",
+                "transaction", "txn-" + System.currentTimeMillis()));
+
+        try {
+            ResponseEntity<String> resp = restTemplate.postForEntity(url, getEntity(body), String.class);
+            return Jsons.parse(resp.getBody());
+        } catch (Exception e) {
+            log.error("destroySession failed sessionId={}", sessionId, e);
+            throw e;
+        }
+    }
+
     public static class JanusSession {
         public long sessionId;
         public long handleId;

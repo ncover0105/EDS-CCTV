@@ -11,17 +11,6 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
-
-import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -103,4 +92,23 @@ public class GstProcessManager {
             headers.set("x-api-key", gstApiKey);
         }
     }
+
+    public boolean isAlive(String key) {
+        if (!isRunning(key))
+            return false;
+
+        try {
+            String resp = webClient.get()
+                    .uri(gstApiBaseUrl + "/status/" + key)
+                    .headers(h -> applyAuth(h))
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .timeout(Duration.ofSeconds(2))
+                    .block();
+            return resp != null && resp.contains("true");
+        } catch (Exception ignore) {
+            return isRunning(key);
+        }
+    }
+
 }

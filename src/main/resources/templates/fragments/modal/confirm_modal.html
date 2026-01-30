@@ -1,5 +1,5 @@
 <div th:fragment="confirm_modal">
-    <div id="confirm_modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div id="confirm_modal" class="modal fade modal-dark" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content p-3">
                 <div class="modal-header border-0">
@@ -11,8 +11,8 @@
                     <h6 class="fw-semibold mb-0 text-muted" id="confirmModalMessage"></h6>
                 </div>
                 <div class="modal-footer border-0">
-                    <button type="button" class="btn footer-btn btn-secondary" id="confirmModalCancelBtn" data-bs-dismiss="modal">취소</button>
-                    <button type="button" class="btn footer-btn btn-primary" id="confirmModalConfirmBtn">확인</button>
+                    <button type="button" class="btn footer-btn btn-primary" id="confirmModalConfirmBtn" style="flex: 0.8;">확인</button>
+                    <button type="button" class="btn footer-btn btn-secondary" id="confirmModalCancelBtn" data-bs-dismiss="modal" style="flex: 0.2;">취소</button>
                 </div>
             </div>
         </div>

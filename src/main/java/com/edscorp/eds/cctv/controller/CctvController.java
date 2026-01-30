@@ -50,4 +50,16 @@ public class CctvController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/stream/restart-all")
+    public ResponseEntity<?> restartAll() {
+        cctvService.restartAllStreams();
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/stream/{cctvCode}/restart")
+    public ResponseEntity<?> restartOne(@PathVariable String cctvCode) {
+        cctvService.restartByCctvCode(cctvCode);
+        return ResponseEntity.ok().build();
+    }
+
 }

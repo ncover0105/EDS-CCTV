@@ -84,22 +84,22 @@ document.addEventListener("shown.bs.modal", (e) => {
 /* =========================
   타입 영역 컨트롤
 ========================= */
-function hideTypeAreas() {
-  hide("area_type_e");
-  hide("area_type_o");
-}
+// function hideTypeAreas() {
+//   hide("area_type_e");
+//   hide("area_type_o");
+// }
 
-function showTypeArea(type) {
-  if (type === "A") {
-    show("area_type_e");
-    hide("area_type_o");
-  } else if (type === "B") {
-    show("area_type_o");
-    hide("area_type_e");
-  } else {
-    hideTypeAreas();
-  }
-}
+// function showTypeArea(type) {
+//   if (type === "A") {
+//     show("area_type_e");
+//     hide("area_type_o");
+//   } else if (type === "B") {
+//     show("area_type_o");
+//     hide("area_type_e");
+//   } else {
+//     hideTypeAreas();
+//   }
+// }
 
 /**
  * 타입 판별 (DTO 키 기반)
@@ -210,20 +210,35 @@ const SpeakerList = {
     const name = safe(spk.speakerName ?? spk.name ?? speakerKey);
 
     return `
-      <div class="speaker-card overflow-hidden h-auto min-h-0 mb-2"
-          data-speaker-key="${String(speakerKey)}"
-          style="cursor:pointer;">
-        <div class="d-flex align-items-center">
-          <div class="flex-grow-1">
-            <div class="fw-semibold text-white">
-              ${name}
-              <span class="badge bg-secondary ms-2">KEY:${safe(speakerKey)}</span>
-            </div>
-            <div class="small text-light opacity-75">${safe(spk.description)}</div>
+    <div class="speaker-card overflow-hidden h-auto min-h-0 mb-2"
+        data-speaker-key="${String(speakerKey)}"
+        style="cursor:pointer;">
+      <div class="d-flex align-items-center">
+        <div class="flex-grow-1">
+          <div class="fw-semibold text-white">
+            ${name}
           </div>
+          <div class="small text-light opacity-75">${safe(spk.speakerId)}</div>
         </div>
       </div>
-    `;
+    </div>
+  `;
+
+    // return `
+    //   <div class="speaker-card overflow-hidden h-auto min-h-0 mb-2"
+    //       data-speaker-key="${String(speakerKey)}"
+    //       style="cursor:pointer;">
+    //     <div class="d-flex align-items-center">
+    //       <div class="flex-grow-1">
+    //         <div class="fw-semibold text-white">
+    //           ${name}
+    //           <span class="badge bg-secondary ms-2">KEY:${safe(speakerKey)}</span>
+    //         </div>
+    //         <div class="small text-light opacity-75">${safe(spk.description)}</div>
+    //       </div>
+    //     </div>
+    //   </div>
+    // `;
   },
 };
 
@@ -335,14 +350,11 @@ const SpeakerSettingModal = {
     if (!modalEl) return;
 
     // ✅ 처음엔 A/B 둘 다 숨김
-    hideTypeAreas();
+    // hideTypeAreas();
 
     modalEl.addEventListener("shown.bs.modal", () => {
       this.resetState();
       SpeakerList.load();
-
-      setText("speakerTypeBadge", "스피커");
-      setText("speakerTypeHint", "스피커 선택 후 설정 정보를 조회할 수 있습니다.");
     });
 
     modalEl.addEventListener("hidden.bs.modal", () => {
@@ -364,7 +376,7 @@ const SpeakerSettingModal = {
     enableTab("tab-config-e", false);
 
     // A/B 영역 숨김
-    hideTypeAreas();
+    // hideTypeAreas();
 
     // (B) 화면 값 초기화 (필요한 id들)
     clearTextByIds([
@@ -388,7 +400,7 @@ const SpeakerSettingModal = {
     // 탭 잠금 + 영역 숨김
     enableTab("tab-config-o", false);
     enableTab("tab-config-e", false);
-    hideTypeAreas();
+    // hideTypeAreas();
 
     // 값 초기화
     clearTextByIds([
@@ -428,10 +440,6 @@ const SpeakerSettingModal = {
       // 기본정보 일부 표기(선택 표시)
       setText("b_speakerName", selectedSpeaker.speakerName ?? "-");
       setText("b_speakerId", selectedSpeaker.speakerKey ?? "-");
-
-      // 배지/힌트
-      setText("speakerTypeBadge", `${selectedSpeaker.speakerName}`);
-      setText("speakerTypeHint", "선택된 스피커의 설정 정보를 조회할 수 있습니다.");
 
       // ✅ 정보 요청 전이므로 A/B 영역은 숨김 유지 + 탭 잠금
       this.resetViewOnlyKeepSelection();
@@ -477,11 +485,7 @@ const SpeakerSettingModal = {
         const type = detectSpeakerType(dto, raw);
 
         // 타입 영역 표시
-        showTypeArea(type);
-
-        // 배지/힌트 업데이트
-        setText("speakerTypeBadge", `타입: ${type} · ${selectedSpeaker.speakerName}`);
-        setText("speakerTypeHint", "설정 정보가 업데이트되었습니다.");
+        // showTypeArea(type);
 
         // 타입별 바인딩/탭 활성화
         if (type === "B") {

@@ -118,7 +118,7 @@ public class SecurityConfig {
 
         // ⚠️ allowCredentials=true 이면 allowedOrigins="*" 조합은 브라우저에서 제한될 수 있음.
         // 문제가 생기면 setAllowedOriginPatterns(Arrays.asList("*"))로 변경 추천.
-        configuration.setAllowedOrigins(Arrays.asList("*"));
+        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("authorization", "content-type", "x-auth-token"));
         configuration.setExposedHeaders(Arrays.asList("x-auth-token"));

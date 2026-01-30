@@ -1,5 +1,6 @@
 package com.edscorp.eds.cctv.stream;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -25,6 +26,10 @@ public class JanusManager {
     private final ConcurrentHashMap<Integer, JanusApi.JanusSession> janusSessions = new ConcurrentHashMap<>();
 
     private final GstProcessManager gstProcessManager;
+
+    private final ConcurrentHashMap<Integer, Integer> failCount = new ConcurrentHashMap<>();
+    private static final int FAIL_THRESHOLD = 3;
+    private static final int WATCHDOG_INTERVAL = 10;
 
     @PostConstruct
     public void initKeepAlive() {
@@ -115,6 +120,28 @@ public class JanusManager {
         session.sessionId = sessionId;
         session.handleId = handleId;
         return session;
+    }
+
+    public synchronized void stopStream(int mountpointId) {
+        // 1) gstreamer stop
+        gstProcessManager.stop(String.valueOf(mountpointId));
+
+        // 2) janus session destroy
+        JanusApi.JanusSession s = janusSessions.remove(mountpointId);
+        if (s != null) {
+            try {
+                janusApi.destroySession(s.sessionId);
+            } catch (Exception e) {
+                log.warn("destroySession failed mountpoint={}", mountpointId, e);
+            }
+        }
+    }
+
+    public synchronized JanusApi.JanusSession restartStream(
+            int mountpointId, int videoPort, String rtspUrl, String rtspId, String rtspPw, String type) {
+
+        stopStream(mountpointId);
+        return ensureStream(mountpointId, videoPort, rtspUrl, rtspId, rtspPw, type);
     }
 
     private void keepAliveAll() {

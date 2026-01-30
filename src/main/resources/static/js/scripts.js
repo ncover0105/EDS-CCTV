@@ -49,6 +49,24 @@ document.addEventListener("DOMContentLoaded", function () {
     CCTVJanus.initSignaling(cameras);
     SSE_MQTT.connect();
 
+    document.getElementById("reconnectAllBtn")?.addEventListener("click", () => {
+        showConfirmModal("전체 재연결", "모든 CCTV를 재연결할까요?", async () => {
+            await CCTVJanus.reconnectAll(cameras);
+            // showToast("전체 재연결 완료", "success");
+            App.utils.showGlobalAlert("전체 재연결 완료", "success");
+        });
+    });
+
+    document.getElementById("restartAllServerBtn")?.addEventListener("click", () => {
+        showConfirmModal(
+            "스트리밍 서버 전체 재시작",
+            "전체 CCTV 스트리밍 서버를 재시작합니다.\n일시적으로 전체 영상이 끊길 수 있습니다.\n진행할까요?",
+            async () => {
+                await callRestartAllServer();
+            }
+        );
+    });
+
     const refreshBtn = document.getElementById("refreshMap");
     if (refreshBtn) {
         refreshBtn.addEventListener("click", () => {
@@ -95,7 +113,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 저장 및 발령 버튼 이벤트
     document.querySelector('.btn-primary').addEventListener('click', function() {
-        showToast('설정이 저장되었습니다.', 'success');
+        // showToast('설정이 저장되었습니다.', 'success');
+        App.utils.showGlobalAlert('설정이 저장되었습니다.', 'success');
     });
 
     // updateRangeValue('volumeRange', 'volumeValue');
@@ -125,6 +144,31 @@ document.addEventListener("DOMContentLoaded", function () {
 
 });
 
+async function callRestartAllServer() {
+    try {
+        setServerRestartBusy(true);
+
+        const res = await fetch("/api/cctv/stream/restart-all", { method: "POST" }); 
+        // ✅ 컨트롤러가 /cctv 아래면: "/cctv/stream/restart-all" 로 바꿔야 함
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        // showToast("전체 스트리밍 서버 재시작 요청 완료", "success");
+        App.utils.showGlobalAlert("전체 스트리밍 서버 재시작 완료", "success");
+    } catch (e) {
+        console.error(e);
+        // showToast("전체 재시작 실패", "danger");
+        App.utils.showGlobalAlert("전체 재시작 실패", "danger");
+    } finally {
+        setServerRestartBusy(false);
+    }
+}
+
+function setServerRestartBusy(busy) {
+    const btn = document.getElementById("restartAllServerBtn");
+    if (!btn) return;
+    btn.disabled = busy;
+}
+
 function showEmergencyToastr(camName, msg, boundaryNum) {
     const box = document.querySelector(".notification");
 
@@ -141,6 +185,7 @@ function showEmergencyToastr(camName, msg, boundaryNum) {
 
         // 2) 알림 닫기
         box.classList.remove("show");
+        document.getElementById("emergencyOverlay").classList.remove("active");
     };
 }
 
@@ -183,27 +228,62 @@ window.onload = function(){
     });
 }
 
+function getSelectedCameraKey() {
+    const active = document.querySelector(".cctv-feed.active");
+    if (!active) return null;
+    return active.dataset.mountpointId || active.dataset.cctvCode || null;
+}
+
+function getSelectedCameraName(key) {
+    const active = document.querySelector(".cctv-feed.active");
+    if (active?.dataset?.camName) return active.dataset.camName;
+
+    const cam = cameras.find(c =>
+    String(c.mountpointId) === String(key) || String(c.cctvCode) === String(key)
+    );
+    return cam?.name ?? "선택 CCTV";
+}
+
 function showToast(message, type) {
-    const toastHtml = `
-        <div class="toast position-fixed top-0 end-0 m-3" style="z-index: 9999;">
-            <div class="toast-body bg-${type} text-white d-flex align-items-center">
-                <i class="fas fa-${type === 'success' ? 'check' : 'exclamation-triangle'} me-2"></i>
-                ${message}
-            </div>
+    const toastEl = document.createElement("div");
+    toastEl.className = "toast position-fixed top-0 end-0 m-3";
+    toastEl.style.zIndex = 9999;
+
+    toastEl.setAttribute("role", "alert");
+    toastEl.setAttribute("aria-live", "assertive");
+    toastEl.setAttribute("aria-atomic", "true");
+
+    toastEl.innerHTML = `
+        <div class="toast-body bg-${type} text-white d-flex align-items-center">
+        <i class="fas fa-${type === "success" ? "check" : "exclamation-triangle"} me-2"></i>
+        ${message}
         </div>
     `;
-    
-    const toastElement = document.createElement('div');
-    toastElement.innerHTML = toastHtml;
-    document.body.appendChild(toastElement.firstElementChild);
-    
-    const toast = new bootstrap.Toast(toastElement.firstElementChild);
-    toast.show();
-    
+
+    document.body.appendChild(toastEl);
+
+    // ✅ Bootstrap 5: getOrCreateInstance 사용(중복/꼬임 방지)
+    const t = bootstrap.Toast.getOrCreateInstance(toastEl, { delay: 3000, autohide: true });
+
+    // ✅ 일부 환경에서 show() 내부 이벤트 참조로 터지는 걸 방지하기 위해 try/catch
+    try {
+        t.show();
+    } catch (e) {
+        console.error("Toast show failed:", e);
+        // fallback: 그냥 DOM만 보여주고 제거
+        toastEl.classList.add("show");
+    }
+
+    toastEl.addEventListener("hidden.bs.toast", () => {
+        toastEl.remove();
+    });
+
+    // hidden 이벤트가 안 뜨는 경우를 대비한 안전 제거
     setTimeout(() => {
-        toastElement.firstElementChild.remove();
-    }, 3000);
+        if (toastEl.isConnected) toastEl.remove();
+    }, 3500);
 }
+
 
 function updateSpeakerSettings(speakerId) {
     console.log('스피커 설정 로드:', speakerId);
@@ -372,58 +452,58 @@ async function renderSpeakerPanel() {
 const DISASTER_LATEST_TODAY_API = "/api/btype/query/disasters/latest-today";
 
 function escapeHtml(s) {
-  return String(s ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    return String(s ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
 }
 
 // 한 줄 표시용 (없으면 "오늘 특보 없음")
 function buildDisasterOneLine(d) {
-  if (!d) return "오늘 특보 없음";
+    if (!d) return "오늘 특보 없음";
 
-  const type = WRN_LABEL?.[d.dstCode] ?? d.dstName ?? "특보";
-  const level = LVL_LABEL?.[d.dstPriority] ?? "";
-  const command = CMD_LABEL?.[Number(d.dstSirenCode)] ?? "";
-  const region = REG_ID_TO_KO?.[d.dstStoCode] ?? "";
+    const type = WRN_LABEL?.[d.dstCode] ?? d.dstName ?? "특보";
+    const level = LVL_LABEL?.[d.dstPriority] ?? "";
+    const command = CMD_LABEL?.[Number(d.dstSirenCode)] ?? "";
+    const region = REG_ID_TO_KO?.[d.dstStoCode] ?? "";
 
-  return [ `${type} ${level}`.trim(), region, command ]
-    .filter(Boolean)
-    .join(" · ");
+    return [ `${type} ${level}`.trim(), region, command ]
+        .filter(Boolean)
+        .join(" · ");
 }
 
 async function loadTodayLatestDisasterOneLine() {
     const lineEl = document.getElementById("disasterLine");
     const dateEl = document.getElementById("disasterDate");
     if (!lineEl || !dateEl) return;
-  
+
     // 날짜 배지(클라이언트 기준)
     const today = new Date().toISOString().slice(0, 10);
     dateEl.textContent = today.replaceAll("-", ".");
-  
+
     try {
-      const res = await fetch(DISASTER_LATEST_TODAY_API, { headers: { "Accept": "application/json" } });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  
-      const data = await res.json(); // { today, item }
-      const oneLine = buildDisasterOneLine(data?.item);
-  
-      lineEl.textContent = oneLine;
-      lineEl.classList.remove("text-muted", "text-warning", "text-danger", "text-white-50");
-  
-      if (!data?.item) {
+    const res = await fetch(DISASTER_LATEST_TODAY_API, { headers: { "Accept": "application/json" } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json(); // { today, item }
+    const oneLine = buildDisasterOneLine(data?.item);
+
+    lineEl.textContent = oneLine;
+    lineEl.classList.remove("text-muted", "text-warning", "text-danger", "text-white-50");
+
+    if (!data?.item) {
         lineEl.classList.add("text-muted");
-      } else {
+    } else {
         // 기본은 경고색으로 강조(원하면 조건부로 레벨별 색상도 가능)
         lineEl.classList.add("text-warning");
-      }
-    } catch (e) {
-      console.error("[disaster latest]", e);
-      lineEl.textContent = "특보 정보 조회 실패";
-      lineEl.classList.remove("text-warning");
-      lineEl.classList.add("text-danger");
     }
-  }
-  
+    } catch (e) {
+    console.error("[disaster latest]", e);
+    lineEl.textContent = "특보 정보 조회 실패";
+    lineEl.classList.remove("text-warning");
+    lineEl.classList.add("text-danger");
+    }
+}
+

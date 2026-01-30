@@ -169,13 +169,23 @@ public class CctvService {
         // mountpointId/videoPort/rtspUrl이 실제 스트림에 필요하면 켜는 것을 권장
         try {
             if (saved.getMountpointId() != null) {
+                // janusManager.ensureStream(
+                // saved.getMountpointId(),
+                // saved.getVideoPort(),
+                // saved.getRtspUrl(),
+                // saved.getId(),
+                // saved.getPassword(),
+                // saved.getType());
+                String rtsp = buildRtspUrl(saved);
+
                 janusManager.ensureStream(
                         saved.getMountpointId(),
                         saved.getVideoPort(),
-                        saved.getRtspUrl(),
+                        rtsp,
                         saved.getId(),
                         saved.getPassword(),
                         saved.getType());
+
             }
         } catch (Exception ex) {
             log.error("ensureStream failed after create: cctvCode={}", saved.getCctvCode(), ex);
@@ -203,6 +213,57 @@ public class CctvService {
 
     // return e;
     // }
+
+    // CCTV 개별 재연결
+    @Transactional(readOnly = true)
+    public void restartByCctvCode(String cctvCode) {
+        CctvEntity e = cctvRepository.findByCctvCode(cctvCode)
+                .orElseThrow(() -> new IllegalArgumentException("CCTV not found: " + cctvCode));
+
+        if (e.getMountpointId() == null || e.getVideoPort() == null) {
+            throw new IllegalStateException("mountpointId/videoPort가 없습니다. cctvCode=" + cctvCode);
+        }
+
+        String rtsp = buildRtspUrl(e);
+
+        janusManager.restartStream(
+                e.getMountpointId(),
+                e.getVideoPort(),
+                rtsp,
+                e.getId(), // RTSP user
+                e.getPassword(), // RTSP pass
+                e.getType());
+    }
+
+    // CCTV 전체 재연결
+    @Transactional(readOnly = true)
+    public void restartAllStreams() {
+        // Janus 자체가 죽었으면 전체 재연결 의미가 없으니 먼저 확인(선택)
+        if (!janusApi.checkJanusConnection()) {
+            throw new IllegalStateException("Janus 연결 실패 상태입니다.");
+        }
+
+        List<CctvEntity> all = cctvRepository.findAll();
+
+        for (CctvEntity e : all) {
+            if (e.getMountpointId() == null || e.getVideoPort() == null)
+                continue;
+
+            String rtsp = buildRtspUrl(e);
+
+            try {
+                janusManager.restartStream(
+                        e.getMountpointId(),
+                        e.getVideoPort(),
+                        rtsp,
+                        e.getId(),
+                        e.getPassword(),
+                        e.getType());
+            } catch (Exception ex) {
+                log.error("restart failed cctvCode={} mountpoint={}", e.getCctvCode(), e.getMountpointId(), ex);
+            }
+        }
+    }
 
     @Transactional
     public CctvEntity updateByCctvCode(String cctvCode, CctvUpdateRequest req) {

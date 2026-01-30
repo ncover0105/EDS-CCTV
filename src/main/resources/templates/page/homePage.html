@@ -36,17 +36,6 @@
         window.VWORLD_API_KEY = /*[[${mapApiKey}]]*/ "";
     </script>
     <script src="/js/jsmpeg.min.js"></script>
-    <!-- <script src="https://cdn.jsdelivr.net/npm/jsmpeg@0.2.1/jsmpeg.min.js"></script> -->
-    <!-- <script src="/js/scripts.js"></script>
-    <script src="/js/module/map.js"></script>
-    <script src="/js/module/weather.js"></script>
-    <script src="/js/module/cctv_layout.js"></script>
-    <script src="/js/module/cctv_janus.js"></script>
-    <script src="/js/module/mqtt.js"></script>
-    <script src="/js/module/logs.js"></script> -->
-    <!-- <script src="/js/ui/modal_broadcast.js"></script> -->
-    <!-- <script src="/js/ui/modal_speaker_setting.js"></script>
-    <script src="/js/ui/modal_speaker_broadcast.js"></script> -->
 
     <script src="/js/scripts.js?v=1"></script>
     <script src="/js/module/map.js?v=1"></script>
@@ -57,6 +46,7 @@
     <script src="/js/module/logs.js?v=1"></script>
     <script src="/js/ui/modal_speaker_setting.js?v=1"></script>
     <script src="/js/ui/modal_speaker_broadcast.js?v=1"></script>
+    <script src="/js/ui/modal_tts_manage.js?v=1"></script>
 
     <!-- <script th:src="@{/js/btype_action_modal.js}"></script> -->
 </head>
@@ -66,7 +56,7 @@
         <div class="control-bar">
             <div class="control-group">
                 <div class="dropdown">
-                    <button class="btn-apple-light dropdown-toggle" type="button" id="viewDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <button class="btn-apple-base btn-apple-light dropdown-toggle" type="button" id="viewDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="bi bi-grid-3x3-gap-fill me-1"></i>
                         <span class="d-none d-md-inline">레이아웃</span>
                     </button>
@@ -77,15 +67,15 @@
                         <li><a class="dropdown-item" href="#" data-layout="16">4x4</a></li>
                     </ul>
                 </div>
-                <button class="btn-apple-light" id="mapBtn">
+                <button class="btn-apple-base btn-apple-light" id="mapBtn">
                     <i class="bi bi-geo-alt-fill"></i>
                     <span class="d-none d-md-inline">지도화면</span>
                 </button>
-                <button class="btn-apple-light" id="speakerList" data-bs-toggle="modal" data-bs-target="#speaker_setting_modal">
+                <button class="btn-apple-base btn-apple-light" id="speakerList" data-bs-toggle="modal" data-bs-target="#speaker_setting_modal">
                     <i class="bi bi-list"></i>
                     <span class="d-none d-md-inline">스피커 정보</span>
                 </button>
-                <button type="button" data-bs-toggle="modal" data-bs-target="#speaker_broadcast_modal" class="btn-apple-danger">
+                <button type="button" data-bs-toggle="modal" data-bs-target="#speaker_broadcast_modal" class="btn-apple-base btn-apple-danger">
                     <i class="bi bi-exclamation-triangle"></i>
                     <span class="d-none d-md-inline">수동발령</span>
                 </button>
@@ -97,9 +87,21 @@
                     <i class="bi bi-arrow-up-right-square"></i>
                     <span class="d-none d-md-inline">출입 테스트</span>
                 </button>
-                <button class="btn-apple-warning" id="entryTestBtn">
+                <button class="btn-apple-warning d-none" id="entryTestBtn">
                     <i class="bi bi-door-open-fill"></i>
                     <span class="d-none d-md-inline">출입 테스트</span>
+                </button>
+
+                <!-- 단순 Watch 재연결 -->
+                <button class="btn-apple-base btn-apple-warning" id="reconnectAllBtn" type="button">
+                    <i class="bi bi-arrow-repeat"></i>
+                    <span class="d-none d-md-inline">전체 재연결</span>
+                </button>
+                
+                <!-- 스트리밍 서버 재시작 -->
+                <button class="btn-apple-base btn-apple-danger" id="restartAllServerBtn" type="button">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    <span class="d-none d-md-inline">스트리밍 서버 전체 재시작</span>
                 </button>
             </div>
             <div class="current-time">
