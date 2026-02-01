@@ -29,8 +29,8 @@ public class TtsListController {
     // GET /api/tts?page=0&size=20
     @GetMapping
     public Page<TtsResponse> list(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
         return ttsListService.list(page, size);
     }
 

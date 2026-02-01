@@ -1,6 +1,6 @@
 <div th:fragment="tts_manage_modal">
     <div class="modal fade modal-dark" id="tts_manage_modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content bg-dark">
     
                 <div class="modal-header border-0 d-flex align-items-center justify-content-between">
@@ -22,19 +22,21 @@
                     <div class="col-12 col-lg-5 d-flex">
                         <div class="setting-card h-100 w-100">
                             <div class="setting-title">
-                                <span class="fw-semibold text-white">TTS 목록</span>
-                                <input id="tts_search"
-                                    class="form-control-dark mb-3"
-                                    placeholder="이름 / 메시지 검색">
-                                <div class="d-flex gap-2 d-none">
-                                    <select id="tts_filter_use" class="form-select-dark form-select-sm">
-                                        <option value="ALL">전체</option>
-                                        <option value="Use" selected>Use</option>
-                                        <option value="NotUse">NotUse</option>
-                                    </select>
-                                    <button type="button" class="btn-apple-base btn-apple-light btn-sm" id="tts_refresh">
-                                        갱신
-                                    </button>
+                                <div class="d-flex flex-column gap-3">
+                                    <span class="fw-semibold text-white">TTS 목록</span>
+                                    <input id="tts_search"
+                                        class="form-control-dark mb-3"
+                                        placeholder="이름 / 메시지 검색">
+                                    <div class="d-flex gap-2 d-none">
+                                        <select id="tts_filter_use" class="form-select-dark form-select-sm">
+                                            <option value="ALL">전체</option>
+                                            <option value="Use" selected>Use</option>
+                                            <option value="NotUse">NotUse</option>
+                                        </select>
+                                        <button type="button" class="btn-apple-base btn-apple-light btn-sm" id="tts_refresh">
+                                            갱신
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
             
@@ -44,7 +46,7 @@
                                     placeholder="이름 / 메시지 검색"> -->
             
                                 <div class="speaker-list-container">
-                                <div id="tts_list" class="d-flex flex-column gap-2 pe-1"></div>
+                                    <div id="tts_list" class="d-flex flex-column gap-2 pe-1"></div>
                                 </div>
                             </div>
                         </div>
@@ -54,7 +56,7 @@
                     <div class="col-12 col-lg-7 d-flex">
                         <div class="setting-card h-100 w-100">
                             <div class="setting-title">
-                                <div class="d-flex flex-column">
+                                <div class="d-flex flex-column gap-3">
                                 <span class="fw-semibold text-white">TTS 정보</span>
                                 <small class="text-white-50">
                                     목록을 선택하여 수정하거나 새 내용을 입력 후 저장하세요.
@@ -68,27 +70,27 @@
             
                                 <!-- ✅ 간격 넓힘 -->
                                 <div class="mb-4">
-                                <label class="form-label text-white-50">TTS 이름</label>
-                                <input id="tts_name"
-                                        class="form-control-dark"
-                                        placeholder="예: 지진 대피 안내">
+                                    <label class="form-label text-white-50">TTS 이름</label>
+                                    <input id="tts_name"
+                                            class="form-control-dark"
+                                            placeholder="예: 지진 대피 안내">
                                 </div>
             
                                 <div class="mb-4">
-                                <label class="form-label text-white-50">사용 여부</label>
-                                <select id="tts_use_flag" class="form-select-dark">
-                                    <option value="Use" selected>Use</option>
-                                    <option value="NotUse">NotUse</option>
-                                </select>
+                                    <label class="form-label text-white-50">사용 여부</label>
+                                    <select id="tts_use_flag" class="form-select-dark">
+                                        <option value="Use" selected>Use</option>
+                                        <option value="NotUse">NotUse</option>
+                                    </select>
                                 </div>
             
-                                <div class="flex-grow-1 d-flex flex-column">
-                                <label class="form-label text-white-50 mb-2">메시지</label>
-                                <textarea id="tts_msg"
-                                            class="form-control-dark flex-grow-1"
-                                            rows="8"
-                                            placeholder="TTS 메시지를 입력하세요">
-                                </textarea>
+                                <div class="d-flex flex-column flex-grow-1 mb-0">
+                                    <label class="form-label text-white-50 mb-2">메시지</label>
+                                    <textarea id="tts_msg"
+                                                class="form-control-dark flex-grow-1"
+                                                rows="8"
+                                                placeholder="TTS 메시지를 입력하세요">
+                                    </textarea>
                                 </div>
             
                             </div>
