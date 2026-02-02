@@ -91,20 +91,39 @@ public class JanusApi {
             String rtspId, String rtspPw) {
         String url = JANUS_URL + "/" + sessionId + "/" + handleId;
 
+        // Map<String, Object> body = Map.of(
+        // "janus", "message",
+        // "transaction", UUID.randomUUID().toString(),
+        // "body", Map.of(
+        // "request", "create",
+        // "type", "rtp",
+        // "id", mountpointId,
+        // "description", "CCTV-" + mountpointId,
+        // "audio", false,
+        // "video", true,
+        // "videoport", videoPort,
+        // "videopt", 96,
+        // "videortpmap", "H264/90000",
+        // "videofmtp", "packetization-mode=1"));
+
+        Map<String, Object> inner = new HashMap<>();
+        inner.put("request", "create");
+        inner.put("type", "rtp");
+        inner.put("id", mountpointId);
+        inner.put("permanent", true);
+        inner.put("description", "CCTV-" + mountpointId);
+        inner.put("audio", false);
+        inner.put("video", true);
+        inner.put("videoport", videoPort);
+        inner.put("videopt", 96);
+        inner.put("videossrc", mountpointId);
+        inner.put("videortpmap", "H264/90000");
+        inner.put("videofmtp", "packetization-mode=1;profile-level-id=42e01f");
+
         Map<String, Object> body = Map.of(
                 "janus", "message",
                 "transaction", UUID.randomUUID().toString(),
-                "body", Map.of(
-                        "request", "create",
-                        "type", "rtp",
-                        "id", mountpointId,
-                        "description", "CCTV-" + mountpointId,
-                        "audio", false,
-                        "video", true,
-                        "videoport", videoPort,
-                        "videopt", 96,
-                        "videortpmap", "H264/90000",
-                        "videofmtp", "packetization-mode=1"));
+                "body", inner);
 
         // 요청 바디 내용 로깅
         try {

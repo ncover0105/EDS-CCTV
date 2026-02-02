@@ -13349,13 +13349,13 @@ body {
   background: rgba(128, 128, 128, 0.1);
   border: 0.063rem solid var(--border-secondary);
   color: var(--text-primary);
-  padding: 0.625rem 1.25rem; /* 약간 넓게 */
+  padding: 0.625rem 1.25rem;
 }
 
 .btn-apple-secondary:hover {
-  background: var(--bs-secondary);
+  background: rgba(128, 128, 128, 0.25);
+  border-color: var(--border-secondary);
   transform: translateY(-0.063rem);
-  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.3);
 }
 
 .btn-apple-danger {
@@ -15442,6 +15442,7 @@ body {
 }
 
 .setting-title {
+  min-height: 43px;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;

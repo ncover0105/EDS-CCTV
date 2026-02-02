@@ -7,6 +7,23 @@
 
 let selectedSpeaker = null;
 
+const SPEAKER_ACTION_MAP = {
+  bi_serverip:        "ins_ServerIP",
+  bi_TTARegionCode:   "insSpeakerSettings",
+  bi_PollingCheckTime:"ins_PollingCheckTime",
+
+  bi_BGMFolderNo:     "ins_BGMFolderNo",
+  bi_BGMStatus:       "insBGMStatus",
+  bi_MusicMode:       "insAudioMode",
+
+  bi_BGM_IN_VOL:      "ins_BGM_IN_VOL",
+  bi_STO_IN_VOL:      "ins_STO_IN_VOL",
+  bi_TTS_IN_VOL:      "ins_TTS_IN_VOL",
+
+  bi_TTS_Pitch:       "ins_TTS_Pitch",
+  bi_TTS_Speed:       "ins_TTS_Speed"
+};
+
 function safe(v, fb = "-") {
   return v !== undefined && v !== null && v !== "" ? v : fb;
 }
@@ -167,8 +184,38 @@ const SpeakerApi = {
     const res = await fetch(`/api/spk/${speakerKey}/setting`);
     if (!res.ok) return null; // 404 포함
     return await res.json();
-  },
+  }
 };
+function sendSpeakerAction(action, extraParam) {
+  const speakerId = getSelectedSpeakerId();
+
+  if (!speakerId) {
+    alert("스피커를 선택하세요.");
+    return;
+  }
+
+  fetch("/api/speaker/action", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      speakerId,
+      action,
+      extraParam
+    })
+  })
+  .then(res => {
+    if (!res.ok) throw new Error("전송 실패");
+  })
+  .catch(err => {
+    console.error(err);
+    alert("설정 전송 중 오류 발생");
+  });
+}
+
+function getSelectedSpeakerId() {
+  const el = document.querySelector(".speaker-item.active");
+  return el ? el.dataset.speakerId : null;
+}
 
 /* =========================
   리스트 렌더
@@ -186,21 +233,30 @@ const SpeakerList = {
     const el = document.getElementById("speakerCount");
     if (el) el.textContent = `총 ${this.speakers.length}개`;
   },
-
   render() {
     const container = document.getElementById("speakerOffcanvasList");
     const emptyMsg = document.getElementById("emptySpeakerMessage");
     if (!container) return;
-
-    container.innerHTML = "";
-
-    if (!this.speakers.length) {
+  
+    // 🔧 TEST ONLY: 무조건 empty 상태
+    emptyMsg?.classList.remove("d-none");
+    container.querySelectorAll(".speaker-item").forEach(el => el.remove());
+    return;
+  
+    // ===== 아래는 정상 로직 (테스트 끝나면 다시 사용) =====
+  
+    // 기존 speaker item만 제거 (empty는 보존)
+    container.querySelectorAll(".speaker-item").forEach(el => el.remove());
+  
+    // 데이터 없음 or 오류
+    if (!Array.isArray(this.speakers) || this.speakers.length === 0) {
       emptyMsg?.classList.remove("d-none");
       return;
     }
+  
     emptyMsg?.classList.add("d-none");
-
-    this.speakers.forEach((spk) => {
+  
+    this.speakers.forEach(spk => {
       container.insertAdjacentHTML("beforeend", this.createCard(spk));
     });
   },

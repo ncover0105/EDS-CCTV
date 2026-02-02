@@ -93,15 +93,15 @@
                 </button>
 
                 <!-- 단순 Watch 재연결 -->
-                <button class="btn-apple-base btn-apple-warning" id="reconnectAllBtn" type="button">
+                <button class="btn-apple-base btn-apple-warning d-none" id="reconnectAllBtn" type="button">
                     <i class="bi bi-arrow-repeat"></i>
                     <span class="d-none d-md-inline">전체 재연결</span>
                 </button>
                 
                 <!-- 스트리밍 서버 재시작 -->
-                <button class="btn-apple-base btn-apple-danger" id="restartAllServerBtn" type="button">
+                <button class="btn-apple-base btn-apple-warning" id="restartAllServerBtn" type="button">
                     <i class="bi bi-arrow-clockwise"></i>
-                    <span class="d-none d-md-inline">스트리밍 서버 전체 재시작</span>
+                    <span class="d-none d-md-inline">CCTV 전체 재시작</span>
                 </button>
             </div>
             <div class="current-time">
@@ -184,13 +184,15 @@
                     </div>
                     
                     <div class="panel-content p-0">
-                        <div id="specialReportLine" class="special-line" style="opacity:0.9;">
+                        <div id="specialReportLine" class="special-line" style="opacity: 0.9;">
                             불러오는 중...
                         </div>
                     
-                        <div id="specialReportEmpty" class="d-none d-flex flex-column align-items-center justify-content-center text-center flex-grow-1">
-                            <i class="bi bi-exclamation-circle mb-2 fs-3 text-muted"></i>
-                            <p class="mb-0 small text-muted">오늘 특보 없음</p>
+                        <div id="specialReportEmpty"
+                                class="d-none special-line"
+                                style="opacity: 0.9;">
+                            <i class="bi bi-exclamation-circle fs-5 text-muted"></i>
+                            <span class="sr-wrn-text text-muted">오늘 특보 없음</span>
                         </div>
                     </div>
                 </div>
