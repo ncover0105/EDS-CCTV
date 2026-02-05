@@ -213,6 +213,31 @@ public class JanusApi {
         }
     }
 
+    // Janus Mountpoint 제거
+    public JsonNode destroyMountpoint(long sessionId, long handleId, int mountpointId) {
+        String url = JANUS_URL + "/" + sessionId + "/" + handleId;
+
+        Map<String, Object> body = Map.of(
+                "janus", "message",
+                "transaction", "txn-" + System.currentTimeMillis(),
+                "body", Map.of(
+                        "request", "destroy",
+                        "id", mountpointId));
+
+        try {
+            ResponseEntity<String> resp = restTemplate.postForEntity(
+                    url,
+                    new HttpEntity<>(body, jsonHeaders()),
+                    String.class);
+
+            log.info("destroyMountpoint() resp: {}", resp.getBody());
+            return Jsons.parse(resp.getBody());
+        } catch (Exception e) {
+            log.error("destroyMountpoint failed mountpoint={}", mountpointId, e);
+            throw e;
+        }
+    }
+
     public static class JanusSession {
         public long sessionId;
         public long handleId;

@@ -6,6 +6,10 @@ let currentAudio = null;
 let logContainer;
 let emptyMessage;
 
+const LAYOUT_STORAGE_KEY = "cctv.layout";
+
+let currentLayout = loadSavedLayout(4);
+
 // 페이지가 로드되면 즉시 실행
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -46,6 +50,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     CCTVLayout.init(cameras);
+    applyLayoutState();
+    
+    // 스트리밍 서버 동작
     CCTVJanus.initSignaling(cameras);
     SSE_MQTT.connect();
 
@@ -142,6 +149,12 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    document.addEventListener("click", (e) => {
+        if (e.target.closest(".dropdown-container")) return;
+        document.querySelectorAll(".dropdown-container .dropdown-menu").forEach(m => m.classList.remove("show"));
+        document.querySelectorAll(".dropdown-container .btn-dropdown").forEach(b => b.classList.remove("active"));
+    });
+
 });
 
 async function callRestartAllServer() {
@@ -149,7 +162,7 @@ async function callRestartAllServer() {
         setServerRestartBusy(true);
 
         const res = await fetch("/api/cctv/stream/restart-all", { method: "POST" }); 
-        // ✅ 컨트롤러가 /cctv 아래면: "/cctv/stream/restart-all" 로 바꿔야 함
+        // 컨트롤러가 /cctv 아래면: "/cctv/stream/restart-all" 로 바꿔야 함
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         // showToast("전체 스트리밍 서버 재시작 요청 완료", "success");
@@ -262,10 +275,8 @@ function showToast(message, type) {
 
     document.body.appendChild(toastEl);
 
-    // ✅ Bootstrap 5: getOrCreateInstance 사용(중복/꼬임 방지)
     const t = bootstrap.Toast.getOrCreateInstance(toastEl, { delay: 3000, autohide: true });
 
-    // ✅ 일부 환경에서 show() 내부 이벤트 참조로 터지는 걸 방지하기 위해 try/catch
     try {
         t.show();
     } catch (e) {
@@ -507,3 +518,76 @@ async function loadTodayLatestDisasterOneLine() {
     }
 }
 
+function loadSavedLayout(defaultValue = 4) {
+    const v = parseInt(localStorage.getItem(LAYOUT_STORAGE_KEY), 10);
+    return [1, 4, 9, 16].includes(v) ? v : defaultValue;
+}
+
+function saveLayout(layout) {
+    localStorage.setItem(LAYOUT_STORAGE_KEY, String(layout));
+}
+
+function toggleDropdown(button) {
+    const container = button.closest(".dropdown-container");
+    const dropdown = button.nextElementSibling;
+    const isOpen = dropdown.classList.contains("show");
+
+    document.querySelectorAll(".dropdown-container .dropdown-menu").forEach(menu => {
+        menu.classList.remove("show");
+    });
+    document.querySelectorAll(".dropdown-container .btn-dropdown").forEach(btn => {
+        btn.classList.remove("active");
+    });
+
+    if (!isOpen) {
+        dropdown.classList.add("show");
+        button.classList.add("active");
+    }
+}
+
+function applyLayoutState() {
+    // 그리드 레이아웃 변경
+    if (window.CCTVLayout && typeof window.CCTVLayout.renderGrid === "function") {
+        window.CCTVLayout.renderGrid(currentLayout);
+    }
+
+    // 드롭다운 상태 업데이트
+    const item = document.querySelector(
+        `.dropdown-container .dropdown-item[data-layout="${currentLayout}"]`
+    );
+    if (!item) return;
+
+    const label = item.querySelector("span:last-child")?.textContent?.trim() || "";
+    const selectedLabelEl = document.getElementById("selected-layout");
+    if (selectedLabelEl && label) selectedLabelEl.textContent = label;
+
+    const menu = item.closest(".dropdown-menu");
+    menu?.querySelectorAll(".dropdown-item").forEach(el => el.classList.remove("selected"));
+    item.classList.add("selected");
+}
+
+function selectLayout(itemEl) {
+    const layout = parseInt(itemEl.getAttribute("data-layout"), 10);
+    if (!layout) return;
+
+    // 상태 저장
+    currentLayout = layout;
+    saveLayout(layout);
+
+    // 라벨 변경
+    const label = itemEl.querySelector("span:last-child")?.textContent?.trim() || "";
+    const selectedLabelEl = document.getElementById("selected-layout");
+    if (selectedLabelEl && label) selectedLabelEl.textContent = label;
+
+    // selected 표시 업데이트
+    const menu = itemEl.closest(".dropdown-menu");
+    menu?.querySelectorAll(".dropdown-item").forEach(el => el.classList.remove("selected"));
+    itemEl.classList.add("selected");
+
+    // 그리드 레이아웃 변경
+    window.CCTVLayout?.renderGrid(layout);
+
+    // 드롭다운 닫기
+    menu?.classList.remove("show");
+    itemEl.closest(".dropdown-container")?.querySelector(".btn-dropdown")?.classList.remove("active");
+}

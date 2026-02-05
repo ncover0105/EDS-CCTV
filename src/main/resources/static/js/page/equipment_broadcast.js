@@ -807,5 +807,18 @@ async function initBroadcastPage(options = { once: true, refresh: false }) {
     } catch (e) {
         console.error("broadcast init error:", e);
     }
+
+    document.getElementById("bc_open_tts_manage")?.addEventListener("click", () => {
+        const ttsEl = document.getElementById("tts_manage_modal");
+        if (!ttsEl) return;
+        
+        const ttsModal = bootstrap.Modal.getOrCreateInstance(ttsEl);
+        ttsModal.show();
+        
+        ttsEl.addEventListener("shown.bs.modal", () => {
+            window.TtsManageModal?.loadList?.();
+        }, { once: true });
+    });
+
 }
 window.initBroadcastPage = initBroadcastPage;

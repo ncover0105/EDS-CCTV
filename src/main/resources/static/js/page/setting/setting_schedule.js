@@ -1,25 +1,3 @@
-/**
- * setting_bgm.js (스케줄/방송 스케줄 관리용 - 전체 수정본)
- * - tb_spk_broadcast_schedule 기반
- * - schedule_name(스케줄 이름) + enabled_yn + 요일/시간 + bc_* + disaster_code + tts_message + speaker_ids(JSON 배열)
- * - 스케줄 카드 렌더링 + 펼치기(할당 스피커 상세) + 모달 신규/수정 + 저장/수정/삭제 API 연동
- *
- * 전제 HTML(id):
- *  - #add-schedule-btn, #schedule-list, #schedule-count, #no-schedule-msg
- *  - #scheduleModal, #scheduleModalLabel, #submitBtn, #schedule-form
- *  - #sc_schedule_id(hidden), #sc_name, #sc_enabled
- *  - input[name=startTime], input[name=endTime], #isRepeat, #weekdays
- *  - #sc_mode, #sc_alert_type, #sc_broadcast_type, #sc_priority, #sc_scope, #sc_disaster, #sc_tts, #ttsSection
- *  - 스피커 선택: #speakerPickTbody, #speakerSearch, #speakerPickedCount, #speakerPickAll
- *
- * API (예시)
- *  - GET    /api/btype/schedule/list
- *  - POST   /api/btype/schedule
- *  - PUT    /api/btype/schedule/{id}
- *  - DELETE /api/btype/schedule/{id}
- *  - GET    /api/btype/query/config/list   (SpkConfig 목록)
- */
-
 (() => {
   'use strict';
 
@@ -914,7 +892,7 @@
     scheduleInitialized = true;
 
     // 특정 뷰 분기(프로젝트에서 쓰는 방식 유지)
-    if (window.currentView && window.currentView !== 'bgm') return;
+    if (window.currentView && window.currentView !== 'schedule') return;
 
     const listDiv = document.getElementById('schedule-list');
     const emptyMsg = document.getElementById('no-schedule-msg');
@@ -947,7 +925,7 @@
   }
 
   async function loadDisastersToSelect(selectedValue = '') {
-    const sel = document.getElementById('sc_disaster'); // ✅ setting_bgm.js는 sc_disaster 사용
+    const sel = document.getElementById('sc_disaster');
     if (!sel) return;
 
     const items = await fetchDisasters();

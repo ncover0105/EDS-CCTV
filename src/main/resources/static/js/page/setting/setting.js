@@ -1,12 +1,3 @@
-/**
- * ======================================================
- * /js/page/setting/setting.js
- *  - view별 init 라우팅
- *  - setting(view=setting) 로직은 이 파일에 포함
- *  - ment/user/sms/bgm은 각각 setting_*.js에 분리
- * ======================================================
- */
-
 (() => {
     'use strict';
 
@@ -14,7 +5,7 @@
       ment: false,
       user: false,
       sms: false,
-      bgm: false,
+      schedule: false,
       setting: false
     };
   
@@ -44,7 +35,7 @@
           }
           break;
   
-        case 'bgm':
+        case 'schedule':
           if (!inited.bgm && typeof window.initBgmManager === 'function') {
             window.initBgmManager(); inited.bgm = true;
           }

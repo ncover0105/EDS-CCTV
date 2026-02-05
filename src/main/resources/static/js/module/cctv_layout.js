@@ -5,6 +5,11 @@ window.CCTVLayout = (function () {
     let originalParent = null;
     let originalElement = null;
 
+    let currentLayout = 4;
+    let focusedCamIndex = 0;
+
+    let fullscreenEventsBound = false;
+
     /* ============================
      *   공통 LOG 함수
      * ============================ */
@@ -17,28 +22,30 @@ window.CCTVLayout = (function () {
      * ============================ */
     function init(cameraList) {
         cameras = cameraList;
-        log("init()", `카메라 개수 = ${cameras.length}`);
-
         // renderGrid(cameras.length > 4 ? 9 : 4);
         renderGrid(4);
-        bindEvents();
-        // updateStatusCounts();
+
+        bindFullscreenEvents(); 
     }
 
-    function bindEvents() {
-        document.querySelectorAll("[data-layout]").forEach(btn => {
-            btn.addEventListener("click", () => {
-                const layout = parseInt(btn.getAttribute("data-layout"));
-                log("Layout 변경", layout);
-                renderGrid(layout);
-            });
-        });
-
+    function bindFullscreenEvents() {
+        if (fullscreenEventsBound) return;
+        fullscreenEventsBound = true;
+        
         const closeBtn = document.getElementById("closefullScreen");
-        if (closeBtn) closeBtn.addEventListener("click", closeFullscreen);
-
-        document.addEventListener("keydown", e => {
-            if (e.key === "Escape") closeFullscreen();
+        if (closeBtn) {
+            closeBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            closeFullscreen();
+            });
+        }
+        
+        document.addEventListener("keydown", (e) => {
+            if (e.key !== "Escape") return;
+            const fullView = document.getElementById("fullscreenView");
+            if (fullView && fullView.classList.contains("active")) {
+            closeFullscreen();
+            }
         });
     }
 
@@ -47,6 +54,7 @@ window.CCTVLayout = (function () {
      * ============================ */
     function renderGrid(layout) {
         log("renderGrid()", `layout = ${layout}`);
+        currentLayout = layout;
 
         const container = document.getElementById("cctv-container");
         container.innerHTML = "";
@@ -70,14 +78,22 @@ window.CCTVLayout = (function () {
         const feed = document.createElement("div");
         feed.className = "cctv-feed";
 
-        if (index >= cameras.length) {
+        let camIndex = index;
+        if (currentLayout === 1) camIndex = focusedCamIndex;
+
+        if (camIndex >= cameras.length) {
             log("createFeed()", `index=${index} → 빈 슬롯`);
             feed.innerHTML = emptySlotHtml();
             return feed;
         }
 
-        const cam = cameras[index];
-        log("createFeed()", `카메라=${cam.name}`);
+        // if (index >= cameras.length) {
+        //     log("createFeed()", `index=${index} → 빈 슬롯`);
+        //     feed.innerHTML = emptySlotHtml();
+        //     return feed;
+        // }
+
+        const cam = cameras[camIndex];
 
         feed.dataset.mountpointId = cam.mountpointId;
         feed.dataset.cctvCode = cam.cctvCode || "";
@@ -218,6 +234,28 @@ window.CCTVLayout = (function () {
             }
         });
 
+        if (currentLayout === 1) {
+            const sel = document.createElement("select");
+            sel.className = "cctv-cam-select"; // CSS는 아래에 제공
+            sel.title = "카메라 선택";
+            
+            sel.innerHTML = cameras.map((c, i) => {
+                const selected = (i === focusedCamIndex) ? "selected" : "";
+                const name = (c?.name ?? `CAM-${i+1}`);
+                return `<option value="${i}" ${selected}>${name}</option>`;
+            }).join("");
+            
+            // 클릭/변경 시 feed 클릭(active 토글) 방지
+            sel.addEventListener("click", (e) => e.stopPropagation());
+            sel.addEventListener("change", (e) => {
+                e.stopPropagation();
+                const idx = parseInt(sel.value, 10);
+                setFocusedCameraByIndex(idx); // 아래에서 추가할 함수
+            });
+            
+            div.appendChild(sel);
+        }
+
         div.appendChild(reconnectBtn);
         div.appendChild(fullscreenBtn);
         return div;
@@ -237,6 +275,22 @@ window.CCTVLayout = (function () {
             </span>
         `;
         return label;
+    }
+
+    // 카메라 선택
+    function setFocusedCameraByIndex(idx) {
+        if (typeof idx !== "number" || idx < 0 || idx >= cameras.length) return;
+        focusedCamIndex = idx;
+        
+        if (currentLayout === 1) {
+            renderGrid(1);
+        
+            // 전환된 카메라 스트림 연결 안정화
+            const cam = cameras[focusedCamIndex];
+            if (window.CCTVJanus?.reconnectOne) {
+                window.CCTVJanus.reconnectOne(cameras, cam.mountpointId).catch(console.error);
+            }
+        }
     }
 
     /* ============================
@@ -329,6 +383,21 @@ window.CCTVLayout = (function () {
 
         if (video) video.classList.add("d-none");
         if (placeholder) placeholder.classList.remove("d-none");
+
+        reportStatusCam(cam, 0);
+    }
+
+    async function reportStatusCam(cam, statusCam) {
+        if (!cam.locationCode || !cam.cctvCode) {
+            console.warn("locationCode/cctvCode 없음", cam);
+            return;
+        }
+        await fetch(
+            `/api/cctv/status?locationCode=${encodeURIComponent(cam.locationCode)}`
+            + `&cctvCode=${encodeURIComponent(cam.cctvCode)}`
+            + `&statusCam=${statusCam}`,
+            { method: "POST" }
+        );
     }
 
     /* ============================
@@ -352,27 +421,57 @@ window.CCTVLayout = (function () {
 
         videoEl.srcObject = stream;
 
-        videoEl.play().then(() => {
-            log("영상 재생 성공", cam.name);
-            videoEl.classList.remove("d-none");
-            placeholder?.classList.add("d-none");
-        }).catch(err => {
-            console.warn("⚠️ 자동 재생 실패:", err);
-        });
-
-        stream.getTracks().forEach(track => {
-            track.onended = () => {
-                log("track.onended", cam.name);
+        if (!videoEl.dataset.statusBound) {
+            videoEl.dataset.statusBound = "1";
+        
+            videoEl.addEventListener("playing", () => {
+                log("▶️ video playing (confirmed)", cam.name);
+        
+                // play 성공(재생) 때만 placeholder 제거
+                videoEl.classList.remove("d-none");
+                placeholder?.classList.add("d-none");
+        
+                reportStatusCam(cam, 1);
+            });
+        
+            const fail = () => {
+                log("video not playable", cam.name);
+        
+                // 실패/버퍼링/에러는 placeholder 유지
                 showPlaceholder(cam);
+                reportStatusCam(cam, 0);
             };
-        });
+        
+            videoEl.addEventListener("stalled", fail);
+            videoEl.addEventListener("waiting", fail);
+            videoEl.addEventListener("ended", fail);
+            videoEl.addEventListener("error", fail);
+        }
+        
+
+        videoEl.play()
+            .then(() => {
+                log("영상 재생 성공", cam.name);
+            }).catch(err => {
+                console.warn("⚠️ 자동 재생 실패:", err);
+            });
+
+        stream.getTracks()
+            .forEach(track => {
+                track.onended = () => {
+                    log("track.onended", cam.name);
+                    showPlaceholder(cam);
+                };
+            });
     }
 
     return {
         init,
         renderGrid,
         attachStreamToVideo,
-        showPlaceholder
+        showPlaceholder,
+        setFocusedCameraByIndex,
+        closeFullscreen
     };
 
 })();

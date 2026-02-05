@@ -1005,7 +1005,8 @@ function mcuResetRequest(selectedCheckbox) {
 }
 
 function showToast(message, title) {
-    App.utils.showToast(message, title);
+    // App.utils.showToast(message, title);
+    App.utils.showToast(message);
 
     // App.utils.showToast('데이터 저장 완료', '시스템');
 }

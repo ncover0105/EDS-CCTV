@@ -462,7 +462,7 @@
 
             <div class="row h-100 overflow-auto" style="min-height:0;">
 
-              <div class="col-12 col-xxl-4 d-flex h-100" style="min-height:0;">
+              <div class="col-12 col-xxl-4 d-flex h-100 mb-3 mb-xxl-0" style="min-height:0;">
                 <section class="card card-surface h-100 d-flex flex-column w-100" style="min-height:0;">
                   <div class="card-header surface-header d-flex flex-column gap-3">
 
@@ -523,32 +523,16 @@
                 <section class="card card-surface d-flex flex-column w-100" style="min-height:0;">
 
                   <div class="card-header surface-header d-flex flex-column flex-shrink-0">
-                    <!-- ✅ w-100 추가 -->
                     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 w-100">
                       <div class="me-2">
                         <h6 class="mb-0">방송 설정</h6>
-                        <!-- <div class="text-white-50 small mt-1">방송 유형 선택 → 설정 → 실행 → 로그 확인</div> -->
                       </div>
                   
-                      <!-- ✅ 버튼 영역은 flex-shrink-0로 밀리지 않게 -->
-                      <div class="d-flex flex-wrap gap-2 flex-shrink-0 d-none">
-                        <button class="btn-action-pill" onclick="showAddBroadcastModal()">
-                          <i class="bi bi-plus"></i><span class="ms-1 d-none d-sm-inline">추가</span>
-                        </button>
-                        <button class="btn-action-pill btn-action-primary" onclick="showEditBroadcastModal()">
-                          <i class="bi bi-pencil"></i><span class="ms-1 d-none d-sm-inline">수정</span>
-                        </button>
-                        <button class="btn-action-pill btn-action-danger" onclick="deleteSelectedBroadcast()">
-                          <i class="bi bi-trash"></i><span class="ms-1 d-none d-sm-inline">삭제</span>
+                      <div class="d-flex flex-wrap gap-2 flex-shrink-0">
+                        <button type="button" class="btn-apple-base btn-apple-light btn-sm" id="bc_open_tts_manage">
+                          TTS 관리
                         </button>
                       </div>
-                    </div>
-                  
-                    <div class="stepper mt-3 d-none">
-                      <div class="step is-active"><span class="step-dot"></span><span class="step-label">유형</span></div>
-                      <div class="step"><span class="step-dot"></span><span class="step-label">설정</span></div>
-                      <div class="step"><span class="step-dot"></span><span class="step-label">실행</span></div>
-                      <div class="step"><span class="step-dot"></span><span class="step-label">로그</span></div>
                     </div>
                   </div>
 
@@ -682,7 +666,7 @@
                             <span class="text-white-50 small">최근 로그만 표시하고 펼치기/접기</span>
                           </div>
 
-                          <div class="d-flex align-items-center gap-2">
+                          <div class="d-flex align-items-center gap-2 d-none">
                             <span id="broadcastLogBadge" class="badge bg-danger d-none">0</span>
                             <button type="button" class="quick-btn" id="toggleBroadcastLogBtn">펼치기</button>
                           </div>

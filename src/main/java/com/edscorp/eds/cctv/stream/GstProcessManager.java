@@ -63,7 +63,6 @@ public class GstProcessManager {
 
     public boolean stop(String key) {
         try {
-            // Node 수정본은 DELETE /stop/{id} 지원
             String resp = webClient.delete()
                     .uri(gstApiBaseUrl + "/stop/" + key)
                     .headers(h -> applyAuth(h))

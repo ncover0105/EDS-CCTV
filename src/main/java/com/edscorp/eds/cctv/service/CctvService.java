@@ -19,13 +19,13 @@ import com.edscorp.eds.cctv.stream.JanusManager;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@EnableAsync
 public class CctvService {
 
     private final CctvRepository cctvRepository;
@@ -34,6 +34,28 @@ public class CctvService {
     private final JanusApi janusApi;
 
     private final ConcurrentHashMap<Integer, JanusApi.JanusSession> janusSessions = new ConcurrentHashMap<>();
+
+    // mountpointId 단위 락
+    private final ConcurrentHashMap<Integer, Object> restartLocks = new ConcurrentHashMap<>();
+
+    // mountpointId 단위 쿨다운(최근 재시작 시간)
+    private final ConcurrentHashMap<Integer, Long> lastRestartAt = new ConcurrentHashMap<>();
+
+    private static final long RESTART_COOLDOWN_MS = 30_000;
+
+    private Object lockFor(Integer mountId) {
+        return restartLocks.computeIfAbsent(mountId, k -> new Object());
+    }
+
+    private boolean isInCooldown(Integer mountId) {
+        long now = System.currentTimeMillis();
+        long last = lastRestartAt.getOrDefault(mountId, 0L);
+        return (now - last) < RESTART_COOLDOWN_MS;
+    }
+
+    private void markRestart(Integer mountId) {
+        lastRestartAt.put(mountId, System.currentTimeMillis());
+    }
 
     @PostConstruct
     public void init() {
@@ -46,23 +68,29 @@ public class CctvService {
             return;
         }
 
+        ensureAllStreamsAsync();
+        log.info("CctvService: 초기화 완료");
+    }
+
+    @Async
+    public void ensureAllStreamsAsync() {
         getCameras().forEach(cam -> {
             Integer mountId = (Integer) cam.get("mountpointId");
+            Integer videoPort = (Integer) cam.get("videoPort");
             String rtspUrl = (String) cam.get("rtspUrl");
             String rtspId = (String) cam.get("id");
             String rtspPw = (String) cam.get("password");
-            Integer vdieoPort = (Integer) cam.get("videoPort");
             String type = (String) cam.get("type");
 
+            if (mountId == null || videoPort == null || rtspUrl == null || rtspUrl.isBlank())
+                return;
+
             try {
-                // janusManager.ensureMountpoint(mountId, rtspUrl, rtspId, rtspPw);
-                janusManager.ensureStream(mountId, vdieoPort, rtspUrl, rtspId, rtspPw, type);
+                janusManager.ensureStream(mountId, videoPort, rtspUrl, rtspId, rtspPw, type);
             } catch (Exception e) {
-                log.error("Mountpoint 생성 실패 mountpoint={} url={}", mountId, rtspUrl, e);
+                log.error("ensureStream failed mountpoint={} url={}", mountId, rtspUrl, e);
             }
         });
-
-        log.info("CctvService: 초기화 완료");
     }
 
     public List<CctvEntity> getAllCCTVList() {
@@ -140,9 +168,18 @@ public class CctvService {
             throw new IllegalArgumentException("name은 필수입니다.");
         }
 
-        cctvRepository.findByCctvCode(req.getCctvCode()).ifPresent(e -> {
-            throw new IllegalArgumentException("이미 존재하는 cctvCode 입니다: " + req.getCctvCode());
-        });
+        // cctvRepository.findByCctvCode(req.getCctvCode()).ifPresent(e -> {
+        // throw new IllegalArgumentException("이미 존재하는 cctvCode 입니다: " +
+        // req.getCctvCode());
+        // });
+
+        String locationCode = (req.getLocationCode() != null && !req.getLocationCode().isBlank())
+                ? req.getLocationCode()
+                : req.getCctvCode();
+
+        if (cctvRepository.existsByLocationCodeAndCctvCode(locationCode, req.getCctvCode())) {
+            throw new IllegalArgumentException("이미 존재하는 CCTV 입니다: " + locationCode + "/" + req.getCctvCode());
+        }
 
         CctvEntity e = new CctvEntity();
         e.setLocationCode(req.getLocationCode() != null ? req.getLocationCode() : req.getCctvCode());
@@ -194,51 +231,58 @@ public class CctvService {
         return saved;
     }
 
-    // public CctvEntity updateByCctvCode(String cctvCode, CctvUpdateRequest req) {
-    // CctvEntity e = cctvRepository.findByCctvCode(cctvCode)
-    // .orElseThrow(() -> new IllegalArgumentException("CCTV not found: " +
-    // cctvCode));
+    @Async
+    public void restartAsync(String locationCode, String cctvCode) {
+        restart(locationCode, cctvCode);
+    }
 
-    // e.setName(req.getName());
-    // e.setMountpointId(req.getMountpointId());
-    // e.setVideoPort(req.getVideoPort());
-    // e.setAddress(req.getAddress());
-    // e.setId(req.getId());
-    // e.setPassword(req.getPassword());
-    // e.setRtspUrl(req.getRtspUrl());
-    // e.setType(req.getType());
-    // e.setWsPort(req.getWsPort());
-    // e.setLatitude(req.getLatitude());
-    // e.setLongitude(req.getLongitude());
-
-    // return e;
-    // }
+    @Async
+    public void restartAllStreamsAsync() {
+        restartAllStreams();
+    }
 
     // CCTV 개별 재연결
     @Transactional(readOnly = true)
-    public void restartByCctvCode(String cctvCode) {
-        CctvEntity e = cctvRepository.findByCctvCode(cctvCode)
-                .orElseThrow(() -> new IllegalArgumentException("CCTV not found: " + cctvCode));
+    public void restart(String locationCode, String cctvCode) {
+        CctvEntity e = cctvRepository.findByLocationCodeAndCctvCode(locationCode, cctvCode)
+                .orElseThrow(() -> new IllegalArgumentException("CCTV not found: " + locationCode + "/" + cctvCode));
 
-        if (e.getMountpointId() == null || e.getVideoPort() == null) {
-            throw new IllegalStateException("mountpointId/videoPort가 없습니다. cctvCode=" + cctvCode);
+        Integer mountId = e.getMountpointId();
+        Integer videoPort = e.getVideoPort();
+        String rtspUrl = e.getRtspUrl();
+
+        // init() 스킵 조건과 동일하게
+        if (mountId == null || videoPort == null || rtspUrl == null || rtspUrl.isBlank()) {
+            throw new IllegalStateException("mountpointId/videoPort/rtspUrl이 없습니다. " + locationCode + "/" + cctvCode);
         }
 
-        String rtsp = buildRtspUrl(e);
+        Object lock = lockFor(mountId);
 
-        janusManager.restartStream(
-                e.getMountpointId(),
-                e.getVideoPort(),
-                rtsp,
-                e.getId(), // RTSP user
-                e.getPassword(), // RTSP pass
-                e.getType());
+        synchronized (lock) {
+            // 쿨다운
+            if (isInCooldown(mountId)) {
+                log.info("restart skipped (cooldown) {} / {} mountId={}", locationCode, cctvCode, mountId);
+                return;
+            }
+
+            String rtsp = buildRtspUrl(e);
+
+            janusManager.restartStream(
+                    mountId,
+                    videoPort,
+                    rtsp,
+                    e.getId(),
+                    e.getPassword(),
+                    e.getType());
+
+            markRestart(mountId);
+            log.info("restart done {} / {} mountId={}", locationCode, cctvCode, mountId);
+        }
     }
 
     // CCTV 전체 재연결
     @Transactional(readOnly = true)
     public void restartAllStreams() {
-        // Janus 자체가 죽었으면 전체 재연결 의미가 없으니 먼저 확인(선택)
         if (!janusApi.checkJanusConnection()) {
             throw new IllegalStateException("Janus 연결 실패 상태입니다.");
         }
@@ -246,29 +290,63 @@ public class CctvService {
         List<CctvEntity> all = cctvRepository.findAll();
 
         for (CctvEntity e : all) {
-            if (e.getMountpointId() == null || e.getVideoPort() == null)
+            Integer mountId = e.getMountpointId();
+            Integer videoPort = e.getVideoPort();
+            String rtspUrl = e.getRtspUrl();
+
+            if (mountId == null || videoPort == null || rtspUrl == null || rtspUrl.isBlank()) {
                 continue;
+            }
 
-            String rtsp = buildRtspUrl(e);
+            Object lock = lockFor(mountId);
 
-            try {
-                janusManager.restartStream(
-                        e.getMountpointId(),
-                        e.getVideoPort(),
-                        rtsp,
-                        e.getId(),
-                        e.getPassword(),
-                        e.getType());
-            } catch (Exception ex) {
-                log.error("restart failed cctvCode={} mountpoint={}", e.getCctvCode(), e.getMountpointId(), ex);
+            synchronized (lock) {
+                // 쿨다운
+                if (isInCooldown(mountId)) {
+                    log.info("restartAll skipped (cooldown) cctvCode={} mountId={}", e.getCctvCode(), mountId);
+                    continue;
+                }
+
+                String rtsp = buildRtspUrl(e);
+
+                try {
+                    janusManager.restartStream(
+                            mountId,
+                            videoPort,
+                            rtsp,
+                            e.getId(),
+                            e.getPassword(),
+                            e.getType());
+
+                    markRestart(mountId);
+                } catch (Exception ex) {
+                    log.error("restartAll failed cctvCode={} mountId={}", e.getCctvCode(), mountId, ex);
+                }
             }
         }
     }
 
     @Transactional
-    public CctvEntity updateByCctvCode(String cctvCode, CctvUpdateRequest req) {
-        CctvEntity e = cctvRepository.findByCctvCode(cctvCode)
-                .orElseThrow(() -> new IllegalArgumentException("CCTV not found: " + cctvCode));
+    public void updateStatusCam(
+            String locationCode,
+            String cctvCode,
+            int statusCam) {
+        CctvEntity entity = cctvRepository
+                .findByLocationCodeAndCctvCode(locationCode, cctvCode)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "CCTV not found: " + locationCode + "/" + cctvCode));
+
+        String newVal = String.valueOf(statusCam);
+
+        if (!newVal.equals(entity.getStatusCam())) {
+            entity.setStatusCam(newVal);
+        }
+    }
+
+    @Transactional
+    public CctvEntity update(String locationCode, String cctvCode, CctvUpdateRequest req) {
+        CctvEntity e = cctvRepository.findByLocationCodeAndCctvCode(locationCode, cctvCode)
+                .orElseThrow(() -> new IllegalArgumentException("CCTV not found: " + locationCode + "/" + cctvCode));
 
         e.setName(req.getName());
         e.setMountpointId(req.getMountpointId());
@@ -276,7 +354,6 @@ public class CctvService {
         e.setAddress(req.getAddress());
         e.setId(req.getId());
 
-        // 비밀번호는 입력된 경우만 변경 권장
         if (req.getPassword() != null && !req.getPassword().isBlank()) {
             e.setPassword(req.getPassword());
         }
@@ -287,21 +364,29 @@ public class CctvService {
         e.setLatitude(req.getLatitude());
         e.setLongitude(req.getLongitude());
 
-        // CctvEntity saved = cctvRepository.save(e);
-
         refreshCache();
-
         return e;
     }
 
     @Transactional
-    public void deleteByCctvCode(String cctvCode) {
-        if (!cctvRepository.existsByCctvCode(cctvCode)) {
-            throw new IllegalArgumentException("CCTV not found: " + cctvCode);
-        }
-        cctvRepository.deleteByCctvCode(cctvCode);
+    public void updateStatusProc(String locationCode, String cctvCode, int statusProc) {
+        CctvEntity entity = cctvRepository
+                .findByLocationCodeAndCctvCode(locationCode, cctvCode)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "CCTV not found: " + locationCode + "/" + cctvCode));
 
-        // 삭제 후 캐시 갱신(권장)
+        String newVal = String.valueOf(statusProc);
+        if (!newVal.equals(entity.getStatusProc())) {
+            entity.setStatusProc(newVal);
+        }
+    }
+
+    @Transactional
+    public void delete(String locationCode, String cctvCode) {
+        if (!cctvRepository.existsByLocationCodeAndCctvCode(locationCode, cctvCode)) {
+            throw new IllegalArgumentException("CCTV not found: " + locationCode + "/" + cctvCode);
+        }
+        cctvRepository.deleteByLocationCodeAndCctvCode(locationCode, cctvCode);
         refreshCache();
     }
 

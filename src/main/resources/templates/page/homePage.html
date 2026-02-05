@@ -55,7 +55,27 @@
     <div class="main-container" layout:fragment="content">
         <div class="control-bar">
             <div class="control-group">
-                <div class="dropdown">
+                <div class="dropdown-container">
+                    <button class="btn-apple-base btn-apple-light btn-dropdown" onclick="toggleDropdown(this)">
+                        <span id="selected-layout">4분할 화면 (2x2)</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </button>
+                    <div class="dropdown-menu">
+                        <div class="dropdown-item" data-layout="1" onclick="selectLayout(this)">
+                            <span>1분할 화면 (1x1)</span>
+                        </div>
+                        <div class="dropdown-item selected" data-layout="4" onclick="selectLayout(this)">
+                            <span>4분할 화면 (2x2)</span>
+                        </div>
+                        <div class="dropdown-item" data-layout="9" onclick="selectLayout(this)">
+                            <span>9분할 화면 (3x3)</span>
+                        </div>
+                        <div class="dropdown-item" data-layout="16" onclick="selectLayout(this)">
+                            <span>16분할 화면 (4x4)</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- <div class="dropdown d-none">
                     <button class="btn-apple-base btn-apple-light dropdown-toggle" type="button" id="viewDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="bi bi-grid-3x3-gap-fill me-1"></i>
                         <span class="d-none d-md-inline">레이아웃</span>
@@ -66,7 +86,7 @@
                         <li><a class="dropdown-item" href="#" data-layout="9">3x3</a></li>
                         <li><a class="dropdown-item" href="#" data-layout="16">4x4</a></li>
                     </ul>
-                </div>
+                </div> -->
                 <button class="btn-apple-base btn-apple-light" id="mapBtn">
                     <i class="bi bi-geo-alt-fill"></i>
                     <span class="d-none d-md-inline">지도화면</span>

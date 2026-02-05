@@ -1,8 +1,11 @@
 package com.edscorp.eds.cctv.domain;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.IdClass;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,6 +14,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "tb_cctv_list")
+@IdClass(CctvId.class)
 public class CctvEntity {
 
     @Id
@@ -55,5 +59,11 @@ public class CctvEntity {
 
     @Column(name = "statusCam")
     private String statusCam;
+
+    @Column(name = "statusProc")
+    private String statusProc;
+
+    @Column(name = "statusCamUpdatedAt")
+    private LocalDateTime statusCamUpdatedAt;
 
 }

@@ -38,33 +38,28 @@ public class JanusManager {
 
     public JanusApi.JanusSession ensureStream(int mountpointId, int videoPort, String rtspUrl, String rtspId,
             String rtspPw, String type) {
+
         return janusSessions.computeIfAbsent(mountpointId, id -> {
-            // 1) Janus 세션·핸들 생성
             JsonNode sess = janusApi.createSession();
             long sessionId = sess.path("data").path("id").asLong();
             JsonNode attach = janusApi.attachPlugin(sessionId);
             long handleId = attach.path("data").path("id").asLong();
 
-            // 2) 기존 mountpoint 존재 여부 확인
             JsonNode list = janusApi.listMountpoints(sessionId, handleId);
             boolean exists = list.path("plugindata").path("data").path("list")
                     .findValuesAsText("id").contains(String.valueOf(mountpointId));
 
-            // 3) RTSP mountpoint 생성 (없을 때만)
-            // int videoPort = BASE_VIDEO_PORT + mountpointId;
             if (!exists) {
                 janusApi.createMountpoint(sessionId, handleId, rtspUrl, mountpointId, videoPort, rtspId, rtspPw);
                 log.info("Mountpoint {} 생성 완료 (port={})", mountpointId, videoPort);
             }
 
-            // 4) GStreamer 실행 (RTSP → RTP)
             boolean started = gstProcessManager.start(String.valueOf(mountpointId), rtspUrl, videoPort, type);
-            // String.valueOf(mountpointId), rtspUrl, videoPort, 50, true, 3);
             if (!started) {
-                log.error("GStreamer 시작 실패 mountpoint={}", mountpointId);
+                // ✅ 즉시 끊지 않음: 5분 watchdog이 정리할 것
+                log.warn("GStreamer start failed now, will be handled by 5-min watchdog. mountpoint={}", mountpointId);
             }
 
-            // 5) 스케줄러에 세션 정보 저장
             JanusApi.JanusSession js = new JanusApi.JanusSession();
             js.sessionId = sessionId;
             js.handleId = handleId;
@@ -123,12 +118,20 @@ public class JanusManager {
     }
 
     public synchronized void stopStream(int mountpointId) {
-        // 1) gstreamer stop
+        // gstreamer stop (카메라 RTP 송출 중지)
         gstProcessManager.stop(String.valueOf(mountpointId));
 
-        // 2) janus session destroy
+        // janus session/handle 가져와서 mountpoint까지 제거
         JanusApi.JanusSession s = janusSessions.remove(mountpointId);
         if (s != null) {
+            // mountpoint destroy (해당 카메라 연결 정보 제거)
+            try {
+                janusApi.destroyMountpoint(s.sessionId, s.handleId, mountpointId);
+            } catch (Exception e) {
+                log.warn("destroyMountpoint failed mountpoint={}", mountpointId, e);
+            }
+
+            // session destroy (해당 카메라에 붙어있던 Janus 세션 정리)
             try {
                 janusApi.destroySession(s.sessionId);
             } catch (Exception e) {

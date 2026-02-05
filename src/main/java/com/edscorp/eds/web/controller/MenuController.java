@@ -162,7 +162,7 @@ public class MenuController {
                 model.addAttribute("userCount", userList.size());
 
                 break;
-            case "bgm":
+            case "schedule":
                 log.info("BGM/스케줄 관리 화면 진입");
                 List<ScheduleDetailDTO> scheduleList = broadcastScheduleService.getAllScheduleSpeakers();
                 log.info("스케줄 조회 - 총 {} 개", scheduleList.size());

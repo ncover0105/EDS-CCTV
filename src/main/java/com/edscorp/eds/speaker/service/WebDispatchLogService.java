@@ -20,12 +20,6 @@ public class WebDispatchLogService {
 
     private final TbWebSpkDispatchLogRepository repo;
 
-    /**
-     * 웹 발령 요청 로그 저장
-     * - speakerIds(List)가 있으면 JSON 문자열 형태로 speaker_ids 컬럼에 저장
-     * - speakerId가 비어있고 speakerIds가 1개면 speaker_id에도 함께 저장
-     * - dispatchType 기본값: MANUAL (요청값 없을 때)
-     */
     @Transactional
     public Long writeLog(WebDispatchLogRequest req, String userId, String ip, String ua) {
         String speakerId = req.getSpeakerId();
@@ -66,14 +60,6 @@ public class WebDispatchLogService {
         return saved.getLogKey();
     }
 
-    /**
-     * 운영용 발령 로그 조회
-     * - tb_spk_disaster_list 조인하여 disasterName/defaultMessage 등 포함
-     * - 메시지는 "ttsMessage(있으면) -> defaultMessage -> memo" 순으로 최종 값을 만들어 ttsMessage에
-     * 세팅해서 반환
-     *
-     * ※ start/end 기본값(오늘)은 Controller에서 처리하는 것을 권장
-     */
     @Transactional(readOnly = true)
     public Page<WebSpkDispatchLogRow> search(
             LocalDateTime start,

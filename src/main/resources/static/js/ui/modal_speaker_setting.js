@@ -1,10 +1,3 @@
-/* ==========================================================
- * modal_speaker_setting.js (SpeakerSettingDTO 기준) - FINAL
- * - 정보 요청 전: A/B 영역 모두 숨김
- * - 정보 요청 성공 시: 타입 판별 후 해당 영역만 표시
- * - 데이터 없음/오류: 초기화 + 알림
- * ========================================================== */
-
 let selectedSpeaker = null;
 
 const SPEAKER_ACTION_MAP = {
@@ -173,6 +166,34 @@ function isEmptySetting(dto) {
 /* =========================
   API
 ========================= */
+async function postBTypeAction({ speakerIds, action, extraParam = "" }) {
+  const res = await fetch("/api/btype/command/action", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ speakerIds, action, extraParam })
+  });
+
+  // 컨트롤러가 json {ok:true...} 를 내려줌
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.ok) {
+    throw new Error(data?.message || "명령 전송 실패");
+  }
+  return data;
+}
+
+async function pollSpeakerSetting(speakerKey, {
+  retries = 6,
+  intervalMs = 800,
+} = {}) {
+  // 데몬 응답 → DB 반영까지 약간의 지연이 있을 수 있어서 polling
+  for (let i = 0; i < retries; i++) {
+    const dto = await SpeakerApi.getSetting(speakerKey);
+    if (!isEmptySetting(dto)) return dto;
+    await new Promise(r => setTimeout(r, intervalMs));
+  }
+  return null;
+}
+
 const SpeakerApi = {
   async list() {
     const res = await fetch("/api/btype/query/config/list");
@@ -237,18 +258,14 @@ const SpeakerList = {
     const container = document.getElementById("speakerOffcanvasList");
     const emptyMsg = document.getElementById("emptySpeakerMessage");
     if (!container) return;
-  
-    // 🔧 TEST ONLY: 무조건 empty 상태
-    emptyMsg?.classList.remove("d-none");
-    container.querySelectorAll(".speaker-item").forEach(el => el.remove());
-    return;
-  
-    // ===== 아래는 정상 로직 (테스트 끝나면 다시 사용) =====
-  
-    // 기존 speaker item만 제거 (empty는 보존)
+    
+    // Test
+    // emptyMsg?.classList.remove("d-none");
+    // container.querySelectorAll(".speaker-item").forEach(el => el.remove());
+    // return;
+
     container.querySelectorAll(".speaker-item").forEach(el => el.remove());
   
-    // 데이터 없음 or 오류
     if (!Array.isArray(this.speakers) || this.speakers.length === 0) {
       emptyMsg?.classList.remove("d-none");
       return;
@@ -279,27 +296,11 @@ const SpeakerList = {
       </div>
     </div>
   `;
-
-    // return `
-    //   <div class="speaker-card overflow-hidden h-auto min-h-0 mb-2"
-    //       data-speaker-key="${String(speakerKey)}"
-    //       style="cursor:pointer;">
-    //     <div class="d-flex align-items-center">
-    //       <div class="flex-grow-1">
-    //         <div class="fw-semibold text-white">
-    //           ${name}
-    //           <span class="badge bg-secondary ms-2">KEY:${safe(speakerKey)}</span>
-    //         </div>
-    //         <div class="small text-light opacity-75">${safe(spk.description)}</div>
-    //       </div>
-    //     </div>
-    //   </div>
-    // `;
   },
 };
 
 /* =========================
-  B 타입 SettingView (네 파일 그대로)
+  B 타입 SettingView
 ========================= */
 const SettingView = {
   fillReadOnly(dto, selected) {
@@ -493,11 +494,10 @@ const SpeakerSettingModal = {
         speakerId: raw.speakerId ?? raw.id,
       };
 
-      // 기본정보 일부 표기(선택 표시)
+      // 기본정보 일부 표기
       setText("b_speakerName", selectedSpeaker.speakerName ?? "-");
       setText("b_speakerId", selectedSpeaker.speakerKey ?? "-");
 
-      // ✅ 정보 요청 전이므로 A/B 영역은 숨김 유지 + 탭 잠금
       this.resetViewOnlyKeepSelection();
       // 선택 기본정보는 유지
       setText("b_speakerName", selectedSpeaker.speakerName ?? "-");
@@ -509,73 +509,81 @@ const SpeakerSettingModal = {
     modalEl.addEventListener("click", async (e) => {
       const btn = e.target.closest("#speakerSettingInfo");
       if (!btn) return;
-
+  
       if (!selectedSpeaker?.speakerKey) {
         showGlobalAlert("스피커를 먼저 선택해주세요.", "warning");
         return;
       }
-
+  
+      // ✅ 여기서 speakerIds에 무엇을 넣을지 결정
+      // 보통 데몬은 speakerId(장비ID)를 쓰므로 speakerId 사용 추천
+      const deviceId = selectedSpeaker.speakerId; // raw.speakerId로 채워둔 값
+      if (!deviceId) {
+        showGlobalAlert("선택된 스피커의 speakerId가 없습니다.", "warning");
+        return;
+      }
+  
       if (btn.dataset.loading === "1") return;
       btn.dataset.loading = "1";
       btn.disabled = true;
-
+  
       try {
-        // 조회
-        const dto = await SpeakerApi.getSetting(selectedSpeaker.speakerKey);
-        console.log("setting dto =", dto);
-
-        // 데이터 없음/조회불가
+        // 1) 조회 요청(발신)
+        await postBTypeAction({
+          speakerIds: [String(deviceId)],
+          action: "getSpeakerSettings",
+          extraParam: ""
+        });
+  
+        // 2) 결과 polling 조회 (DB/캐시 반영될 때까지)
+        const dto = await pollSpeakerSetting(selectedSpeaker.speakerKey, {
+          retries: 8,
+          intervalMs: 700
+        });
+  
         if (isEmptySetting(dto)) {
           this.resetViewOnlyKeepSelection();
           setText("b_speakerName", selectedSpeaker.speakerName ?? "-");
           setText("b_speakerId", selectedSpeaker.speakerKey ?? "-");
-          setText("speakerTypeHint", "설정 정보를 불러올 수 없습니다.");
-          showGlobalAlert("조회된 설정 정보가 없습니다.", "warning");
+          showGlobalAlert("조회된 설정 정보가 없습니다. (응답 대기 시간 초과)", "warning");
           return;
         }
-
-        // 타입 판별
+  
+        // 타입 판별 및 바인딩은 기존 그대로
         const raw = SpeakerList.speakers.find(
           (s) => String(s?.speakerKey) === String(selectedSpeaker.speakerKey)
         );
         const type = detectSpeakerType(dto, raw);
-
-        // 타입 영역 표시
-        // showTypeArea(type);
-
-        // 타입별 바인딩/탭 활성화
+  
         if (type === "B") {
           SettingView.fillReadOnly(dto, selectedSpeaker);
           SettingView.fillForm(dto);
-
+  
           enableTab("tab-config-o", true);
           if (this.AUTO_OPEN_CONFIG_TAB) showTab("tab-config-o");
           else showTab("tab-info-o");
         } else {
-          // A 타입: A 바인딩이 있으면 호출 (없어도 영역 표시/탭 활성화는 동작)
           if (window.SettingViewA?.fillReadOnly) window.SettingViewA.fillReadOnly(dto, selectedSpeaker);
           if (window.SettingViewA?.fillForm) window.SettingViewA.fillForm(dto);
-
+  
           enableTab("tab-config-e", true);
           if (this.AUTO_OPEN_CONFIG_TAB) showTab("tab-config-e");
           else showTab("tab-info-e");
         }
-
+  
       } catch (err) {
         console.error("speakerSettingInfo error:", err);
-
+  
         this.resetViewOnlyKeepSelection();
         setText("b_speakerName", selectedSpeaker.speakerName ?? "-");
         setText("b_speakerId", selectedSpeaker.speakerKey ?? "-");
-        setText("speakerTypeHint", "설정 정보를 불러올 수 없습니다.");
-
-        showGlobalAlert("정보 요청 중 오류가 발생했습니다.", "danger");
+        showGlobalAlert(`정보 요청 중 오류: ${err.message}`, "danger");
       } finally {
         btn.dataset.loading = "0";
         btn.disabled = false;
       }
     });
-  },
+  },  
 };
 
 document.addEventListener("DOMContentLoaded", () => {

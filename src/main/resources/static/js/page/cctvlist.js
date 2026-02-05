@@ -26,6 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!editModalEl) return;
 
   editModalEl.addEventListener("hidden.bs.modal", () => {
+    setVal("editCctvlocationCode", "");
     setVal("editCctvCode", "");
     setVal("editCctvName", "");
     setVal("editCctvLoginId", "");
@@ -51,6 +52,7 @@ function openAddModal() {
   const modalEl = document.getElementById("addCctvModal");
   if (!modalEl) return alert("addCctvModal을 찾을 수 없습니다.");
 
+  setVal("cctvLocationCode", "");
   setVal("cctvCode", "");
   setVal("cctvName", "");
   setVal("cctvLoginId", "");
@@ -64,9 +66,8 @@ function openAddModal() {
 
   bootstrap.Modal.getOrCreateInstance(modalEl).show();
 }
-
-// HTML에서 onclick="submitAddCctv()" 이므로 전역 유지
 window.submitAddCctv = function submitAddCctv() {
+  const locationCode = getVal("cctvLocationCode").trim();
   const code = getVal("cctvCode").trim();
   const name = getVal("cctvName").trim();
   const url = getVal("cctvUrl").trim();
@@ -82,6 +83,7 @@ window.submitAddCctv = function submitAddCctv() {
   if (!name) return alert("CCTV 이름은 필수입니다.");
 
   const payload = {
+    locationCode: locationCode || null,
     cctvCode: code,
     name: name,
     rtspUrl: url || null,
@@ -115,6 +117,7 @@ window.submitAddCctv = function submitAddCctv() {
 };
 
 function submitEditCctv() {
+  const locationCode = getVal("editCctvlocationCode").trim();
   const code = getVal("editCctvCode").trim();
   const name = getVal("editCctvName").trim();
   const url = getVal("editCctvUrl").trim();
@@ -123,6 +126,7 @@ function submitEditCctv() {
   const loginId = getVal("editCctvLoginId").trim();
   const loginPw = getVal("editCctvLoginPassword").trim();
 
+  if (!locationCode) return alert("Location 코드를 찾을 수 없습니다.");
   if (!code) return alert("CCTV 코드를 찾을 수 없습니다.");
   if (!name) return alert("CCTV 이름은 필수입니다.");
 
@@ -135,7 +139,7 @@ function submitEditCctv() {
     ...(loginPw ? { password: loginPw } : {}),
   };
 
-  fetch(`/api/cctv/update/${encodeURIComponent(code)}`, {
+  fetch(`/api/cctv/${encodeURIComponent(locationCode)}/${encodeURIComponent(code)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -195,6 +199,7 @@ function renderCctvTable(list) {
   }
 
   list.forEach((cctv) => {
+    const locationCode = cctv.locationCode ?? "";
     const code = cctv.cctvCode ?? "-";
     const name = cctv.name ?? "";
     const url = cctv.rtspUrl ?? "-";
@@ -215,7 +220,7 @@ function renderCctvTable(list) {
 
     const tr = document.createElement("tr");
 
-    // ✅ 수정 모달용 dataset
+    tr.dataset.locationCode = locationCode;
     tr.dataset.code = code;
     tr.dataset.name = name;
     tr.dataset.loginId = cctv.id ?? "";
@@ -249,6 +254,7 @@ function renderCctvTable(list) {
 }
 
 function openEditModalFromRow(row) {
+  setVal("editCctvlocationCode", row.dataset.locationCode || "");
   setVal("editCctvCode", row.dataset.code);
   setVal("editCctvName", row.dataset.name || "");
   setVal("editCctvLoginId", row.dataset.loginId || "");
@@ -267,9 +273,14 @@ function openEditModalFromRow(row) {
 
 function deleteCctvFromRow(row) {
   const code = row.dataset.code;
-  if (!confirm(`CCTV(${code})를 삭제할까요?`)) return;
+  const locationCode = row.dataset.locationCode || "";
+  if (!locationCode) {
+    return alert("locationCode가 없습니다. 목록 데이터를 확인하세요.");
+  }
 
-  fetch(`/api/cctv/delete/${encodeURIComponent(code)}`, { method: "DELETE" })
+  if (!confirm(`CCTV(${locationCode}/${code})를 삭제할까요?`)) return;
+
+  fetch(`/api/cctv/${encodeURIComponent(locationCode)}/${encodeURIComponent(code)}`, { method: "DELETE" })
     .then((res) => {
       if (!res.ok) throw new Error("delete failed");
       loadCctvList();
