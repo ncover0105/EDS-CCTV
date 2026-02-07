@@ -25,26 +25,26 @@ window.CCTVLayout = (function () {
         // renderGrid(cameras.length > 4 ? 9 : 4);
         renderGrid(4);
 
-        bindFullscreenEvents(); 
+        bindFullscreenEvents();
     }
 
     function bindFullscreenEvents() {
         if (fullscreenEventsBound) return;
         fullscreenEventsBound = true;
-        
+
         const closeBtn = document.getElementById("closefullScreen");
         if (closeBtn) {
             closeBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            closeFullscreen();
+                e.preventDefault();
+                closeFullscreen();
             });
         }
-        
+
         document.addEventListener("keydown", (e) => {
             if (e.key !== "Escape") return;
             const fullView = document.getElementById("fullscreenView");
             if (fullView && fullView.classList.contains("active")) {
-            closeFullscreen();
+                closeFullscreen();
             }
         });
     }
@@ -101,15 +101,15 @@ window.CCTVLayout = (function () {
 
         feed.addEventListener("click", (e) => {
             if (e.target.closest(".cctv-controls")) return;
-        
+
             const isActive = feed.classList.contains("active");
-        
+
             // 일단 전부 해제
             document.querySelectorAll(".cctv-feed.active")
-            .forEach(el => el.classList.remove("active"));
-        
+                .forEach(el => el.classList.remove("active"));
+
             if (isActive) return;
-        
+
             feed.classList.add("active");
         });
 
@@ -164,7 +164,7 @@ window.CCTVLayout = (function () {
 
     function createPlaceholder(cam) {
         log("createPlaceholder()", `placeholder-${cam.mountpointId}`);
-    
+
         const placeholder = document.createElement("div");
         placeholder.id = `placeholder-${cam.mountpointId}`;
         placeholder.className = "cctv-placeholder";
@@ -179,7 +179,7 @@ window.CCTVLayout = (function () {
                 <small>연결없음</small>
             </div>
         `;
-    
+
         return placeholder;
     }
     function emptySlotHtml() {
@@ -203,7 +203,7 @@ window.CCTVLayout = (function () {
 
         reconnectBtn.addEventListener("click", async (e) => {
             e.stopPropagation();
-        
+
             // 프론트 재-watch 방식 (cctv_janus.js에 reconnectOne export 필요)
             try {
                 await CCTVJanus.reconnectOne(cameras, cam.mountpointId);
@@ -224,7 +224,7 @@ window.CCTVLayout = (function () {
         fullscreenBtn.addEventListener('click', e => {
             e.stopPropagation();
             console.log(`[FULLSCREEN BTN CLICK] camera: ${cam.name}`);
-        
+
             if (!video.classList.contains('d-none')) {
                 console.log(`[FULLSCREEN START] ${cam.name} 영상 표시 중`);
                 showFullscreen(video);
@@ -238,13 +238,13 @@ window.CCTVLayout = (function () {
             const sel = document.createElement("select");
             sel.className = "cctv-cam-select"; // CSS는 아래에 제공
             sel.title = "카메라 선택";
-            
+
             sel.innerHTML = cameras.map((c, i) => {
                 const selected = (i === focusedCamIndex) ? "selected" : "";
-                const name = (c?.name ?? `CAM-${i+1}`);
+                const name = (c?.name ?? `CAM-${i + 1}`);
                 return `<option value="${i}" ${selected}>${name}</option>`;
             }).join("");
-            
+
             // 클릭/변경 시 feed 클릭(active 토글) 방지
             sel.addEventListener("click", (e) => e.stopPropagation());
             sel.addEventListener("change", (e) => {
@@ -252,7 +252,7 @@ window.CCTVLayout = (function () {
                 const idx = parseInt(sel.value, 10);
                 setFocusedCameraByIndex(idx); // 아래에서 추가할 함수
             });
-            
+
             div.appendChild(sel);
         }
 
@@ -281,10 +281,10 @@ window.CCTVLayout = (function () {
     function setFocusedCameraByIndex(idx) {
         if (typeof idx !== "number" || idx < 0 || idx >= cameras.length) return;
         focusedCamIndex = idx;
-        
+
         if (currentLayout === 1) {
             renderGrid(1);
-        
+
             // 전환된 카메라 스트림 연결 안정화
             const cam = cameras[focusedCamIndex];
             if (window.CCTVJanus?.reconnectOne) {
@@ -321,42 +321,41 @@ window.CCTVLayout = (function () {
     }
 
     function closeFullscreen() {
-        log("closeFullscreen()");
-    
+
         const fullView = document.getElementById("fullscreenView");
         const content = fullView.querySelector(".fullscreen-content");
-    
+
         if (originalParent && originalElement) {
             const mountId = originalElement.id.replace("video-", "");
             const placeholder = document.getElementById(`placeholder-${mountId}`);
-    
-            log("전체화면 → 원래 자리 복귀", originalElement.id);
-    
+
             // 원래 자리 복귀
             originalParent.appendChild(originalElement);
-    
+
+            syncVisibilityByMountId(mountId);
+
             // video 표시 보장
-            originalElement.classList.remove("d-none");
-            originalElement.style.display = "block";
-    
+            // originalElement.classList.remove("d-none");
+            // originalElement.style.display = "block";
+
             // placeholder 숨기기
-            if (placeholder) {
-                placeholder.classList.add("d-none");
-                placeholder.style.display = "none";
-            }
+            // if (placeholder) {
+            //     placeholder.classList.add("d-none");
+            //     placeholder.style.display = "none";
+            // }
         }
-    
+
         // fullscreen 영역 초기화
         content.innerHTML = "";
         fullView.classList.add("d-none");
         fullView.classList.remove("active");
-    
+
         originalParent = null;
         originalElement = null;
-    
+
         log("전체화면 종료 완료");
     }
-    
+
 
     /* ============================
      *   상태 카운트
@@ -375,16 +374,52 @@ window.CCTVLayout = (function () {
     /* ============================
      *   Placeholder 표시
      * ============================ */
-    function showPlaceholder(cam) {
-        log("showPlaceholder()", cam.name);
+    function syncVisibilityByMountId(mountId) {
+        const video = document.getElementById(`video-${mountId}`);
+        const placeholder = document.getElementById(`placeholder-${mountId}`);
+        if (!video || !placeholder) return;
+
+        const hasPlayed = video.dataset.hasPlayed === "1";
+        if (hasPlayed) {
+            video.classList.remove("d-none");
+            placeholder.classList.add("d-none");
+        } else {
+            video.classList.add("d-none");
+            placeholder.classList.remove("d-none");
+        }
+    }
+
+    function showPlaceholder(cam, opts = {}) {
+        log("showPlaceholder()", cam?.name);
 
         const video = document.getElementById(`video-${cam.mountpointId}`);
         const placeholder = document.getElementById(`placeholder-${cam.mountpointId}`);
 
-        if (video) video.classList.add("d-none");
+        if (video) {
+            video.classList.add("d-none");
+            // 다음 재연결 시 영상 스트리밍 전까지 placeholder 표시를 위한 초기화
+            video.dataset.hasPlayed = "0";
+            if (opts.clearSrcObject && video.srcObject) {
+                try { video.srcObject.getTracks().forEach(t => t.stop()); } catch (e) { }
+                video.srcObject = null;
+            }
+        }
+
         if (placeholder) placeholder.classList.remove("d-none");
 
-        reportStatusCam(cam, 0);
+        if (opts.report !== false) {
+            reportStatusCam(cam, 0);
+        }
+    }
+
+    function prepareReconnect(cam) {
+        showPlaceholder(cam, { clearSrcObject: true, report: false });
+    }
+
+    function showAllPlaceholders(cameraList) {
+        (cameraList || cameras || []).forEach(c => {
+            try { prepareReconnect(c); } catch (e) { }
+        });
     }
 
     async function reportStatusCam(cam, statusCam) {
@@ -414,46 +449,59 @@ window.CCTVLayout = (function () {
             return;
         }
 
+        // placeholder 상태 초기화
+        videoEl.dataset.hasPlayed = "0";
+        videoEl.classList.add("d-none");
+        placeholder?.classList.remove("d-none");
+
+
         if (videoEl.srcObject) {
             log("기존 stream stop()", "");
-            videoEl.srcObject.getTracks().forEach(t => t.stop());
+            try { videoEl.srcObject.getTracks().forEach(t => t.stop()); } catch (e) { }
         }
 
         videoEl.srcObject = stream;
 
         if (!videoEl.dataset.statusBound) {
             videoEl.dataset.statusBound = "1";
-        
+
             videoEl.addEventListener("playing", () => {
                 log("▶️ video playing (confirmed)", cam.name);
-        
-                // play 성공(재생) 때만 placeholder 제거
+
+                // play 성공 때만 placeholder 제거
+                videoEl.dataset.hasPlayed = "1";
                 videoEl.classList.remove("d-none");
                 placeholder?.classList.add("d-none");
-        
+
                 reportStatusCam(cam, 1);
             });
-        
-            const fail = () => {
-                log("video not playable", cam.name);
-        
-                // 실패/버퍼링/에러는 placeholder 유지
-                showPlaceholder(cam);
-                reportStatusCam(cam, 0);
+
+            const failSoft = () => {
+                // waiting/stalled는 정상 재생 중에도 잠깐 발생 가능
+                // 아직 한 번도 재생되지 않은 상태일 때만 placeholder 유지
+                if (videoEl.dataset.hasPlayed !== "1") {
+                    log("video not playable (pre-play)", cam.name);
+                    showPlaceholder(cam, { report: false });
+                }
             };
-        
-            videoEl.addEventListener("stalled", fail);
-            videoEl.addEventListener("waiting", fail);
-            videoEl.addEventListener("ended", fail);
-            videoEl.addEventListener("error", fail);
+
+            const failHard = () => {
+                log("video not playable (ended/error)", cam.name);
+                showPlaceholder(cam);
+            };
+
+            videoEl.addEventListener("stalled", failSoft);
+            videoEl.addEventListener("waiting", failSoft);
+            videoEl.addEventListener("ended", failHard);
+            videoEl.addEventListener("error", failHard);
         }
-        
+
 
         videoEl.play()
             .then(() => {
                 log("영상 재생 성공", cam.name);
             }).catch(err => {
-                console.warn("⚠️ 자동 재생 실패:", err);
+                console.warn("자동 재생 실패:", err);
             });
 
         stream.getTracks()

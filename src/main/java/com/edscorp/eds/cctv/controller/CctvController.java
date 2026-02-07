@@ -56,7 +56,7 @@ public class CctvController {
 
     @PostMapping("/stream/restart-all")
     public ResponseEntity<?> restartAll() {
-        cctvService.restartAllStreamsAsync();
+        cctvService.restartAllStreamsAsync(true);
         return ResponseEntity.ok().build();
     }
 

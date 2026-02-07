@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", function () {
         showMethod: "fadeIn",
         hideMethod: "fadeOut"
     };
-    
+
     setTime();
 
     Logs.init();
@@ -48,10 +48,10 @@ document.addEventListener("DOMContentLoaded", function () {
         alert("❌ Janus.js 라이브러리 로드 실패");
         return;
     }
-    
+
     CCTVLayout.init(cameras);
     applyLayoutState();
-    
+
     // 스트리밍 서버 동작
     CCTVJanus.initSignaling(cameras);
     SSE_MQTT.connect();
@@ -88,9 +88,9 @@ document.addEventListener("DOMContentLoaded", function () {
         const btn = document.getElementById('mapBtn');
         const icon = btn.querySelector("i");
         const text = btn.querySelector("span");
-    
+
         const isMapVisible = !mapContainer.classList.contains('d-none');
-    
+
         // UI 전환
         if (isMapVisible) {
             // 현재 지도 → CCTV로 변경
@@ -108,10 +108,10 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     document.querySelectorAll('.speaker-item').forEach(item => {
-        item.addEventListener('click', function() {
+        item.addEventListener('click', function () {
             document.querySelectorAll('.speaker-item').forEach(el => el.classList.remove('active'));
             this.classList.add('active');
-            
+
             // 선택된 스피커 정보로 설정 업데이트
             const speakerId = this.dataset.speakerId;
             updateSpeakerSettings(speakerId);
@@ -119,18 +119,18 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // 저장 및 발령 버튼 이벤트
-    document.querySelector('.btn-primary').addEventListener('click', function() {
+    document.querySelector('.btn-primary').addEventListener('click', function () {
         // showToast('설정이 저장되었습니다.', 'success');
         App.utils.showGlobalAlert('설정이 저장되었습니다.', 'success');
     });
 
     // updateRangeValue('volumeRange', 'volumeValue');
     // generateRandomSpeakers();
-    
+
     // loadSpeakerList();
     // renderSpeakerPanel();
 
-    
+
     const entryTestBtn = document.getElementById("entryTestBtn");
 
     if (entryTestBtn) {
@@ -140,7 +140,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const camName = "CCTV-01";
             const msg = "허가되지 않은 인원이 위험구역에 진입했습니다.";
             const boundaryNum = 2;
-            
+
             if (typeof window.triggerEmergencyScreenEffect === "function") {
                 window.triggerEmergencyScreenEffect();
             }
@@ -161,15 +161,14 @@ async function callRestartAllServer() {
     try {
         setServerRestartBusy(true);
 
-        const res = await fetch("/api/cctv/stream/restart-all", { method: "POST" }); 
-        // 컨트롤러가 /cctv 아래면: "/cctv/stream/restart-all" 로 바꿔야 함
+        const res = await fetch("/api/cctv/stream/restart-all", { method: "POST" });
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        // showToast("전체 스트리밍 서버 재시작 요청 완료", "success");
-        App.utils.showGlobalAlert("전체 스트리밍 서버 재시작 완료", "success");
+        showToast("전체 스트리밍 서버 재시작 요청 완료", "success");
+        // App.utils.showGlobalAlert("전체 스트리밍 서버 재시작 완료", "success");
     } catch (e) {
         console.error(e);
-        // showToast("전체 재시작 실패", "danger");
+        showToast("전체 재시작 실패", "danger");
         App.utils.showGlobalAlert("전체 재시작 실패", "danger");
     } finally {
         setServerRestartBusy(false);
@@ -224,13 +223,13 @@ window.openBroadcastModal = function (camName, boundaryNum) {
 };
 
 
-window.onload = function(){
+window.onload = function () {
 
     // CCTV 아이템 클릭 이벤트 (선택)
     const cctvItems = document.querySelectorAll('.cctv-item');
 
     cctvItems.forEach(item => {
-        item.addEventListener('click', function(e) {
+        item.addEventListener('click', function (e) {
             // 액션 버튼 클릭은 제외
             if (!e.target.closest('.action-btn')) {
                 // 활성화 클래스 전환
@@ -252,7 +251,7 @@ function getSelectedCameraName(key) {
     if (active?.dataset?.camName) return active.dataset.camName;
 
     const cam = cameras.find(c =>
-    String(c.mountpointId) === String(key) || String(c.cctvCode) === String(key)
+        String(c.mountpointId) === String(key) || String(c.cctvCode) === String(key)
     );
     return cam?.name ?? "선택 CCTV";
 }
@@ -298,15 +297,15 @@ function showToast(message, type) {
 
 function updateSpeakerSettings(speakerId) {
     console.log('스피커 설정 로드:', speakerId);
-    
+
     const speakerSettings = {
         'SP001': { volume: 75, bgm: 30, input: 50 },
         'SP002': { volume: 60, bgm: 25, input: 45 },
         'SP003': { volume: 80, bgm: 35, input: 55 }
     };
-    
+
     const settings = speakerSettings[speakerId] || { volume: 50, bgm: 30, input: 50 };
-    
+
     // document.getElementById('outputVolume').value = settings.volume;
     // document.getElementById('outputVolumeValue').textContent = settings.volume + '%';
     document.getElementById('bgmVolume').value = settings.bgm;
@@ -376,11 +375,11 @@ function getCurrentDateTime() {
 
 function setTime() {
     const datetimeElement = document.getElementById("currentDate");
-    
+
     if (datetimeElement) {
         // 초기 시간 설정
         datetimeElement.textContent = getCurrentDateTime();
-        
+
         // 1초마다 시간 업데이트
         setInterval(() => {
             datetimeElement.textContent = getCurrentDateTime();
@@ -392,8 +391,8 @@ function setTime() {
 function updateRangeValue(rangeId, valueId) {
     const range = document.getElementById(rangeId);
     const valueSpan = document.getElementById(valueId);
-    
-    range.addEventListener('input', function() {
+
+    range.addEventListener('input', function () {
         valueSpan.textContent = this.value + '%';
     });
 }
@@ -443,7 +442,7 @@ async function renderSpeakerPanel() {
     speakerList.forEach(sp => {
         const isOnline =
             sp.connStat === "01" || sp.connStat === "1" || sp.status === "온라인";
-        
+
         const html = `
             <div class="speaker-item">
                 <div style="display: flex; align-items: center; justify-content: space-between;">
@@ -480,7 +479,7 @@ function buildDisasterOneLine(d) {
     const command = CMD_LABEL?.[Number(d.dstSirenCode)] ?? "";
     const region = REG_ID_TO_KO?.[d.dstStoCode] ?? "";
 
-    return [ `${type} ${level}`.trim(), region, command ]
+    return [`${type} ${level}`.trim(), region, command]
         .filter(Boolean)
         .join(" · ");
 }
@@ -495,26 +494,26 @@ async function loadTodayLatestDisasterOneLine() {
     dateEl.textContent = today.replaceAll("-", ".");
 
     try {
-    const res = await fetch(DISASTER_LATEST_TODAY_API, { headers: { "Accept": "application/json" } });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const res = await fetch(DISASTER_LATEST_TODAY_API, { headers: { "Accept": "application/json" } });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-    const data = await res.json(); // { today, item }
-    const oneLine = buildDisasterOneLine(data?.item);
+        const data = await res.json(); // { today, item }
+        const oneLine = buildDisasterOneLine(data?.item);
 
-    lineEl.textContent = oneLine;
-    lineEl.classList.remove("text-muted", "text-warning", "text-danger", "text-white-50");
+        lineEl.textContent = oneLine;
+        lineEl.classList.remove("text-muted", "text-warning", "text-danger", "text-white-50");
 
-    if (!data?.item) {
-        lineEl.classList.add("text-muted");
-    } else {
-        // 기본은 경고색으로 강조(원하면 조건부로 레벨별 색상도 가능)
-        lineEl.classList.add("text-warning");
-    }
+        if (!data?.item) {
+            lineEl.classList.add("text-muted");
+        } else {
+            // 기본은 경고색으로 강조(원하면 조건부로 레벨별 색상도 가능)
+            lineEl.classList.add("text-warning");
+        }
     } catch (e) {
-    console.error("[disaster latest]", e);
-    lineEl.textContent = "특보 정보 조회 실패";
-    lineEl.classList.remove("text-warning");
-    lineEl.classList.add("text-danger");
+        console.error("[disaster latest]", e);
+        lineEl.textContent = "특보 정보 조회 실패";
+        lineEl.classList.remove("text-warning");
+        lineEl.classList.add("text-danger");
     }
 }
 

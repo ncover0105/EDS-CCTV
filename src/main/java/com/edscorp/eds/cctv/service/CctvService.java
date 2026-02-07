@@ -20,7 +20,6 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.EnableAsync;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -85,10 +84,13 @@ public class CctvService {
             if (mountId == null || videoPort == null || rtspUrl == null || rtspUrl.isBlank())
                 return;
 
-            try {
-                janusManager.ensureStream(mountId, videoPort, rtspUrl, rtspId, rtspPw, type);
-            } catch (Exception e) {
-                log.error("ensureStream failed mountpoint={} url={}", mountId, rtspUrl, e);
+            Object lock = lockFor(mountId);
+            synchronized (lock) {
+                try {
+                    janusManager.ensureStream(mountId, videoPort, rtspUrl, rtspId, rtspPw, type);
+                } catch (Exception e) {
+                    log.error("ensureStream failed mountpoint={} url={}", mountId, rtspUrl, e);
+                }
             }
         });
     }
@@ -125,16 +127,16 @@ public class CctvService {
     }
 
     private String buildRtspUrl(CctvEntity entity) {
-        String base = "rtsp://";
-        // if (entity.getRtspUrl() != null && !entity.getRtspUrl().isEmpty()) {
-        // return base + entity.getRtspUrl();
-        // } else {
-        // return base;
-        // }
+        String raw = entity.getRtspUrl();
+        if (raw == null)
+            return "rtsp://";
+
+        String base = raw.startsWith("rtsp://") ? raw.substring("rtsp://".length()) : raw;
+
         if (entity.getId() != null && !entity.getId().isEmpty()) {
-            return base + entity.getId() + ":" + entity.getPassword() + "@" + entity.getRtspUrl();
+            return "rtsp://" + entity.getId() + ":" + entity.getPassword() + "@" + base;
         } else {
-            return base + entity.getRtspUrl();
+            return "rtsp://" + base;
         }
     }
 
@@ -233,17 +235,22 @@ public class CctvService {
 
     @Async
     public void restartAsync(String locationCode, String cctvCode) {
-        restart(locationCode, cctvCode);
+        restart(locationCode, cctvCode, true);
     }
 
     @Async
     public void restartAllStreamsAsync() {
-        restartAllStreams();
+        restartAllStreams(false);
     }
 
     // CCTV 개별 재연결
     @Transactional(readOnly = true)
     public void restart(String locationCode, String cctvCode) {
+        restart(locationCode, cctvCode, false);
+    }
+
+    @Transactional(readOnly = true)
+    public void restart(String locationCode, String cctvCode, boolean force) {
         CctvEntity e = cctvRepository.findByLocationCodeAndCctvCode(locationCode, cctvCode)
                 .orElseThrow(() -> new IllegalArgumentException("CCTV not found: " + locationCode + "/" + cctvCode));
 
@@ -259,8 +266,8 @@ public class CctvService {
         Object lock = lockFor(mountId);
 
         synchronized (lock) {
-            // 쿨다운
-            if (isInCooldown(mountId)) {
+            // 쿨다운 (수동/관리자 force 요청이면 무시)
+            if (!force && isInCooldown(mountId)) {
                 log.info("restart skipped (cooldown) {} / {} mountId={}", locationCode, cctvCode, mountId);
                 return;
             }
@@ -281,8 +288,13 @@ public class CctvService {
     }
 
     // CCTV 전체 재연결
+    @Async
+    public void restartAllStreamsAsync(boolean force) {
+        restartAllStreams(force);
+    }
+
     @Transactional(readOnly = true)
-    public void restartAllStreams() {
+    public void restartAllStreams(boolean force) {
         if (!janusApi.checkJanusConnection()) {
             throw new IllegalStateException("Janus 연결 실패 상태입니다.");
         }
@@ -294,15 +306,14 @@ public class CctvService {
             Integer videoPort = e.getVideoPort();
             String rtspUrl = e.getRtspUrl();
 
-            if (mountId == null || videoPort == null || rtspUrl == null || rtspUrl.isBlank()) {
+            if (mountId == null || videoPort == null || rtspUrl == null || rtspUrl.isBlank())
                 continue;
-            }
 
             Object lock = lockFor(mountId);
-
             synchronized (lock) {
-                // 쿨다운
-                if (isInCooldown(mountId)) {
+
+                // ✅ force=true면 쿨다운 무시
+                if (!force && isInCooldown(mountId)) {
                     log.info("restartAll skipped (cooldown) cctvCode={} mountId={}", e.getCctvCode(), mountId);
                     continue;
                 }

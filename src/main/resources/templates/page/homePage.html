@@ -1,15 +1,14 @@
 <!DOCTYPE html>
-<html lang="ko"
-    xmlns:th="http://www.thymeleaf.org"
-    xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-    xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-    layout:decorate="~{layout/layout}">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+    xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/layout}">
+
 <head>
     <meta charset="UTF-8">
     <title th:text="${title}">Home</title>
     <script src="/js/footer.js"></script>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
     <!-- <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=66sw7wk0ye&callback=initMap"></script> -->
@@ -27,7 +26,7 @@
     <!-- 서버 데이터를 JavaScript로 전달 -->
     <script th:inline="javascript">
         /*<![CDATA[*/
-        var cameras = /*[[${cameras}]]*/ [];
+        var cameras = /*[[${cameras}]]*/[];
         var mapApiKey = /*[[${mapApiKey}]]*/ "";
         // var speakerList = /*[[${speakerList}]]*/ [];
         /*]]>*/
@@ -50,6 +49,7 @@
 
     <!-- <script th:src="@{/js/btype_action_modal.js}"></script> -->
 </head>
+
 <body>
     <!-- Main -->
     <div class="main-container" layout:fragment="content">
@@ -91,19 +91,23 @@
                     <i class="bi bi-geo-alt-fill"></i>
                     <span class="d-none d-md-inline">지도화면</span>
                 </button>
-                <button class="btn-apple-base btn-apple-light" id="speakerList" data-bs-toggle="modal" data-bs-target="#speaker_setting_modal">
+                <button class="btn-apple-base btn-apple-light" id="speakerList" data-bs-toggle="modal"
+                    data-bs-target="#speaker_setting_modal">
                     <i class="bi bi-list"></i>
                     <span class="d-none d-md-inline">스피커 정보</span>
                 </button>
-                <button type="button" data-bs-toggle="modal" data-bs-target="#speaker_broadcast_modal" class="btn-apple-base btn-apple-danger">
+                <button type="button" data-bs-toggle="modal" data-bs-target="#speaker_broadcast_modal"
+                    class="btn-apple-base btn-apple-danger">
                     <i class="bi bi-exclamation-triangle"></i>
                     <span class="d-none d-md-inline">수동발령</span>
                 </button>
-                <button type="button" data-bs-toggle="modal" data-bs-target="#btype_action_modal" class="btn-apple-warning d-none">
+                <button type="button" data-bs-toggle="modal" data-bs-target="#btype_action_modal"
+                    class="btn-apple-warning d-none">
                     <i class="bi bi-arrow-up-right-square"></i>
                     <span class="d-none d-md-inline">스피커 테스트</span>
                 </button>
-                <button type="button" data-bs-toggle="modal" data-bs-target="#btype_action_modal" class="btn-apple-warning d-none">
+                <button type="button" data-bs-toggle="modal" data-bs-target="#btype_action_modal"
+                    class="btn-apple-warning d-none">
                     <i class="bi bi-arrow-up-right-square"></i>
                     <span class="d-none d-md-inline">출입 테스트</span>
                 </button>
@@ -117,7 +121,7 @@
                     <i class="bi bi-arrow-repeat"></i>
                     <span class="d-none d-md-inline">전체 재연결</span>
                 </button>
-                
+
                 <!-- 스트리밍 서버 재시작 -->
                 <button class="btn-apple-base btn-apple-warning" id="restartAllServerBtn" type="button">
                     <i class="bi bi-arrow-clockwise"></i>
@@ -202,15 +206,13 @@
                         <span>특보</span>
                         <span class="badge info" id="specialReportBadge">오늘</span>
                     </div>
-                    
+
                     <div class="panel-content p-0">
                         <div id="specialReportLine" class="special-line" style="opacity: 0.9;">
                             불러오는 중...
                         </div>
-                    
-                        <div id="specialReportEmpty"
-                                class="d-none special-line"
-                                style="opacity: 0.9;">
+
+                        <div id="specialReportEmpty" class="d-none special-line" style="opacity: 0.9;">
                             <i class="bi bi-exclamation-circle fs-5 text-muted"></i>
                             <span class="sr-wrn-text text-muted">오늘 특보 없음</span>
                         </div>
@@ -266,7 +268,7 @@
                                 <span class="air-quality-value" id="pm10Value">-</span>
                             </div>
                         </div>
-                    
+
                         <!-- PM2.5 -->
                         <div class="air-quality-item">
                             <div class="air-quality-top">
@@ -284,7 +286,7 @@
                 <div class="panel weather-panel">
                     <div class="panel-header">
                         <span>레이더 영상</span>
-                        <div  style="display: flex; gap: 0.5rem;">
+                        <div style="display: flex; gap: 0.5rem;">
                             <button class="toggle-btn active" onclick="Weather.switchRadarType('radar', this)">
                                 <i class="fa-solid fa-broadcast-tower me-1"></i>레이더
                             </button>
@@ -295,16 +297,18 @@
                     </div>
                     <div class="panel-content">
                         <div class="weather-map position-relative" id="radar-map">
-                            <div id="loadingSpinnerRadar" class="d-flex justify-content-center align-items-center flex-column position-absolute w-100 h-100">
+                            <div id="loadingSpinnerRadar"
+                                class="d-flex justify-content-center align-items-center flex-column position-absolute w-100 h-100">
                                 <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
                                 <div class="mt-2 small text-white-50">레이더 로딩중...</div>
                             </div>
                             <img id="radarImg" class="d-none w-100" alt="레이더 지도">
                         </div>
-                
+
                         <!-- 위성 지도 -->
                         <div class="weather-map d-none position-relative" id="satellite-map">
-                            <div id="loadingSpinnerSatellite" class="d-flex justify-content-center align-items-center flex-column position-absolute w-100 h-100">
+                            <div id="loadingSpinnerSatellite"
+                                class="d-flex justify-content-center align-items-center flex-column position-absolute w-100 h-100">
                                 <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
                                 <div class="mt-2 small text-white-50">위성 로딩중...</div>
                             </div>
@@ -321,13 +325,13 @@
 
         <!-- 전체화면 뷰 -->
         <div id="fullscreenView" class="fullscreen-view d-none">
-            <button id="closefullScreen" class="close-fullscreen">
+            <button id="closefullScreen" class="cctv-control-btn">
                 <i class="bi bi-x-lg"></i>
             </button>
             <div class="fullscreen-content">
             </div>
         </div>
-        
+
         <!-- 알림 -->
         <div class="notification notification-danger" id="customNotification">
             <div class="notification-icon">
@@ -342,8 +346,9 @@
         <div id="emergencyOverlay" class="emergency-overlay" aria-hidden="true"></div>
         <!-- <div class="overlay-3" id="overlay3"></div>
         <div class="ripple" id="ripple"></div> -->
-        
+
         <!-- <script src="/js/notimodal.js"></script> -->
     </div>
 </body>
+
 </html>
