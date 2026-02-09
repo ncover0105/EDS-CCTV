@@ -54,6 +54,9 @@ window.CCTVLayout = (function () {
      * ============================ */
     function renderGrid(layout) {
         log("renderGrid()", `layout = ${layout}`);
+        if (layout !== 1) {
+            focusedCamIndex = 0;
+        }
         currentLayout = layout;
 
         const container = document.getElementById("cctv-container");
@@ -204,7 +207,7 @@ window.CCTVLayout = (function () {
         reconnectBtn.addEventListener("click", async (e) => {
             e.stopPropagation();
 
-            // 프론트 재-watch 방식 (cctv_janus.js에 reconnectOne export 필요)
+            // 재-watch 방식
             try {
                 await CCTVJanus.reconnectOne(cameras, cam.mountpointId);
                 // showToast(`${cam.name} 재연결 완료`, "success");
@@ -236,7 +239,7 @@ window.CCTVLayout = (function () {
 
         if (currentLayout === 1) {
             const sel = document.createElement("select");
-            sel.className = "cctv-cam-select"; // CSS는 아래에 제공
+            sel.className = "cctv-cam-select";
             sel.title = "카메라 선택";
 
             sel.innerHTML = cameras.map((c, i) => {

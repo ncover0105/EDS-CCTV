@@ -13,8 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.edscorp.eds.common.util.Util;
-import com.edscorp.eds.rainfall.vo.global.RAINAWSLISTVO;
 import com.edscorp.eds.weather.domain.WeatherCondition;
+import com.edscorp.eds.weather.dto.RAINAWSLISTVO;
 import com.edscorp.eds.weather.dto.WeatherResponseDTO;
 
 import lombok.RequiredArgsConstructor;

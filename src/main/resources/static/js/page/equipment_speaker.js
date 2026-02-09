@@ -13,7 +13,7 @@ const SPEAKER_ACTION_API = "/api/btype/command/action";
 const SPEAKER_POLL_SECONDS = 0;
 
 // 스피커 테이블 페이지네이션
-const SPEAKER_ITEMS_PER_PAGE = 15;
+const SPEAKER_ITEMS_PER_PAGE = 10;
 
 // 페이지 상태(필터/검색 도입 시에도 여기 리스트만 바꾸면 됨)
 let speakerPageState = {

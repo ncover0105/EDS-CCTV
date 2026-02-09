@@ -18,8 +18,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import com.edscorp.eds.rainfall.vo.global.RAINSPEACIALLISTVO;
 import com.edscorp.eds.weather.client.KmaApiClient;
+import com.edscorp.eds.weather.dto.RAINSPEACIALLISTVO;
 import com.edscorp.eds.weather.dto.TbWeatherWarningList;
 import com.edscorp.eds.weather.dto.TbWeatherWarningListKey;
 import com.edscorp.eds.weather.repository.TbWeatherWarningListRepository;
