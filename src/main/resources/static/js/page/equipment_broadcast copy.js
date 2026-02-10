@@ -1,7 +1,8 @@
 /* ===================================
-* equipment_broadcast.js (발령 전용 교체본)
-* - 파일/오디오 실행 로직 제거
-* - 방송 탭에서도 모달과 동일하게 /api/btype/command/alert 발령 전송만 수행
+* equipment_broadcast.js (드롭다운 버전)
+* - 방송 유형 카드 UI 제거
+* - 방송 유형(재난) 드롭다운 + TTS 템플릿 드롭다운 추가
+* - 발령 전송은 /api/btype/command/alert 만 수행
 * =================================== */
 
 /* -----------------------------
@@ -97,11 +98,13 @@ function getSpeakerId(spk) {
 * ----------------------------- */
 let disasterCache = [];
 let broadcastSpeakerCache = [];
-
 let selectedTargetSpeakerKeys = new Set();
 
-window.selectedSpeakers = window.selectedSpeakers || [];
+// "저장메시지/기타"에서 사용하는 재난 코드
 window.selectedBroadcastType = window.selectedBroadcastType || null;
+
+// TTS 템플릿 선택값(선택된 템플릿 객체 캐시)
+window.selectedTtsTemplate = window.selectedTtsTemplate || null;
 
 /* -----------------------------
 * API (조회)
@@ -122,7 +125,6 @@ async function listDisasters() {
 * 발령 API (전송)
 * ----------------------------- */
 const ALERT_API_URL = "/api/btype/command/alert";
-
 const ALERT_LOG_LATEST_API = "/api/spk/web/alert-logs/latest";
 
 function getSelectedSpeakerCodes() {
@@ -153,6 +155,7 @@ function buildServerAlertPayload({ deviceId, ttsMessage }) {
     const alertRange = document.getElementById("bc_scope")?.value ?? "3";
     const alertPriority = document.getElementById("bc_priority")?.value ?? "3";
 
+    // TTS면 CFW 고정(기존 정책 유지), 저장메시지/기타면 선택한 재난 코드 사용
     const disasterCode = isTtsBroadcastMode()
         ? "CFW"
         : String(window.selectedBroadcastType ?? "").trim();
@@ -221,29 +224,29 @@ function renderTargetSpeakerList(list) {
         listEl.insertAdjacentHTML(
             "beforeend",
             `
-        <div class="speaker-card overflow-hidden h-auto min-h-0 mb-2 ${checked ? "selected" : ""}"
-            data-speaker-key="${escapeHtml(speakerKey)}">
-            <div class="d-flex justify-content-between align-items-start">
-            <div class="w-100">
-                <div class="d-flex align-items-center justify-content-between gap-2">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="dot dot-${statusClass}"></span>
-                    <div class="fw-semibold text-white">${escapeHtml(name)}</div>
-                </div>
+      <div class="speaker-card overflow-hidden h-auto min-h-0 mb-2 ${checked ? "selected" : ""}"
+        data-speaker-key="${escapeHtml(speakerKey)}">
+        <div class="d-flex justify-content-between align-items-start">
+          <div class="w-100">
+            <div class="d-flex align-items-center justify-content-between gap-2">
+              <div class="d-flex align-items-center gap-2">
+                <span class="dot dot-${statusClass}"></span>
+                <div class="fw-semibold text-white">${escapeHtml(name)}</div>
+              </div>
 
-                <div class="form-check mb-0 ms-2">
-                    <input class="form-check-input targetSpeakerChk"
-                        type="checkbox"
-                        data-speaker-key="${escapeHtml(speakerKey)}"
-                        ${checked ? "checked" : ""}>
-                </div>
-                </div>
+              <div class="form-check mb-0 ms-2">
+                <input class="form-check-input targetSpeakerChk"
+                  type="checkbox"
+                  data-speaker-key="${escapeHtml(speakerKey)}"
+                  ${checked ? "checked" : ""}>
+              </div>
+            </div>
 
-                <div class="small text-white-50 mt-1">${escapeHtml(spkId)}</div>
-            </div>
-            </div>
+            <div class="small text-white-50 mt-1">${escapeHtml(spkId)}</div>
+          </div>
         </div>
-        `
+      </div>
+      `
         );
 
         appended++;
@@ -382,127 +385,260 @@ function clearTargetSpeakers() {
 window.clearTargetSpeakers = clearTargetSpeakers;
 
 /* -----------------------------
-* 방송 종류(재난) 렌더링
+* 드롭다운: 재난(방송 유형) / TTS 템플릿
 * ----------------------------- */
 function isUseFlag(v) {
     const s = String(v ?? "").trim().toUpperCase();
     return s === "Y" || s === "USE" || s === "1" || s === "TRUE";
 }
 
-function mapDisasterStyle(disaster) {
-    const p = Number(disaster?.dstPriority ?? 99);
+function resetInfoPanel() {
+    const infoArea = document.getElementById("selectedBroadcastInfo");
+    const t = document.getElementById("selectedBroadcastTitle");
+    const m = document.getElementById("selectedBroadcastMessage");
+    const a = document.getElementById("selectedBroadcastAudio");
 
-    if (p <= 1) return { type: "emergency", icon: "bi-exclamation-triangle-fill", colorVar: "--accent-red" };
-    if (p <= 3) return { type: "warning", icon: "bi-bell-fill", colorVar: "--accent-orange" };
-    return { type: "normal", icon: "bi-megaphone-fill", colorVar: "--accent-primary" };
+    if (t) t.innerText = "-";
+    if (m) m.innerText = "-";
+    if (a) a.innerText = "-";
+    if (infoArea) infoArea.style.display = "none";
 }
 
-async function renderBroadcastTypes() {
-    const container = document.getElementById("broadcastTypesContainer");
+function showInfoPanel({ title, message, audio }) {
+    const infoArea = document.getElementById("selectedBroadcastInfo");
+    const t = document.getElementById("selectedBroadcastTitle");
+    const m = document.getElementById("selectedBroadcastMessage");
+    const a = document.getElementById("selectedBroadcastAudio");
+
+    if (t) t.innerText = title ?? "-";
+    if (m) m.innerText = message ?? "-";
+    if (a) a.innerText = audio ?? "";
+    if (infoArea) infoArea.style.display = "block";
+}
+
+async function renderDisasterSelect() {
+    const sel = document.getElementById("bc_disaster_type");
+    if (!sel) return;
+
+    sel.innerHTML = `<option value="" selected>방송 유형 선택</option>`;
 
     const disasters = await listDisasters();
     disasterCache = Array.isArray(disasters) ? disasters : [];
-
-    // 1. 드롭다운(bc_disaster) 갱신
-    const select = document.getElementById("bc_disaster");
-    if (select) {
-        select.innerHTML = `<option value="" selected>재난을 선택하세요</option>`;
-
-        const listForDropdown = disasterCache
-            .filter(d => isUseFlag(d?.dstUseFlag))
-            .sort((a, b) => (a?.dstPriority ?? 9999) - (b?.dstPriority ?? 9999));
-
-        listForDropdown.forEach(d => {
-            const opt = document.createElement("option");
-            opt.value = safeValue(d.dstCode, "");
-            opt.textContent = safeName(d.dstName);
-            select.appendChild(opt);
-        });
-    }
-
-    // 2. 방송 버튼(broadcastTypesContainer) 갱신
-    if (!container) return;
-
-    container.innerHTML = "";
 
     const list = disasterCache
         .filter(d => isUseFlag(d?.dstUseFlag))
         .sort((a, b) => (a?.dstPriority ?? 9999) - (b?.dstPriority ?? 9999));
 
-    list.forEach((disaster) => {
-        const { type, icon, colorVar } = mapDisasterStyle(disaster);
+    list.forEach(d => {
+        const opt = document.createElement("option");
+        opt.value = String(d?.dstCode ?? "").trim();
+        opt.textContent = safeValue(d?.dstName, "(이름없음)");
 
-        const div = document.createElement("div");
-        div.className = `broadcast-type ${type}`;
+        // 미리보기 데이터
+        opt.dataset.title = safeValue(d?.dstName, "(이름없음)");
+        opt.dataset.message = safeValue(d?.dstStoreMsg, "");
+        const audioFile = (d?.dstStoCode ?? "").trim() || (d?.dstSirenCode ?? "").trim() || "";
+        opt.dataset.audio = audioFile ? `저장코드: ${audioFile}` : "";
 
-        div.dataset.code = safeValue(disaster.dstCode, "");
-        div.dataset.title = safeValue(disaster.dstName, "");
-        div.dataset.message = safeValue(disaster.dstStoreMsg, "");
-
-        const audioFile = (disaster.dstStoCode ?? "").trim() || (disaster.dstSirenCode ?? "").trim() || "";
-        div.dataset.audio = audioFile;
-        div.dataset.category = type;
-
-        div.innerHTML = `
-        <i class="bi ${icon}" style="color: var(${colorVar}); font-size:1.5rem;"></i>
-        <div class="text-wrap">${escapeHtml(safeValue(disaster.dstName, "(이름없음)"))}</div>
-        `;
-
-        div.onclick = () => selectBroadcastType(div, div.dataset.code);
-        container.appendChild(div);
+        sel.appendChild(opt);
     });
 
-    resetSelection();
+    // 변경 이벤트 바인딩(1회)
+    if (sel.dataset.bound !== "1") {
+        sel.addEventListener("change", () => {
+            const code = String(sel.value ?? "").trim();
+            window.selectedBroadcastType = code || null;
+
+            // 저장메시지/기타에서 의미가 크므로, 선택 시 패널 표시
+            const opt = sel.options[sel.selectedIndex];
+            if (!code) {
+                // 아무 것도 선택 안 했으면 패널은 TTS 쪽 선택이 있으면 그걸 우선
+                syncInfoPanel();
+                return;
+            }
+
+            showInfoPanel({
+                title: opt?.dataset?.title || "방송 유형",
+                message: opt?.dataset?.message || "",
+                audio: opt?.dataset?.audio || ""
+            });
+        });
+        sel.dataset.bound = "1";
+    }
 }
 
-/* -----------------------------
-* 방송 타입 선택 UI
-* ----------------------------- */
-function selectBroadcastType(element, code) {
-    const typeCol = document.getElementById("broadcastTypeCol");
-    const infoCol = document.getElementById("broadcastInfoCol");
-    const infoArea = document.getElementById("selectedBroadcastInfo");
+/**
+ * broadcastList(서버 렌더링 전역 변수) 기반으로 TTS 템플릿 드롭다운 구성
+ * - broadcastList의 필드가 프로젝트마다 다를 수 있어 최대한 방어적으로 매핑
+ */
+function getTtsItemId(item, idx) {
+    return String(
+        item?.id ??
+        item?.broadcastKey ??
+        item?.brdKey ??
+        item?.code ??
+        item?.broadcastCode ??
+        item?.brdCode ??
+        idx
+    ).trim();
+}
 
-    const sel = document.getElementById("bc_broadcast_type");
-    const customText = document.getElementById("customMessageText");
+function getTtsItemTitle(item) {
+    return String(
+        item?.title ??
+        item?.broadcastTitle ??
+        item?.brdTitle ??
+        item?.name ??
+        item?.ttsTitle ??
+        item?.ttsName ??
+        "TTS 템플릿"
+    ).trim();
+}
 
-    if (sel && String(sel.value) !== "2") {
-        sel.value = "2";
-        if (customText) customText.value = "";
-        updateCustomMessageAreaVisibility();
-    } else {
-        if (customText) customText.value = "";
+function getTtsItemMessage(item) {
+    return String(
+        item?.text ??
+        item?.message ??
+        item?.broadcastText ??
+        item?.brdText ??
+        item?.ttsMessage ??
+        item?.ttsText ??
+        ""
+    );
+}
+
+function renderTtsTemplateSelect() {
+    const sel = document.getElementById("bc_tts_template");
+    if (!sel) return;
+
+    sel.innerHTML = `<option value="" selected>TTS 템플릿 선택</option>`;
+
+    const list = Array.isArray(window.broadcastList) ? window.broadcastList : (Array.isArray(broadcastList) ? broadcastList : []);
+    list.forEach((item, idx) => {
+        const id = getTtsItemId(item, idx);
+        const title = getTtsItemTitle(item);
+        const msg = getTtsItemMessage(item);
+
+        const opt = document.createElement("option");
+        opt.value = id;
+        opt.textContent = title;
+
+        // 미리보기/자동입력용 데이터
+        opt.dataset.title = title;
+        opt.dataset.message = msg;
+
+        sel.appendChild(opt);
+    });
+
+    if (sel.dataset.bound !== "1") {
+        sel.addEventListener("change", () => {
+            const val = String(sel.value ?? "").trim();
+            const opt = sel.options[sel.selectedIndex];
+
+            if (!val) {
+                window.selectedTtsTemplate = null;
+                syncInfoPanel();
+                return;
+            }
+
+            // 선택된 템플릿 캐시
+            window.selectedTtsTemplate = {
+                id: val,
+                title: opt?.dataset?.title || "",
+                message: opt?.dataset?.message || ""
+            };
+
+            // TTS 종류로 강제 전환 + 메시지 자동 입력
+            const kindSel = document.getElementById("bc_broadcast_type");
+            if (kindSel && String(kindSel.value) !== "1") {
+                kindSel.value = "1";
+            }
+            updateCustomMessageAreaVisibility();
+
+            const customText = document.getElementById("customMessageText");
+            if (customText) {
+                customText.value = window.selectedTtsTemplate.message || "";
+            }
+
+            showInfoPanel({
+                title: `TTS: ${window.selectedTtsTemplate.title || "-"}`,
+                message: window.selectedTtsTemplate.message || "",
+                audio: "" // TTS 템플릿은 오디오 코드 개념이 없으면 비움
+            });
+        });
+        sel.dataset.bound = "1";
     }
+}
 
-    if (element.classList.contains("selected")) {
-        element.classList.remove("selected");
-        window.selectedBroadcastType = null;
+/**
+ * 정보 패널 우선순위:
+ * 1) TTS 템플릿 선택이 있으면 TTS 정보
+ * 2) 아니면 재난(방송유형) 선택이 있으면 재난 정보
+ * 3) 둘 다 없으면 숨김
+ */
+function syncInfoPanel() {
+    const ttsSel = document.getElementById("bc_tts_template");
+    const disSel = document.getElementById("bc_disaster_type");
 
-        if (typeCol) typeCol.className = "col-12";
-        if (infoCol) infoCol.classList.add("d-none");
-        if (infoArea) infoArea.style.display = "none";
+    const ttsVal = String(ttsSel?.value ?? "").trim();
+    if (ttsVal) {
+        const opt = ttsSel.options[ttsSel.selectedIndex];
+        showInfoPanel({
+            title: `TTS: ${opt?.dataset?.title || "-"}`,
+            message: opt?.dataset?.message || "",
+            audio: ""
+        });
         return;
     }
 
-    document.querySelectorAll(".broadcast-type")
-        .forEach(el => el.classList.remove("selected"));
+    const disVal = String(disSel?.value ?? "").trim();
+    if (disVal) {
+        const opt = disSel.options[disSel.selectedIndex];
+        showInfoPanel({
+            title: opt?.dataset?.title || "방송 유형",
+            message: opt?.dataset?.message || "",
+            audio: opt?.dataset?.audio || ""
+        });
+        return;
+    }
 
-    element.classList.add("selected");
-    window.selectedBroadcastType = code;
-
-    if (typeCol) typeCol.className = "col-12 col-lg-7";
-    if (infoCol) infoCol.classList.remove("d-none");
-    if (infoArea) infoArea.style.display = "block";
-
-    const t = document.getElementById("selectedBroadcastTitle");
-    const m = document.getElementById("selectedBroadcastMessage");
-    const a = document.getElementById("selectedBroadcastAudio");
-
-    if (t) t.innerText = element.dataset.title || "-";
-    if (m) m.innerText = element.dataset.message || "-";
-    if (a) a.innerText = element.dataset.audio ? `저장코드: ${element.dataset.audio}` : "";
+    resetInfoPanel();
 }
 
+/* -----------------------------
+* 방송 종류(TTS/저장/기타) 바인딩
+* ----------------------------- */
+function updateCustomMessageAreaVisibility() {
+    const customArea = document.getElementById("customMessageArea");
+    const customText = document.getElementById("customMessageText");
+
+    const show = isTtsBroadcastMode();
+
+    if (customArea) customArea.style.display = show ? "block" : "none";
+    if (!show && customText) customText.value = "";
+}
+
+function bindBroadcastKindSelector() {
+    const sel = document.getElementById("bc_broadcast_type");
+    if (!sel) return;
+
+    if (sel.dataset.bound === "1") return;
+
+    sel.addEventListener("change", () => {
+        updateCustomMessageAreaVisibility();
+
+        // 저장메시지/기타로 바꾸면, TTS 템플릿 선택값은 유지하되(원하면 지워도 됨)
+        // 메시지 자동 입력은 하지 않음. 패널은 sync로 재정렬.
+        syncInfoPanel();
+    });
+
+    sel.dataset.bound = "1";
+    updateCustomMessageAreaVisibility();
+}
+
+/* -----------------------------
+* 확인 모달(원본 유지)
+* ----------------------------- */
 function edsConfirm(message, onConfirm) {
     const msgEl = document.getElementById("edsConfirmMessage");
     const titleEl = document.getElementById("edsConfirmTitle");
@@ -534,82 +670,8 @@ function getOfflineSpeakers() {
         .filter(sp => String(sp?.connStat ?? sp?.connectStat ?? sp?.status ?? "") !== "01");
 }
 
-function updateCustomMessageAreaVisibility() {
-    const customArea = document.getElementById("customMessageArea");
-    const infoArea = document.getElementById("selectedBroadcastInfo");
-    const customText = document.getElementById("customMessageText");
-    const disasterArea = document.getElementById("bc_disaster_area");
-
-    const showTts = isTtsBroadcastMode();
-
-    // 1. TTS 입력창: TTS 모드일 때만 표시
-    if (customArea) customArea.style.display = showTts ? "block" : "none";
-
-    // 2. 재난 선택 영역: TTS 모드가 아닐 때만 표시 (요청사항)
-    if (disasterArea) {
-        disasterArea.style.display = showTts ? "none" : "block";
-
-        // Hide message area if hiding entire disaster area
-        const msgArea = document.getElementById("bc_disaster_msg_area");
-        if (showTts && msgArea) msgArea.classList.add("d-none");
-    }
-
-    if (!showTts && customText) {
-        customText.value = "";
-    }
-
-    if (showTts && infoArea && !window.selectedBroadcastType) {
-        infoArea.style.display = "none";
-    }
-}
-
-function bindBroadcastTypeSelector() {
-    const sel = document.getElementById("bc_broadcast_type");
-    if (!sel) return;
-
-    if (sel.dataset.bound === "1") return;
-    sel.addEventListener("change", () => {
-        updateCustomMessageAreaVisibility();
-    });
-    sel.dataset.bound = "1";
-
-    updateCustomMessageAreaVisibility();
-}
-
-function bindDisasterSelector() {
-    const sel = document.getElementById("bc_disaster");
-    if (!sel || sel.dataset.boundDisaster === "1") return;
-
-    const msgArea = document.getElementById("bc_disaster_msg_area");
-
-    sel.addEventListener("change", () => {
-        const val = sel.value;
-        if (!msgArea) return;
-
-        const msgText = document.getElementById("bc_disaster_msg_text");
-
-        if (!val) {
-            msgArea.classList.add("d-none");
-            if (msgText) msgText.textContent = "";
-            return;
-        }
-
-        const found = disasterCache.find(d => String(d.dstCode) === val);
-        if (found && found.dstStoreMsg) {
-            if (msgText) msgText.textContent = found.dstStoreMsg;
-            msgArea.classList.remove("d-none");
-        } else {
-            msgArea.classList.add("d-none");
-            if (msgText) msgText.textContent = "";
-        }
-    });
-
-    sel.dataset.boundDisaster = "1";
-}
-
 /* -----------------------------
 * 발령 실행 (startBroadcast)
-* - 파일/오디오 실행 없이 발령 API만 호출
 * ----------------------------- */
 async function startBroadcast() {
     const speakerKeys = getSelectedSpeakerCodes();
@@ -618,17 +680,30 @@ async function startBroadcast() {
         return;
     }
 
-    // 백엔드가 disasterCode를 필수로 요구하므로 TTS 포함 항상 선택 강제
-    if (!isTtsBroadcastMode() && !window.selectedBroadcastType) {
+    const isTts = isTtsBroadcastMode();
+
+    // 저장메시지/기타면 재난(방송유형) 선택 필수
+    if (!isTts && !window.selectedBroadcastType) {
         App.utils.showGlobalAlert("발령을 위해 방송 유형(재난)을 선택해 주세요.", "warning");
         return;
     }
 
-    const isTts = isTtsBroadcastMode();
-    const msg = (document.getElementById("customMessageText")?.value ?? "").trim();
+    // TTS면 메시지 필수인데, 템플릿 선택으로 채워진 경우도 허용
+    const customText = document.getElementById("customMessageText");
+    let msg = (customText?.value ?? "").trim();
 
     if (isTts && !msg) {
-        App.utils.showGlobalAlert("TTS 메시지를 입력해 주세요.", "warning");
+        const ttsSel = document.getElementById("bc_tts_template");
+        const opt = ttsSel?.options?.[ttsSel.selectedIndex];
+        const templMsg = String(opt?.dataset?.message ?? "").trim();
+        if (templMsg) {
+            msg = templMsg;
+            if (customText) customText.value = templMsg; // UI도 동기화
+        }
+    }
+
+    if (isTts && !msg) {
+        App.utils.showGlobalAlert("TTS 메시지를 입력하거나 템플릿을 선택해 주세요.", "warning");
         return;
     }
 
@@ -639,30 +714,23 @@ async function startBroadcast() {
     }
 
     const offlineList = getOfflineSpeakers();
+
     const doSend = async () => {
         try {
             for (const id of deviceIds) {
                 const payload = buildServerAlertPayload({
                     deviceId: id,
-                    ttsMessage: isTts ? msg : "" // 필요 시 여기 정책 변경 가능
+                    ttsMessage: isTts ? msg : "" // 저장/기타는 정책상 빈값
                 });
 
                 console.log("[BC TAB SEND SERVER PAYLOAD]", payload);
                 await sendAlertToServer(payload);
-
-                // appendBroadcastLogEntry?.({
-                // message: `발령 전송 성공 (deviceId=${id})`,
-                // level: "success"
-                // });
             }
+
             await loadLatestAlertLogs();
             App.utils.showGlobalAlert(`발령 요청 전송 완료 (${deviceIds.length}대)`, "success");
         } catch (e) {
             console.error(e);
-            // appendBroadcastLogEntry?.({
-            //     message: `발령 전송 실패: ${e.message}`,
-            //     level: "error"
-            // });
             App.utils.showGlobalAlert("발령 전송 실패", "danger");
         }
     };
@@ -671,8 +739,8 @@ async function startBroadcast() {
         const names = offlineList.map(sp => getSpeakerName(sp, getSpeakerKey(sp))).join(", ");
         edsConfirm(
             `다음 스피커는 <span class="text-danger fw-bold">오프라인</span>입니다:<br><br>
-        <b>${escapeHtml(names)}</b><br><br>
-        그래도 발령을 전송할까요?`,
+      <b>${escapeHtml(names)}</b><br><br>
+      그래도 발령을 전송할까요?`,
             () => { doSend(); }
         );
         return;
@@ -683,8 +751,7 @@ async function startBroadcast() {
 window.startBroadcast = startBroadcast;
 
 /* -----------------------------
-* stop/test 버튼이 HTML에 남아있어도 오류 방지용 (기능 비활성)
-* - 원하시면 equipmentPage.html에서 해당 버튼 제거 권장
+* stop/test 버튼 유지(기능 비활성)
 * ----------------------------- */
 function stopBroadcast() {
     App.utils.showGlobalAlert("현재 화면에서는 파일/오디오 실행 기능이 비활성화되었습니다.", "info");
@@ -703,44 +770,23 @@ function resetSelection() {
     clearTargetSpeakers();
 
     window.selectedBroadcastType = null;
-    document.querySelectorAll(".broadcast-type").forEach((el) => el.classList.remove("selected"));
+    window.selectedTtsTemplate = null;
+
+    const disSel = document.getElementById("bc_disaster_type");
+    const ttsSel = document.getElementById("bc_tts_template");
+    if (disSel) disSel.value = "";
+    if (ttsSel) ttsSel.value = "";
 
     const customText = document.getElementById("customMessageText");
     if (customText) customText.value = "";
 
-    const typeCol = document.getElementById("broadcastTypeCol");
-    const infoCol = document.getElementById("broadcastInfoCol");
-
-    if (typeCol) typeCol.className = "col-12";
-    if (infoCol) infoCol.classList.add("d-none");
-
-    const infoArea = document.getElementById("selectedBroadcastInfo");
-    if (infoArea) infoArea.style.display = "none";
-
-    const t = document.getElementById("selectedBroadcastTitle");
-    const m = document.getElementById("selectedBroadcastMessage");
-    const a = document.getElementById("selectedBroadcastAudio");
-    if (t) t.innerText = "-";
-    if (m) m.innerText = "";
-    if (a) a.innerText = "";
-
-    // Clear Disaster Dropdown & Message Area
-    const disasterSel = document.getElementById("bc_disaster");
-    const disasterMsg = document.getElementById("bc_disaster_msg_area");
-    const disasterText = document.getElementById("bc_disaster_msg_text");
-    if (disasterSel) disasterSel.value = "";
-    if (disasterMsg) {
-        disasterMsg.classList.add("d-none");
-        if (disasterText) disasterText.textContent = "";
-    }
-
+    resetInfoPanel();
     updateCustomMessageAreaVisibility();
 }
 window.resetSelection = resetSelection;
 
 /* -----------------------------
-* Broadcast Log (간단 유지)
-* - 기존 UI와 충돌 없이 사용 가능
+* Broadcast Log (원본 유지)
 * ----------------------------- */
 function formatLogTimestamp(d = new Date()) {
     const pad = (n) => String(n).padStart(2, "0");
@@ -788,39 +834,37 @@ function buildAlertLogHtml(row) {
     const disaster = String(row?.disasterCode ?? "-");
     const kind = String(row?.alertKind ?? "-");
 
-    // 발령 유형 한글 매핑
     const kindText =
         kind === "1" ? "TTS" :
             kind === "2" ? "저장 메시지" :
                 kind === "3" ? "기타" : kind;
 
-    // 상태 한글
     const statusText =
         status === "SENT" ? "전송 성공" :
             status === "FAILED" ? "전송 실패" : status || "-";
 
     const tag = (label, value) => `
-        <span class="log-tag">
-        <span class="log-tag-label">${escapeHtml(label)}</span>
-        <span class="log-tag-value">${escapeHtml(String(value))}</span>
-        </span>
-    `;
+    <span class="log-tag">
+      <span class="log-tag-label">${escapeHtml(label)}</span>
+      <span class="log-tag-value">${escapeHtml(String(value))}</span>
+    </span>
+  `;
 
     const statusTag = `
-        <span class="log-tag log-tag-status ${status === "SENT" ? "is-success" : status === "FAILED" ? "is-error" : ""}">
-        <span class="log-tag-label">상태</span>
-        <span class="log-tag-value">${escapeHtml(statusText)}</span>
-        </span>
-    `;
+    <span class="log-tag log-tag-status ${status === "SENT" ? "is-success" : status === "FAILED" ? "is-error" : ""}">
+      <span class="log-tag-label">상태</span>
+      <span class="log-tag-value">${escapeHtml(statusText)}</span>
+    </span>
+  `;
 
     return `
-        <div class="log-row">
-            ${tag("장비", deviceId)}
-            ${tag("재난", disaster)}
-            ${tag("방송유형", kindText)}
-            ${statusTag}
-        </div>
-    `;
+    <div class="log-row">
+      ${tag("장비", deviceId)}
+      ${tag("재난", disaster)}
+      ${tag("방송유형", kindText)}
+      ${statusTag}
+    </div>
+  `;
 }
 
 function appendBroadcastLogEntry({ timestamp, message, html, level = "" }, opts = { notify: true }) {
@@ -837,13 +881,13 @@ function appendBroadcastLogEntry({ timestamp, message, html, level = "" }, opts 
     panel.insertAdjacentHTML(
         "beforeend",
         `
-        <div class="log-entry${lvlClass}">
-        <div class="log-timestamp">${escapeHtml(ts)}</div>
-        <div class="log-body">
-            ${bodyHtml}
-        </div>
-        </div>
-        `
+    <div class="log-entry${lvlClass}">
+      <div class="log-timestamp">${escapeHtml(ts)}</div>
+      <div class="log-body">
+        ${bodyHtml}
+      </div>
+    </div>
+    `
     );
 
     if (!panel.classList.contains("collapsed")) {
@@ -860,7 +904,8 @@ async function initBroadcastPage(options = { once: true, refresh: false }) {
     const hasBroadcastDom =
         document.getElementById("broadcast-content") ||
         document.getElementById("targetSpeakerList") ||
-        document.getElementById("broadcastTypesContainer");
+        document.getElementById("bc_disaster_type") ||
+        document.getElementById("bc_tts_template");
 
     if (!hasBroadcastDom) return;
 
@@ -871,15 +916,20 @@ async function initBroadcastPage(options = { once: true, refresh: false }) {
         renderTargetSpeakerList(broadcastSpeakerCache);
         bindTargetSpeakerUI();
 
-        await renderBroadcastTypes();
-        bindBroadcastTypeSelector();
-        bindDisasterSelector();
+        await renderDisasterSelect();
+        renderTtsTemplateSelect();
+        bindBroadcastKindSelector();
+
+        // 초기 패널 상태 동기화
+        syncInfoPanel();
+
         await loadLatestAlertLogs();
         __broadcastInitOnce = true;
     } catch (e) {
         console.error("broadcast init error:", e);
     }
 
+    // TTS 관리 모달 오픈(원본 유지)
     document.getElementById("bc_open_tts_manage")?.addEventListener("click", () => {
         const ttsEl = document.getElementById("tts_manage_modal");
         if (!ttsEl) return;
@@ -891,6 +941,5 @@ async function initBroadcastPage(options = { once: true, refresh: false }) {
             window.TtsManageModal?.loadList?.();
         }, { once: true });
     });
-
 }
 window.initBroadcastPage = initBroadcastPage;

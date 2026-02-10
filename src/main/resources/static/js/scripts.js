@@ -183,6 +183,7 @@ function setServerRestartBusy(busy) {
 
 function showEmergencyToastr(camName, msg, boundaryNum) {
     const box = document.querySelector(".notification");
+    const overlay = document.getElementById("emergencyOverlay");
 
     document.getElementById("notification-title").innerText =
         `${camName}\n위험구역 출입 발생`;
@@ -191,13 +192,17 @@ function showEmergencyToastr(camName, msg, boundaryNum) {
 
     box.classList.add("show");
 
-    box.onclick = () => {
-        // 1) 발령 모달 오픈
-        window.openBroadcastModal(camName, boundaryNum);
-
-        // 2) 알림 닫기
+    // ===== 5초 후 자동 제거 =====
+    clearTimeout(box.__timer);
+    box.__timer = setTimeout(() => {
         box.classList.remove("show");
-        document.getElementById("emergencyOverlay").classList.remove("active");
+        overlay?.classList.remove("active");
+    }, 5000);
+
+    box.onclick = () => {
+        window.openBroadcastModal(camName, boundaryNum);
+        box.classList.remove("show");
+        overlay?.classList.remove("active");
     };
 }
 

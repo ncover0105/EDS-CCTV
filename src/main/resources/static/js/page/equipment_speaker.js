@@ -13,7 +13,7 @@ const SPEAKER_ACTION_API = "/api/btype/command/action";
 const SPEAKER_POLL_SECONDS = 0;
 
 // 스피커 테이블 페이지네이션
-const SPEAKER_ITEMS_PER_PAGE = 10;
+const SPEAKER_ITEMS_PER_PAGE = 15;
 
 // 페이지 상태(필터/검색 도입 시에도 여기 리스트만 바꾸면 됨)
 let speakerPageState = {
@@ -42,6 +42,7 @@ function setViewList(list, { resetPage = false } = {}) {
 
 let speakerListState = [];
 let pollTimer = null;
+let resizeDebounceTimer = null;
 
 /* ------------------------------
   Utils
@@ -183,6 +184,31 @@ function bindSpeakerSearchUI() {
   }
 }
 
+function calculateSpeakerPageSize() {
+  // .speaker-table-wrap 또는 .table-container 사용
+  const wrap = document.querySelector(".speaker-table-wrap") || document.querySelector(".table-container");
+  const tbody = document.getElementById("speakerTableBody");
+  if (!wrap || !tbody) return SPEAKER_ITEMS_PER_PAGE;
+
+  const wrapHeight = wrap.clientHeight;
+  const thead = wrap.querySelector("thead");
+  const headHeight = thead ? thead.getBoundingClientRect().height : 45;
+
+  // 샘플 행 높이 측정 (기본값 40px - 사이 공간 고려하여 약간 작게)
+  const sampleRow = tbody.querySelector("tr:not(.table-empty-row)");
+  let rowHeight = 40;
+  if (sampleRow) {
+    rowHeight = sampleRow.getBoundingClientRect().height;
+  }
+
+  // 여유 공간(페이지네이션 영역 등)을 위해 60px 정도 차감
+  const availableHeight = wrapHeight - headHeight - 60;
+  let calculatedRows = Math.floor(availableHeight / rowHeight);
+
+  // 최소 5행, 최대 30행 제한
+  return Math.max(5, Math.min(calculatedRows > 0 ? calculatedRows : SPEAKER_ITEMS_PER_PAGE, 30));
+}
+
 /* ------------------------------
   Render table
 ------------------------------ */
@@ -196,6 +222,10 @@ function renderSpeakerTable(page = speakerPageState.currentPage) {
       setViewList(speakerListState);
     }
   }
+
+  // 동적으로 페이지 사이즈 계산 후 반영
+  const dynamicSize = calculateSpeakerPageSize();
+  speakerPageState.itemsPerPage = dynamicSize;
 
   const list = Array.isArray(speakerPageState.viewList) ? speakerPageState.viewList : [];
   const totalItems = list.length;
@@ -287,6 +317,22 @@ function renderSpeakerTable(page = speakerPageState.currentPage) {
     tbody.appendChild(tr);
   });
 
+  const missing = Math.max(0, speakerPageState.itemsPerPage - pageList.length);
+  if (missing > 0) {
+    const colCount = 9; // 스피커 테이블 컬럼 수
+    const ghostCell = `<td><span class="row-ghost">-</span></td>`;
+    const rowHtml = ghostCell.repeat(colCount);
+
+    for (let i = 0; i < missing; i++) {
+      const emptyTr = document.createElement("tr");
+      emptyTr.className = "table-empty-row";
+      emptyTr.innerHTML = rowHtml;
+      tbody.appendChild(emptyTr);
+    }
+  }
+
+  // lockSpeakerTableMinHeight() 호출 제거 (동적 행 계산으로 불필요)
+
   const cnt = document.getElementById("speakerCount");
   if (cnt) cnt.innerText = `${totalItems}건`;
 
@@ -304,6 +350,44 @@ function renderSpeakerTable(page = speakerPageState.currentPage) {
     });
   }
 }
+
+function lockSpeakerTableMinHeight() {
+  const tbody = document.getElementById("speakerTableBody");
+  if (!tbody) return;
+
+  const wrap = tbody.closest(".speaker-table-wrap");
+  const table = tbody.closest("table");
+  if (!wrap || !table) return;
+
+  // ✅ 기존 min-height 영향 제거 후 자연 높이 측정
+  const prev = wrap.style.getPropertyValue("--speaker-table-minh");
+  wrap.style.setProperty("--speaker-table-minh", "0px");
+
+  const thead = table.querySelector("thead");
+
+  let sampleRow = tbody.querySelector("tr:not(.table-empty-row)");
+  let temp = false;
+
+  if (!sampleRow) {
+    sampleRow = document.createElement("tr");
+    sampleRow.innerHTML = `<td><span class="row-ghost">-</span></td>`.repeat(9);
+    tbody.appendChild(sampleRow);
+    temp = true;
+  }
+
+  const rowH = sampleRow.getBoundingClientRect().height;
+  const headH = thead ? thead.getBoundingClientRect().height : 0;
+
+  if (temp) sampleRow.remove();
+
+  const rows = speakerPageState.itemsPerPage;
+  const minH = headH + rowH * rows;
+
+  // ✅ 최종값 세팅 (이전값보다 커지는 루프 방지용으로도 사용 가능)
+  wrap.style.setProperty("--speaker-table-minh", `${Math.ceil(minH)}px`);
+}
+
+
 
 /* ------------------------------
   Detail panel reset
@@ -507,6 +591,15 @@ async function initSpeakerPage() {
 
     // 검색 UI 바인딩(추가)
     bindSpeakerSearchUI();
+
+    // Resize 이벤트 바인딩 (디바운스 처리)
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeDebounceTimer);
+      resizeDebounceTimer = setTimeout(() => {
+        console.log("Window resized, re-rendering speaker table...");
+        renderSpeakerTable();
+      }, 250);
+    });
   } catch (e) {
     console.error(e);
     resetDetail();

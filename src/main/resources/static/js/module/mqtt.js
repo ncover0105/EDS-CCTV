@@ -56,14 +56,14 @@ window.SSE_MQTT = (function () {
         }
     }
 
-    window.triggerEmergencyScreenEffect = function() {
+    window.triggerEmergencyScreenEffect = function () {
         let overlay = document.getElementById("emergencyOverlay");
         if (!overlay) return;
-    
+
         overlay.classList.remove("active");
         void overlay.offsetWidth;
         overlay.classList.add("active");
-    
+
         // clearTimeout(overlay.__timer);
         //     overlay.__timer = setTimeout(() => {
         //     overlay.classList.remove("active");
@@ -107,8 +107,10 @@ window.SSE_MQTT = (function () {
         }
     }
 
+    // TEST 
     function showEmergencyToastr(camName, msg, boundaryNum) {
         const box = document.querySelector(".notification");
+        const overlay = document.getElementById("emergencyOverlay");
 
         document.getElementById("notification-title").innerText =
             `${camName}\n위험구역 출입 발생`;
@@ -117,21 +119,20 @@ window.SSE_MQTT = (function () {
 
         box.classList.add("show");
 
-        box.onclick = () => {
-
-            window.openBroadcastModal(camName, boundaryNum);
-            // openConfirmModal(
-            //     "위험구역 출입",
-            //     `${camName} 카메라\n${boundaryNum}번 구역에 발령을 송출할까요?`,
-            //     () => {
-            //         if (window.Speakers) {
-            //             Speakers.sendBroadcast(boundaryNum);
-            //         }
-            //     }
-            // );
+        // ===== 기존 타이머 제거 후 5초 타이머 설정 =====
+        clearTimeout(box.__timer);
+        box.__timer = setTimeout(() => {
             box.classList.remove("show");
-            document.getElementById("emergencyOverlay").classList.remove("active");
+            overlay?.classList.remove("active");
+        }, 5000);
 
+        box.onclick = () => {
+            window.openBroadcastModal(camName, boundaryNum);
+
+            box.classList.remove("show");
+            overlay?.classList.remove("active");
+
+            clearTimeout(box.__timer);
         };
     }
 

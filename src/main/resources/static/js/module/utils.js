@@ -21,7 +21,7 @@ export function renderPagination(...args) {
         itemsPerPage = opt.itemsPerPage;
         onPageChange = opt.onPageChange;
 
-        // ✅ 추가 옵션 파싱
+        // 추가 옵션 파싱
         emptyTargetTbodyId = opt.emptyTargetTbodyId;
         emptyRowColspan = opt.emptyRowColspan;
         emptyRowHtml = opt.emptyRowHtml;
@@ -47,8 +47,8 @@ export function renderPagination(...args) {
         if (tbody) {
             const col = Number(emptyRowColspan) || 1;
             const msg = (typeof emptyRowHtml === 'string' && emptyRowHtml.trim().length > 0)
-            ? emptyRowHtml
-            : `조회된 데이터가 없습니다.`;
+                ? emptyRowHtml
+                : `조회된 데이터가 없습니다.`;
 
             const rows = Math.max(1, Number(emptyRowCount) || 1);
 
@@ -85,8 +85,8 @@ export function renderPagination(...args) {
         const a = li.querySelector('a,button');
         if (a && !disabled && typeof onClick === 'function') {
             a.addEventListener('click', (e) => {
-            e.preventDefault();
-            onClick();
+                e.preventDefault();
+                onClick();
             });
         }
         return li;
@@ -130,50 +130,50 @@ export function renderPagination(...args) {
 
     // ---- First / Prev
     pagination.appendChild(iconBtn({
-    icon: 'bi-chevron-double-left',
-    label: '처음',
-    ariaLabel: 'First page',
-    disabled: isEmpty || safeCurrent === 1,
-    onClick: () => go(1),
+        icon: 'bi-chevron-double-left',
+        label: '처음',
+        ariaLabel: 'First page',
+        disabled: isEmpty || safeCurrent === 1,
+        onClick: () => go(1),
     }));
 
     pagination.appendChild(iconBtn({
-    icon: 'bi-chevron-left',
-    label: '이전',
-    ariaLabel: 'Previous page',
-    disabled: isEmpty || safeCurrent === 1,
-    onClick: () => go(safeCurrent - 1),
+        icon: 'bi-chevron-left',
+        label: '이전',
+        ariaLabel: 'Previous page',
+        disabled: isEmpty || safeCurrent === 1,
+        onClick: () => go(safeCurrent - 1),
     }));
 
     // ---- Numbers + Ellipsis
     const pages = getPageWindow(safeCurrent, totalPages);
     let prev = 0;
     pages.forEach((p) => {
-    if (prev && p - prev > 1) pagination.appendChild(ellipsis());
-    pagination.appendChild(numberBtn({
-        page: p,
-        active: p === safeCurrent,
-        disabled: isEmpty,
-        onClick: () => go(p),
-    }));
-    prev = p;
+        if (prev && p - prev > 1) pagination.appendChild(ellipsis());
+        pagination.appendChild(numberBtn({
+            page: p,
+            active: p === safeCurrent,
+            disabled: isEmpty,
+            onClick: () => go(p),
+        }));
+        prev = p;
     });
 
     // ---- Next / Last
     pagination.appendChild(iconBtn({
-    icon: 'bi-chevron-right',
-    label: '다음',
-    ariaLabel: 'Next page',
-    disabled: isEmpty || safeCurrent === totalPages,
-    onClick: () => go(safeCurrent + 1),
+        icon: 'bi-chevron-right',
+        label: '다음',
+        ariaLabel: 'Next page',
+        disabled: isEmpty || safeCurrent === totalPages,
+        onClick: () => go(safeCurrent + 1),
     }));
 
     pagination.appendChild(iconBtn({
-    icon: 'bi-chevron-double-right',
-    label: '마지막',
-    ariaLabel: 'Last page',
-    disabled: isEmpty || safeCurrent === totalPages,
-    onClick: () => go(totalPages),
+        icon: 'bi-chevron-double-right',
+        label: '마지막',
+        ariaLabel: 'Last page',
+        disabled: isEmpty || safeCurrent === totalPages,
+        onClick: () => go(totalPages),
     }));
 
     // ---- Info
@@ -182,17 +182,17 @@ export function renderPagination(...args) {
 
     const aroundPages = [];
     if (!isEmpty) {
-    if (safeCurrent - 1 >= 1) aroundPages.push(safeCurrent - 1);
-    aroundPages.push(safeCurrent);
-    if (safeCurrent + 1 <= totalPages) aroundPages.push(safeCurrent + 1);
+        if (safeCurrent - 1 >= 1) aroundPages.push(safeCurrent - 1);
+        aroundPages.push(safeCurrent);
+        if (safeCurrent + 1 <= totalPages) aroundPages.push(safeCurrent + 1);
     }
 
     const aroundHtml = isEmpty
-    ? `<span class="text-white-50">-</span>`
-    : aroundPages.map(p => {
-        if (p === safeCurrent) return `<span class="page-mini current" aria-current="page">${p}</span>`;
-        return `<a href="#" class="page-mini" data-page="${p}" aria-label="page ${p}">${p}</a>`;
-    }).join(' ');
+        ? `<span class="text-white-50">-</span>`
+        : aroundPages.map(p => {
+            if (p === safeCurrent) return `<span class="page-mini current" aria-current="page">${p}</span>`;
+            return `<a href="#" class="page-mini" data-page="${p}" aria-label="page ${p}">${p}</a>`;
+        }).join(' ');
 
     const infoHtml = `
     <span class="page-link page-info">
@@ -206,12 +206,12 @@ export function renderPagination(...args) {
     infoLi.innerHTML = infoHtml;
 
     infoLi.querySelectorAll('a.page-mini[data-page]').forEach(a => {
-    a.addEventListener('click', (e) => {
-        e.preventDefault();
-        const p = Number(a.dataset.page);
-        if (!Number.isFinite(p)) return;
-        go(p);
-    });
+        a.addEventListener('click', (e) => {
+            e.preventDefault();
+            const p = Number(a.dataset.page);
+            if (!Number.isFinite(p)) return;
+            go(p);
+        });
     });
 
     pagination.appendChild(infoLi);
@@ -418,7 +418,7 @@ export function fillDateTimeInputs(startId = "startDateTime", endId = "endDateTi
 
 export const toast = showToast;
 export const alert = showGlobalAlert;
-export const confirm = function(title, msg, onConfirm) {
+export const confirm = function (title, msg, onConfirm) {
     const modal = document.getElementById("confirm_modal");
 
     document.getElementById("confirmModalLabel").innerText = title;
@@ -456,7 +456,7 @@ export async function fetchJson(url, options = {}) {
             try {
                 const errorJson = await res.json();
                 errorMsg = errorJson.message || JSON.stringify(errorJson);
-            } catch (_) {}
+            } catch (_) { }
 
             throw new Error(errorMsg);
         }
