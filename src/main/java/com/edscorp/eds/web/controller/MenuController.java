@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.edscorp.eds.cctv.service.CctvService;
 import com.edscorp.eds.mqtt.dto.EmergencyLogRowDTO;
 import com.edscorp.eds.mqtt.service.EmergencyService;
-import com.edscorp.eds.speaker.domain.BroadcastListEntity;
 import com.edscorp.eds.speaker.domain.SpeakerStatusEntity;
 import com.edscorp.eds.speaker.dto.ScheduleDetailDTO;
 import com.edscorp.eds.speaker.service.BroadcastScheduleService;
@@ -149,9 +148,6 @@ public class MenuController {
                 model.addAttribute("userCount", userList.size());
                 break;
             case "ment":
-                // List<BroadcastListEntity> broadcastList = speakerService.getBroadcastList();
-                // model.addAttribute("broadcastList", broadcastList);
-                // model.addAttribute("broadcastCount", broadcastList.size());
                 List<SpkDisaster> disasterList = spkDisasterService.getAllDisasters();
 
                 model.addAttribute("disasterList", disasterList);

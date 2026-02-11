@@ -100,16 +100,14 @@
                       </div>
 
                       <!-- updated: panel-actions -->
-                      <div class="panel-actions">
-                        <button class="btn-apple-base btn-apple-light" type="button" onclick="speakerAdd()" title="추가">
+                      <div class="panel-actions btn-group gap-3">
+                        <button class="icon-btn" type="button" onclick="speakerAdd()" title="추가">
                           <i class="bi bi-plus"></i>
                         </button>
-                        <button class="btn-apple-base btn-apple-light" type="button" onclick="speakerUpdate()"
-                          title="수정">
+                        <button class="icon-btn" type="button" onclick="speakerUpdate()" title="수정">
                           <i class="bi bi-pencil-square"></i>
                         </button>
-                        <button class="btn-apple-base btn-apple-danger" type="button" onclick="speakerDeleted()"
-                          title="삭제">
+                        <button class="icon-btn delete" type="button" onclick="speakerDeleted()" title="삭제">
                           <i class="bi bi-trash"></i>
                         </button>
                       </div>
@@ -441,7 +439,7 @@
       </div>
     </div>
 
-    <div class="modal fade" id="speaker_update_modal" tabindex="-1">
+    <div class="modal modal-dark fade" id="speaker_update_modal" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content bg-dark border-secondary">
           <div class="modal-header border-0">
@@ -477,7 +475,8 @@
       </div>
     </div>
 
-    <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal modal-dark fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel"
+      aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header border-0">

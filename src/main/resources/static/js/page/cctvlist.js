@@ -2,22 +2,25 @@ document.addEventListener("DOMContentLoaded", () => {
   bindTopButtons();
   loadCctvList();
 
-  const tbody = document.getElementById("cctvTableBody");
-  if (tbody) {
-    tbody.addEventListener("click", (event) => {
-      const editBtn = event.target.closest(".row-edit-btn");
+  // 카드 그리드 컨테이너에서 이벤트 위임
+  const cardContainer = document.getElementById("cctvTableBody");
+  if (cardContainer) {
+    cardContainer.addEventListener("click", (event) => {
+      // 수정 버튼 클릭
+      const editBtn = event.target.closest(".card-action-edit");
       if (editBtn) {
         event.stopPropagation();
-        const row = editBtn.closest("tr");
-        if (row) openEditModalFromRow(row);
+        const card = editBtn.closest(".pinterest-card");
+        if (card) openEditModalFromCard(card);
         return;
       }
 
-      const delBtn = event.target.closest(".row-del-btn");
+      // 삭제 버튼 클릭
+      const delBtn = event.target.closest(".card-action-delete");
       if (delBtn) {
         event.stopPropagation();
-        const row = delBtn.closest("tr");
-        if (row) deleteCctvFromRow(row);
+        const card = delBtn.closest(".pinterest-card");
+        if (card) deleteCctvFromCard(card);
       }
     });
   }
@@ -32,6 +35,9 @@ document.addEventListener("DOMContentLoaded", () => {
     setVal("editCctvLoginId", "");
     setVal("editCctvLoginPassword", "");
     setVal("editCctvUrl", "");
+    setVal("editCctvMountpointId", "");
+    setVal("editCctvVideoPort", "");
+    setVal("editCctvWsPort", "");
     setVal("editCctvLat", "");
     setVal("editCctvLng", "");
   });
@@ -52,7 +58,7 @@ function openAddModal() {
   const modalEl = document.getElementById("addCctvModal");
   if (!modalEl) return alert("addCctvModal을 찾을 수 없습니다.");
 
-  setVal("cctvLocationCode", "");
+  setVal("cctvlocationCode", "");
   setVal("cctvCode", "");
   setVal("cctvName", "");
   setVal("cctvLoginId", "");
@@ -66,8 +72,9 @@ function openAddModal() {
 
   bootstrap.Modal.getOrCreateInstance(modalEl).show();
 }
+
 window.submitAddCctv = function submitAddCctv() {
-  const locationCode = getVal("cctvLocationCode").trim();
+  const locationCode = getVal("cctvlocationCode").trim();
   const code = getVal("cctvCode").trim();
   const name = getVal("cctvName").trim();
   const url = getVal("cctvUrl").trim();
@@ -91,7 +98,7 @@ window.submitAddCctv = function submitAddCctv() {
     longitude: lng || null,
     id: loginId || null,
     password: loginPw || null,
-  
+
     mountpointId: mountpointId ? Number(mountpointId) : null,
     videoPort: videoPort ? Number(videoPort) : null,
     wsPort: wsPort || null,
@@ -125,6 +132,9 @@ function submitEditCctv() {
   const lng = getVal("editCctvLng").trim();
   const loginId = getVal("editCctvLoginId").trim();
   const loginPw = getVal("editCctvLoginPassword").trim();
+  const mountpointId = getVal("editCctvMountpointId").trim();
+  const videoPort = getVal("editCctvVideoPort").trim();
+  const wsPort = getVal("editCctvWsPort").trim();
 
   if (!locationCode) return alert("Location 코드를 찾을 수 없습니다.");
   if (!code) return alert("CCTV 코드를 찾을 수 없습니다.");
@@ -136,6 +146,9 @@ function submitEditCctv() {
     latitude: lat || null,
     longitude: lng || null,
     id: loginId || null,
+    mountpointId: mountpointId ? Number(mountpointId) : null,
+    videoPort: videoPort ? Number(videoPort) : null,
+    wsPort: wsPort || null,
     ...(loginPw ? { password: loginPw } : {}),
   };
 
@@ -159,7 +172,7 @@ function submitEditCctv() {
 }
 
 /* -----------------------------
- * 목록
+ * 목록 - Pinterest 카드 그리드 렌더링
  * ----------------------------- */
 function loadCctvList() {
   fetch("/api/cctv/list")
@@ -168,7 +181,7 @@ function loadCctvList() {
       return res.json();
     })
     .then((data) => {
-      renderCctvTable(Array.isArray(data) ? data : []);
+      renderCctvCards(Array.isArray(data) ? data : []);
       updateCctvCount(Array.isArray(data) ? data.length : 0);
     })
     .catch((err) => {
@@ -176,29 +189,35 @@ function loadCctvList() {
       alert("CCTV 목록 조회 중 오류가 발생했습니다.");
     });
 }
-function renderCctvTable(list) {
-  const tbody = document.getElementById("cctvTableBody");
-  if (!tbody) return;
 
-  tbody.innerHTML = "";
+function renderCctvCards(list) {
+  const container = document.getElementById("cctvTableBody");
+  if (!container) return;
 
+  container.innerHTML = "";
+
+  // 빈 목록일 때 Empty State
   if (!Array.isArray(list) || list.length === 0) {
-    tbody.innerHTML = `
-      <tr class="text-center">
-        <td colspan="6" style="height: 60vh;">
-          <div class="d-flex align-items-center justify-content-center h-100">
-            <span class="text-muted">
-              <i class="bi bi-inbox me-2"></i>
-              등록된 CCTV가 없습니다.
-            </span>
-          </div>
-        </td>
-      </tr>
+    container.innerHTML = `
+      <div class="pinterest-empty-state">
+        <div class="empty-state-icon">
+          <i class="bi bi-camera-video"></i>
+        </div>
+        <h3 class="empty-state-title">아직 등록된 CCTV가 없습니다</h3>
+        <p class="empty-state-description">
+          새 CCTV를 추가하여 실시간 모니터링을 시작하세요
+        </p>
+        <button class="pinterest-btn-secondary" onclick="document.getElementById('btn-register').click()">
+          <i class="bi bi-plus-lg"></i>
+          첫 CCTV 추가하기
+        </button>
+      </div>
     `;
     return;
   }
 
-  list.forEach((cctv) => {
+  // CCTV 카드 렌더링
+  list.forEach((cctv, index) => {
     const locationCode = cctv.locationCode ?? "";
     const code = cctv.cctvCode ?? "-";
     const name = cctv.name ?? "";
@@ -207,80 +226,155 @@ function renderCctvTable(list) {
     const lat = cctv.latitude ?? "-";
     const lng = cctv.longitude ?? "-";
 
-    const statusHtml =
-      statusCam === "1"
-        ? `<span class="status-badge status-success d-inline-flex align-items-center gap-1">
-            <i class="bi bi-check-circle-fill"></i> 정상
-          </span>`
-        : statusCam === "0"
-        ? `<span class="status-badge status-error d-inline-flex align-items-center gap-1">
-            <i class="bi bi-x-circle-fill"></i> 신호없음
-          </span>`
-        : `-`;
+    // 상태 배지 HTML
+    let statusBadgeHtml = "";
+    if (statusCam === "1") {
+      statusBadgeHtml = `
+        <span class="pinterest-badge pinterest-badge-success">
+          <i class="bi bi-check-circle-fill"></i>
+          <span>정상</span>
+        </span>
+      `;
+    } else if (statusCam === "0") {
+      statusBadgeHtml = `
+        <span class="pinterest-badge pinterest-badge-error">
+          <i class="bi bi-x-circle-fill"></i>
+          <span>신호없음</span>
+        </span>
+      `;
+    } else {
+      statusBadgeHtml = `
+        <span class="pinterest-badge pinterest-badge-unknown">
+          <i class="bi bi-question-circle-fill"></i>
+          <span>알 수 없음</span>
+        </span>
+      `;
+    }
 
-    const tr = document.createElement("tr");
+    // 카드 엘리먼트 생성
+    const card = document.createElement("div");
+    card.className = "pinterest-card";
 
-    tr.dataset.locationCode = locationCode;
-    tr.dataset.code = code;
-    tr.dataset.name = name;
-    tr.dataset.loginId = cctv.id ?? "";
-    tr.dataset.loginPw = cctv.password ?? "";
-    tr.dataset.rtspUrl = (url === "-" ? "" : url);
-    tr.dataset.latitude = (lat === "-" ? "" : lat);
-    tr.dataset.longitude = (lng === "-" ? "" : lng);
-    tr.dataset.mountpointId = cctv.mountpointId ?? "";
-    tr.dataset.videoPort = cctv.videoPort ?? "";
-    tr.dataset.wsPort = cctv.wsPort ?? "";
+    // 데이터 속성 설정
+    card.dataset.locationCode = locationCode;
+    card.dataset.cctvCode = code;
+    card.dataset.name = name;
+    card.dataset.loginId = cctv.id ?? "";
+    card.dataset.loginPw = cctv.password ?? "";
+    card.dataset.rtspUrl = url === "-" ? "" : url;
+    card.dataset.latitude = lat === "-" ? "" : lat;
+    card.dataset.longitude = lng === "-" ? "" : lng;
+    card.dataset.mountpointId = cctv.mountpointId ?? "";
+    card.dataset.videoPort = cctv.videoPort ?? "";
+    card.dataset.wsPort = cctv.wsPort ?? "";
 
-    tr.innerHTML = `
-      <td>${escapeHtml(name || code)}</td>
-      <td style="word-break: break-all;">${escapeHtml(url)}</td>
-      <td>${statusHtml}</td>
-      <td>${escapeHtml(lat)}</td>
-      <td>${escapeHtml(lng)}</td>
-      <td class="text-center">
-        <button class="icon-btn me-1 row-edit-btn"
-                data-code="${escapeHtml(code)}" title="수정">
-          <i class="bi bi-pencil-square"></i>
+    // 카드 HTML 구성
+    card.innerHTML = `
+      <!-- 카드 헤더 -->
+      <div class="pinterest-card-header">
+        <div class="card-checkbox-wrapper">
+          <input type="checkbox"
+            name="selectedCctv"
+            value="${escapeHtml(locationCode)}|${escapeHtml(code)}"
+            class="form-check-input cctv-checkbox pinterest-checkbox"
+            id="cctv-check-${index}" />
+          <label for="cctv-check-${index}" class="checkbox-label"></label>
+        </div>
+        <div class="card-status-wrapper">
+          ${statusBadgeHtml}
+        </div>
+      </div>
+
+      <!-- 카드 바디 -->
+      <div class="pinterest-card-body">
+        <!-- CCTV 코드 -->
+        <div class="card-main-info">
+          <h3 class="card-title">${escapeHtml(name || code)}</h3>
+          <p class="card-subtitle">Location: ${escapeHtml(locationCode || 'N/A')}</p>
+        </div>
+
+        <!-- RTSP URL -->
+        <div class="card-url-section">
+          <div class="card-label">
+            <i class="bi bi-link-45deg"></i>
+            <span>RTSP URL</span>
+          </div>
+          <div class="card-url-value">${escapeHtml(url)}</div>
+        </div>
+
+        <!-- 위치 정보 -->
+        <div class="card-location-grid">
+          <div class="card-location-item">
+            <div class="card-label">
+              <i class="bi bi-geo-alt"></i>
+              <span>위도</span>
+            </div>
+            <div class="card-value">${escapeHtml(lat)}</div>
+          </div>
+          <div class="card-location-item">
+            <div class="card-label">
+              <i class="bi bi-geo-alt-fill"></i>
+              <span>경도</span>
+            </div>
+            <div class="card-value">${escapeHtml(lng)}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 카드 푸터 -->
+      <div class="pinterest-card-footer">
+        <button class="card-action-btn card-action-edit" 
+          data-code="${escapeHtml(code)}"
+          title="수정">
+          <i class="bi bi-pencil"></i>
+          <span>수정</span>
         </button>
-        <button class="icon-btn delete row-del-btn"
-                data-code="${escapeHtml(code)}" title="삭제">
-          <i class="bi bi-trash3"></i>
+        <button class="card-action-btn card-action-delete"
+          data-code="${escapeHtml(code)}"
+          title="삭제">
+          <i class="bi bi-trash"></i>
+          <span>삭제</span>
         </button>
-      </td>
+      </div>
     `;
-    tbody.appendChild(tr);
+
+    container.appendChild(card);
   });
 }
 
-function openEditModalFromRow(row) {
-  setVal("editCctvlocationCode", row.dataset.locationCode || "");
-  setVal("editCctvCode", row.dataset.code);
-  setVal("editCctvName", row.dataset.name || "");
-  setVal("editCctvLoginId", row.dataset.loginId || "");
+// 카드에서 수정 모달 열기
+function openEditModalFromCard(card) {
+  setVal("editCctvlocationCode", card.dataset.locationCode || "");
+  setVal("editCctvCode", card.dataset.cctvCode || "");
+  setVal("editCctvName", card.dataset.name || "");
+  setVal("editCctvLoginId", card.dataset.loginId || "");
   setVal("editCctvLoginPassword", "");
-  setVal("editCctvUrl", row.dataset.rtspUrl || "");
-  setVal("editCctvMountpointId", row.dataset.mountpointId || "");
-  setVal("editCctvVideoPort", row.dataset.videoPort || "");
-  setVal("editCctvWsPort", row.dataset.wsPort || "");
-  setVal("editCctvLat", row.dataset.latitude || "");
-  setVal("editCctvLng", row.dataset.longitude || "");
+  setVal("editCctvUrl", card.dataset.rtspUrl || "");
+  setVal("editCctvMountpointId", card.dataset.mountpointId || "");
+  setVal("editCctvVideoPort", card.dataset.videoPort || "");
+  setVal("editCctvWsPort", card.dataset.wsPort || "");
+  setVal("editCctvLat", card.dataset.latitude || "");
+  setVal("editCctvLng", card.dataset.longitude || "");
 
   bootstrap.Modal.getOrCreateInstance(
     document.getElementById("editCctvModal")
   ).show();
 }
 
-function deleteCctvFromRow(row) {
-  const code = row.dataset.code;
-  const locationCode = row.dataset.locationCode || "";
+// 카드에서 삭제
+function deleteCctvFromCard(card) {
+  const code = card.dataset.cctvCode;
+  const locationCode = card.dataset.locationCode || "";
+
   if (!locationCode) {
     return alert("locationCode가 없습니다. 목록 데이터를 확인하세요.");
   }
 
   if (!confirm(`CCTV(${locationCode}/${code})를 삭제할까요?`)) return;
 
-  fetch(`/api/cctv/${encodeURIComponent(locationCode)}/${encodeURIComponent(code)}`, { method: "DELETE" })
+  fetch(`/api/cctv/${encodeURIComponent(locationCode)}/${encodeURIComponent(code)}`, {
+    method: "DELETE"
+  })
     .then((res) => {
       if (!res.ok) throw new Error("delete failed");
       loadCctvList();
@@ -294,9 +388,46 @@ function updateCctvCount(count) {
   el.textContent = `등록된 CCTV 총 ${count}건 | 등록된 CCTV를 관리하세요`;
 }
 
+/* ----------------------------- 
+ * 레거시 함수 (하위 호환성 유지)
+ * ----------------------------- */
+// Thymeleaf에서 직접 호출하는 함수들을 window에 노출
+window.editCctv = function (locationCode, cctvCode) {
+  // 해당 카드 찾기
+  const cards = document.querySelectorAll('.pinterest-card');
+  for (const card of cards) {
+    if (card.dataset.locationCode === locationCode &&
+      card.dataset.cctvCode === cctvCode) {
+      openEditModalFromCard(card);
+      return;
+    }
+  }
+  alert('해당 CCTV를 찾을 수 없습니다.');
+};
+
+window.deleteCctv = function (locationCode, cctvCode) {
+  // 해당 카드 찾기
+  const cards = document.querySelectorAll('.pinterest-card');
+  for (const card of cards) {
+    if (card.dataset.locationCode === locationCode &&
+      card.dataset.cctvCode === cctvCode) {
+      deleteCctvFromCard(card);
+      return;
+    }
+  }
+  alert('해당 CCTV를 찾을 수 없습니다.');
+};
+
 /* helpers */
-function getVal(id) { return document.getElementById(id)?.value ?? ""; }
-function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = v; }
+function getVal(id) {
+  return document.getElementById(id)?.value ?? "";
+}
+
+function setVal(id, v) {
+  const el = document.getElementById(id);
+  if (el) el.value = v;
+}
+
 function escapeHtml(str) {
   return String(str ?? "")
     .replaceAll("&", "&amp;")
