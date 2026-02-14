@@ -50,6 +50,13 @@ public class MenuController {
         return "page/dashboard";
     }
 
+    @GetMapping("/equipment2")
+    public String showEquipmentPage2(Model model) {
+        model.addAttribute("title", "EDS");
+        model.addAttribute("currentPage", "equipment2");
+        return "page/menu/equipment/equipmentPage2";
+    }
+
     @GetMapping("/equipment")
     public String showEquipmentPage(
             @RequestParam(value = "view", required = false, defaultValue = "speaker") String view, Model model) {

@@ -6,14 +6,13 @@
 export function renderPagination(...args) {
     let containerId, currentPage, totalItems, itemsPerPage, onPageChange;
 
-    // ✅ 추가 옵션(빈 데이터일 때 table row 채우기)
+    // 추가 옵션(빈 데이터 tbody 채우기)
     let emptyTargetTbodyId, emptyRowColspan, emptyRowHtml, emptyRowCount;
 
-    // Backward compatibility: positional args
+    // Backward compatibility
     if (typeof args[0] === 'string') {
         [containerId, currentPage, totalItems, itemsPerPage, onPageChange] = args;
     } else {
-        // Object style
         const opt = args[0] || {};
         containerId = opt.containerId;
         currentPage = opt.currentPage;
@@ -21,7 +20,6 @@ export function renderPagination(...args) {
         itemsPerPage = opt.itemsPerPage;
         onPageChange = opt.onPageChange;
 
-        // 추가 옵션 파싱
         emptyTargetTbodyId = opt.emptyTargetTbodyId;
         emptyRowColspan = opt.emptyRowColspan;
         emptyRowHtml = opt.emptyRowHtml;
@@ -41,7 +39,7 @@ export function renderPagination(...args) {
 
     const isEmpty = safeTotalItems === 0;
 
-    // ✅ (추가) 데이터 0건이면 tbody에 빈 row 생성
+    // 0건 tbody filler
     if (isEmpty && emptyTargetTbodyId && emptyRowColspan) {
         const tbody = document.getElementById(emptyTargetTbodyId);
         if (tbody) {
@@ -52,7 +50,6 @@ export function renderPagination(...args) {
 
             const rows = Math.max(1, Number(emptyRowCount) || 1);
 
-            // 첫 줄은 메시지
             let html = `
             <tr>
                 <td colspan="${col}" class="text-center text-white-50 py-5">
@@ -61,7 +58,6 @@ export function renderPagination(...args) {
             </tr>
             `;
 
-            // 추가 filler row(선택): 테이블 높이 채우고 싶을 때
             for (let i = 1; i < rows; i++) {
                 html += `
                     <tr class="table-empty-row">
@@ -74,7 +70,7 @@ export function renderPagination(...args) {
         }
     }
 
-    // ---- 내부 유틸
+    // util
     const createLi = (html, { disabled = false, active = false, onClick } = {}) => {
         const li = document.createElement('li');
         li.className = 'page-item';
@@ -92,9 +88,9 @@ export function renderPagination(...args) {
         return li;
     };
 
-    const iconBtn = ({ icon, label, disabled, onClick, ariaLabel }) => {
+    const iconBtn = ({ icon, label, disabled, onClick }) => {
         const html = `
-            <a class="page-link page-btn" href="#" aria-label="${ariaLabel || label}">
+            <a class="page-link page-btn" href="#">
             <i class="bi ${icon}"></i>
             <span class="d-none d-sm-inline">${label}</span>
             </a>
@@ -104,119 +100,50 @@ export function renderPagination(...args) {
 
     const numberBtn = ({ page, active, disabled, onClick }) => {
         const html = `
-            <a class="page-link page-num" href="#" aria-label="page ${page}">
+            <a class="page-link page-num" href="#">
             ${page}
             </a>
         `;
         return createLi(html, { active, disabled, onClick });
     };
 
-    const ellipsis = () => {
-        const html = `<span class="page-link page-ellipsis" aria-hidden="true">…</span>`;
-        const li = document.createElement('li');
-        li.className = 'page-item disabled';
-        li.innerHTML = html;
-        return li;
-    };
-
-    const getPageWindow = (cur, total) => {
-        const set = new Set([1, total, cur, cur - 1, cur - 2, cur + 1, cur + 2]);
-        return [...set].filter(p => p >= 1 && p <= total).sort((a, b) => a - b);
-    };
-
     const go = (p) => {
         if (typeof onPageChange === 'function') onPageChange(p);
     };
 
-    // ---- First / Prev
-    pagination.appendChild(iconBtn({
-        icon: 'bi-chevron-double-left',
-        label: '처음',
-        ariaLabel: 'First page',
-        disabled: isEmpty || safeCurrent === 1,
-        onClick: () => go(1),
-    }));
-
+    // ---- Prev
     pagination.appendChild(iconBtn({
         icon: 'bi-chevron-left',
         label: '이전',
-        ariaLabel: 'Previous page',
         disabled: isEmpty || safeCurrent === 1,
         onClick: () => go(safeCurrent - 1),
     }));
 
-    // ---- Numbers + Ellipsis
-    const pages = getPageWindow(safeCurrent, totalPages);
-    let prev = 0;
+    // ---- Numbers (prev / current / next only)
+    const pages = [];
+    if (!isEmpty) {
+        if (safeCurrent - 1 >= 1) pages.push(safeCurrent - 1);
+        pages.push(safeCurrent);
+        if (safeCurrent + 1 <= totalPages) pages.push(safeCurrent + 1);
+    }
+
     pages.forEach((p) => {
-        if (prev && p - prev > 1) pagination.appendChild(ellipsis());
         pagination.appendChild(numberBtn({
             page: p,
             active: p === safeCurrent,
             disabled: isEmpty,
             onClick: () => go(p),
         }));
-        prev = p;
     });
 
-    // ---- Next / Last
+    // ---- Next
     pagination.appendChild(iconBtn({
         icon: 'bi-chevron-right',
         label: '다음',
-        ariaLabel: 'Next page',
         disabled: isEmpty || safeCurrent === totalPages,
         onClick: () => go(safeCurrent + 1),
     }));
-
-    pagination.appendChild(iconBtn({
-        icon: 'bi-chevron-double-right',
-        label: '마지막',
-        ariaLabel: 'Last page',
-        disabled: isEmpty || safeCurrent === totalPages,
-        onClick: () => go(totalPages),
-    }));
-
-    // ---- Info
-    const startIdx = isEmpty ? 0 : (safeCurrent - 1) * safePerPage + 1;
-    const endIdx = isEmpty ? 0 : Math.min(safeCurrent * safePerPage, safeTotalItems);
-
-    const aroundPages = [];
-    if (!isEmpty) {
-        if (safeCurrent - 1 >= 1) aroundPages.push(safeCurrent - 1);
-        aroundPages.push(safeCurrent);
-        if (safeCurrent + 1 <= totalPages) aroundPages.push(safeCurrent + 1);
-    }
-
-    const aroundHtml = isEmpty
-        ? `<span class="text-white-50">-</span>`
-        : aroundPages.map(p => {
-            if (p === safeCurrent) return `<span class="page-mini current" aria-current="page">${p}</span>`;
-            return `<a href="#" class="page-mini" data-page="${p}" aria-label="page ${p}">${p}</a>`;
-        }).join(' ');
-
-    const infoHtml = `
-    <span class="page-link page-info">
-        <span class="d-none d-md-inline">${startIdx}-${endIdx} / ${safeTotalItems}</span>
-        <span class="d-md-none">${aroundHtml}</span>
-    </span>
-    `;
-
-    const infoLi = document.createElement('li');
-    infoLi.className = 'page-item disabled ms-1';
-    infoLi.innerHTML = infoHtml;
-
-    infoLi.querySelectorAll('a.page-mini[data-page]').forEach(a => {
-        a.addEventListener('click', (e) => {
-            e.preventDefault();
-            const p = Number(a.dataset.page);
-            if (!Number.isFinite(p)) return;
-            go(p);
-        });
-    });
-
-    pagination.appendChild(infoLi);
 }
-
 
 export function safeValue(value, isNumber = false, suffix = '', digits = 0) {
     try {

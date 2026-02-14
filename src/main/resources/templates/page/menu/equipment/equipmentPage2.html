@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/layout}">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>장비 관리</title>
+
+  <link rel="stylesheet" th:href="@{/css/page/equipment.css}" />
+
+  <script defer src="/js/page/equipment/equipment2.js?v=1"></script>
+  <script defer src="/js/page/equipment/equipment_cctv_pane.js?v=1"></script>
+  <script defer src="/js/page/equipment/equipment_speaker_pane.js?v=1"></script>
+  <script defer src="/js/page/equipment/equipment_broadcast_pane.js?v=1"></script>
+
+</head>
+
+<body>
+  <div class="container-fluid p-0" layout:fragment="content">
+
+    <!-- 스코프 시작: CSS가 .page-equipment 하위로만 적용됨 -->
+    <div class="page-equipment">
+
+      <!-- Topbar (sticky) -->
+      <header class="eq-topbar">
+        <div class="eq-topbar-content">
+          <div class="eq-topbar-left">
+            <!-- 모바일에서 사이드바 여는 버튼 (CSS에서 1024px 이하에 표시) -->
+            <button type="button" class="eq-sidebar-toggle" id="eqSidebarToggle" aria-label="메뉴 열기">
+              <i class="bi bi-list"></i>
+            </button>
+
+            <h2 class="eq-page-title m-0">
+              <i class="bi bi-grid-3x3-gap-fill"></i>
+              장비 관리
+            </h2>
+          </div>
+
+          <div class="eq-topbar-right">
+            <!-- 공통 액션 버튼(원하면 교체) -->
+            <button type="button" class="eq-btn eq-btn-primary">
+              <i class="bi bi-plus-lg"></i>
+              <span>새 장비</span>
+            </button>
+            <button type="button" class="eq-btn eq-btn-secondary">
+              <i class="bi bi-lightning-charge"></i>
+              <span>빠른 실행</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- (선택) 탭 네비게이션: CSS에서 1024px 이하에 표시 -->
+        <nav class="eq-tab-nav" aria-label="장비관리 탭">
+          <button class="eq-tab-item is-active" type="button" data-target="equipment-speaker-pane" aria-selected="true">
+            <i class="bi bi-megaphone"></i> 스피커
+          </button>
+          <button class="eq-tab-item" type="button" data-target="equipment-broadcast-pane" aria-selected="false">
+            <i class="bi bi-broadcast"></i> 방송
+          </button>
+          <button class="eq-tab-item" type="button" data-target="equipment-cctv-pane" aria-selected="false">
+            <i class="bi bi-camera-video"></i> CCTV
+          </button>
+        </nav>
+      </header>
+
+      <!-- 메인 레이아웃: Sidebar + Main -->
+      <div class="eq-layout">
+
+        <!-- Sidebar (Desktop 기본 표시 / Mobile에선 오프캔버스처럼 동작) -->
+        <aside class="eq-sidebar" id="eqSidebar" aria-label="장비관리 섹션">
+          <div class="eq-sidebar-content">
+
+            <nav class="eq-nav">
+              <button class="eq-nav-item is-active" type="button" data-target="equipment-speaker-pane"
+                aria-selected="true">
+                <i class="bi bi-megaphone"></i>
+                <span class="eq-nav-label">스피커</span>
+              </button>
+
+              <button class="eq-nav-item" type="button" data-target="equipment-broadcast-pane" aria-selected="false">
+                <i class="bi bi-broadcast"></i>
+                <span class="eq-nav-label">방송</span>
+              </button>
+
+              <button class="eq-nav-item" type="button" data-target="equipment-cctv-pane" aria-selected="false">
+                <i class="bi bi-camera-video"></i>
+                <span class="eq-nav-label">CCTV</span>
+              </button>
+            </nav>
+
+            <!-- (선택) 사이드바 접기/안내 영역 -->
+            <div class="eq-sidebar-footer">
+              <div class="eq-nav-toggle-hint" id="eqSidebarCollapse" role="button" tabindex="0"
+                aria-label="사이드바 접기/펼치기">
+                <i class="bi bi-chevron-left"></i>
+                <span class="eq-nav-label">접기</span>
+              </div>
+            </div>
+
+          </div>
+        </aside>
+
+        <!-- Main -->
+        <main class="eq-main">
+
+          <!-- Pane 1: Speaker -->
+          <section class="eq-pane is-active" id="equipment-speaker-pane">
+            <div th:replace="~{page/menu/equipment/equipment-speaker-pane :: speakerPane}"></div>
+          </section>
+
+          <!-- Pane 2: Broadcast -->
+          <section class="eq-pane" id="equipment-broadcast-pane">
+            <div th:replace="~{page/menu/equipment/equipment-broadcast-pane :: broadcastPane}"></div>
+          </section>
+
+          <!-- Pane 3: CCTV -->
+          <section class="eq-pane" id="equipment-cctv-pane">
+            <div th:replace="~{page/menu/equipment/equipment-cctv-pane :: cctvPane}"></div>
+          </section>
+
+        </main>
+      </div>
+
+      <!-- 모바일 오버레이 (사이드바 열렸을 때 뒤 클릭 차단) -->
+      <div class="eq-overlay" id="eqOverlay"></div>
+
+    </div>
+  </div>
+</body>
+
+
+</html>

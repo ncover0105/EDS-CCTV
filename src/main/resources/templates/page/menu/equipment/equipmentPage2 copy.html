@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/layout}">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>장비 관리</title>
+
+  <link rel="stylesheet" th:href="@{/css/page/equipment.css}" />
+
+  <script defer src="/js/page/equipment/equipment2.js?v=1"></script>
+  <script defer src="/js/page/equipment/equipment_cctv_pane.js?v=1"></script>
+  <script defer src="/js/page/equipment/equipment_speaker_pane.js?v=1"></script>
+  <script defer src="/js/page/equipment/equipment_broadcast_pane.js?v=1"></script>
+
+</head>
+
+<body>
+  <div class="container-fluid p-0" layout:fragment="content">
+    <div class="page-equipment p-3">
+      <!-- (선택) 상단 헤더 영역: 제목/버튼 등 -->
+      <div class="eq-header">
+        <div class="eq-title">
+          <h2>장비 관리</h2>
+          <span class="eq-desc">스피커 / 방송 / CCTV를 한 곳에서 관리합니다.</span>
+        </div>
+      </div>
+
+      <!-- 핵심: 서브내비 + 메인 컨텐츠 -->
+      <div class="eq-shell">
+        <aside class="eq-subnav" aria-label="장비관리 섹션">
+          <button class="eq-navitem is-active" data-target="equipment-speaker-pane">스피커</button>
+          <button class="eq-navitem" data-target="equipment-broadcast-pane">방송</button>
+          <button class="eq-navitem" data-target="equipment-cctv-pane">CCTV</button>
+        </aside>
+
+        <section class="eq-main">
+          <div th:replace="~{page/menu/equipment/equipment-speaker-pane :: speakerPane}"></div>
+          <div th:replace="~{page/menu/equipment/equipment-broadcast-pane :: broadcastPane}"></div>
+          <div th:replace="~{page/menu/equipment/equipment-cctv-pane :: cctvPane}"></div>
+        </section>overflow-y
+      </div>
+    </div>
+
+  </div>
+</body>
+
+</html>
