@@ -1,0 +1,155 @@
+<div th:fragment="broadcastPane">
+    <div class="broadcast-pane">
+        <!-- Broadcast Layout Grid -->
+        <div class="broadcast-layout">
+
+            <!-- Left: Target Selector Panel -->
+            <section class="eq-panel">
+                <header class="panel-header">
+                    <div class="panel-title">
+                        <i class="bi bi-bullseye"></i>
+                        <span>스피커 목록</span>
+                        <span class="badge bg-purple ms-2" id="selectedTargetSpeakerCount">0</span>
+                    </div>
+                </header>
+                <div class="panel-body p-3">
+                    <!-- Search -->
+                    <div class="hud-search w-100 mb-3">
+                        <i class="bi bi-search"></i>
+                        <input id="targetSpeakerSearch" type="text" placeholder="ID / 이름 / 지역 검색" autocomplete="off">
+                    </div>
+
+                    <!-- Select All Checkbox -->
+                    <div class="d-flex justify-content-between align-items-center mb-3 px-1 text-white-50">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="targetSpeakerSelectAll">
+                            <label class="form-check-label small" for="targetSpeakerSelectAll">전체 선택</label>
+                        </div>
+                    </div>
+
+                    <!-- Target Speaker List -->
+                    <div class="flex-grow-1 overflow-auto">
+                        <div id="targetSpeakerList">
+                            <!-- Dynamic speaker list inserted by JS -->
+                        </div>
+                        <div id="targetSpeakerEmpty" class="text-center py-5 text-white-50 d-none">
+                            <i class="bi bi-inbox fs-2"></i>
+                            <p class="mt-2 mb-0">검색된 스피커가 없습니다</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right: Broadcast Composer -->
+            <section class="eq-panel">
+                <header class="panel-header">
+                    <div class="panel-title">방송 설정</div>
+                    <button type="button" class="btn-cyber" id="bc_open_tts_manage">TTS 라이브러리</button>
+                </header>
+                <div class="panel-body p-0 overflow-auto">
+
+                    <!-- Broadcast Types Container (Hidden by default) -->
+                    <div class="p-3 border-bottom border-white-10 d-none">
+                        <div class="eq-label mb-3 fw-bold text-cyan">사용 가능한 재난 유형</div>
+                        <div id="broadcastTypesContainer" class="d-flex flex-wrap gap-2"></div>
+                    </div>
+
+                    <!-- Composer Layout -->
+                    <div class="composer-layout">
+
+                        <!-- Settings (Left Area) -->
+                        <div class="composer-settings p-3">
+                            <div class="eq-label mb-3 fw-bold text-cyan">방송 설정</div>
+
+                            <div class="composer-form-grid">
+                                <!-- Mode -->
+                                <div class="form-item">
+                                    <label class="eq-label">모드</label>
+                                    <select id="bc_mode" class="eq-select">
+                                        <option value="0">시험 방송</option>
+                                        <option value="1" selected>실제 방송</option>
+                                    </select>
+                                </div>
+
+                                <!-- Category -->
+                                <div class="form-item">
+                                    <label class="eq-label">카테고리</label>
+                                    <select id="bc_broadcast_type" class="eq-select">
+                                        <option value="1" selected>TTS</option>
+                                        <option value="2">저장메시지</option>
+                                        <option value="3">기타</option>
+                                    </select>
+                                </div>
+
+                                <!-- Disaster Type -->
+                                <div class="form-item full-width" id="bc_disaster_area">
+                                    <label class="eq-label">재난 유형</label>
+                                    <select id="bc_disaster" class="eq-select mb-2">
+                                        <option value="">-- 선택 --</option>
+                                    </select>
+                                    <div id="bc_disaster_msg_area" class="disaster-msg-box d-none">
+                                        <div class="msg-header">
+                                            <i class="bi bi-info-circle"></i> 선택된 방송 문구
+                                        </div>
+                                        <div class="msg-content" id="bc_disaster_msg_text"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Message Area -->
+                                <div class="form-item full-width" id="customMessageArea">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label class="eq-label mb-0" id="customMessageLabel">TTS 입력</label>
+                                        <select id="bc_tts_list" class="eq-select py-1" style="width: 200px;">
+                                            <option value="">직접 입력</option>
+                                        </select>
+                                    </div>
+                                    <textarea class="eq-input" id="customMessageText" rows="6"
+                                        placeholder="전송할 내용을 입력하세요..."></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div id="broadcastProgress" class="d-none mt-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="text-white-50 small">전송 중...</span>
+                                    <span class="small text-cyan" id="progressText">0%</span>
+                                </div>
+                                <div class="cyber-progress">
+                                    <div class="cyber-progress-bar" id="progressFill"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Control Actions & Log (Right Area) -->
+                        <div class="composer-controls p-3 bg-black-20">
+                            <div class="eq-label mb-3 fw-bold text-cyan">실행 제어</div>
+
+                            <!-- Control Buttons -->
+                            <div class="control-buttons d-grid gap-3 mb-4">
+                                <button class="btn-cyber w-100 py-2" onclick="startBroadcast()">
+                                    <i class="bi bi-play-circle fs-5 me-2"></i>방송 시작
+                                </button>
+                                <button class="btn-cyber danger w-100 py-2" onclick="stopBroadcast()">
+                                    <i class="bi bi-stop-circle fs-5 me-2"></i>방송 종료
+                                </button>
+                                <button class="btn-cyber w-100 py-2" onclick="resetSelection()">
+                                    <i class="bi bi-arrow-clockwise me-2"></i>초기화
+                                </button>
+                            </div>
+
+                            <!-- Activity Log -->
+                            <div class="eq-label mb-2 fw-bold text-cyan">최근 활동</div>
+                            <div id="broadcastLogSection" class="eq-panel"
+                                style="background:rgba(0,0,0,0.3); max-height: 400px; overflow-y:auto;">
+                                <div id="broadcastLogPanel" class="p-2 small">
+                                    <!-- Log entries inserted by JS -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+</div>

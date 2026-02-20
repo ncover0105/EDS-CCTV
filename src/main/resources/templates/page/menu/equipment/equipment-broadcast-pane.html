@@ -1,155 +1,231 @@
-<div th:fragment="broadcastPane" class="eq-pane" id="equipment-broadcast-pane">
-    <div class="broadcast-pane">
-        <!-- Broadcast Layout Grid -->
-        <div class="broadcast-layout">
+<div th:fragment="broadcastPane" style="display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden;">
+    <!--
+        ★ 핵심: th:replace 로 삽입되는 이 div 자체에 flex 구조를 인라인으로 부여.
+           CSS의 '#equipment-broadcast-pane > div' 선택자와 이중 보호.
+    -->
 
-            <!-- Left: Target Selector Panel -->
-            <section class="eq-panel">
+    <div class="broadcast-pane">
+
+        <!-- ══════════════════════════════════════
+             Phase Progress Bar
+             flex-shrink:0 → 높이 고정
+             ══════════════════════════════════════ -->
+        <div class="bc-phase-bar">
+            <div class="bc-phase-step" id="bcPhase1">
+                <div class="bc-phase-icon">1</div>
+                <div class="bc-phase-label">
+                    대상 선택
+                    <span class="bc-phase-count" id="selectedTargetSpeakerCount">0</span>
+                </div>
+            </div>
+            <div class="bc-phase-connector"></div>
+            <div class="bc-phase-step is-active" id="bcPhase2">
+                <div class="bc-phase-icon">2</div>
+                <div class="bc-phase-label">메시지 구성</div>
+            </div>
+            <div class="bc-phase-connector"></div>
+            <div class="bc-phase-step" id="bcPhase3">
+                <div class="bc-phase-icon">3</div>
+                <div class="bc-phase-label">실행</div>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             3-Column Pipeline
+             flex:1 + min-height:0 → 나머지 높이 점유
+             grid-auto-rows:1fr → 열이 컨테이너 높이 꽉 채움
+             ══════════════════════════════════════ -->
+        <div class="bc-pipeline">
+
+            <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                 Panel A: 스피커 목록
+                 구조: panel-body(flex col)
+                   └ search-wrap   (flex-shrink:0)
+                   └ selectall     (flex-shrink:0)
+                   └ list-wrap     (flex:1 + min-height:0 + overflow-y:auto)
+                      └ #targetSpeakerList  ← JS가 .speaker-card 삽입
+                 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+            <section class="eq-panel bc-panel-target">
                 <header class="panel-header">
                     <div class="panel-title">
                         <i class="bi bi-bullseye"></i>
-                        <span>스피커 목록</span>
-                        <span class="badge bg-purple ms-2" id="selectedTargetSpeakerCount">0</span>
+                        스피커 목록
                     </div>
                 </header>
-                <div class="panel-body p-3">
-                    <!-- Search -->
-                    <div class="hud-search w-100 mb-3">
-                        <i class="bi bi-search"></i>
-                        <input id="targetSpeakerSearch" type="text" placeholder="ID / 이름 / 지역 검색" autocomplete="off">
+
+                <div class="panel-body">
+
+                    <!-- 검색 (고정) -->
+                    <div class="bc-target-search-wrap">
+                        <div class="hud-search" style="min-width:unset; width:100%;">
+                            <i class="bi bi-search"></i>
+                            <input id="targetSpeakerSearch" type="text" placeholder="ID / 이름 / 지역 검색"
+                                autocomplete="off">
+                        </div>
                     </div>
 
-                    <!-- Select All Checkbox -->
-                    <div class="d-flex justify-content-between align-items-center mb-3 px-1 text-white-50">
+                    <!-- 전체 선택 (고정) -->
+                    <div class="bc-target-selectall">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="targetSpeakerSelectAll">
-                            <label class="form-check-label small" for="targetSpeakerSelectAll">전체 선택</label>
+                            <label class="form-check-label" for="targetSpeakerSelectAll" style="font-size:12px;">전체
+                                선택</label>
                         </div>
                     </div>
 
-                    <!-- Target Speaker List -->
-                    <div class="flex-grow-1 overflow-auto">
-                        <div id="targetSpeakerList">
-                            <!-- Dynamic speaker list inserted by JS -->
-                        </div>
-                        <div id="targetSpeakerEmpty" class="text-center py-5 text-white-50 d-none">
-                            <i class="bi bi-inbox fs-2"></i>
-                            <p class="mt-2 mb-0">검색된 스피커가 없습니다</p>
+                    <!-- ★ 스크롤 컨테이너 — JS가 .speaker-card를 여기에 append -->
+                    <div class="bc-target-list-wrap" id="bc-target-list-scroll">
+                        <div id="targetSpeakerList"></div>
+                        <div id="targetSpeakerEmpty" class="d-none"
+                            style="text-align:center; padding: 2rem 1rem; color:var(--text-muted);">
+                            <i class="bi bi-inbox" style="font-size:2rem;"></i>
+                            <p style="margin:.5rem 0 0; font-size:13px;">검색된 스피커가 없습니다</p>
                         </div>
                     </div>
+
                 </div>
             </section>
 
-            <!-- Right: Broadcast Composer -->
-            <section class="eq-panel">
+            <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                 Panel B: 방송 설정 (Composer)
+                 panel-body → overflow-y:auto
+                 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+            <section class="eq-panel bc-panel-composer">
                 <header class="panel-header">
-                    <div class="panel-title">방송 설정</div>
-                    <button type="button" class="btn-cyber" id="bc_open_tts_manage">TTS 라이브러리</button>
+                    <div class="panel-title">
+                        <i class="bi bi-sliders"></i>
+                        방송 설정
+                    </div>
+                    <button type="button" class="btn-cyber btn-cyber-sm" id="bc_open_tts_manage">
+                        <i class="bi bi-collection"></i> TTS 라이브러리
+                    </button>
                 </header>
-                <div class="panel-body p-0 overflow-auto">
 
-                    <!-- Broadcast Types Container (Hidden by default) -->
-                    <div class="p-3 border-bottom border-white-10 d-none">
-                        <div class="eq-label mb-3 fw-bold text-cyan">사용 가능한 재난 유형</div>
-                        <div id="broadcastTypesContainer" class="d-flex flex-wrap gap-2"></div>
-                    </div>
+                <div class="panel-body" style="overflow-y:auto;">
+                    <div class="composer-settings">
 
-                    <!-- Composer Layout -->
-                    <div class="composer-layout">
+                        <div style="font-size:11px; font-weight:700; text-transform:uppercase;
+                                    letter-spacing:.6px; color:var(--accent);
+                                    border-bottom:1px solid var(--border-subtle);
+                                    padding-bottom:6px; margin-bottom:14px;">
+                            방송 파라미터
+                        </div>
 
-                        <!-- Settings (Left Area) -->
-                        <div class="composer-settings p-3">
-                            <div class="eq-label mb-3 fw-bold text-cyan">방송 설정</div>
+                        <div class="composer-form-grid">
 
-                            <div class="composer-form-grid">
-                                <!-- Mode -->
-                                <div class="form-item">
-                                    <label class="eq-label">모드</label>
-                                    <select id="bc_mode" class="eq-select">
-                                        <option value="0">시험 방송</option>
-                                        <option value="1" selected>실제 방송</option>
-                                    </select>
-                                </div>
+                            <!-- 모드 -->
+                            <div class="form-item">
+                                <label class="eq-label">모드</label>
+                                <select id="bc_mode" class="eq-select">
+                                    <option value="0">시험 방송</option>
+                                    <option value="1" selected>실제 방송</option>
+                                </select>
+                            </div>
 
-                                <!-- Category -->
-                                <div class="form-item">
-                                    <label class="eq-label">카테고리</label>
-                                    <select id="bc_broadcast_type" class="eq-select">
-                                        <option value="1" selected>TTS</option>
-                                        <option value="2">저장메시지</option>
-                                        <option value="3">기타</option>
-                                    </select>
-                                </div>
+                            <!-- 카테고리 -->
+                            <div class="form-item">
+                                <label class="eq-label">카테고리</label>
+                                <select id="bc_broadcast_type" class="eq-select">
+                                    <option value="1" selected>TTS</option>
+                                    <option value="2">저장메시지</option>
+                                    <option value="3">기타</option>
+                                </select>
+                            </div>
 
-                                <!-- Disaster Type -->
-                                <div class="form-item full-width" id="bc_disaster_area">
-                                    <label class="eq-label">재난 유형</label>
-                                    <select id="bc_disaster" class="eq-select mb-2">
-                                        <option value="">-- 선택 --</option>
-                                    </select>
-                                    <div id="bc_disaster_msg_area" class="disaster-msg-box d-none">
-                                        <div class="msg-header">
-                                            <i class="bi bi-info-circle"></i> 선택된 방송 문구
-                                        </div>
-                                        <div class="msg-content" id="bc_disaster_msg_text"></div>
+                            <!-- 재난 유형 -->
+                            <div class="form-item full-width" id="bc_disaster_area">
+                                <label class="eq-label">재난 유형</label>
+                                <select id="bc_disaster" class="eq-select" style="margin-bottom:8px;">
+                                    <option value="">-- 선택 --</option>
+                                </select>
+                                <div id="bc_disaster_msg_area" class="disaster-msg-box d-none">
+                                    <div class="msg-header">
+                                        <i class="bi bi-info-circle"></i> 선택된 방송 문구
                                     </div>
-                                </div>
-
-                                <!-- Message Area -->
-                                <div class="form-item full-width" id="customMessageArea">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <label class="eq-label mb-0" id="customMessageLabel">TTS 입력</label>
-                                        <select id="bc_tts_list" class="eq-select py-1" style="width: 200px;">
-                                            <option value="">직접 입력</option>
-                                        </select>
-                                    </div>
-                                    <textarea class="eq-input" id="customMessageText" rows="6"
-                                        placeholder="전송할 내용을 입력하세요..."></textarea>
+                                    <div class="msg-content" id="bc_disaster_msg_text"></div>
                                 </div>
                             </div>
 
-                            <!-- Progress Bar -->
-                            <div id="broadcastProgress" class="d-none mt-4">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span class="text-white-50 small">전송 중...</span>
-                                    <span class="small text-cyan" id="progressText">0%</span>
+                            <!-- TTS 메시지 입력 -->
+                            <div class="form-item full-width" id="customMessageArea">
+                                <div style="display:flex; justify-content:space-between;
+                                            align-items:center; margin-bottom:8px;">
+                                    <label class="eq-label" id="customMessageLabel" style="margin-bottom:0;">TTS
+                                        입력</label>
+                                    <select id="bc_tts_list" class="eq-select"
+                                        style="width:160px; font-size:12px; padding:8px 28px 8px 8px;">
+                                        <option value="">직접 입력</option>
+                                    </select>
                                 </div>
-                                <div class="cyber-progress">
-                                    <div class="cyber-progress-bar" id="progressFill"></div>
-                                </div>
+                                <textarea class="eq-input" id="customMessageText" rows="6"
+                                    placeholder="전송할 내용을 입력하세요..." style="resize:none;"></textarea>
+                            </div>
+
+                        </div><!-- /.composer-form-grid -->
+
+                        <!-- 전송 진행률 -->
+                        <div id="broadcastProgress" class="d-none" style="margin-top:12px;">
+                            <div style="display:flex; justify-content:space-between;
+                                        align-items:center; margin-bottom:4px;">
+                                <span style="font-size:11px; color:var(--text-muted);">전송 중...</span>
+                                <span style="font-size:11px; font-family:var(--font-mono);
+                                            color:var(--accent);" id="progressText">0%</span>
+                            </div>
+                            <div class="cyber-progress">
+                                <div class="cyber-progress-bar" id="progressFill"></div>
                             </div>
                         </div>
 
-                        <!-- Control Actions & Log (Right Area) -->
-                        <div class="composer-controls p-3 bg-black-20">
-                            <div class="eq-label mb-3 fw-bold text-cyan">실행 제어</div>
-
-                            <!-- Control Buttons -->
-                            <div class="control-buttons d-grid gap-3 mb-4">
-                                <button class="btn-cyber w-100 py-2" onclick="startBroadcast()">
-                                    <i class="bi bi-play-circle fs-5 me-2"></i>방송 시작
-                                </button>
-                                <button class="btn-cyber danger w-100 py-2" onclick="stopBroadcast()">
-                                    <i class="bi bi-stop-circle fs-5 me-2"></i>방송 종료
-                                </button>
-                                <button class="btn-cyber w-100 py-2" onclick="resetSelection()">
-                                    <i class="bi bi-arrow-clockwise me-2"></i>초기화
-                                </button>
-                            </div>
-
-                            <!-- Activity Log -->
-                            <div class="eq-label mb-2 fw-bold text-cyan">최근 활동</div>
-                            <div id="broadcastLogSection" class="eq-panel"
-                                style="background:rgba(0,0,0,0.3); max-height: 400px; overflow-y:auto;">
-                                <div id="broadcastLogPanel" class="p-2 small">
-                                    <!-- Log entries inserted by JS -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    </div><!-- /.composer-settings -->
+                </div><!-- /.panel-body -->
             </section>
 
-        </div>
-    </div>
+            <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                 Panel C: 실행 제어 + 로그
+                 panel-body(flex col, padding:0)
+                   └ bc-execution-controls (flex-shrink:0) ← 버튼 고정
+                   └ bc-log-area (flex:1, min-height:0)    ← 로그 스크롤
+                 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+            <section class="eq-panel bc-panel-execution">
+                <header class="panel-header">
+                    <div class="panel-title">
+                        <i class="bi bi-terminal"></i>
+                        실행 제어
+                    </div>
+                </header>
+
+                <div class="panel-body">
+
+                    <!-- 버튼 영역 (고정 / flex-shrink:0) -->
+                    <div class="bc-execution-controls">
+                        <button class="bc-btn-start" id="broadcastStartBtn" onclick="startBroadcast()">
+                            <i class="bi bi-play-circle-fill"></i>
+                            방송 시작
+                        </button>
+                        <button class="btn-cyber danger" style="width:100%; justify-content:center; padding:10px;"
+                            onclick="stopBroadcast()">
+                            <i class="bi bi-stop-circle-fill"></i>&ensp;방송 종료
+                        </button>
+                        <button class="btn-cyber" style="width:100%; justify-content:center; padding:10px;"
+                            onclick="resetSelection()">
+                            <i class="bi bi-arrow-clockwise"></i>&ensp;초기화
+                        </button>
+                    </div>
+
+                    <!-- 로그 영역 (flex:1, 내부 스크롤) -->
+                    <div class="bc-log-area">
+                        <div class="bc-log-title">최근 활동</div>
+                        <div class="bc-log-section">
+                            <div class="bc-log-scroll" id="broadcastLogSection">
+                                <div id="broadcastLogPanel"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div><!-- /.panel-body -->
+            </section>
+
+        </div><!-- /.bc-pipeline -->
+
+    </div><!-- /.broadcast-pane -->
 </div>

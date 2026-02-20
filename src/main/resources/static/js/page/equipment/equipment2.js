@@ -107,12 +107,11 @@
     }
 
     function toggleSidebarCollapsed() {
-        // desktop collapse: .page-equipment or .eq-layout에 상태 클래스 주는 방식이 일반적
-        // CSS에서 .is-collapsed 처리하고 싶으면 아래 클래스만 맞춰주면 됨.
-        const root = qs(".page-equipment");
-        if (!root) return;
-        root.classList.toggle("is-sidebar-collapsed");
-    } eq - topbar
+        const sidebar = qs(SELECTORS.sidebar);
+        if (!sidebar) return;
+
+        sidebar.classList.toggle("is-collapsed");
+    }
 
     function getInitialTargetId() {
         // 1) URL ?view=...

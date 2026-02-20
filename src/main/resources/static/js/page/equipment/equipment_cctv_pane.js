@@ -1,60 +1,110 @@
 (() => {
-    const PAGE_SIZE = 10;
+    const PAGE_SIZE = 12;
 
-    let fullList = [];
+    let fullList = [];        // API에서 가져온 원본 전체 목록
+    let filteredList = [];    // 검색/필터가 적용된 현재 목록
     let currentPage = 1;
 
+    let currentFilter = "all";
+    let currentSearch = "";
+
     document.addEventListener("DOMContentLoaded", () => {
-        bindTopButtons();
-        bindTableDelegation();
-        loadCctvList();
+        init();
     });
 
-    function bindTopButtons() {
-        document.getElementById("cctv-btn-refresh")?.addEventListener("click", loadCctvList);
+    function init() {
+        bindEvents();
+        loadCctvList();
+    }
 
+    function bindEvents() {
+        // 새로고침
+        document.getElementById("cctv-btn-refresh")?.addEventListener("click", () => {
+            loadCctvList();
+        });
+
+        // 검색 (실시간)
+        const searchInput = document.getElementById("cctvSearch");
+        searchInput?.addEventListener("input", (e) => {
+            currentSearch = e.target.value.toLowerCase().trim();
+            currentPage = 1;
+            applyFilter();
+        });
+
+        // 필터 칩
+        document.querySelectorAll(".cctv-filters .chip").forEach(chip => {
+            chip.addEventListener("click", () => {
+                document.querySelectorAll(".cctv-filters .chip").forEach(c => c.classList.remove("is-active"));
+                chip.classList.add("is-active");
+                currentFilter = chip.dataset.filter;
+                currentPage = 1;
+                applyFilter();
+            });
+        });
+
+        // 추가 모달 열기 버튼
+        document.getElementById("cctv-btn-add")?.addEventListener("click", () => {
+            openAddModal();
+        });
+        document.getElementById("cctv-btn-empty-add")?.addEventListener("click", () => {
+            openAddModal();
+        });
+
+        // 추가/수정 저장
         document.getElementById("cctv-btn-save-add")?.addEventListener("click", submitAddCctv);
         document.getElementById("cctv-btn-save-edit")?.addEventListener("click", submitEditCctv);
 
-        document.getElementById("cctv-check-all")?.addEventListener("change", (e) => {
-            const checked = !!e.target.checked;
-            document.querySelectorAll("#cctvTbody input.cctv-row-check").forEach((cb) => (cb.checked = checked));
-        });
-
-        // edit modal reset (원본 로직과 동일 목적)
-        document.getElementById("cctvEditModal")?.addEventListener("hidden.bs.modal", () => {
-            // 필요 시 edit input reset
-            // setVal("cctv-edit-name", "");
-        });
-    }
-
-    function bindTableDelegation() {
+        // 테이블 이벤트 위임 (수정/삭제)
         const tbody = document.getElementById("cctvTbody");
-        if (!tbody) return;
+        tbody?.addEventListener("click", (e) => {
+            const row = e.target.closest("tr");
+            if (!row) return;
 
-        tbody.addEventListener("click", (e) => {
-            const editBtn = e.target.closest(".cctv-btn-edit");
+            const editBtn = e.target.closest(".row-edit-btn");
             if (editBtn) {
-                e.preventDefault();
-                const tr = editBtn.closest("tr");
-                if (tr) openEditModalFromRow(tr);
+                openEditModalFromRow(row);
                 return;
             }
 
-            const delBtn = e.target.closest(".cctv-btn-delete");
+            const delBtn = e.target.closest(".row-del-btn");
             if (delBtn) {
-                e.preventDefault();
-                const tr = delBtn.closest("tr");
-                if (tr) deleteCctvFromRow(tr);
+                deleteCctvFromRow(row);
                 return;
             }
+        });
+
+        // 체크박스 전체 선택
+        document.getElementById("cctv-check-all")?.addEventListener("change", (e) => {
+            const checked = e.target.checked;
+            document.querySelectorAll("#cctvTbody .cctv-row-check").forEach(cb => {
+                cb.checked = checked;
+            });
+            updateSelectedDeleteButton();
+        });
+
+        tbody?.addEventListener("change", (e) => {
+            if (e.target.classList.contains("cctv-row-check")) {
+                updateSelectedDeleteButton();
+            }
+        });
+
+        // 선택 삭제 버튼 (추가 기능)
+        document.getElementById("cctv-btn-delete-selected")?.addEventListener("click", deleteSelectedCctvs);
+
+        // 모달 닫힐 때 폼 리셋
+        document.getElementById("cctvAddModal")?.addEventListener("hidden.bs.modal", () => {
+            document.getElementById("addCctvForm")?.reset();
+        });
+        document.getElementById("cctvEditModal")?.addEventListener("hidden.bs.modal", () => {
+            document.getElementById("editCctvForm")?.reset();
         });
     }
 
     /* -----------------------------
-     * 목록
+     * 데이터 로드 및 필터링
      * ----------------------------- */
     function loadCctvList() {
+        console.log("Loading CCTV list...");
         fetch("/api/cctv/list")
             .then(async (res) => {
                 if (!res.ok) throw new Error(await res.text());
@@ -62,176 +112,248 @@
             })
             .then((data) => {
                 fullList = Array.isArray(data) ? data : [];
-                currentPage = 1;
-                updateCount(fullList.length);
-                renderPage();
+                updateStats();
+                applyFilter();
             })
             .catch((err) => {
                 console.error(err);
-                alert("CCTV 목록 조회 중 오류가 발생했습니다.");
+                // alert("CCTV 목록 조회 중 오류가 발생했습니다.");
             });
     }
 
+    function updateStats() {
+        const total = fullList.length;
+        const ok = fullList.filter(c => c.statusCam === "1").length;
+        const bad = fullList.filter(c => c.statusCam === "0").length;
+        const unk = total - ok - bad;
+
+        setText("cctvStatTotal", total);
+        setText("cctvStatOk", ok);
+        setText("cctvStatBad", bad);
+        setText("cctvStatUnk", unk);
+        setText("cctvCountText", `등록된 CCTV 총 ${total}건`);
+    }
+
+    function applyFilter() {
+        filteredList = fullList.filter(item => {
+            // 1. 상태 필터
+            let statusMatch = true;
+            if (currentFilter === "ok") statusMatch = item.statusCam === "1";
+            else if (currentFilter === "bad") statusMatch = item.statusCam === "0";
+            else if (currentFilter === "unk") statusMatch = !item.statusCam || (item.statusCam !== "1" && item.statusCam !== "0");
+
+            if (!statusMatch) return false;
+
+            // 2. 검색 필터
+            if (!currentSearch) return true;
+            const name = (item.name || "").toLowerCase();
+            const code = (item.cctvCode || "").toLowerCase();
+            const loc = (item.locationCode || "").toLowerCase();
+            const url = (item.rtspUrl || "").toLowerCase();
+
+            return name.includes(currentSearch) ||
+                code.includes(currentSearch) ||
+                loc.includes(currentSearch) ||
+                url.includes(currentSearch);
+        });
+
+        renderPage();
+    }
+
+    /* -----------------------------
+     * 렌더링
+     * ----------------------------- */
     function renderPage() {
+        const tbody = document.getElementById("cctvTbody");
         const emptyEl = document.getElementById("cctvEmpty");
         const tableEl = document.getElementById("cctvTable");
-        const tbody = document.getElementById("cctvTbody");
-        const paging = document.getElementById("cctvPagination");
+        const pagingEl = document.getElementById("cctvPagination");
 
         if (!tbody) return;
 
-        // empty
-        if (fullList.length === 0) {
+        if (filteredList.length === 0) {
             tbody.innerHTML = "";
             emptyEl?.classList.remove("d-none");
             tableEl?.classList.add("d-none");
-            paging && (paging.innerHTML = "");
+            if (pagingEl) pagingEl.innerHTML = "";
             return;
-        } else {
-            emptyEl?.classList.add("d-none");
-            tableEl?.classList.remove("d-none");
         }
 
-        const totalPages = Math.max(1, Math.ceil(fullList.length / PAGE_SIZE));
-        currentPage = clamp(currentPage, 1, totalPages);
+        emptyEl?.classList.add("d-none");
+        tableEl?.classList.remove("d-none");
+
+        const totalPages = Math.max(1, Math.ceil(filteredList.length / PAGE_SIZE));
+        if (currentPage > totalPages) currentPage = totalPages;
 
         const start = (currentPage - 1) * PAGE_SIZE;
-        const pageItems = fullList.slice(start, start + PAGE_SIZE);
+        const pageItems = filteredList.slice(start, start + PAGE_SIZE);
 
-        tbody.innerHTML = pageItems.map((cctv, idx) => rowHtml(cctv, start + idx)).join("");
-
+        tbody.innerHTML = pageItems.map(item => rowHtml(item)).join("");
         renderPagination(totalPages);
+
+        // 체크올 상태 동기화
+        const checkAll = document.getElementById("cctv-check-all");
+        if (checkAll) checkAll.checked = false;
+        updateSelectedDeleteButton();
     }
 
-    function rowHtml(cctv, rowIndex) {
-        const locationCode = cctv.locationCode ?? "";
-        const code = cctv.cctvCode ?? "-";
-        const name = cctv.name ?? "";
-        const url = cctv.rtspUrl ?? "-";
-        const statusCam = cctv.statusCam ?? "";
-        const lat = cctv.latitude ?? "-";
-        const lng = cctv.longitude ?? "-";
+    function rowHtml(item) {
+        const code = item.cctvCode || "-";
+        const name = item.name || "-";
+        const loc = item.locationCode || "-";
+        const url = item.rtspUrl || "-";
+        const lat = (item.latitude ?? "-");
+        const lng = (item.longitude ?? "-");
+        const status = item.statusCam;
 
-        const badge = statusBadge(statusCam);
+        let statusHtml = "";
+        if (status === "1") {
+            statusHtml = `<span class="badge ok-bg text-success border border-success border-opacity-25 py-1 px-2 d-inline-flex align-items-center gap-1">
+      <span class="status-dot ok"></span> 정상
+    </span>`;
+        } else if (status === "0") {
+            statusHtml = `<span class="badge danger-bg text-danger border border-danger border-opacity-25 py-1 px-2 d-inline-flex align-items-center gap-1">
+      <span class="status-dot bad"></span> 신호없음
+    </span>`;
+        } else {
+            statusHtml = `<span class="badge bg-black-20 text-muted border border-white-10 py-1 px-2 d-inline-flex align-items-center gap-1">
+      <span class="status-dot unknown"></span> 알수없음
+    </span>`;
+        }
 
-        // row에 dataset 박아두면 edit/delete에서 그대로 사용 가능
+        const safeName = escapeHtml(String(name));
+        const safeLoc = escapeHtml(String(loc));
+        const safeCode = escapeHtml(String(code));
+        const safeUrl = escapeHtml(String(url));
+
+        // 좌표는 "lat, lng" 형태로 표시
+        const coordText = (lat === "-" || lng === "-") ? "-" : `${lat}, ${lng}`;
+
         return `
-        <tr ...>
-            <td data-label="선택">
-                <input type="checkbox" class="form-check-input cctv-row-check" ...>
-            </td>
-            <td data-label="상태">${badge}</td>
-            <td data-label="이름"><strong>${escapeHtml(name || code)}</strong></td>
-            <td data-label="Location">${escapeHtml(locationCode || "-")}</td>
-            <td data-label="Code">${escapeHtml(code)}</td>
-            <td data-label="RTSP" class="rtsp">${escapeHtml(url)}</td>
-            <td data-label="좌표">${escapeHtml(String(lat))}, ${escapeHtml(String(lng))}</td>
-            <td data-label="액션"> ...버튼... </td>
-        </tr>
-        `;
+    <tr data-location-code="${safeLoc}"
+        data-cctv-code="${safeCode}"
+        data-name="${safeName}"
+        data-url="${safeUrl}"
+        data-lat="${lat}"
+        data-lng="${lng}"
+        data-mountpoint-id="${item.mountpointId || ""}"
+        data-login-id="${item.id || ""}"
+        data-video-port="${item.videoPort || ""}"
+        data-ws-port="${item.wsPort || ""}">
+
+      <td>${statusHtml}</td>
+      <td class="text-primary fw-600">${safeName}</td>
+      <td class="text-secondary">${safeLoc}</td>
+      <td class="text-secondary font-mono small">${safeCode}</td>
+
+      <!-- ✅ RTSP -->
+      <td class="text-muted small text-truncate" style="max-width: 320px;" title="${safeUrl}">
+        ${safeUrl}
+      </td>
+
+      <!-- ✅ 좌표 -->
+      <td class="text-muted small">${escapeHtml(String(coordText))}</td>
+
+      <td class="text-center">
+        <div class="d-flex justify-content-center gap-1">
+          <button class="icon-btn row-edit-btn" type="button" title="정보 수정" aria-label="정보 수정">
+            <i class="bi bi-pencil-square"></i>
+          </button>
+          <button class="icon-btn delete row-del-btn" type="button" title="삭제" aria-label="삭제">
+            <i class="bi bi-trash3"></i>
+          </button>
+        </div>
+      </td>
+    </tr>
+  `;
     }
 
-    function statusBadge(statusCam) {
-        if (statusCam === "1") {
-            return `<span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>정상</span>`;
-        }
-        if (statusCam === "0") {
-            return `<span class="badge bg-danger"><i class="bi bi-x-circle-fill me-1"></i>신호없음</span>`;
-        }
-        return `<span class="badge bg-secondary"><i class="bi bi-question-circle-fill me-1"></i>알 수 없음</span>`;
-    }
 
     function renderPagination(totalPages) {
         const el = document.getElementById("cctvPagination");
         if (!el) return;
 
-        const btn = (label, page, disabled = false, active = false) => `
-      <button type="button"
-        class="eq-page-btn ${active ? "is-active" : ""}"
-        ${disabled ? "disabled" : ""}
-        data-page="${page}">
-        ${label}
-      </button>
-    `;
-
         let html = "";
-        html += btn("«", 1, currentPage === 1);
-        html += btn("‹", currentPage - 1, currentPage === 1);
+        const maxVisible = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+        let endPage = Math.min(totalPages, startPage + maxVisible - 1);
 
-        // 페이지 번호는 5개 정도만 노출(원하면 7/9로 조정)
-        const windowSize = 5;
-        const half = Math.floor(windowSize / 2);
-        let start = Math.max(1, currentPage - half);
-        let end = Math.min(totalPages, start + windowSize - 1);
-        start = Math.max(1, end - windowSize + 1);
-
-        for (let p = start; p <= end; p++) {
-            html += btn(String(p), p, false, p === currentPage);
+        if (endPage - startPage + 1 < maxVisible) {
+            startPage = Math.max(1, endPage - maxVisible + 1);
         }
 
-        html += btn("›", currentPage + 1, currentPage === totalPages);
-        html += btn("»", totalPages, currentPage === totalPages);
+        // 이전
+        html += `<button type="button" class="eq-page-btn" ${currentPage === 1 ? 'disabled' : ''} data-page="${currentPage - 1}">‹</button>`;
+
+        for (let i = startPage; i <= endPage; i++) {
+            html += `<button type="button" class="eq-page-btn ${i === currentPage ? 'is-active' : ''}" data-page="${i}">${i}</button>`;
+        }
+
+        // 다음
+        html += `<button type="button" class="eq-page-btn" ${currentPage === totalPages ? 'disabled' : ''} data-page="${currentPage + 1}">›</button>`;
 
         el.innerHTML = html;
 
-        // 클릭 바인딩(이 컨테이너에서만)
-        el.querySelectorAll("button[data-page]").forEach((b) => {
-            b.addEventListener("click", () => {
-                const p = Number(b.dataset.page);
-                if (!Number.isFinite(p)) return;
-                currentPage = p;
-                renderPage();
-                // 체크올 해제
-                const all = document.getElementById("cctv-check-all");
-                if (all) all.checked = false;
+        el.querySelectorAll(".eq-page-btn[data-page]").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const p = parseInt(btn.dataset.page);
+                if (p > 0 && p <= totalPages) {
+                    currentPage = p;
+                    renderPage();
+                }
             });
         });
     }
 
-    function updateCount(count) {
-        const el = document.getElementById("cctvCountText");
-        if (el) el.textContent = `등록된 CCTV 총 ${count}건 (페이지당 ${PAGE_SIZE}개)`;
+    function updateSelectedDeleteButton() {
+        const checkedCount = document.querySelectorAll("#cctvTbody .cctv-row-check:checked").length;
+        const btn = document.getElementById("cctv-btn-delete-selected");
+        if (btn) {
+            if (checkedCount > 0) {
+                btn.classList.remove("d-none");
+                btn.querySelector("span").textContent = `삭제 (${checkedCount})`;
+            } else {
+                btn.classList.add("d-none");
+            }
+        }
     }
 
     /* -----------------------------
-     * 추가 / 수정 / 삭제 (원본 흐름 유지)
+     * CRUD
      * ----------------------------- */
+    function openAddModal() {
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("cctvAddModal"));
+        modal.show();
+    }
 
     function submitAddCctv() {
-        // 아래 id들은 너가 modal에 배치한 input id에 맞춰서 통일해줘야 함
-        const locationCode = getVal("cctv-locationCode").trim();
-        const code = getVal("cctv-code").trim();
-        const name = getVal("cctv-name").trim();
-        const url = getVal("cctv-rtspUrl").trim();
-        const lat = getVal("cctv-lat").trim();
-        const lng = getVal("cctv-lng").trim();
-        const loginId = getVal("cctv-loginId").trim();
-        const loginPw = getVal("cctv-loginPw").trim();
-        const mountpointId = getVal("cctv-mountpointId").trim();
-        const videoPort = getVal("cctv-videoPort").trim();
-        const wsPort = getVal("cctv-wsPort").trim();
+        const locationCode = getVal("cctvlocationCode");
+        const code = getVal("cctvCode");
+        const name = getVal("cctvName");
 
-        if (!code) return alert("CCTV 코드는 필수입니다.");
-        if (!name) return alert("CCTV 이름은 필수입니다.");
+        if (!locationCode || !code || !name) {
+            alert("필수 입력 항목(*표시)을 모두 입력해 주세요.");
+            return;
+        }
 
         const payload = {
-            locationCode: locationCode || null,
+            locationCode,
             cctvCode: code,
             name,
-            rtspUrl: url || null,
-            latitude: lat || null,
-            longitude: lng || null,
-            id: loginId || null,
-            password: loginPw || null,
-            mountpointId: mountpointId ? Number(mountpointId) : null,
-            videoPort: videoPort ? Number(videoPort) : null,
-            wsPort: wsPort || null,
+            rtspUrl: getVal("cctvUrl") || null,
+            latitude: getVal("cctvLat") || null,
+            longitude: getVal("cctvLng") || null,
+            id: getVal("cctvLoginId") || null,
+            password: getVal("cctvLoginPassword") || null,
+            mountpointId: getVal("cctvMountpointId") ? Number(getVal("cctvMountpointId")) : null,
+            videoPort: getVal("cctvVideoPort") ? Number(getVal("cctvVideoPort")) : null,
+            wsPort: getVal("cctvWsPort") || null,
         };
 
         fetch("/api/cctv/add", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
+            body: JSON.stringify(payload)
         })
             .then(async (res) => {
                 if (!res.ok) throw new Error(await res.text());
@@ -241,62 +363,56 @@
                 bootstrap.Modal.getInstance(document.getElementById("cctvAddModal"))?.hide();
                 loadCctvList();
             })
-            .catch((err) => {
+            .catch(err => {
                 console.error(err);
-                alert("CCTV 추가 중 오류가 발생했습니다.\n" + (err?.message ?? ""));
+                alert("저장 중 오류가 발생했습니다: " + err.message);
             });
     }
 
-    function openEditModalFromRow(tr) {
-        // edit input id는 아래처럼 네임스페이스 추천
-        setVal("cctv-edit-locationCode", tr.dataset.locationCode || "");
-        setVal("cctv-edit-code", tr.dataset.cctvCode || "");
-        setVal("cctv-edit-name", tr.dataset.name || "");
-        setVal("cctv-edit-loginId", tr.dataset.loginId || "");
-        setVal("cctv-edit-loginPw", ""); // 비번은 항상 빈 값
-        setVal("cctv-edit-rtspUrl", tr.dataset.rtspUrl || "");
-        setVal("cctv-edit-mountpointId", tr.dataset.mountpointId || "");
-        setVal("cctv-edit-videoPort", tr.dataset.videoPort || "");
-        setVal("cctv-edit-wsPort", tr.dataset.wsPort || "");
-        setVal("cctv-edit-lat", tr.dataset.latitude || "");
-        setVal("cctv-edit-lng", tr.dataset.longitude || "");
+    function openEditModalFromRow(row) {
+        setVal("editCctvlocationCode", row.dataset.locationCode);
+        setVal("editCctvCode", row.dataset.cctvCode);
+        setVal("editCctvName", row.dataset.name);
+        setVal("editCctvUrl", row.dataset.url);
+        setVal("editCctvLat", row.dataset.lat);
+        setVal("editCctvLng", row.dataset.lng);
+        setVal("editCctvMountpointId", row.dataset.mountpointId);
+        setVal("editCctvLoginId", row.dataset.loginId);
+        setVal("editCctvLoginPassword", ""); // 비밀번호는 보안상 빈값
+        setVal("editCctvVideoPort", row.dataset.videoPort);
+        setVal("editCctvWsPort", row.dataset.wsPort);
 
-        bootstrap.Modal.getOrCreateInstance(document.getElementById("cctvEditModal")).show();
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("cctvEditModal"));
+        modal.show();
     }
 
     function submitEditCctv() {
-        const locationCode = getVal("cctv-edit-locationCode").trim();
-        const code = getVal("cctv-edit-code").trim();
-        const name = getVal("cctv-edit-name").trim();
-        const url = getVal("cctv-edit-rtspUrl").trim();
-        const lat = getVal("cctv-edit-lat").trim();
-        const lng = getVal("cctv-edit-lng").trim();
-        const loginId = getVal("cctv-edit-loginId").trim();
-        const loginPw = getVal("cctv-edit-loginPw").trim();
-        const mountpointId = getVal("cctv-edit-mountpointId").trim();
-        const videoPort = getVal("cctv-edit-videoPort").trim();
-        const wsPort = getVal("cctv-edit-wsPort").trim();
+        const locationCode = getVal("editCctvlocationCode");
+        const code = getVal("editCctvCode");
+        const name = getVal("editCctvName");
 
-        if (!locationCode) return alert("Location 코드를 찾을 수 없습니다.");
-        if (!code) return alert("CCTV 코드를 찾을 수 없습니다.");
-        if (!name) return alert("CCTV 이름은 필수입니다.");
+        if (!name) {
+            alert("CCTV 이름은 필수입니다.");
+            return;
+        }
 
+        const pw = getVal("editCctvLoginPassword");
         const payload = {
             name,
-            rtspUrl: url || null,
-            latitude: lat || null,
-            longitude: lng || null,
-            id: loginId || null,
-            mountpointId: mountpointId ? Number(mountpointId) : null,
-            videoPort: videoPort ? Number(videoPort) : null,
-            wsPort: wsPort || null,
-            ...(loginPw ? { password: loginPw } : {}),
+            rtspUrl: getVal("editCctvUrl") || null,
+            latitude: getVal("editCctvLat") || null,
+            longitude: getVal("editCctvLng") || null,
+            id: getVal("editCctvLoginId") || null,
+            mountpointId: getVal("editCctvMountpointId") ? Number(getVal("editCctvMountpointId")) : null,
+            videoPort: getVal("editCctvVideoPort") ? Number(getVal("editCctvVideoPort")) : null,
+            wsPort: getVal("editCctvWsPort") || null,
+            ...(pw ? { password: pw } : {})
         };
 
         fetch(`/api/cctv/${encodeURIComponent(locationCode)}/${encodeURIComponent(code)}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
+            body: JSON.stringify(payload)
         })
             .then(async (res) => {
                 if (!res.ok) throw new Error(await res.text());
@@ -306,46 +422,71 @@
                 bootstrap.Modal.getInstance(document.getElementById("cctvEditModal"))?.hide();
                 loadCctvList();
             })
-            .catch((err) => {
+            .catch(err => {
                 console.error(err);
-                alert("CCTV 수정 중 오류가 발생했습니다.\n" + (err?.message ?? ""));
+                alert("수정 중 오류가 발생했습니다: " + err.message);
             });
     }
 
-    function deleteCctvFromRow(tr) {
-        const code = tr.dataset.cctvCode || "";
-        const locationCode = tr.dataset.locationCode || "";
+    function deleteCctvFromRow(row) {
+        const loc = row.dataset.locationCode;
+        const code = row.dataset.cctvCode;
+        const name = row.dataset.name;
 
-        if (!locationCode) return alert("locationCode가 없습니다. 목록 데이터를 확인하세요.");
-        if (!confirm(`CCTV(${locationCode}/${code})를 삭제할까요?`)) return;
+        if (!confirm(`CCTV '${name}'(${code})를 정말로 삭제하시겠습니까?`)) return;
 
-        fetch(`/api/cctv/${encodeURIComponent(locationCode)}/${encodeURIComponent(code)}`, {
-            method: "DELETE",
+        fetch(`/api/cctv/${encodeURIComponent(loc)}/${encodeURIComponent(code)}`, {
+            method: "DELETE"
         })
-            .then((res) => {
-                if (!res.ok) throw new Error("delete failed");
+            .then(res => {
+                if (!res.ok) throw new Error("Delete failed");
                 loadCctvList();
             })
-            .catch(() => alert("삭제 처리 중 오류가 발생했습니다."));
+            .catch(err => {
+                console.error(err);
+                alert("삭제 중 오류가 발생했습니다.");
+            });
     }
 
-    /* helpers */
-    function getVal(id) {
-        return document.getElementById(id)?.value ?? "";
+    function deleteSelectedCctvs() {
+        const checkedRows = document.querySelectorAll("#cctvTbody .cctv-row-check:checked");
+        if (checkedRows.length === 0) return;
+
+        if (!confirm(`${checkedRows.length}개의 CCTV를 삭제하시겠습니까?`)) return;
+
+        const promises = Array.from(checkedRows).map(cb => {
+            const row = cb.closest("tr");
+            const loc = row.dataset.locationCode;
+            const code = row.dataset.cctvCode;
+            return fetch(`/api/cctv/${encodeURIComponent(loc)}/${encodeURIComponent(code)}`, { method: "DELETE" });
+        });
+
+        Promise.all(promises)
+            .then(() => {
+                loadCctvList();
+            })
+            .catch(err => {
+                console.error(err);
+                alert("일부 항목 삭제 중 오류가 발생했습니다.");
+            });
     }
-    function setVal(id, v) {
-        const el = document.getElementById(id);
-        if (el) el.value = v;
-    }
+
+    /* -----------------------------
+     * Helpers
+     * ----------------------------- */
+    function getVal(id) { return document.getElementById(id)?.value.trim() ?? ""; }
+    function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = v ?? ""; }
+    function setText(id, t) { const el = document.getElementById(id); if (el) el.textContent = t; }
+
     function escapeHtml(str) {
-        return String(str ?? "")
+        if (!str) return "";
+        return String(str)
             .replaceAll("&", "&amp;")
             .replaceAll("<", "&lt;")
             .replaceAll(">", "&gt;")
             .replaceAll('"', "&quot;")
             .replaceAll("'", "&#039;");
     }
-    function clamp(n, min, max) {
-        return Math.min(max, Math.max(min, n));
-    }
+
 })();
+

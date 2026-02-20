@@ -18453,7 +18453,7 @@ body {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35) !important;
   flex: 1 1 auto;
   min-height: 360px;
-  max-height: 65vh;
+  /* max-height: 65vh; */
   display: flex;
   flex-direction: column;
 }

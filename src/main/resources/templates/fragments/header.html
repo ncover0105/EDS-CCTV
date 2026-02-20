@@ -34,7 +34,7 @@
                         role="button" th:href="@{/menu/equipment2}">장비관리</a>
                 </li>
 
-                <li class="nav-item">
+                <li class="nav-item d-none">
                     <a class="nav-link text-nowrap"
                         th:classappend="${currentPage == 'equipment' and view == 'speaker' ? 'active' : ''}"
                         th:href="@{/menu/equipment(view='speaker')}">
@@ -42,7 +42,7 @@
                     </a>
                 </li>
 
-                <li class="nav-item">
+                <li class="nav-item d-none">
                     <a class="nav-link text-nowrap" th:classappend="${currentPage == 'cctv' ? 'active' : ''}"
                         th:href="@{/menu/cctv}">
                         CCTV관리

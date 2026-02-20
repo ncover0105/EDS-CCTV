@@ -1,0 +1,143 @@
+<div th:fragment="speakerPane">
+
+    <!-- updated: speaker-layout grid -->
+    <div class="speaker-layout"> <!-- responsive update -->
+
+        <!-- Left: Speaker List Panel -->
+        <section class="eq-panel"> <!-- updated -->
+            <header class="panel-header"> <!-- updated -->
+                <div class="panel-title">
+                    <i class="bi bi-speaker"></i>
+                    <span>장비 네트워크</span>
+                    <span class="badge bg-primary ms-2" id="speakerCount">0</span>
+                </div>
+
+                <div class="header-controls">
+                    <!-- updated: hud-search -->
+                    <div class="hud-search">
+                        <i class="bi bi-search"></i>
+                        <input id="speakerSearchInput" type="text" placeholder="ID / 이름 / 지역 검색" autocomplete="off">
+                    </div>
+
+                    <!-- updated: panel-actions -->
+                    <div class="panel-actions btn-group gap-3">
+                        <button class="icon-btn" type="button" onclick="speakerAdd()" title="추가">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                        <button class="icon-btn" type="button" onclick="speakerUpdate()" title="수정">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
+                        <button class="icon-btn delete" type="button" onclick="speakerDeleted()" title="삭제">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="panel-body">
+                <div class="table-container speaker-table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">선택</th>
+                                <th>ID</th>
+                                <th>단말명</th>
+                                <th>상태</th>
+                                <th>최종수신</th>
+                                <th>전화번호</th>
+                                <th>설치지역</th>
+                                <th style="width: 80px;">위도</th>
+                                <th style="width: 80px;">경도</th>
+                            </tr>
+                        </thead>
+                        <tbody id="speakerTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <footer class="panel-footer">
+                <ul class="pagination pagination-modern mb-0" id="speakerPagination"></ul>
+            </footer>
+        </section>
+
+        <!-- Right: Inspector Column -->
+        <div class="d-flex flex-column gap-3" style="min-height:0;">
+
+            <!-- Selected Device Info -->
+            <section class="eq-panel flex-shrink-0">
+                <header class="panel-header">
+                    <div class="panel-title">장비 점검</div>
+                </header>
+                <div class="panel-body p-3">
+                    <div class="val-accent fs-5 fw-bold mb-1" id="selectedSpeakerTitle">장비를
+                        선택하세요</div>
+                    <div class="text-white-50 small mb-3" id="selectedSpeakeraddress">-</div>
+
+                    <div class="monitor-grid p-0 mb-3" style="grid-template-columns: 1fr; gap: 8px;">
+                        <div class="monitor-card" style="align-items: flex-start;">
+                            <div class="monitor-label">최근 업데이트</div>
+                            <div class="monitor-value small" id="selectedSpeakerLastUpdate">-
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="divider-soft mb-3" style="border-top: 1px solid rgba(255,255,255,0.05);"></div>
+
+                    <div class="quick-actions d-grid gap-2"> <!-- updated -->
+                        <button class="btn-cyber w-100" onclick="handleButtonClick(this, requestStatus)">
+                            <i class="bi bi-info-circle"></i> 상태 요청
+                        </button>
+                        <button class="btn-cyber w-100" onclick="handleButtonClick(this, setTime)">
+                            <i class="bi bi-clock"></i> 시간 설정
+                        </button>
+                        <button class="btn-cyber danger w-100" onclick="handleButtonClick(this, resetRequest)">
+                            <i class="bi bi-bootstrap-reboot"></i> 시스템 리셋
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Monitoring Panel -->
+            <section class="eq-panel flex-grow-1" style="min-height:0;">
+                <header class="panel-header">
+                    <div class="panel-title">실시간 상태 정보</div>
+                </header>
+                <!-- updated: monitor-grid -->
+                <div class="monitor-grid">
+                    <div class="monitor-card">
+                        <div class="monitor-label">네트워크</div>
+                        <div class="monitor-value" id="connectionStatus">-</div>
+                    </div>
+                    <div class="monitor-card">
+                        <div class="monitor-label">교류 전원(AC)</div>
+                        <div class="monitor-value" id="acStatus">-</div>
+                    </div>
+                    <div class="monitor-card">
+                        <div class="monitor-label">직류 전원(DC)</div>
+                        <div class="monitor-value" id="dcStatus">-</div>
+                    </div>
+                    <div class="monitor-card">
+                        <div class="monitor-label">배터리</div>
+                        <div class="monitor-value" id="batteryStatus">-</div>
+                    </div>
+                    <div class="monitor-card">
+                        <div class="monitor-label">태양광 충전</div>
+                        <div class="monitor-value" id="solarChargerStatus">-</div>
+                    </div>
+                    <div class="monitor-card">
+                        <div class="monitor-label">LTE 안테나</div>
+                        <div class="monitor-value" id="lteAntennaStatus">-</div>
+                    </div>
+                    <div class="monitor-card">
+                        <div class="monitor-label">온도</div>
+                        <div class="monitor-value" id="cpuTemperature">-</div>
+                    </div>
+                    <div class="monitor-card">
+                        <div class="monitor-label">펌웨어</div>
+                        <div class="monitor-value" id="mcuVersion">-</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>

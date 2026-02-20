@@ -1,10 +1,7 @@
 <!DOCTYPE html>
-<html lang="ko"
-    xmlns:th="http://www.thymeleaf.org"
-    xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-    xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-    layout:decorate="~{layout/layout}"
-    >
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+    xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/layout}">
+
 <head>
     <meta charset="UTF-8" />
     <title th:text="${title}">EDS</title>
@@ -18,15 +15,17 @@
     <!-- view별로 필요한 파일만 로드 -->
     <script th:if="${view == 'situation'}" src="/js/page/situation/situation_view.js?v=1"></script>
     <script th:if="${view == 'broadcast'}" src="/js/page/situation/broadcast_view.js?v=1"></script>
-    <script th:if="${view == 'special'}"   src="/js/page/situation/special_view.js?v=1"></script>
+    <script th:if="${view == 'special'}" src="/js/page/situation/special_view.js?v=1"></script>
 </head>
+
 <body>
     <div class="container-fluid p-3 text-nowrap" layout:fragment="content">
         <!-- 상황발생이력 -->
         <div th:if="${view == 'situation'}" class="d-flex flex-column h-100">
-            <div class="container d-flex flex-column h-100 animate-fade-in">
+            <div class="d-flex flex-column h-100 animate-fade-in">
                 <div class="top-panel p-4 mb-3">
-                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pb-3">
+                    <div
+                        class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pb-3">
                         <div>
                             <h4 class="top-panel-title mb-3">
                                 <i class="bi bi-exclamation-triangle-fill title-icon"></i>
@@ -35,23 +34,25 @@
                             <p class="top-panel-desc mb-0 small" id="situationCount">상황 발생 이력 총 0개 | 상황 발생 이력을 관리하세요</p>
                         </div>
                     </div>
-                    
+
                     <div class="border-top pt-3">
                         <form class="row g-3 align-items-end">
                             <div class="col-12 col-sm-6 col-lg-3">
                                 <label for="startDateTime" class="form-label small fw-semibold mb-1">시작 일시</label>
-                                <input type="datetime-local" class="form-control form-control-sm form-control-dark" id="startDateTime">
+                                <input type="datetime-local" class="form-control form-control-sm form-control-dark"
+                                    id="startDateTime">
                             </div>
-                            
+
                             <div class="col-auto d-none d-lg-flex align-items-end pb-1">
                                 <span class="fw-bold text-secondary">~</span>
                             </div>
-                            
+
                             <div class="col-12 col-sm-6 col-lg-3">
                                 <label for="endDateTime" class="form-label small fw-semibold mb-1">종료 일시</label>
-                                <input type="datetime-local" class="form-control form-control-sm form-control-dark" id="endDateTime">
+                                <input type="datetime-local" class="form-control form-control-sm form-control-dark"
+                                    id="endDateTime">
                             </div>
-                            
+
                             <!-- <div class="col-12 col-sm-6 col-lg-2">
                                 <label for="situationType" class="form-label small fw-semibold mb-1">상황 종류</label>
                                 <select class="form-select form-select-sm form-control-dark" id="modeType">
@@ -73,9 +74,10 @@
                                     <option value="4">4번 구역</option>
                                 </select>
                             </div>
-                            
+
                             <div class="col-12 col-lg-auto">
-                                <button type="button" class="btn-apple-base btn-apple-light" onclick="situationSearch()">
+                                <button type="button" class="btn-apple-base btn-apple-light"
+                                    onclick="situationSearch()">
                                     <i class="bi bi-search me-1"></i>
                                     검색
                                 </button>
@@ -86,7 +88,7 @@
 
                 <!-- 상황발생이력 -->
                 <div class="bg-dark rounded-3 shadow-sm situation-panel situation-panel-paged">
-                
+
                     <!-- 테이블 스크롤 영역: 패널의 남은 높이를 모두 차지 -->
                     <div class="situation-table-area d-flex flex-column flex-grow-1 min-vh-0">
                         <!-- 스크롤 컨테이너: Bootstrap 유틸로 구성 -->
@@ -114,22 +116,22 @@
                             </table>
                         </div>
                     </div>
-                        
-                
+
+
                     <!-- 페이지네이션: 항상 패널 하단에 고정 -->
                     <div class="situation-panel-footer">
                         <nav aria-label="상황발생이력 페이지네이션">
                             <ul class="pagination pagination-modern mb-0" id="situationPagination"></ul>
                         </nav>
                     </div>
-                
+
                 </div>
             </div>
         </div>
-        
+
         <!-- 발령 이력 섹션 -->
         <div th:if="${view == 'broadcast'}" class="d-flex flex-column h-100 min-h-0">
-            <div class="container d-flex flex-column h-100 min-h-0 animate-fade-in">
+            <div class="d-flex flex-column h-100 min-h-0 animate-fade-in">
                 <!-- 고정 헤더 + 통계 + 검색폼 -->
                 <div class="top-panel p-4 mb-3 flex-shrink-0">
 
@@ -145,7 +147,7 @@
                                 총 0건 | 발령 내역을 관리하세요
                             </p>
                         </div>
-                    
+
                         <!-- 통계 -->
                         <div class="col-12 col-md-6">
                             <div class="row g-2">
@@ -176,40 +178,37 @@
                             </div>
                         </div>
                     </div>
-            
+
                     <!-- 검색 영역 -->
                     <div class="border-top pt-3">
-                
+
                         <!-- 기본 필터 -->
                         <form class="row g-3 align-items-end">
                             <div class="col-12 col-md-3">
-                            <label class="form-label small fw-semibold mb-1 text-white-50">시작일시</label>
-                            <input type="datetime-local"
-                                    class="form-control form-control-sm form-control-dark"
+                                <label class="form-label small fw-semibold mb-1 text-white-50">시작일시</label>
+                                <input type="datetime-local" class="form-control form-control-sm form-control-dark"
                                     id="broadcastStartDateTime">
                             </div>
-                    
+
                             <div class="col-12 col-md-3">
-                            <label class="form-label small fw-semibold mb-1 text-white-50">종료일시</label>
-                            <input type="datetime-local"
-                                    class="form-control form-control-sm form-control-dark"
+                                <label class="form-label small fw-semibold mb-1 text-white-50">종료일시</label>
+                                <input type="datetime-local" class="form-control form-control-sm form-control-dark"
                                     id="broadcastEndDateTime">
                             </div>
-                    
+
                             <div class="col-6 col-md-3">
                                 <label class="form-label small fw-semibold mb-1 text-white-50">방송모드</label>
-                                <select class="form-select form-select-sm form-control-dark"
-                                        id="broadcastModeFilter">
+                                <select class="form-select form-select-sm form-control-dark" id="broadcastModeFilter">
                                     <option value="">전체</option>
                                     <option value="REAL">실제</option>
                                     <option value="TEST">실험</option>
                                 </select>
                             </div>
-                    
+
                             <div class="col-6 col-md-3">
                                 <label class="form-label small fw-semibold mb-1 text-white-50">우선순위</label>
                                 <select class="form-select form-select-sm form-control-dark"
-                                        id="broadcastPriorityFilter">
+                                    id="broadcastPriorityFilter">
                                     <option value="">전체</option>
                                     <option value="NONE">없음</option>
                                     <option value="CAUTION">주의</option>
@@ -217,50 +216,42 @@
                                     <option value="DANGER">위험</option>
                                 </select>
                             </div>
-                    
+
                             <!-- 액션 버튼 -->
                             <div class="col-12 col-md-auto">
-                            <div class="d-flex gap-2">
-                                <button type="button"
-                                        class="btn-apple-base btn-apple-light"
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn-apple-base btn-apple-light"
                                         id="broadcastSearchBtn">
-                                <i class="bi bi-search me-1"></i>검색
-                                </button>
-                    
-                                <button type="button"
-                                        class="btn-apple-base btn-apple-danger d-none"
+                                        <i class="bi bi-search me-1"></i>검색
+                                    </button>
+
+                                    <button type="button" class="btn-apple-base btn-apple-danger d-none"
                                         id="broadcastResetBtn">
-                                <i class="bi bi-x-circle me-1"></i>초기화
-                                </button>
-                    
-                                <button type="button"
-                                        class="btn-apple-base btn-apple-secondary"
-                                        data-bs-toggle="collapse"
-                                        data-bs-target="#broadcastAdvancedFilter"
+                                        <i class="bi bi-x-circle me-1"></i>초기화
+                                    </button>
+
+                                    <button type="button" class="btn-apple-base btn-apple-secondary"
+                                        data-bs-toggle="collapse" data-bs-target="#broadcastAdvancedFilter"
                                         aria-expanded="false">
-                                <i class="bi bi-sliders me-1"></i>고급필터
-                                </button>
-                            </div>
+                                        <i class="bi bi-sliders me-1"></i>고급필터
+                                    </button>
+                                </div>
                             </div>
                         </form>
-                
+
                         <!-- 고급 필터 (접기/펼치기) -->
                         <div id="broadcastAdvancedFilter" class="collapse mt-3">
                             <div class="row g-3">
                                 <div class="col-12">
                                     <label class="form-label small fw-semibold mb-1 text-white-50">스피커</label>
-                                    <input type="text"
-                                        class="form-control form-control-sm form-control-dark"
-                                        id="broadcastSpeakerSearch"
-                                        placeholder="스피커 검색">
+                                    <input type="text" class="form-control form-control-sm form-control-dark"
+                                        id="broadcastSpeakerSearch" placeholder="스피커 검색">
                                 </div>
-                        
+
                                 <div class="col-12 col-md-6 d-none">
                                     <label class="form-label small fw-semibold mb-1 text-white-50">메시지</label>
-                                    <input type="text"
-                                        class="form-control form-control-sm form-control-dark"
-                                        id="broadcastMessageSearch"
-                                        placeholder="메시지 검색">
+                                    <input type="text" class="form-control form-control-sm form-control-dark"
+                                        id="broadcastMessageSearch" placeholder="메시지 검색">
                                 </div>
                             </div>
                         </div>
@@ -286,10 +277,11 @@
 
         <!-- 특보이력 -->
         <div th:if="${view == 'special'}" class="d-flex flex-column h-100">
-            <div class="container d-flex flex-column h-100 animate-fade-in">
+            <div class="d-flex flex-column h-100 animate-fade-in">
                 <!-- 상단 필터 영역 (변경 없음) -->
                 <div class="top-panel p-4 mb-3">
-                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pb-3">
+                    <div
+                        class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pb-3">
                         <div>
                             <h4 class="top-panel-title mb-3">
                                 <i class="bi bi-cloud-lightning-rain-fill title-icon"></i>
@@ -297,26 +289,28 @@
                             </h4>
                             <p class="top-panel-desc mb-0 small" id="specialCount">
                                 총 0건 | 특보 이력을 관리하세요
-                                </p>
+                            </p>
                         </div>
                     </div>
-        
+
                     <div class="border-top pt-3">
                         <form class="row g-3 align-items-end">
                             <div class="col-12 col-sm-6 col-lg-3">
                                 <label class="form-label small fw-semibold mb-1">시작 일시</label>
-                                <input type="datetime-local" class="form-control form-control-sm form-control-dark" id="startDateTime">
+                                <input type="datetime-local" class="form-control form-control-sm form-control-dark"
+                                    id="startDateTime">
                             </div>
-        
+
                             <div class="col-auto d-none d-lg-flex align-items-end pb-1">
                                 <span class="fw-bold text-secondary">~</span>
                             </div>
-        
+
                             <div class="col-12 col-sm-6 col-lg-3">
                                 <label class="form-label small fw-semibold mb-1">종료 일시</label>
-                                <input type="datetime-local" class="form-control form-control-sm form-control-dark" id="endDateTime">
+                                <input type="datetime-local" class="form-control form-control-sm form-control-dark"
+                                    id="endDateTime">
                             </div>
-        
+
                             <div class="col-12 col-sm-6 col-lg-2">
                                 <label class="form-label small fw-semibold mb-1">특보 종류</label>
                                 <select class="form-select form-select-sm form-control-dark" id="specialWrn">
@@ -345,28 +339,28 @@
                                     <option value="3">경보</option>
                                 </select>
                             </div>
-        
+
                             <div class="col-12 col-lg-auto">
-                                <button type="button"
-                                        class="btn-apple-base btn-apple-light"
-                                        onclick="situationSearch()">
+                                <button type="button" class="btn-apple-base btn-apple-light"
+                                    onclick="situationSearch()">
                                     <i class="bi bi-search me-1"></i> 검색
                                 </button>
                             </div>
                         </form>
                     </div>
                 </div>
-        
+
                 <!-- 🔹 하단 공용 패널 (bottom-panel 적용) -->
                 <div class="bg-dark shadow-sm bottom-panel">
-        
+
                     <div class="bottom-panel-scroll rounded-3">
-        
+
                         <div style="min-width: 800px;" class="d-flex flex-column h-100">
-        
+
                             <!-- 테이블 헤더 (고정) -->
                             <div class="flex-shrink-0">
-                                <table class="table table-dark table-hover mb-0" style="table-layout: fixed; width: 100%;">
+                                <table class="table table-dark table-hover mb-0"
+                                    style="table-layout: fixed; width: 100%;">
                                     <colgroup>
                                         <col style="width: 5%;">
                                         <col style="width: 10%;">
@@ -390,10 +384,11 @@
                                     </thead>
                                 </table>
                             </div>
-        
+
                             <!-- 테이블 바디 (스크롤) -->
                             <div class="flex-grow-1 min-h-0 overflow-auto">
-                                <table class="table table-dark table-hover mb-0" style="table-layout: fixed; width: 100%;">
+                                <table class="table table-dark table-hover mb-0"
+                                    style="table-layout: fixed; width: 100%;">
                                     <colgroup>
                                         <col style="width: 5%;">
                                         <col style="width: 10%;">
@@ -406,13 +401,14 @@
                                     <tbody id="specialList"></tbody>
                                 </table>
                             </div>
-        
+
                         </div>
                     </div>
                 </div>
-        
+
             </div>
         </div>
     </div>
 </body>
+
 </html>
