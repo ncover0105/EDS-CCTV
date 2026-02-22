@@ -1,7 +1,7 @@
 /**
  * Equipment Management Page — Redesigned Dark Operational UI
  * Version: 6.0
- * Scoped to .page-equipment
+ * Scoped to .page-setting
  *
  * Screen Accents:
  *   Speaker  → Blue   #3b82f6
@@ -17,7 +17,7 @@
 /* ============================================
    Design Tokens
    ============================================ */
-.page-equipment {
+.page-setting {
     /* Base Backgrounds */
     --bg-base: #07090e;
     --bg-panel: #0d1117;
@@ -129,7 +129,7 @@
 /* ============================================
    Per-Screen Accent Overrides
    ============================================ */
-#equipment-speaker-pane {
+#situation-speaker-pane {
     --accent: #3b82f6;
     --accent-hover: #2563eb;
     --accent-glow: rgba(59, 130, 246, 0.22);
@@ -137,7 +137,7 @@
     --accent-border: rgba(59, 130, 246, 0.28);
 }
 
-#equipment-broadcast-pane {
+#situation-broadcast-pane {
     --accent: #a855f7;
     --accent-hover: #9333ea;
     --accent-glow: rgba(168, 85, 247, 0.22);
@@ -145,7 +145,7 @@
     --accent-border: rgba(168, 85, 247, 0.28);
 }
 
-#equipment-cctv-pane {
+#situation-cctv-pane {
     --accent: #06b6d4;
     --accent-hover: #0891b2;
     --accent-glow: rgba(6, 182, 212, 0.22);
@@ -156,12 +156,12 @@
 /* ============================================
    Base Reset — Critical Overflow Structure
    ============================================ */
-.page-equipment,
-.page-equipment * {
+.page-setting,
+.page-setting * {
     box-sizing: border-box;
 }
 
-.page-equipment {
+.page-setting {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -178,38 +178,38 @@
 /* ============================================
    Utility Tokens (legacy compat)
    ============================================ */
-.page-equipment .text-cyan {
+.page-setting .text-cyan {
     color: #06b6d4 !important;
 }
 
-.page-equipment .text-purple {
+.page-setting .text-purple {
     color: #a855f7 !important;
 }
 
-.page-equipment .text-white-50 {
+.page-setting .text-white-50 {
     color: var(--text-muted) !important;
 }
 
-.page-equipment .bg-black-20 {
+.page-setting .bg-black-20 {
     background: rgba(0, 0, 0, 0.20);
 }
 
-.page-equipment .border-white-10 {
+.page-setting .border-white-10 {
     border-color: rgba(255, 255, 255, 0.10) !important;
 }
 
-.page-equipment .val-accent {
+.page-setting .val-accent {
     color: var(--accent);
 }
 
-.page-equipment .d-none {
+.page-setting .d-none {
     display: none !important;
 }
 
 /* ============================================
    Topbar
    ============================================ */
-.eq-topbar {
+.set-topbar {
     flex-shrink: 0;
     position: sticky;
     top: 0;
@@ -219,7 +219,7 @@
     backdrop-filter: blur(12px);
 }
 
-.eq-topbar-content {
+.set-topbar-content {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -228,14 +228,14 @@
     min-height: 52px;
 }
 
-.eq-topbar-left,
-.eq-topbar-right {
+.set-topbar-left,
+.set-topbar-right {
     display: flex;
     align-items: center;
     gap: var(--sp-sm);
 }
 
-.eq-sidebar-toggle {
+.set-sidebar-toggle {
     display: none;
     background: transparent;
     border: none;
@@ -247,13 +247,13 @@
     transition: all var(--t-fast);
 }
 
-.eq-sidebar-toggle:hover {
+.set-sidebar-toggle:hover {
     background: var(--bg-surface);
     color: var(--text-primary);
 }
 
 /* Sidebar collapsed: icon-only alignment fix */
-.page-equipment .eq-sidebar.is-collapsed .eq-nav-item {
+.page-setting .set-sidebar.is-collapsed .set-nav-item {
     width: 100%;
     justify-content: center;
     /* 아이콘 중앙 */
@@ -263,24 +263,24 @@
     /* 텍스트용 gap 제거 */
 }
 
-.page-equipment .eq-sidebar.is-collapsed .eq-nav-item i {
+.page-setting .set-sidebar.is-collapsed .set-nav-item i {
     margin: 0;
     /* 혹시 남는 margin 제거 */
 }
 
 /* footer(접기/펼치기) 영역도 아이콘만 중앙 */
-.page-equipment .eq-sidebar.is-collapsed .eq-nav-toggle-hint {
+.page-setting .set-sidebar.is-collapsed .set-nav-toggle-hint {
     justify-content: center;
     padding: 10px 0;
     gap: 0;
 }
 
 /* 접힌 상태에서 footer 라벨 숨김은 이미 되지만, 혹시 누락 대비 */
-.page-equipment .eq-sidebar.is-collapsed .eq-nav-toggle-hint .eq-nav-label {
+.page-setting .set-sidebar.is-collapsed .set-nav-toggle-hint .set-nav-label {
     display: none;
 }
 
-.eq-page-title {
+.set-page-title {
     display: flex;
     align-items: center;
     gap: var(--sp-sm);
@@ -292,15 +292,80 @@
     letter-spacing: -0.3px;
 }
 
-.eq-page-title i {
+.set-page-title i {
     color: var(--accent);
     font-size: 20px;
 }
 
 /* ============================================
+   Schedule Card v2
+   ============================================ */
+.schedule-card-v2 {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    padding: 16px 18px;
+    transition: transform .15s ease, border-color .15s ease, background .15s ease;
+}
+
+.schedule-card-v2:hover {
+    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, 0.14);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.025));
+}
+
+.schedule-title-row {
+    gap: 12px;
+}
+
+.schedule-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    color: rgba(255, 255, 255, 0.70);
+    font-size: 0.92rem;
+}
+
+.schedule-meta .meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.schedule-meta .meta-item i {
+    opacity: .85;
+}
+
+.schedule-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.schedule-date {
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.85rem;
+}
+
+/* 확장 영역 래퍼 */
+.schedule-expand {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ============================================
    Tab Nav (mobile)
    ============================================ */
-.eq-tab-nav {
+.set-tab-nav {
     display: none;
     padding: 0 var(--sp-xl);
     border-top: 1px solid var(--border-subtle);
@@ -310,11 +375,11 @@
     background: var(--bg-panel);
 }
 
-.eq-tab-nav::-webkit-scrollbar {
+.set-tab-nav::-webkit-scrollbar {
     display: none;
 }
 
-.eq-tab-item {
+.set-tab-item {
     display: inline-flex;
     align-items: center;
     gap: var(--sp-xs);
@@ -331,23 +396,23 @@
     white-space: nowrap;
 }
 
-.eq-tab-item:hover {
+.set-tab-item:hover {
     color: var(--text-secondary);
 }
 
-.eq-tab-item.is-active {
+.set-tab-item.is-active {
     color: var(--accent);
     border-bottom-color: var(--accent);
 }
 
-.eq-tab-item i {
+.set-tab-item i {
     font-size: 15px;
 }
 
 /* ============================================
    Main Layout — CRITICAL OVERFLOW FIX
    ============================================ */
-.eq-layout {
+.set-layout {
     display: flex;
     flex: 1;
     min-height: 0;
@@ -358,7 +423,7 @@
 /* ============================================
    Sidebar
    ============================================ */
-.eq-sidebar {
+.set-sidebar {
     width: 220px;
     flex-shrink: 0;
     background: var(--bg-panel);
@@ -369,24 +434,24 @@
     flex-direction: column;
 }
 
-.eq-sidebar.is-collapsed {
+.set-sidebar.is-collapsed {
     width: 60px;
 }
 
-.eq-sidebar-content {
+.set-sidebar-content {
     display: flex;
     flex-direction: column;
     height: 100%;
     padding: var(--sp-lg) var(--sp-md);
 }
 
-.eq-nav {
+.set-nav {
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
 
-.eq-nav-item {
+.set-nav-item {
     display: flex;
     align-items: center;
     gap: var(--sp-md);
@@ -404,34 +469,34 @@
     white-space: nowrap;
 }
 
-.eq-nav-item:hover {
+.set-nav-item:hover {
     background: var(--bg-surface);
     color: var(--text-secondary);
 }
 
-.eq-nav-item.is-active {
+.set-nav-item.is-active {
     background: var(--accent-soft);
     color: var(--accent);
     border: 1px solid var(--accent-border);
 }
 
-.eq-nav-item i {
+.set-nav-item i {
     font-size: 17px;
     min-width: 17px;
     flex-shrink: 0;
 }
 
-.eq-sidebar.is-collapsed .eq-nav-label {
+.set-sidebar.is-collapsed .set-nav-label {
     display: none;
 }
 
-.eq-sidebar-footer {
+.set-sidebar-footer {
     margin-top: auto;
     padding-top: var(--sp-lg);
     border-top: 1px solid var(--border-subtle);
 }
 
-.eq-nav-toggle-hint {
+.set-nav-toggle-hint {
     display: flex;
     align-items: center;
     gap: var(--sp-sm);
@@ -443,19 +508,19 @@
     transition: all var(--t-fast);
 }
 
-.eq-nav-toggle-hint:hover {
+.set-nav-toggle-hint:hover {
     color: var(--text-secondary);
     background: var(--bg-surface);
 }
 
-.eq-sidebar.is-collapsed .eq-nav-toggle-hint i {
+.set-sidebar.is-collapsed .set-nav-toggle-hint i {
     transform: rotate(180deg);
 }
 
 /* ============================================
    Main Content Area — CRITICAL OVERFLOW FIX
    ============================================ */
-.eq-main {
+.set-main {
     flex: 1;
     min-width: 0;
     min-height: 0;
@@ -466,11 +531,11 @@
     background: var(--bg-base);
 }
 
-.eq-pane {
+.set-pane {
     display: none;
 }
 
-.eq-pane.is-active {
+.set-pane.is-active {
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -492,9 +557,9 @@
 }
 
 /* ============================================
-   Panel (eq-panel)
+   Panel (set-panel)
    ============================================ */
-.eq-panel {
+.set-panel {
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -505,11 +570,11 @@
     transition: border-color var(--t-fast);
 }
 
-.eq-panel:hover {
+.set-panel:hover {
     border-color: var(--border-soft);
 }
 
-.page-equipment .panel-header {
+.panel-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -521,7 +586,7 @@
     background: var(--bg-surface);
 }
 
-.page-equipment .panel-title {
+.panel-title {
     display: flex;
     align-items: center;
     gap: var(--sp-sm);
@@ -534,7 +599,7 @@
     letter-spacing: 0.5px;
 }
 
-.page-equipment .panel-title i {
+.panel-title i {
     color: var(--accent);
     font-size: 15px;
 }
@@ -546,13 +611,13 @@
     flex-wrap: wrap;
 }
 
-.page-equipment .panel-body {
+.panel-body {
     flex: 1;
     min-height: 0;
     overflow: hidden;
 }
 
-.page-equipment .panel-footer {
+.panel-footer {
     padding: var(--sp-sm) var(--sp-lg);
     border-top: 1px solid var(--border-subtle);
     display: flex;
@@ -566,7 +631,7 @@
 /* ============================================
    Buttons
    ============================================ */
-.eq-btn {
+.set-btn {
     display: inline-flex;
     align-items: center;
     gap: var(--sp-xs);
@@ -583,46 +648,46 @@
     white-space: nowrap;
 }
 
-.eq-btn:hover {
+.set-btn:hover {
     background: var(--bg-raised);
     border-color: var(--border-strong);
     transform: translateY(-1px);
 }
 
-.eq-btn-primary {
+.set-btn-primary {
     background: var(--accent);
     border-color: transparent;
     color: #fff;
     box-shadow: 0 2px 12px var(--accent-glow);
 }
 
-.eq-btn-primary:hover {
+.set-btn-primary:hover {
     background: var(--accent-hover);
     border-color: transparent;
     box-shadow: 0 4px 16px var(--accent-glow);
 }
 
-.eq-btn-secondary {
+.set-btn-secondary {
     background: var(--bg-surface);
     border-color: var(--border-mid);
 }
 
-.eq-btn-sm {
+.set-btn-sm {
     padding: 4px 10px;
     font-size: 12px;
 }
 
-.eq-btn-block {
+.set-btn-block {
     width: 100%;
     justify-content: center;
 }
 
-.eq-btn-outline {
+.set-btn-outline {
     background: transparent;
     border-color: var(--border-strong);
 }
 
-.page-equipment .btn-cyber {
+.btn-cyber {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -640,27 +705,27 @@
     white-space: nowrap;
 }
 
-.page-equipment .btn-cyber:hover {
+.btn-cyber:hover {
     background: rgba(255, 255, 255, 0.08);
     border-color: var(--accent);
     color: #fff;
     box-shadow: 0 0 14px var(--accent-glow);
 }
 
-.page-equipment .btn-cyber.danger {
+.btn-cyber.danger {
     background: var(--danger-bg);
     border-color: rgba(239, 68, 68, 0.30);
     color: var(--danger);
 }
 
-.page-equipment .btn-cyber.danger:hover {
+.btn-cyber.danger:hover {
     background: rgba(239, 68, 68, 0.18);
     border-color: var(--danger);
     color: #fff;
     box-shadow: 0 0 14px rgba(239, 68, 68, 0.25);
 }
 
-.page-equipment .icon-btn {
+.icon-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -676,25 +741,25 @@
     flex-shrink: 0;
 }
 
-.page-equipment .icon-btn:hover {
+.icon-btn:hover {
     background: var(--bg-raised);
     border-color: var(--border-strong);
     color: var(--text-primary);
 }
 
-.page-equipment .icon-btn.delete:hover {
+.icon-btn.delete:hover {
     background: var(--danger-bg);
     border-color: rgba(239, 68, 68, 0.35);
     color: var(--danger);
 }
 
-.page-equipment .panel-actions {
+.panel-actions {
     display: flex;
     align-items: center;
     gap: var(--sp-xs);
 }
 
-.page-equipment .btn-soft {
+.btn-soft {
     display: inline-flex;
     align-items: center;
     gap: var(--sp-xs);
@@ -711,13 +776,13 @@
     white-space: nowrap;
 }
 
-.page-equipment .btn-soft:hover {
+.btn-soft:hover {
     background: var(--bg-raised);
     border-color: var(--border-strong);
     color: var(--text-primary);
 }
 
-.page-equipment .btn-primary-soft {
+.btn-primary-soft {
     display: inline-flex;
     align-items: center;
     gap: var(--sp-xs);
@@ -734,7 +799,7 @@
     white-space: nowrap;
 }
 
-.page-equipment .btn-primary-soft:hover {
+.btn-primary-soft:hover {
     background: rgba(255, 255, 255, 0.08);
     border-color: var(--accent);
     color: #fff;
@@ -744,7 +809,7 @@
 /* ============================================
    Search Widget
    ============================================ */
-.page-equipment .hud-search {
+.hud-search {
     position: relative;
     display: flex;
     align-items: center;
@@ -781,8 +846,8 @@
     box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-/* eq-search-bar / eq-search-input (legacy) */
-.eq-search-bar {
+/* set-search-bar / set-search-input (legacy) */
+.set-search-bar {
     display: flex;
     align-items: center;
     gap: var(--sp-md);
@@ -790,12 +855,12 @@
     min-width: 260px;
 }
 
-.eq-search-input-wrapper {
+.set-search-input-wrapper {
     position: relative;
     flex: 1;
 }
 
-.eq-search-input-wrapper i {
+.set-search-input-wrapper i {
     position: absolute;
     left: var(--sp-md);
     top: 50%;
@@ -804,7 +869,7 @@
     font-size: 15px;
 }
 
-.eq-search-input {
+.set-search-input {
     width: 100%;
     padding: var(--sp-md) var(--sp-md) var(--sp-md) 38px;
     background: var(--bg-surface);
@@ -816,22 +881,22 @@
     transition: all var(--t-fast);
 }
 
-.eq-search-input:focus {
+.set-search-input:focus {
     outline: none;
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-.eq-search-input::placeholder {
+.set-search-input::placeholder {
     color: var(--text-muted);
 }
 
-.eq-filter-group {
+.set-filter-group {
     display: flex;
     gap: var(--sp-xs);
 }
 
-.eq-filter-btn {
+.set-filter-btn {
     display: flex;
     align-items: center;
     gap: var(--sp-xs);
@@ -846,7 +911,7 @@
     transition: all var(--t-fast);
 }
 
-.eq-filter-btn:hover {
+.set-filter-btn:hover {
     background: var(--bg-raised);
     border-color: var(--border-strong);
     color: var(--text-primary);
@@ -855,9 +920,9 @@
 /* ============================================
    Form Controls
    ============================================ */
-.eq-input,
-.eq-select,
-.eq-textarea,
+.set-input,
+.set-select,
+.set-textarea,
 .pinterest-form-control {
     width: 100%;
     padding: 7px 12px;
@@ -871,23 +936,23 @@
     transition: border-color var(--t-fast), box-shadow var(--t-fast);
 }
 
-.eq-input::placeholder,
-.eq-textarea::placeholder,
+.set-input::placeholder,
+.set-textarea::placeholder,
 .pinterest-form-control::placeholder {
     color: var(--text-muted);
 }
 
-.eq-input:focus,
-.eq-select:focus,
-.eq-textarea:focus,
+.set-input:focus,
+.set-select:focus,
+.set-textarea:focus,
 .pinterest-form-control:focus {
     outline: none;
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-.eq-select,
-select.eq-input {
+.set-select,
+select.set-input {
     -webkit-appearance: none;
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%23666' d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
@@ -897,18 +962,18 @@ select.eq-input {
     cursor: pointer;
 }
 
-.eq-select option,
-select.eq-input option {
+.set-select option,
+select.set-input option {
     background: var(--bg-surface);
     color: var(--text-primary);
 }
 
-.eq-textarea {
+.set-textarea {
     resize: vertical;
     min-height: 80px;
 }
 
-.eq-label,
+.set-label,
 .pinterest-form-label {
     display: block;
     margin-bottom: 4px;
@@ -924,7 +989,7 @@ select.eq-input option {
     margin-left: 3px;
 }
 
-.eq-form-group,
+.set-form-group,
 .form-item {
     display: flex;
     flex-direction: column;
@@ -996,7 +1061,7 @@ select.eq-input option {
 }
 
 /* Bootstrap table-dark overrides */
-.page-equipment .table-dark {
+.page-setting .table-dark {
     --bs-table-bg: transparent;
     --bs-table-striped-bg: transparent;
     --bs-table-hover-bg: var(--bg-surface);
@@ -1005,7 +1070,7 @@ select.eq-input option {
     font-size: 13px;
 }
 
-.page-equipment .table-dark thead th {
+.page-setting .table-dark thead th {
     background: var(--bg-surface);
     border-bottom-color: var(--border-mid);
     color: var(--text-muted);
@@ -1016,7 +1081,7 @@ select.eq-input option {
     padding: 8px 12px;
 }
 
-.page-equipment .table-dark tbody tr:hover td {
+.page-setting .table-dark tbody tr:hover td {
     background: var(--bg-surface);
     color: var(--text-primary);
 }
@@ -1131,7 +1196,7 @@ select.eq-input option {
 /* ============================================
    Badges & Status
    ============================================ */
-.eq-badge {
+.set-badge {
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -1143,44 +1208,44 @@ select.eq-input option {
     letter-spacing: 0.5px;
 }
 
-.eq-badge-success {
+.set-badge-success {
     background: var(--ok-bg);
     color: var(--ok);
 }
 
-.eq-badge-warning {
+.set-badge-warning {
     background: var(--warn-bg);
     color: var(--warn);
 }
 
-.eq-badge-danger {
+.set-badge-danger {
     background: var(--danger-bg);
     color: var(--danger);
 }
 
-.eq-badge-info {
+.set-badge-info {
     background: var(--info-bg);
     color: var(--info);
 }
 
-.page-equipment .badge.bg-primary {
+.page-setting .badge.bg-primary {
     background: var(--accent) !important;
 }
 
-.page-equipment .badge.bg-purple {
+.page-setting .badge.bg-purple {
     background: #a855f7 !important;
 }
 
-.page-equipment .badge.bg-success {
+.page-setting .badge.bg-success {
     background: var(--ok) !important;
 }
 
-.page-equipment .badge.bg-warning {
+.page-setting .badge.bg-warning {
     background: var(--warn) !important;
     color: #000 !important;
 }
 
-.page-equipment .badge.bg-danger {
+.page-setting .badge.bg-danger {
     background: var(--danger) !important;
 }
 
@@ -1214,7 +1279,7 @@ select.eq-input option {
 /* ============================================
    Filter Chip
    ============================================ */
-.page-equipment .chip {
+.chip {
     display: inline-flex;
     align-items: center;
     gap: 5px;
@@ -1229,13 +1294,13 @@ select.eq-input option {
     transition: all var(--t-fast);
 }
 
-.page-equipment .chip:hover {
+.chip:hover {
     background: var(--bg-raised);
     border-color: var(--border-strong);
     color: var(--text-secondary);
 }
 
-.page-equipment .chip.is-active {
+.chip.is-active {
     background: var(--accent-soft);
     border-color: var(--accent-border);
     color: var(--accent);
@@ -1244,15 +1309,14 @@ select.eq-input option {
 /* ============================================
    Monitor Grid (Speaker Inspector)
    ============================================ */
-.page-equipment .monitor-grid {
+.monitor-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: var(--sp-md);
-    padding: var(--sp-md) var(--sp-lg);
-    /* 상하 패딩 축소 */
+    padding: var(--sp-lg);
 }
 
-.page-equipment .monitor-card {
+.monitor-card {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -1266,7 +1330,7 @@ select.eq-input option {
     transition: all var(--t-fast);
 }
 
-.page-equipment .monitor-card:hover {
+.monitor-card:hover {
     border-color: var(--border-mid);
     background: var(--bg-raised);
 }
@@ -1338,12 +1402,12 @@ select.eq-input option {
 }
 
 /* Left panel: full-height with scrollable tbody */
-.speaker-layout>.eq-panel:first-child {
+.speaker-layout>.set-panel:first-child {
     min-height: 0;
 }
 
 /* 테이블 패널 panel-body → flex column으로 명시 */
-.speaker-layout>.eq-panel:first-child .panel-body {
+.speaker-layout>.set-panel:first-child .panel-body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -1365,10 +1429,10 @@ select.eq-input option {
 }
 
 /* 인스펙터 내 개별 패널 최소 높이 보장 */
-.speaker-inspector-col>.eq-panel {
-    min-height: 200px;
-    /* 패널 높이 유연성 확보 (기존 280px에서 축소) */
-    flex-shrink: 1;
+.speaker-inspector-col>.set-panel {
+    min-height: 280px;
+    /* 각 섹션이 너무 작아지지 않게 함 */
+    flex-shrink: 0;
 }
 
 /* Inspector: device header */
@@ -1415,9 +1479,9 @@ select.eq-input option {
    th:replace/th:insert가 삽입하는 래퍼 <div>가
    flex 높이 체인을 단절시키지 않도록 투명 처리
    ============================================ */
-#equipment-speaker-pane>div,
-#equipment-broadcast-pane>div,
-#equipment-cctv-pane>div {
+#situation-speaker-pane>div,
+#situation-broadcast-pane>div,
+#situation-cctv-pane>div {
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -1556,7 +1620,7 @@ select.eq-input option {
 }
 
 /* 그리드 셀(패널) 자체도 flex column + min-height:0 강제 */
-.bc-pipeline>.eq-panel {
+.bc-pipeline>.set-panel {
     display: flex;
     flex-direction: column;
     min-height: 400px;
@@ -1647,7 +1711,7 @@ select.eq-input option {
 
 /* ============================================
    Speaker Card (JS-generated: .speaker-card)
-   equipment_broadcast_pane.js 가 삽입하는 카드
+   situation_broadcast_pane.js 가 삽입하는 카드
    ============================================ */
 .speaker-card {
     display: flex;
@@ -1976,7 +2040,7 @@ select.eq-input option {
 /* ============================================
    ██████╗ CCTV PANE — Surveillance Command
    ============================================ */
-.cctv-pane {
+.set-hist-pane {
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -1985,7 +2049,7 @@ select.eq-input option {
 }
 
 /* CCTV topbar */
-.cctv-topbar {
+.set-hist-topbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1997,13 +2061,13 @@ select.eq-input option {
     flex-wrap: wrap;
 }
 
-.cctv-title {
+.set-hist-title {
     display: flex;
     align-items: center;
     gap: var(--sp-md);
 }
 
-.cctv-icon {
+.set-hist-icon {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2017,7 +2081,7 @@ select.eq-input option {
     flex-shrink: 0;
 }
 
-.cctv-title-text h3 {
+.set-hist-title-text h3 {
     margin: 0;
     font-family: var(--font-display);
     font-size: 15px;
@@ -2025,27 +2089,27 @@ select.eq-input option {
     color: var(--text-primary);
 }
 
-.cctv-title-text p {
+.set-hist-title-text p {
     margin: 0;
     font-size: 12px;
     color: var(--text-muted);
 }
 
-.cctv-actions {
+.set-hist-actions {
     display: flex;
     align-items: center;
     gap: var(--sp-sm);
     flex-wrap: wrap;
 }
 
-.cctv-search {
+.set-hist-search {
     position: relative;
     display: flex;
     align-items: center;
     min-width: 220px;
 }
 
-.cctv-search>i {
+.set-hist-search>i {
     position: absolute;
     left: var(--sp-md);
     color: var(--text-muted);
@@ -2053,7 +2117,7 @@ select.eq-input option {
     pointer-events: none;
 }
 
-.cctv-search input {
+.set-hist-search input {
     width: 100%;
     padding: 7px 12px 7px 34px;
     background: var(--bg-surface);
@@ -2065,24 +2129,24 @@ select.eq-input option {
     transition: all var(--t-fast);
 }
 
-.cctv-search input::placeholder {
+.set-hist-search input::placeholder {
     color: var(--text-muted);
 }
 
-.cctv-search input:focus {
+.set-hist-search input:focus {
     outline: none;
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-.cctv-action-buttons {
+.set-hist-action-buttons {
     display: flex;
     align-items: center;
     gap: var(--sp-xs);
 }
 
 /* Filters */
-.cctv-filters {
+.set-hist-filters {
     display: flex;
     align-items: center;
     gap: var(--sp-xs);
@@ -2094,7 +2158,7 @@ select.eq-input option {
 }
 
 /* Status summary bar (new) */
-.cctv-status-bar {
+.set-hist-status-bar {
     display: flex;
     align-items: center;
     gap: var(--sp-xl);
@@ -2104,7 +2168,7 @@ select.eq-input option {
     flex-shrink: 0;
 }
 
-.cctv-stat {
+.set-hist-stat {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -2112,27 +2176,27 @@ select.eq-input option {
     color: var(--text-muted);
 }
 
-.cctv-stat-num {
+.set-hist-stat-num {
     font-family: var(--font-mono);
     font-size: 16px;
     font-weight: 700;
     color: var(--text-primary);
 }
 
-.cctv-stat-num.ok {
+.set-hist-stat-num.ok {
     color: var(--ok);
 }
 
-.cctv-stat-num.warn {
+.set-hist-stat-num.warn {
     color: var(--warn);
 }
 
-.cctv-stat-num.danger {
+.set-hist-stat-num.danger {
     color: var(--danger);
 }
 
 /* Content surface */
-.cctv-surface {
+.set-hist-surface {
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -2143,7 +2207,7 @@ select.eq-input option {
     /* min-width: 1160px; */
 }
 
-.cctv-table-wrap {
+.set-hist-table-wrap {
     flex: 1;
     min-height: 0;
     background: var(--bg-panel);
@@ -2154,7 +2218,7 @@ select.eq-input option {
     flex-direction: column;
 }
 
-.cctv-table-wrap .table-responsive {
+.set-hist-table-wrap .table-responsive {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
@@ -2162,21 +2226,21 @@ select.eq-input option {
     /* thead sticky가 동작하려면 overflow-y:auto 필요 */
 }
 
-.page-equipment .col-check {
+.page-setting .col-check {
     width: 44px;
 }
 
-.page-equipment .col-geo {
+.page-setting .col-geo {
     min-width: 140px;
 }
 
-.page-equipment .col-actions {
+.page-setting .col-actions {
     width: 100px;
     text-align: center;
 }
 
 /* Empty state */
-.cctv-empty {
+.set-hist-empty {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -2192,11 +2256,11 @@ select.eq-input option {
     justify-content: center;
     width: 64px;
     height: 64px;
-    background: var(--bg-surface);
-    border-radius: var(--r-xl);
+    /* background: var(--bg-surface);
+    border-radius: var(--r-xl); */
     color: var(--text-muted);
     font-size: 30px;
-    border: 1px solid var(--border-subtle);
+    /* border: 1px solid var(--border-subtle); */
 }
 
 .empty-title {
@@ -2213,7 +2277,7 @@ select.eq-input option {
 }
 
 /* CCTV Pagination */
-.cctv-pagination {
+.set-hist-pagination {
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -2222,7 +2286,7 @@ select.eq-input option {
     flex-wrap: wrap;
 }
 
-.cctv-pagination .page-link {
+.set-hist-pagination .page-link {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -2239,13 +2303,13 @@ select.eq-input option {
     transition: all var(--t-fast);
 }
 
-.cctv-pagination .page-link:hover {
+.set-hist-pagination .page-link:hover {
     background: var(--bg-raised);
     border-color: var(--border-strong);
     color: var(--text-primary);
 }
 
-.cctv-pagination .page-link.active {
+.set-hist-pagination .page-link.active {
     background: var(--accent);
     border-color: transparent;
     color: #fff;
@@ -2253,17 +2317,17 @@ select.eq-input option {
 }
 
 /* CCTV card grid (thumbnail view - legacy) */
-.eq-card-grid {
+.set-card-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: var(--sp-lg);
 }
 
-.eq-cctv-grid {
+.set-cctv-grid {
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
 }
 
-.eq-card {
+.set-card {
     background: var(--bg-panel);
     border: 1px solid var(--border-subtle);
     border-radius: var(--r-lg);
@@ -2271,13 +2335,13 @@ select.eq-input option {
     transition: all var(--t-base);
 }
 
-.eq-card:hover {
+.set-card:hover {
     transform: translateY(-3px);
     box-shadow: var(--shadow-lg);
     border-color: var(--border-mid);
 }
 
-.eq-card-header {
+.set-card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -2285,7 +2349,7 @@ select.eq-input option {
     border-bottom: 1px solid var(--border-subtle);
 }
 
-.eq-card-icon {
+.set-card-icon {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2298,12 +2362,12 @@ select.eq-input option {
     font-size: 18px;
 }
 
-.eq-card-actions {
+.set-card-actions {
     display: flex;
     gap: var(--sp-xs);
 }
 
-.eq-card-action-btn {
+.set-card-action-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2317,16 +2381,16 @@ select.eq-input option {
     transition: all var(--t-fast);
 }
 
-.eq-card-action-btn:hover {
+.set-card-action-btn:hover {
     background: var(--bg-surface);
     color: var(--text-primary);
 }
 
-.eq-card-body {
+.set-card-body {
     padding: var(--sp-md) var(--sp-lg);
 }
 
-.eq-card-title {
+.set-card-title {
     margin: 0 0 var(--sp-sm) 0;
     font-family: var(--font-display);
     font-size: 15px;
@@ -2334,7 +2398,7 @@ select.eq-input option {
     color: var(--text-primary);
 }
 
-.eq-card-info {
+.set-card-info {
     display: flex;
     align-items: center;
     gap: var(--sp-xs);
@@ -2343,12 +2407,12 @@ select.eq-input option {
     color: var(--text-secondary);
 }
 
-.eq-card-info i {
+.set-card-info i {
     color: var(--text-muted);
     font-size: 12px;
 }
 
-.eq-card-footer {
+.set-card-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -2356,24 +2420,24 @@ select.eq-input option {
     border-top: 1px solid var(--border-subtle);
 }
 
-.eq-card-meta {
+.set-card-meta {
     font-size: 12px;
     color: var(--text-muted);
 }
 
 /* CCTV thumbnail card */
-.eq-cctv-card {
+.set-cctv-card {
     overflow: visible;
 }
 
-.eq-cctv-thumbnail {
+.set-cctv-thumbnail {
     position: relative;
     aspect-ratio: 16/9;
     overflow: hidden;
     border-radius: var(--r-md);
 }
 
-.eq-cctv-preview {
+.set-cctv-preview {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2383,16 +2447,16 @@ select.eq-input option {
     color: var(--text-muted);
 }
 
-.eq-cctv-preview i {
+.set-cctv-preview i {
     font-size: 40px;
 }
 
-.eq-cctv-offline {
+.set-cctv-offline {
     background: linear-gradient(135deg, #1f0a0a 0%, #120606 100%);
     color: var(--danger);
 }
 
-.eq-cctv-overlay {
+.set-cctv-overlay {
     position: absolute;
     inset: 0;
     display: flex;
@@ -2405,12 +2469,12 @@ select.eq-input option {
     border-radius: var(--r-md);
 }
 
-.eq-cctv-card:hover .eq-cctv-overlay {
+.set-cctv-card:hover .set-cctv-overlay {
     opacity: 1;
 }
 
-.eq-cctv-expand,
-.eq-cctv-record {
+.set-cctv-expand,
+.set-cctv-record {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2426,26 +2490,26 @@ select.eq-input option {
     transition: all var(--t-fast);
 }
 
-.eq-cctv-expand:hover,
-.eq-cctv-record:hover {
+.set-cctv-expand:hover,
+.set-cctv-record:hover {
     background: rgba(255, 255, 255, 0.20);
     transform: scale(1.08);
 }
 
-.eq-cctv-expand:disabled,
-.eq-cctv-record:disabled {
+.set-cctv-expand:disabled,
+.set-cctv-record:disabled {
     opacity: 0.3;
     cursor: not-allowed;
 }
 
-.eq-cctv-status {
+.set-cctv-status {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-top: var(--sp-sm);
 }
 
-.eq-cctv-meta {
+.set-cctv-meta {
     font-size: 11px;
     color: var(--text-muted);
 }
@@ -2453,7 +2517,7 @@ select.eq-input option {
 /* ============================================
    Log Entries
    ============================================ */
-.eq-log-entry {
+.set-log-entry {
     display: flex;
     gap: var(--sp-md);
     padding: var(--sp-sm) var(--sp-md);
@@ -2461,15 +2525,15 @@ select.eq-input option {
     transition: background var(--t-fast);
 }
 
-.eq-log-entry:hover {
+.set-log-entry:hover {
     background: var(--bg-surface);
 }
 
-.eq-log-entry:last-child {
+.set-log-entry:last-child {
     border-bottom: none;
 }
 
-.eq-log-icon {
+.set-log-icon {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2479,34 +2543,34 @@ select.eq-input option {
     flex-shrink: 0;
 }
 
-.eq-log-success {
+.set-log-success {
     background: var(--ok-bg);
     color: var(--ok);
 }
 
-.eq-log-warning {
+.set-log-warning {
     background: var(--warn-bg);
     color: var(--warn);
 }
 
-.eq-log-error {
+.set-log-error {
     background: var(--danger-bg);
     color: var(--danger);
 }
 
-.eq-log-content {
+.set-log-content {
     flex: 1;
     min-width: 0;
 }
 
-.eq-log-title {
+.set-log-title {
     font-size: 12px;
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 1px;
 }
 
-.eq-log-meta {
+.set-log-meta {
     display: flex;
     gap: var(--sp-md);
     font-size: 11px;
@@ -2515,7 +2579,7 @@ select.eq-input option {
     flex-wrap: wrap;
 }
 
-.eq-log-desc {
+.set-log-desc {
     font-size: 12px;
     color: var(--text-secondary);
     margin-top: 2px;
@@ -2662,13 +2726,13 @@ select.eq-input option {
 /* ============================================
    Slider / Volume
    ============================================ */
-.eq-volume-control {
+.set-volume-control {
     display: flex;
     align-items: center;
     gap: var(--sp-md);
 }
 
-.eq-slider {
+.set-slider {
     flex: 1;
     height: 5px;
     background: var(--bg-raised);
@@ -2679,7 +2743,7 @@ select.eq-input option {
     cursor: pointer;
 }
 
-.eq-slider::-webkit-slider-thumb {
+.set-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
     width: 14px;
@@ -2691,11 +2755,11 @@ select.eq-input option {
     box-shadow: 0 0 6px var(--accent-glow);
 }
 
-.eq-slider::-webkit-slider-thumb:hover {
+.set-slider::-webkit-slider-thumb:hover {
     transform: scale(1.2);
 }
 
-.eq-volume-value {
+.set-volume-value {
     min-width: 40px;
     text-align: right;
     font-weight: 600;
@@ -2707,13 +2771,13 @@ select.eq-input option {
 /* ============================================
    Quick Actions (speaker inspector)
    ============================================ */
-.eq-quick-actions {
+.set-quick-actions {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: var(--sp-sm);
 }
 
-.eq-quick-action-btn {
+.set-quick-action-btn {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -2728,14 +2792,14 @@ select.eq-input option {
     transition: all var(--t-fast);
 }
 
-.eq-quick-action-btn:hover {
+.set-quick-action-btn:hover {
     background: var(--bg-raised);
     border-color: var(--border-strong);
     color: var(--text-primary);
     transform: translateY(-2px);
 }
 
-.eq-quick-action-btn i {
+.set-quick-action-btn i {
     font-size: 20px;
     color: var(--accent);
 }
@@ -2743,7 +2807,7 @@ select.eq-input option {
 /* ============================================
    Mobile Overlay
    ============================================ */
-.eq-overlay {
+.set-overlay {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.72);
@@ -2754,7 +2818,7 @@ select.eq-input option {
     transition: opacity var(--t-base);
 }
 
-.eq-overlay.is-active {
+.set-overlay.is-active {
     opacity: 1;
     pointer-events: auto;
 }
@@ -2762,43 +2826,43 @@ select.eq-input option {
 /* ============================================
    Custom Scrollbar
    ============================================ */
-.page-equipment ::-webkit-scrollbar {
+.page-setting ::-webkit-scrollbar {
     width: 5px;
     height: 5px;
 }
 
-.page-equipment ::-webkit-scrollbar-track {
+.page-setting ::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.page-equipment ::-webkit-scrollbar-thumb {
+.page-setting ::-webkit-scrollbar-thumb {
     background: var(--border-strong);
     border-radius: 10px;
 }
 
-.page-equipment ::-webkit-scrollbar-thumb:hover {
+.page-setting ::-webkit-scrollbar-thumb:hover {
     background: var(--text-muted);
 }
 
 /* ============================================
    Checkbox Override
    ============================================ */
-.page-equipment .form-check-input {
+.page-setting .form-check-input {
     background-color: var(--bg-surface);
     border-color: var(--border-mid);
     cursor: pointer;
 }
 
-.page-equipment .form-check-input:checked {
+.page-setting .form-check-input:checked {
     background-color: var(--accent);
     border-color: var(--accent);
 }
 
-.page-equipment .form-check-input:focus {
+.page-setting .form-check-input:focus {
     box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-.page-equipment .form-check-label {
+.page-setting .form-check-label {
     color: var(--text-secondary);
     font-size: 13px;
     cursor: pointer;
@@ -2807,7 +2871,7 @@ select.eq-input option {
 /* ============================================
    Pane Header (legacy, for any remaining uses)
    ============================================ */
-.eq-pane-header {
+.set-pane-header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -2816,12 +2880,12 @@ select.eq-input option {
     flex-wrap: wrap;
 }
 
-.eq-pane-title-group {
+.set-pane-title-group {
     flex: 1;
     min-width: 260px;
 }
 
-.eq-pane-title {
+.set-pane-title {
     display: flex;
     align-items: center;
     gap: var(--sp-sm);
@@ -2832,11 +2896,11 @@ select.eq-input option {
     color: var(--text-primary);
 }
 
-.eq-pane-title i {
+.set-pane-title i {
     color: var(--accent);
 }
 
-.eq-pane-subtitle {
+.set-pane-subtitle {
     margin: 0;
     font-size: 13px;
     color: var(--text-muted);
@@ -2871,12 +2935,12 @@ select.eq-input option {
 
 /* ── 1024px: 사이드바 오버레이 + 탭 네비 전환 ── */
 @media (max-width: 1024px) {
-    .page-equipment {
+    .page-setting {
         font-size: 13px;
     }
 
     /* 사이드바 → 오프캔버스 */
-    .eq-sidebar {
+    .set-sidebar {
         position: fixed;
         left: 0;
         top: 0;
@@ -2887,36 +2951,30 @@ select.eq-input option {
         width: 220px;
     }
 
-    .eq-sidebar.is-open {
+    .set-sidebar.is-open {
         transform: translateX(0);
     }
 
-    .eq-sidebar-toggle {
+    .set-sidebar-toggle {
         display: flex;
     }
 
-    .eq-tab-nav {
+    .set-tab-nav {
         display: flex;
     }
 
-    /* ── eq-main: 모바일에서 pane 레벨 세로 스크롤 허용 ── */
-    .eq-main {
-        overflow-y: auto !important;
-        overflow-x: hidden;
+    /* ── set-main: 모바일에서 pane 레벨 세로 스크롤 허용 ── */
+    .set-main {
+        overflow-y: auto;
     }
 
     /*
      * 패널이 세로로 적층될 때 pane 자체를 스크롤 컨테이너로 전환.
      * 각 레이아웃(grid)는 자연 높이(auto)로 변경되어 내용에 맞게 확장.
      */
-    .eq-pane.is-active {
-        display: flex;
-        flex-direction: column;
-        overflow-y: auto !important;
+    .set-pane.is-active {
+        overflow-y: auto;
         overflow-x: hidden;
-        height: auto !important;
-        min-height: 0;
-        flex: none;
     }
 
     /* ── Speaker pane ── */
@@ -2925,7 +2983,7 @@ select.eq-input option {
         flex-direction: column;
         align-items: stretch;
 
-        /* 모바일: 스크롤은 상위(.eq-pane)에서 처리하므로 visible */
+        /* 모바일: 스크롤은 상위(.set-pane)에서 처리하므로 visible */
         overflow: visible !important;
         flex: none;
         height: auto;
@@ -2936,7 +2994,7 @@ select.eq-input option {
     }
 
     /* 60vh 제한 제거: 패널이 컨테이너 높이를 따라가게 */
-    .speaker-layout>.eq-panel:first-child {
+    .speaker-layout>.set-panel:first-child {
         min-height: 400px;
         /* 테이블 최소 높이 확보 */
         max-height: none;
@@ -3022,64 +3080,64 @@ select.eq-input option {
     }
 
     /* ── CCTV pane ── */
-    .cctv-pane {
+    .set-hist-pane {
         overflow-y: auto;
     }
 
-    .cctv-surface {
+    .set-hist-surface {
         flex: none;
         height: auto;
         overflow: visible;
     }
 
-    .cctv-table-wrap {
+    .set-hist-table-wrap {
         flex: none;
         min-height: 400px;
         max-height: 65vh;
         overflow: hidden;
     }
 
-    .cctv-table-wrap .table-responsive {
+    .set-hist-table-wrap .table-responsive {
         overflow-y: auto;
         max-height: calc(65vh - 44px);
     }
 
-    .cctv-topbar {
+    .set-hist-topbar {
         flex-direction: column;
         align-items: flex-start;
     }
 
-    .cctv-actions {
+    .set-hist-actions {
         width: 100%;
         flex-direction: column;
         align-items: flex-start;
     }
 
-    .cctv-search {
+    .set-hist-search {
         min-width: unset;
         width: 100%;
     }
 
-    .cctv-action-buttons {
+    .set-hist-action-buttons {
         flex-wrap: wrap;
     }
 }
 
 /* ── 768px: 폼/헤더/패딩 축소 ── */
 @media (max-width: 768px) {
-    .eq-topbar-content {
+    .set-topbar-content {
         padding: var(--sp-sm) var(--sp-md);
     }
 
-    .eq-page-title {
+    .set-page-title {
         font-size: 15px;
     }
 
-    .eq-page-title i {
+    .set-page-title i {
         font-size: 17px;
     }
 
-    .eq-topbar-right .eq-btn span {
+    .set-topbar-right .set-btn span {
         display: none;
     }
 
@@ -3169,21 +3227,21 @@ select.eq-input option {
     }
 
     /* CCTV */
-    .cctv-surface {
+    .set-hist-surface {
         padding: var(--sp-sm) var(--sp-md);
     }
 
-    .cctv-status-bar {
+    .set-hist-status-bar {
         gap: var(--sp-md);
         flex-wrap: wrap;
         padding: 6px var(--sp-md);
     }
 
-    .cctv-stat-num {
+    .set-hist-stat-num {
         font-size: 14px;
     }
 
-    .cctv-filters {
+    .set-hist-filters {
         padding: 6px var(--sp-md);
     }
 
@@ -3210,12 +3268,12 @@ select.eq-input option {
 
     .speaker-layout,
     .bc-pipeline,
-    .cctv-surface {
+    .set-hist-surface {
         padding: var(--sp-xs);
         gap: var(--sp-xs);
     }
 
-    .eq-quick-actions {
+    .set-quick-actions {
         grid-template-columns: 1fr;
     }
 
@@ -3228,7 +3286,7 @@ select.eq-input option {
         margin-left: 0;
     }
 
-    .speaker-layout>.eq-panel:first-child {
+    .speaker-layout>.set-panel:first-child {
         max-height: 55vh;
     }
 
@@ -3248,11 +3306,11 @@ select.eq-input option {
         max-height: calc(45vh - 150px);
     }
 
-    .cctv-table-wrap {
+    .set-hist-table-wrap {
         max-height: 55vh;
     }
 
-    .cctv-table-wrap .table-responsive {
+    .set-hist-table-wrap .table-responsive {
         max-height: calc(55vh - 44px);
     }
 
@@ -3260,11 +3318,11 @@ select.eq-input option {
         grid-template-columns: repeat(2, 1fr);
     }
 
-    .eq-topbar-right .eq-btn {
+    .set-topbar-right .set-btn {
         padding: 6px 8px;
     }
 
-    .eq-page-title {
+    .set-page-title {
         font-size: 14px;
     }
 }
@@ -3273,28 +3331,8 @@ select.eq-input option {
    Responsive Stacking for Mobile/Tablet
    ============================================ */
 @media (max-width: 1024px) {
-    .speaker-layout {
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        grid-template-columns: 1fr;
-        grid-auto-rows: min-content;
-        overflow-y: visible !important;
-        height: auto;
-    }
-
-    .bc-pipeline {
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        grid-template-columns: 1fr;
-        grid-auto-rows: min-content;
-        overflow-y: visible !important;
-        height: auto;
-    }
-
-    .cctv-surface {
-        overflow-y: visible !important;
-        height: auto;
+    .set-hist-surface {
+        overflow-x: auto;
+        overflow-y: auto !important;
     }
 }

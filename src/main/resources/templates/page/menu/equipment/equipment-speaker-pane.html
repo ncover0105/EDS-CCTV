@@ -1,4 +1,4 @@
-<div th:fragment="speakerPane" style="display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden;">
+<div th:fragment="speakerPane" style="display:flex; flex-direction:column; flex:1; min-height:0;">
 
     <div class="speaker-pane">
 
@@ -86,7 +86,7 @@
             <div class="speaker-inspector-col">
 
                 <!-- Device Info Card -->
-                <section class="eq-panel flex-shrink-0">
+                <section class="eq-panel" style="flex: 0 1 auto;">
                     <header class="panel-header">
                         <div class="panel-title">
                             <i class="bi bi-cpu"></i>
@@ -121,14 +121,14 @@
                 </section>
 
                 <!-- Real-time Status Panel -->
-                <section class="eq-panel" style="flex: 1; min-height: 0;">
+                <section class="eq-panel" style="flex: 1.5; min-height: 0;">
                     <header class="panel-header">
                         <div class="panel-title">
                             <i class="bi bi-activity"></i>
                             실시간 상태 정보
                         </div>
                     </header>
-                    <div class="monitor-grid" style="overflow-y: auto; flex: 1; min-height: 0; align-content: start;">
+                    <div class="monitor-grid" style="overflow-y: auto; flex: 1; min-height: 0;">
                         <div class="monitor-card">
                             <div class="monitor-label">네트워크</div>
                             <div class="monitor-value" id="connectionStatus">-</div>

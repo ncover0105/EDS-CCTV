@@ -1,4 +1,4 @@
-<div th:fragment="broadcastPane" style="display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden;">
+<div th:fragment="broadcastPane" style="display:flex; flex-direction:column; flex:1; min-height:0;">
     <!--
         ★ 핵심: th:replace 로 삽입되는 이 div 자체에 flex 구조를 인라인으로 부여.
            CSS의 '#equipment-broadcast-pane > div' 선택자와 이중 보호.
@@ -133,7 +133,7 @@
                             </div>
 
                             <!-- 재난 유형 -->
-                            <div class="form-item full-width" id="bc_disaster_area">
+                            <div class="form-item full-width" id="bc_disaster_area" style="display: none;">
                                 <label class="eq-label">재난 유형</label>
                                 <select id="bc_disaster" class="eq-select" style="margin-bottom:8px;">
                                     <option value="">-- 선택 --</option>
