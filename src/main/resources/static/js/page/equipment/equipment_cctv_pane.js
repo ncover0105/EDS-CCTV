@@ -1,5 +1,5 @@
 (() => {
-    const PAGE_SIZE = 12;
+    const PAGE_SIZE = 10;
 
     let fullList = [];        // API에서 가져온 원본 전체 목록
     let filteredList = [];    // 검색/필터가 적용된 현재 목록
@@ -189,7 +189,19 @@
         const pageItems = filteredList.slice(start, start + PAGE_SIZE);
 
         tbody.innerHTML = pageItems.map(item => rowHtml(item)).join("");
-        renderPagination(totalPages);
+
+        if (window.App?.utils?.renderPagination) {
+            window.App.utils.renderPagination({
+                containerId: "cctvPagination",
+                currentPage: currentPage,
+                totalItems: filteredList.length,
+                itemsPerPage: PAGE_SIZE,
+                onPageChange: (p) => {
+                    currentPage = p;
+                    renderPage();
+                }
+            });
+        }
 
         // 체크올 상태 동기화
         const checkAll = document.getElementById("cctv-check-all");
@@ -269,41 +281,6 @@
     }
 
 
-    function renderPagination(totalPages) {
-        const el = document.getElementById("cctvPagination");
-        if (!el) return;
-
-        let html = "";
-        const maxVisible = 5;
-        let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-        let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-
-        if (endPage - startPage + 1 < maxVisible) {
-            startPage = Math.max(1, endPage - maxVisible + 1);
-        }
-
-        // 이전
-        html += `<button type="button" class="eq-page-btn" ${currentPage === 1 ? 'disabled' : ''} data-page="${currentPage - 1}">‹</button>`;
-
-        for (let i = startPage; i <= endPage; i++) {
-            html += `<button type="button" class="eq-page-btn ${i === currentPage ? 'is-active' : ''}" data-page="${i}">${i}</button>`;
-        }
-
-        // 다음
-        html += `<button type="button" class="eq-page-btn" ${currentPage === totalPages ? 'disabled' : ''} data-page="${currentPage + 1}">›</button>`;
-
-        el.innerHTML = html;
-
-        el.querySelectorAll(".eq-page-btn[data-page]").forEach(btn => {
-            btn.addEventListener("click", () => {
-                const p = parseInt(btn.dataset.page);
-                if (p > 0 && p <= totalPages) {
-                    currentPage = p;
-                    renderPage();
-                }
-            });
-        });
-    }
 
     function updateSelectedDeleteButton() {
         const checkedCount = document.querySelectorAll("#cctvTbody .cctv-row-check:checked").length;

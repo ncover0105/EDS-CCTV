@@ -207,31 +207,31 @@
   function renderSpeakerPickTable(list) {
     const tbody = document.getElementById('speakerPickTbody');
     if (!tbody) return;
-  
+
     const speakers = Array.isArray(list) ? list : [];
     tbody.innerHTML = '';
-  
+
     if (!speakers.length) {
       tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">스피커가 없습니다.</td></tr>`;
       syncHeaderCheckState();
       updatePickedCount();
       return;
     }
-  
+
     speakers.forEach(sp => {
       const tr = document.createElement('tr');
       tr.classList.add('speaker-row', 'cursor-pointer');
       tr.setAttribute('data-role', 'speaker-row');
-  
+
       const key = sp.speakerKey != null ? String(sp.speakerKey) : '';
-      const id  = sp.speakerId  != null ? String(sp.speakerId)  : '';
+      const id = sp.speakerId != null ? String(sp.speakerId) : '';
       const name = sp.speakerName != null ? String(sp.speakerName) : '-';
-      const loc  = sp.locationName != null ? String(sp.locationName)
-                 : (sp.locationCode != null ? String(sp.locationCode) : '-');
-      const adr  = sp.speakerAdr != null ? String(sp.speakerAdr) : '-';
-  
+      const loc = sp.locationName != null ? String(sp.locationName)
+        : (sp.locationCode != null ? String(sp.locationCode) : '-');
+      const adr = sp.speakerAdr != null ? String(sp.speakerAdr) : '-';
+
       const checked = key && selectedSpeakerKeys.has(key) ? 'checked' : '';
-  
+
       tr.innerHTML = `
         <td style="width:44px;">
           <input class="form-check-input speaker-row-check"
@@ -247,7 +247,7 @@
       `;
       tbody.appendChild(tr);
     });
-  
+
     syncHeaderCheckState();
     updatePickedCount();
   }
@@ -259,56 +259,56 @@
   function syncHeaderCheckState() {
     const header = document.getElementById('speakerHeaderCheck');
     if (!header) return;
-  
+
     const visibles = getVisibleSpeakerCheckboxes();
     const total = visibles.length;
     const checkedCnt = visibles.filter(chk => chk.checked).length;
-  
+
     header.checked = (total > 0 && checkedCnt === total);
     header.indeterminate = (checkedCnt > 0 && checkedCnt < total);
   }
-  
+
   function bindSpeakerPickEvents() {
     const tbody = document.getElementById('speakerPickTbody');
     const search = document.getElementById('speakerSearch');
-  
+
     const headerCheck = document.getElementById('speakerHeaderCheck');
     const btnSelectAll = document.getElementById('speakerSelectAllBtn');
     const btnClear = document.getElementById('speakerClearBtn');
     const btnReload = document.getElementById('speakerReloadBtn');
-  
+
     if (tbody) {
       // 1) checkbox 직접 클릭/변경
       tbody.addEventListener('change', (e) => {
         const chk = e.target.closest('input[type="checkbox"][data-role="speaker-check"]');
         if (!chk) return;
-  
+
         const key = chk.getAttribute('data-speaker-key');
         if (!key) return;
-  
+
         if (chk.checked) selectedSpeakerKeys.add(String(key));
         else selectedSpeakerKeys.delete(String(key));
-  
+
         updatePickedCount();
         syncHeaderCheckState();
       });
-  
+
       // 2) row 전체 클릭하면 toggle (input 클릭은 제외)
       tbody.addEventListener('click', (e) => {
         // 버튼/링크/체크박스 자체 클릭은 기본 동작 유지
         if (e.target.closest('input, button, a, label')) return;
-  
+
         const row = e.target.closest('tr[data-role="speaker-row"]');
         if (!row) return;
-  
+
         const chk = row.querySelector('input[type="checkbox"][data-role="speaker-check"]');
         if (!chk) return;
-  
+
         chk.checked = !chk.checked;
         chk.dispatchEvent(new Event('change', { bubbles: true }));
       });
     }
-  
+
     // 3) 헤더 전체 선택 (현재 필터로 "보이는" row 기준)
     if (headerCheck) {
       headerCheck.addEventListener('change', () => {
@@ -316,18 +316,18 @@
         visibles.forEach(chk => {
           const key = chk.getAttribute('data-speaker-key');
           if (!key) return;
-  
+
           chk.checked = headerCheck.checked;
           if (headerCheck.checked) selectedSpeakerKeys.add(String(key));
           else selectedSpeakerKeys.delete(String(key));
         });
-  
+
         headerCheck.indeterminate = false;
         updatePickedCount();
         syncHeaderCheckState();
       });
     }
-  
+
     // 4) 버튼: 전체선택/선택해제
     if (btnSelectAll) {
       btnSelectAll.addEventListener('click', () => {
@@ -342,7 +342,7 @@
         syncHeaderCheckState();
       });
     }
-  
+
     if (btnClear) {
       btnClear.addEventListener('click', () => {
         const visibles = getVisibleSpeakerCheckboxes();
@@ -356,7 +356,7 @@
         syncHeaderCheckState();
       });
     }
-  
+
     // 5) 새로고침: 스피커 목록 다시 로드 + 선택 상태 유지
     if (btnReload) {
       btnReload.addEventListener('click', async () => {
@@ -367,7 +367,7 @@
           const q = String(search?.value ?? '').trim().toLowerCase();
           const filtered = !q ? speakers : speakers.filter(sp => {
             const key = String(sp.speakerKey ?? '').toLowerCase();
-            const id  = String(sp.speakerId ?? '').toLowerCase();
+            const id = String(sp.speakerId ?? '').toLowerCase();
             const name = String(sp.speakerName ?? '').toLowerCase();
             const loc = String(sp.locationName ?? sp.locationCode ?? '').toLowerCase();
             const adr = String(sp.speakerAdr ?? '').toLowerCase();
@@ -379,20 +379,20 @@
         }
       });
     }
-  
+
     // 6) 검색 필터
     if (search) {
       search.addEventListener('input', () => {
         const q = String(search.value ?? '').trim().toLowerCase();
         const filtered = !q ? allSpeakersCache : allSpeakersCache.filter(sp => {
           const key = String(sp.speakerKey ?? '').toLowerCase();
-          const id  = String(sp.speakerId ?? '').toLowerCase();
+          const id = String(sp.speakerId ?? '').toLowerCase();
           const name = String(sp.speakerName ?? '').toLowerCase();
           const loc = String(sp.locationName ?? sp.locationCode ?? '').toLowerCase();
           const adr = String(sp.speakerAdr ?? '').toLowerCase();
           return key.includes(q) || id.includes(q) || name.includes(q) || loc.includes(q) || adr.includes(q);
         });
-  
+
         renderSpeakerPickTable(filtered);
       });
     }
@@ -453,17 +453,17 @@
             </thead>
             <tbody>
               ${list.map(sp => {
-                const key = sp.speakerKey ?? '-';
-                const sid = sp.speakerId ?? '-';
-                const name = sp.speakerName ?? '-';
-                const loc = (sp.locationName || sp.locationCode) ? `${sp.locationName ?? ''} ${sp.locationCode ? '(' + sp.locationCode + ')' : ''}`.trim() : '-';
-                const adr = sp.speakerAdr ?? '-';
+      const key = sp.speakerKey ?? '-';
+      const sid = sp.speakerId ?? '-';
+      const name = sp.speakerName ?? '-';
+      const loc = (sp.locationName || sp.locationCode) ? `${sp.locationName ?? ''} ${sp.locationCode ? '(' + sp.locationCode + ')' : ''}`.trim() : '-';
+      const adr = sp.speakerAdr ?? '-';
 
-                const lat = sp.speakerLatitude ?? '';
-                const lng = sp.speakerLongitude ?? '';
-                const coord = (lat && lng) ? `${lat}, ${lng}` : '-';
+      const lat = sp.speakerLatitude ?? '';
+      const lng = sp.speakerLongitude ?? '';
+      const coord = (lat && lng) ? `${lat}, ${lng}` : '-';
 
-                return `
+      return `
                   <tr style="border-color:#30363D;">
                     <td style="border-color:#30363D;"><small style="color:#8B949E;">${escapeHtml(String(key))}</small></td>
                     <td style="border-color:#30363D;">${escapeHtml(String(sid))}</td>
@@ -473,7 +473,7 @@
                     <td style="border-color:#30363D;"><small style="color:#8B949E;">${escapeHtml(String(coord))}</small></td>
                   </tr>
                 `;
-              }).join('')}
+    }).join('')}
             </tbody>
           </table>
         </div>
@@ -525,7 +525,7 @@
       const weekStr = weekStrOf(s);
 
       const card = document.createElement('div');
-      card.className = 'schedule-card-v2 mb-2';
+      card.className = 'schedule-card-v2';
       card.innerHTML = `
         <div class="d-flex justify-content-between align-items-start gap-3">
           <div class="flex-grow-1" style="min-width:260px;">
@@ -552,9 +552,9 @@
             </div>
 
             ${(String(s.bcBroadcastType ?? '').toUpperCase() === 'TTS' && s.ttsMessage)
-              ? `<div class="mt-2 small text-white-50"><i class="bi bi-chat-left-text me-1"></i>${escapeHtml(s.ttsMessage)}</div>`
-              : ''
-            }
+          ? `<div class="mt-2 small text-white-50"><i class="bi bi-chat-left-text me-1"></i>${escapeHtml(s.ttsMessage)}</div>`
+          : ''
+        }
           </div>
 
           <div class="schedule-actions flex-shrink-0">

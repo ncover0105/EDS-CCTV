@@ -14705,7 +14705,7 @@ body {
   flex: 1;
   overflow-y: auto;
   display: flex;
-  flex-direction: column;
+  /* flex-direction: column; */
   gap: 0.5rem;
   min-height: 0;
 }
@@ -16148,7 +16148,7 @@ body {
   height: 100%;
   /* max-height: 100px; */
   /* object-fit: cover; */
-  object-fit: cover;
+  /* object-fit: cover; */
   object-position: center;
 }
 
@@ -18485,6 +18485,11 @@ body {
   min-width: 1920px;
   min-height: 1080px;
 } */
+
+.layoutSidenav {
+  min-width: 1920px;
+  min-height: 1080px;
+}
 
 /* 콘텐츠가 넘쳐도 내부가 아니라 body에서 스크롤 되게 */
 .main-layout,

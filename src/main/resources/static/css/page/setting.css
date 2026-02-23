@@ -307,6 +307,7 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
     padding: 16px 18px;
     transition: transform .15s ease, border-color .15s ease, background .15s ease;
+    margin-bottom: 1rem;
 }
 
 .schedule-card-v2:hover {
@@ -1108,7 +1109,7 @@ select.set-input option {
     border-bottom: 1px solid var(--border-mid);
     color: var(--text-muted);
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.8px;
@@ -2202,8 +2203,8 @@ select.set-input option {
     flex: 1;
     min-height: 0;
     /* min-height 500px 제거하여 창이 작아질 때 축소 허용 */
-    padding: var(--sp-md) var(--sp-lg);
-    gap: var(--sp-md);
+    /* padding: var(--sp-md) var(--sp-lg);
+    gap: var(--sp-md); */
     /* min-width: 1160px; */
 }
 
@@ -2211,8 +2212,8 @@ select.set-input option {
     flex: 1;
     min-height: 0;
     background: var(--bg-panel);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--r-lg);
+    /* border: 1px solid var(--border-subtle);
+    border-radius: var(--r-lg); */
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -3227,9 +3228,9 @@ select.set-input option {
     }
 
     /* CCTV */
-    .set-hist-surface {
+    /* .set-hist-surface {
         padding: var(--sp-sm) var(--sp-md);
-    }
+    } */
 
     .set-hist-status-bar {
         gap: var(--sp-md);
@@ -3266,12 +3267,12 @@ select.set-input option {
 /* ── 480px: 최소 UI ── */
 @media (max-width: 480px) {
 
-    .speaker-layout,
+    /* .speaker-layout,
     .bc-pipeline,
     .set-hist-surface {
         padding: var(--sp-xs);
         gap: var(--sp-xs);
-    }
+    } */
 
     .set-quick-actions {
         grid-template-columns: 1fr;

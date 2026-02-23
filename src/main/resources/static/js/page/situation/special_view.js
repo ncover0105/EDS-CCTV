@@ -5,7 +5,9 @@
   'use strict';
 
   const maxLimit = 1000;
+  const PAGE_SIZE = 10;
   let specialData = [];
+  let currentPage = 1;
 
   // -------------------------
   // 사용자 입력 여부 플래그(날짜만)
@@ -229,6 +231,7 @@
     try {
       const data = await App.utils.fetchJson(url);
       specialData = Array.isArray(data) ? data : [];
+      currentPage = 1;
       renderSpecialTable();
     } catch (e) {
       console.error('특보 이력 데이터 오류:', e);
@@ -244,7 +247,13 @@
     const tbody = document.getElementById('specialList');
     if (!tbody) return;
 
-    if (!specialData || specialData.length === 0) {
+    const totalItems = specialData.length;
+
+    // 현재 페이지 데이터 추출 (슬라이싱)
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageItems = specialData.slice(start, start + PAGE_SIZE);
+
+    if (totalItems === 0) {
       tbody.innerHTML = `
         <tr>
           <td colspan="7" class="text-center text-secondary py-5">
@@ -254,22 +263,26 @@
       `;
       const countEl = document.getElementById('specialCount');
       if (countEl) countEl.innerText = `총 0건 | 특보 이력을 조회하세요`;
+
+      const pagEl = document.getElementById('specialPagination');
+      if (pagEl) pagEl.innerHTML = "";
       return;
     }
 
-    tbody.innerHTML = specialData.map((row, idx) => {
+    tbody.innerHTML = pageItems.map((row, idx) => {
+      const globalIdx = start + idx + 1; // 전체 데이터 기준 번호
       const id = row.id || {};
 
       const wrnText = formatWrn(id.wrn);
       const tmInText = fmt12ToText(id.tmIn);
       const regionText = getRegKoById(id.regId);
       const lvlHtml = formatLvlText(row.lvl);
-      const cmdText = formatCmd(row.cmd);     // ✅ CMD_LABEL 적용
+      const cmdText = formatCmd(row.cmd);
       const sendText = formatSend(row.send);
 
       return `
         <tr>
-          <td>${idx + 1}</td>
+          <td>${globalIdx}</td>
           <td>${wrnText}</td>
           <td>${tmInText}</td>
           <td>${regionText}</td>
@@ -281,7 +294,21 @@
     }).join('');
 
     const countEl = document.getElementById('specialCount');
-    if (countEl) countEl.innerText = `총 ${specialData.length}건 | 특보 이력을 조회하세요`;
+    if (countEl) countEl.innerText = `총 ${totalItems}건 | 특보 이력을 조회하세요`;
+
+    // 페이지네이션 렌더링
+    if (window.SituationCommon?.safeRenderPagination) {
+      window.SituationCommon.safeRenderPagination(
+        'specialPagination',
+        currentPage,
+        totalItems,
+        PAGE_SIZE,
+        (p) => {
+          currentPage = p;
+          renderSpecialTable();
+        }
+      );
+    }
   }
 
   // =========================

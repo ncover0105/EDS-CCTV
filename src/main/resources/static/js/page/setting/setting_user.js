@@ -1,92 +1,184 @@
 /**
- * setting_user.js (FULL - final)
- * 정책:
- *  - 등록: ID + PW(필수) + 전화 + (관리자면 권한 선택 가능)
- *  - 수정: ID(readonly) + 전화 + (관리자면 권한 변경 가능)
- *          비밀번호는 수정 불가(모달에서 숨김 + API로 전송 안 함)
- *  - 삭제: DELETE 호출(서버에서 soft delete 권장)
- *  - 행 클릭 시 체크박스 토글
- *
- * 필요 HTML 요소(IDs):
- *  - tbody#userList
- *  - button#user_btn_register #user_btn_edit #user_btn_disable
- *  - modal#userEditModal
- *  - input#editUserId #editUserPw #editUserPhone
- *  - select#editUserRole
- *  - button#saveUserBtn
- *  - (권장) 비번 영역 wrapper: #pwField  (없으면 editUserPw만 숨김)
- *
- * 필요 체크박스:
- *  - input[type=checkbox] name="selectedUserIds" value="{user.id}"
- *
- * 권한 플래그:
- *  - window.IS_MANAGER (settingPage.html에서 th:inline="javascript"로 주입)
+ * setting_user.js
+ * - 사용자 목록 테이블 페이지네이션(기본 10개)
+ * - 행 선택/수정/삭제/등록
  */
 
 (() => {
   const API_BASE = "/api/users";
   const IS_MANAGER = !!window.IS_MANAGER;
+  const PAGE_SIZE = 10;
+
+  let userRows = [];
+  let currentPage = 1;
 
   document.addEventListener("DOMContentLoaded", () => {
     const tbody = document.getElementById("userList");
-    if (tbody) bindRowToggle(tbody);
+    if (tbody) {
+      userRows = collectInitialRows(tbody);
+      renderUserTable();
+      bindRowToggle(tbody);
+    }
 
     bindButtons();
     bindSave();
 
-    // 관리자 아니면 권한 select 비활성화(UX)
     const roleSelect = document.getElementById("editUserRole");
     if (roleSelect && !IS_MANAGER) roleSelect.disabled = true;
   });
 
-  /* ------------------------------
-   * 1) Row click -> checkbox toggle
-   * ------------------------------ */
-function bindRowToggle(tbody) {
-  const selector = 'input[type="checkbox"][name="selectedUserIds"]';
+  function collectInitialRows(tbody) {
+    const rows = [];
+    tbody.querySelectorAll("tr[data-user-id]").forEach((tr) => {
+      const tds = tr.querySelectorAll("td");
+      const checkbox = tr.querySelector('input[name="selectedUserIds"]');
+      const id = checkbox?.value || tr.dataset.userId || "";
+      if (!id || tds.length < 6) return;
 
-  function clearOthers(keepCb) {
-    tbody.querySelectorAll(selector).forEach(cb => {
-      if (cb !== keepCb) {
-        cb.checked = false;
-        const tr = cb.closest("tr");
-        if (tr) tr.classList.remove("table-active");
-      }
+      const roleText = (tds[5]?.textContent || "").trim();
+      const role = roleText.includes("관리자") ? "MANAGER" : "USER";
+
+      rows.push({
+        id,
+        name: (tds[3]?.textContent || "").trim() || "-",
+        phnNo: (tds[4]?.textContent || "").trim() || "-",
+        role,
+      });
+    });
+    return rows;
+  }
+
+  function getTotalPages() {
+    return Math.max(1, Math.ceil(userRows.length / PAGE_SIZE));
+  }
+
+  function renderUserTable() {
+    const tbody = document.getElementById("userList");
+    if (!tbody) return;
+
+    const totalPages = getTotalPages();
+    if (currentPage > totalPages) currentPage = totalPages;
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageRows = userRows.slice(start, start + PAGE_SIZE);
+
+    if (pageRows.length === 0) {
+      tbody.innerHTML = `
+        <tr class="text-center">
+          <td colspan="6" style="height: 60vh;">
+            <div class="d-flex align-items-center justify-content-center h-100">
+              <span class="text-muted">
+                <i class="bi bi-inbox me-2"></i>
+                등록된 사용자가 없습니다.
+              </span>
+            </div>
+          </td>
+        </tr>
+      `;
+      renderPagination();
+      return;
+    }
+
+    tbody.innerHTML = pageRows
+      .map((user, idx) => {
+        const no = start + idx + 1;
+        const roleBadge =
+          user.role === "MANAGER"
+            ? `<span class="status-badge status-danger"><i class="bi bi-shield-check"></i><span>관리자</span></span>`
+            : `<span class="status-badge status-info"><i class="bi bi-person"></i><span>사용자</span></span>`;
+
+        return `
+          <tr data-user-id="${escapeHtml(user.id)}">
+            <td><input type="checkbox" name="selectedUserIds" value="${escapeHtml(user.id)}"></td>
+            <td>${no}</td>
+            <td>${escapeHtml(user.id)}</td>
+            <td>${escapeHtml(user.name || "-")}</td>
+            <td>${escapeHtml(user.phnNo || "-")}</td>
+            <td>${roleBadge}</td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    renderPagination();
+  }
+
+  function renderPagination() {
+    const el = document.getElementById("userPagination");
+    if (!el) return;
+
+    const totalPages = getTotalPages();
+    const canPrev = currentPage > 1;
+    const canNext = currentPage < totalPages;
+    const windowSize = 5;
+    let start = Math.max(1, currentPage - Math.floor(windowSize / 2));
+    let end = Math.min(totalPages, start + windowSize - 1);
+    start = Math.max(1, end - windowSize + 1);
+
+    const items = [];
+    items.push(pageBtn("«", 1, !canPrev));
+    items.push(pageBtn("‹", currentPage - 1, !canPrev));
+    for (let p = start; p <= end; p += 1) {
+      items.push(pageBtn(String(p), p, false, p === currentPage));
+    }
+    items.push(pageBtn("›", currentPage + 1, !canNext));
+    items.push(pageBtn("»", totalPages, !canNext));
+
+    el.innerHTML = items.join("");
+    el.querySelectorAll("button[data-page]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const page = Number(btn.dataset.page || "1");
+        if (Number.isNaN(page)) return;
+        currentPage = Math.min(Math.max(1, page), getTotalPages());
+        renderUserTable();
+      });
     });
   }
 
-  tbody.addEventListener("click", (e) => {
-    const tr = e.target.closest("tr");
-    if (!tr) return;
+  function pageBtn(label, page, disabled, active = false) {
+    const itemClass = `page-item${disabled ? " disabled" : ""}${active ? " active" : ""}`;
+    return `<li class="${itemClass}"><button type="button" class="page-link" data-page="${page}" ${disabled ? "disabled" : ""}>${label}</button></li>`;
+  }
 
-    const cb = tr.querySelector(selector);
-    if (!cb) return;
+  function bindRowToggle(tbody) {
+    const selector = 'input[type="checkbox"][name="selectedUserIds"]';
 
-    // checkbox 자체 클릭이면 change에서 처리
-    if (e.target === cb) return;
+    function clearOthers(keepCb) {
+      tbody.querySelectorAll(selector).forEach((cb) => {
+        if (cb !== keepCb) {
+          cb.checked = false;
+          const tr = cb.closest("tr");
+          if (tr) tr.classList.remove("table-active");
+        }
+      });
+    }
 
-    const willCheck = !cb.checked;
+    tbody.addEventListener("click", (e) => {
+      const tr = e.target.closest("tr");
+      if (!tr) return;
 
-    if (willCheck) clearOthers(cb);   // ✅ 다른 선택 해제
-    cb.checked = willCheck;
-    tr.classList.toggle("table-active", cb.checked);
-  });
+      const cb = tr.querySelector(selector);
+      if (!cb) return;
 
-  tbody.addEventListener("change", (e) => {
-    if (!e.target.matches(selector)) return;
+      if (e.target === cb) return;
 
-    const cb = e.target;
-    const tr = cb.closest("tr");
-    if (!tr) return;
+      const willCheck = !cb.checked;
+      if (willCheck) clearOthers(cb);
+      cb.checked = willCheck;
+      tr.classList.toggle("table-active", cb.checked);
+    });
 
-    if (cb.checked) clearOthers(cb);  // ✅ 다른 선택 해제
-    tr.classList.toggle("table-active", cb.checked);
-  });
-}
+    tbody.addEventListener("change", (e) => {
+      if (!e.target.matches(selector)) return;
 
-  /* ------------------------------
-   * 2) Buttons
-   * ------------------------------ */
+      const cb = e.target;
+      const tr = cb.closest("tr");
+      if (!tr) return;
+
+      if (cb.checked) clearOthers(cb);
+      tr.classList.toggle("table-active", cb.checked);
+    });
+  }
+
   function bindButtons() {
     const btnRegister = document.getElementById("user_btn_register");
     const btnEdit = document.getElementById("user_btn_edit");
@@ -96,7 +188,6 @@ function bindRowToggle(tbody) {
     if (btnEdit) btnEdit.addEventListener("click", onEdit);
     if (btnDelete) btnDelete.addEventListener("click", onDelete);
 
-    // HTML에 onclick="userInsert()" 남아있어도 동작하게
     window.userInsert = function () {
       openModal("insert");
     };
@@ -110,8 +201,6 @@ function bindRowToggle(tbody) {
     }
 
     const id = ids[0];
-
-    // th:value 누락 등 재발 방지
     if (!id || id.includes("${")) {
       alert("선택 값이 사용자 ID가 아닙니다. 체크박스 th:value를 user.id로 수정하세요.");
       return;
@@ -146,9 +235,6 @@ function bindRowToggle(tbody) {
     }
   }
 
-  /* ------------------------------
-   * 3) Modal open
-   * ------------------------------ */
   function openModal(mode, user) {
     const modalEl = document.getElementById("userEditModal");
     if (!modalEl) {
@@ -158,16 +244,15 @@ function bindRowToggle(tbody) {
     modalEl.dataset.mode = mode;
 
     const titleEl = modalEl.querySelector(".modal-title");
-    if (titleEl) titleEl.textContent = (mode === "insert") ? "사용자 등록" : "사용자 정보 수정";
+    if (titleEl) titleEl.textContent = mode === "insert" ? "사용자 등록" : "사용자 정보 수정";
 
     const idEl = document.getElementById("editUserId");
     const pwEl = document.getElementById("editUserPw");
     const nameEl = document.getElementById("editUserName");
-    const pwField = document.getElementById("pwField"); // 권장 wrapper
+    const pwField = document.getElementById("pwField");
     const phoneEl = document.getElementById("editUserPhone");
     const roleEl = document.getElementById("editUserRole");
 
-    // ID
     if (idEl) {
       idEl.value = user?.id ?? "";
       if (mode === "insert") {
@@ -178,7 +263,6 @@ function bindRowToggle(tbody) {
       }
     }
 
-    // PW: 등록만 입력 가능 / 수정에서는 숨김
     if (mode === "insert") {
       if (pwField) pwField.classList.remove("d-none");
       if (pwEl) {
@@ -186,30 +270,24 @@ function bindRowToggle(tbody) {
         pwEl.placeholder = "비밀번호 입력(필수)";
       }
     } else {
-      // update
       if (pwField) pwField.classList.add("d-none");
       if (pwEl) {
         pwEl.value = "";
-        // wrapper가 없으면 input 자체 숨김
         if (!pwField) pwEl.classList.add("d-none");
       }
     }
+
     if (nameEl) nameEl.value = user?.name ?? "";
-    // Phone
     if (phoneEl) phoneEl.value = user?.phnNo ?? "";
 
-    // Role: 관리자만 변경 가능
     if (roleEl) {
-      roleEl.value = (user?.userRole ?? "USER");
+      roleEl.value = user?.userRole ?? "USER";
       roleEl.disabled = !IS_MANAGER;
     }
 
     bootstrap.Modal.getOrCreateInstance(modalEl).show();
   }
 
-  /* ------------------------------
-   * 4) Save (insert/update)
-   * ------------------------------ */
   function bindSave() {
     const saveBtn = document.getElementById("saveUserBtn");
     if (!saveBtn) return;
@@ -229,7 +307,6 @@ function bindRowToggle(tbody) {
 
     try {
       if (mode === "insert") {
-        // ✅ 등록: 비밀번호 필수
         if (!pw || !pw.trim()) {
           alert("등록 시 비밀번호는 필수입니다.");
           return;
@@ -241,27 +318,23 @@ function bindRowToggle(tbody) {
             id,
             pw,
             phnNo,
-            userRole: IS_MANAGER ? userRole : "USER" // 관리자 아니면 USER 고정
-          })
+            userRole: IS_MANAGER ? userRole : "USER",
+          }),
         });
 
         location.reload();
         return;
       }
 
-      // ✅ 수정: 비밀번호 전송 X (전화만 수정)
       await fetchJson(`${API_BASE}/${encodeURIComponent(id)}`, {
         method: "PUT",
-        body: JSON.stringify({
-          phnNo
-        })
+        body: JSON.stringify({ phnNo }),
       });
 
-      // ✅ 권한 변경은 관리자만 별도 호출
       if (IS_MANAGER) {
         await fetchJson(`${API_BASE}/${encodeURIComponent(id)}/role`, {
           method: "PUT",
-          body: JSON.stringify({ userRole })
+          body: JSON.stringify({ userRole }),
         });
       }
 
@@ -278,18 +351,25 @@ function bindRowToggle(tbody) {
     }
   }
 
-  /* ------------------------------
-   * helpers
-   * ------------------------------ */
   function getSelectedIds() {
-    return Array.from(document.querySelectorAll('input[name="selectedUserIds"]:checked'))
-      .map(cb => cb.value);
+    return Array.from(document.querySelectorAll('input[name="selectedUserIds"]:checked')).map(
+      (cb) => cb.value
+    );
+  }
+
+  function escapeHtml(str) {
+    return String(str ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
   async function fetchJson(url, options = {}) {
     const res = await fetch(url, {
       headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-      ...options
+      ...options,
     });
 
     if (!res.ok) {

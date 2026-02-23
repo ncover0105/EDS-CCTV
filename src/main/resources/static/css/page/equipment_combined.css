@@ -519,6 +519,7 @@
     flex-shrink: 0;
     flex-wrap: wrap;
     background: var(--bg-surface);
+    margin-bottom: 0px !important;
 }
 
 .page-equipment .panel-title {
@@ -739,6 +740,19 @@
     border-color: var(--accent);
     color: #fff;
     box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.page-equipment .danger-soft {
+    background: var(--danger-bg);
+    border-color: rgba(239, 68, 68, 0.25);
+    color: var(--danger);
+}
+
+.page-equipment .danger-soft:hover {
+    background: rgba(239, 68, 68, 0.18);
+    border-color: var(--danger);
+    color: #fff;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.25);
 }
 
 /* ============================================
@@ -1043,7 +1057,7 @@ select.eq-input option {
     border-bottom: 1px solid var(--border-mid);
     color: var(--text-muted);
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.8px;
@@ -1051,8 +1065,6 @@ select.eq-input option {
 }
 
 .table-modern tbody tr {
-    height: 10%;
-    /* 10 rows fit the body */
     border-bottom: 1px solid var(--border-subtle);
     transition: all var(--t-fast);
     cursor: pointer;
@@ -1064,6 +1076,8 @@ select.eq-input option {
 
 .table-modern tbody td {
     padding: 10px 12px;
+    height: 44px;
+    /* 화면 크기와 무관하게 행 높이 고정 */
     color: var(--text-secondary);
     vertical-align: middle;
     border-bottom: 1px solid var(--border-subtle);
@@ -1125,6 +1139,44 @@ select.eq-input option {
 
 .pagination-modern .page-item.disabled .page-link {
     opacity: 0.30;
+    cursor: not-allowed;
+}
+
+/* Custom Page Buttons (used in CCTV/Speaker Panes) */
+.eq-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-mid);
+    border-radius: var(--r-sm);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--t-fast);
+}
+
+.eq-page-btn:hover:not(:disabled) {
+    background: var(--bg-raised);
+    border-color: var(--accent-border);
+    color: var(--text-primary);
+}
+
+.eq-page-btn.is-active {
+    background: var(--accent);
+    border-color: transparent;
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.eq-page-btn:disabled {
+    opacity: 0.25;
     cursor: not-allowed;
 }
 
@@ -1540,11 +1592,11 @@ select.eq-input option {
     color: var(--accent);
 }
 
-/* 3-column pipeline layout */
+/* 2-column pipeline layout (Speaker List | Controls Stack) */
 .bc-pipeline {
     display: grid;
-    grid-template-columns: 280px 1fr 300px;
-    grid-auto-rows: 1fr;
+    grid-template-columns: 320px 1fr !important;
+    grid-template-rows: 1fr;
     gap: var(--sp-lg);
     padding: var(--sp-lg);
     flex: 1;
@@ -1555,13 +1607,63 @@ select.eq-input option {
     /* min-width: 1160px; */
 }
 
-/* 그리드 셀(패널) 자체도 flex column + min-height:0 강제 */
+/* 그리드 셀(패널) 기본 설정 */
 .bc-pipeline>.eq-panel {
     display: flex;
     flex-direction: column;
-    min-height: 400px;
-    /* 방송 설정 각 패널 최소 높이 */
+    min-height: 500px;
     overflow: hidden;
+}
+
+/* 방송 설정 + 실행 제어 수집 스택 컬럼 */
+.bc-controls-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-lg);
+    min-height: 0;
+    flex: 1;
+    /* 파이프라인 높이 전체 점유 */
+}
+
+.bc-controls-col>.eq-panel {
+    min-height: 250px;
+    /* 최소 가시성 확보 */
+}
+
+/* 방송 설정(Composer) 영역을 실행 제어 영역보다 크게 유지 (비율 기반 확장) */
+.bc-panel-composer {
+    display: flex;
+    flex-direction: column;
+}
+
+.bc-panel-composer .panel-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.bc-controls-col>.bc-panel-composer {
+    flex: 1.1;
+    margin-bottom: 0;
+}
+
+.bc-controls-col>.bc-panel-execution {
+    flex: 1;
+}
+
+/* 좁은 화면(1400px 이하)에서는 고정 높이/비율 제약을 해제하여 전체 확장되도록 함 */
+@media (max-width: 1400px) {
+    .bc-controls-col {
+        flex: none;
+        height: auto;
+    }
+
+    .bc-controls-col>.eq-panel {
+        flex: none;
+        height: auto;
+        min-height: unset;
+    }
 }
 
 /* Panel A: target list scrollable */
@@ -1817,16 +1919,36 @@ select.eq-input option {
 
 .composer-settings {
     padding: var(--sp-lg);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
 .composer-form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto 1fr;
+    /* 마지막 행(메시지 영역)이 확장됨 */
     gap: var(--sp-md);
+    flex: 1;
+    min-height: 0;
 }
 
 .composer-form-grid .form-item.full-width {
     grid-column: 1 / -1;
+}
+
+#customMessageArea {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+#customMessageText {
+    flex: 1;
+    min-height: 120px;
+    /* 최소 높이 보장 */
 }
 
 .disaster-msg-box {
@@ -1875,20 +1997,54 @@ select.eq-input option {
 /* Panel C: execution + log */
 .bc-panel-execution .panel-body {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    /* 가로 배치 */
     overflow: hidden;
     padding: 0;
-    /* ← padding은 각 하위 영역에서 제어 */
 }
 
-/* 버튼 컨트롤 영역 — 고정 높이 */
+/* 버튼 컨트롤 영역 — 가로 배치 시 왼쪽 고정 너비 */
 .bc-execution-controls {
     display: flex;
     flex-direction: column;
-    gap: var(--sp-sm);
+    justify-content: center;
+    /* 세로 중앙 정렬 */
+    align-items: center;
+    /* 가로 중앙 정렬 */
+    gap: var(--sp-md);
+    width: 280px;
+    /* 버튼 영역 너비 고정 */
     flex-shrink: 0;
-    padding: var(--sp-lg) var(--sp-lg) var(--sp-md);
-    border-bottom: 1px solid var(--border-subtle);
+    padding: var(--sp-lg);
+    border-right: 1px solid var(--border-subtle);
+    border-bottom: none;
+    text-align: center;
+}
+
+/* 반응형: 화면이 좁아질 경우 수직 배치로 전환 및 콘텐츠 전체 노출 */
+@media (max-width: 1400px) {
+    .bc-panel-execution .panel-body {
+        flex-direction: column;
+        overflow: visible;
+        /* 내부 스크롤 제거 */
+        height: auto;
+    }
+
+    .bc-execution-controls {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-subtle);
+        padding: var(--sp-md) var(--sp-lg);
+    }
+
+    .bc-log-area {
+        min-height: unset;
+        /* 고정 최소 높이 해제 */
+        flex: none;
+        overflow: visible;
+        /* 로그 내용이 길어져도 그대로 노출 */
+        height: auto;
+    }
 }
 
 /* 로그 영역 — 나머지 높이 차지 + 내부 스크롤 */
@@ -2136,19 +2292,15 @@ select.eq-input option {
     display: flex;
     flex-direction: column;
     flex: 1;
-    min-height: 0;
-    /* min-height 500px 제거하여 창이 작아질 때 축소 허용 */
-    padding: var(--sp-md) var(--sp-lg);
-    gap: var(--sp-md);
-    /* min-width: 1160px; */
+    min-height: 400px;
 }
 
 .cctv-table-wrap {
     flex: 1;
-    min-height: 0;
+    min-height: 300px;
     background: var(--bg-panel);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--r-lg);
+    /* border: 1px solid var(--border-subtle);
+    border-radius: var(--r-lg); */
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -3002,7 +3154,7 @@ select.eq-input option {
 
     .bc-log-area {
         flex: none;
-        height: 200px;
+        height: 300px;
     }
 
     .bc-log-scroll {
@@ -3084,9 +3236,6 @@ select.eq-input option {
     }
 
     .panel-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--sp-sm);
         padding: 8px var(--sp-md);
     }
 
@@ -3170,7 +3319,17 @@ select.eq-input option {
 
     /* CCTV */
     .cctv-surface {
-        padding: var(--sp-sm) var(--sp-md);
+        padding: 0;
+    }
+
+    .cctv-table-wrap {
+        min-height: 300px;
+        overflow-y: auto;
+    }
+
+    .cctv-table-wrap .table-responsive {
+        min-height: 0;
+        overflow-y: auto;
     }
 
     .cctv-status-bar {
@@ -3209,10 +3368,25 @@ select.eq-input option {
 @media (max-width: 480px) {
 
     .speaker-layout,
-    .bc-pipeline,
-    .cctv-surface {
+    .bc-pipeline {
         padding: var(--sp-xs);
         gap: var(--sp-xs);
+    }
+
+    /* CCTV: 패딩 완전 제거 */
+    .cctv-surface {
+        padding: 0;
+        gap: 0;
+    }
+
+    .cctv-table-wrap {
+        min-height: 300px;
+        overflow-y: auto;
+    }
+
+    .cctv-table-wrap .table-responsive {
+        min-height: 0;
+        overflow-y: auto;
     }
 
     .eq-quick-actions {
@@ -3246,14 +3420,6 @@ select.eq-input option {
 
     .bc-target-list-wrap {
         max-height: calc(45vh - 150px);
-    }
-
-    .cctv-table-wrap {
-        max-height: 55vh;
-    }
-
-    .cctv-table-wrap .table-responsive {
-        max-height: calc(55vh - 44px);
     }
 
     .monitor-grid {
@@ -3296,5 +3462,16 @@ select.eq-input option {
     .cctv-surface {
         overflow-y: visible !important;
         height: auto;
+        padding: 0;
+    }
+
+    .cctv-table-wrap {
+        min-height: 300px;
+        overflow-y: auto;
+    }
+
+    .cctv-table-wrap .table-responsive {
+        min-height: 0;
+        overflow-y: auto;
     }
 }

@@ -1,14 +1,14 @@
 // setting_sms.js
 // SMS 알림 설정(UserEntity: eventAlertYn / warnAlertYn / alertEnabledYn) 관리
-// - 등록: 모달 빈값(사용자ID 직접 입력) + 저장(PATCH)
-// - 수정: 선택 1명 → 모달에 선택 데이터 채움 + 저장(PATCH)
-// - 삭제: 선택 N명 → 미사용 처리(배치) alertEnabledYn=N, event/warn=N
-// API:
-//   PATCH /api/users/sms/{id}
-//   POST  /api/users/sms/disable-batch
+// + 목록 페이지네이션(기본 10개)
 
 (function () {
   const $ = (id) => document.getElementById(id);
+  const PAGE_SIZE = 10;
+
+  let modalMode = "insert";
+  let smsUsers = [];
+  let currentPage = 1;
 
   const isSmsView = () => {
     try {
@@ -18,7 +18,6 @@
     }
   };
 
-  // ===== Selection =====
   function getSelectedSmsUserIds() {
     const tbody = $("smsUserList");
     if (!tbody) return [];
@@ -39,17 +38,14 @@
     return tbody.querySelector(`tr[data-user-id="${CSS.escape(userId)}"]`);
   }
 
-  // 화면의 badge 텍스트 기반으로 Y/N 읽기
   function readYnFromCell(td) {
     const text = (td?.textContent || "").trim();
-    // "미사용" 포함이면 N, 그 외 "사용"이면 Y
     if (text.includes("미사용")) return "N";
     if (text.includes("사용")) return "Y";
     return "N";
   }
 
   function getUserInfoFromRow(tr) {
-    // [0] checkbox, [1] no, [2] name, [3] phnNo, [4] event, [5] warn, [6] enabled
     const tds = tr ? tr.querySelectorAll("td") : null;
     if (!tds || tds.length < 7) return null;
 
@@ -64,12 +60,128 @@
     return { id, name, phnNo, eventAlertYn, warnAlertYn, alertEnabledYn };
   }
 
-  // ===== Modal =====
-  let modalMode = "insert"; // "insert" | "edit"
+  function collectInitialSmsRows() {
+    const tbody = $("smsUserList");
+    if (!tbody) return [];
+
+    const rows = [];
+    tbody.querySelectorAll("tr[data-user-id]").forEach((tr) => {
+      const info = getUserInfoFromRow(tr);
+      if (!info?.id) return;
+      rows.push(info);
+    });
+    return rows;
+  }
+
+  function getTotalPages() {
+    return Math.max(1, Math.ceil(smsUsers.length / PAGE_SIZE));
+  }
+
+  function statusBadge(yn) {
+    if (yn === "Y") {
+      return `<span class="status-badge status-success"><i class="bi bi-check-circle-fill"></i> 사용</span>`;
+    }
+    return `<span class="status-badge status-primary"><i class="bi bi-x-circle-fill"></i> 미사용</span>`;
+  }
+
+  function escapeHtml(str) {
+    return String(str ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function renderSmsTable() {
+    const tbody = $("smsUserList");
+    if (!tbody) return;
+
+    const totalPages = getTotalPages();
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageRows = smsUsers.slice(start, start + PAGE_SIZE);
+
+    if (pageRows.length === 0) {
+      tbody.innerHTML = `
+        <tr class="text-center">
+          <td colspan="7" style="height: 60vh;">
+            <div class="d-flex align-items-center justify-content-center h-100">
+              <span class="text-muted">
+                <i class="bi bi-inbox me-2"></i>
+                등록된 사용자가 없습니다.
+              </span>
+            </div>
+          </td>
+        </tr>
+      `;
+      renderSmsPagination();
+      return;
+    }
+
+    tbody.innerHTML = pageRows
+      .map((user, idx) => {
+        const no = start + idx + 1;
+        return `
+          <tr data-user-id="${escapeHtml(user.id)}">
+            <td class="text-center">
+              <input type="checkbox" class="alert-toggle">
+            </td>
+            <td class="text-center">${no}</td>
+            <td>${escapeHtml(user.name || "-")}</td>
+            <td>${escapeHtml(user.phnNo || "-")}</td>
+            <td class="text-center">${statusBadge(user.eventAlertYn)}</td>
+            <td class="text-center">${statusBadge(user.warnAlertYn)}</td>
+            <td class="text-center">${statusBadge(user.alertEnabledYn)}</td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    renderSmsPagination();
+  }
+
+  function renderSmsPagination() {
+    const el = $("smsPagination");
+    if (!el) return;
+
+    const totalPages = getTotalPages();
+    const canPrev = currentPage > 1;
+    const canNext = currentPage < totalPages;
+    const windowSize = 5;
+
+    let start = Math.max(1, currentPage - Math.floor(windowSize / 2));
+    let end = Math.min(totalPages, start + windowSize - 1);
+    start = Math.max(1, end - windowSize + 1);
+
+    const items = [];
+    items.push(pageBtn("«", 1, !canPrev));
+    items.push(pageBtn("‹", currentPage - 1, !canPrev));
+    for (let p = start; p <= end; p += 1) {
+      items.push(pageBtn(String(p), p, false, p === currentPage));
+    }
+    items.push(pageBtn("›", currentPage + 1, !canNext));
+    items.push(pageBtn("»", totalPages, !canNext));
+
+    el.innerHTML = items.join("");
+    el.querySelectorAll("button[data-page]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const page = Number(btn.dataset.page || "1");
+        if (Number.isNaN(page)) return;
+        currentPage = Math.min(Math.max(1, page), getTotalPages());
+        renderSmsTable();
+      });
+    });
+  }
+
+  function pageBtn(label, page, disabled, active = false) {
+    const itemClass = `page-item${disabled ? " disabled" : ""}${active ? " active" : ""}`;
+    return `<li class="${itemClass}"><button type="button" class="page-link" data-page="${page}" ${disabled ? "disabled" : ""}>${label}</button></li>`;
+  }
 
   function syncChildTogglesByEnabled() {
     const enabled = $("modalAlertEnabled")?.checked;
-
     const ev = $("modalEventAlert");
     const wa = $("modalWarnAlert");
     if (!ev || !wa) return;
@@ -91,20 +203,16 @@
     }
 
     modalMode = "insert";
-
     const titleEl = $("smsEditModalLabel");
     if (titleEl) titleEl.textContent = "SMS 알림 등록";
 
-    // ✅ 등록: 전부 비움
     $("modalUserId").value = "";
     $("modalUserName").value = "";
     $("modalUserPhn").value = "";
 
     $("modalEventAlert").checked = false;
     $("modalWarnAlert").checked = false;
-    $("modalAlertEnabled").checked = true; // 기본은 사용
-
-    // 등록에서는 ID를 입력해야 하므로 활성화
+    $("modalAlertEnabled").checked = true;
     $("modalUserId").readOnly = false;
 
     syncChildTogglesByEnabled();
@@ -119,27 +227,21 @@
     }
 
     modalMode = "edit";
-
     const titleEl = $("smsEditModalLabel");
     if (titleEl) titleEl.textContent = "SMS 알림 수정";
 
-    // ✅ 수정: 선택 데이터 채움
     $("modalUserId").value = userInfo.id;
     $("modalUserName").value = userInfo.name || "-";
     $("modalUserPhn").value = userInfo.phnNo || "-";
-
     $("modalEventAlert").checked = userInfo.eventAlertYn === "Y";
     $("modalWarnAlert").checked = userInfo.warnAlertYn === "Y";
     $("modalAlertEnabled").checked = userInfo.alertEnabledYn === "Y";
-
-    // 수정에서는 ID 변경 못하게
     $("modalUserId").readOnly = true;
 
     syncChildTogglesByEnabled();
     bootstrap.Modal.getOrCreateInstance(modalEl).show();
   }
 
-  // ===== API =====
   async function apiUpdateSmsSetting(userId, payload) {
     const res = await fetch(`/api/users/sms/${encodeURIComponent(userId)}`, {
       method: "PATCH",
@@ -164,13 +266,10 @@
     location.reload();
   }
 
-  // ===== Actions =====
-  // 등록: 선택 없이 빈 모달
   window.smsInsert = function smsInsert() {
     openSmsModalEmpty();
   };
 
-  // 수정: 선택 1명 → 값 채워서 모달
   window.smsUpdate = function smsUpdate() {
     const selected = getSelectedSmsUserIds();
     if (selected.length !== 1) {
@@ -188,7 +287,6 @@
     openSmsModalWithData(info);
   };
 
-  // 삭제(미사용): 선택 N명
   window.smsDelete = async function smsDelete() {
     const selected = getSelectedSmsUserIds();
     if (selected.length === 0) {
@@ -207,12 +305,10 @@
     }
   };
 
-  // ===== Modal save =====
   async function onSaveModal() {
     const userId = $("modalUserId")?.value?.trim();
     if (!userId) return alert("사용자 ID를 입력하세요.");
 
-    // (등록 모드에서) 이름/전화는 참고용 표시일 수도 있어서 서버로는 안 보냄
     const alertEnabledYn = $("modalAlertEnabled").checked ? "Y" : "N";
     const eventAlertYn = $("modalEventAlert").checked ? "Y" : "N";
     const warnAlertYn = $("modalWarnAlert").checked ? "Y" : "N";
@@ -236,31 +332,30 @@
   }
 
   function bindRowClickSelection() {
-    const tbody = document.getElementById("smsUserList");
-    if (!tbody) return;
-  
-    tbody.querySelectorAll("tr").forEach((tr) => {
-      const checkbox = tr.querySelector('input.alert-toggle[type="checkbox"]');
-      if (!checkbox) return;
-  
-      // ✅ row 클릭 시 체크박스 토글
-      tr.addEventListener("click", () => {
-        checkbox.checked = !checkbox.checked;
-        tr.classList.toggle("table-active", checkbox.checked);
-      });
-  
-      // ✅ 체크박스 직접 클릭 시 row 클릭 이벤트 중복 방지
-      checkbox.addEventListener("click", (e) => {
-        e.stopPropagation(); // row 클릭 이벤트 막기
-        tr.classList.toggle("table-active", checkbox.checked);
-      });
-    });
-  }  
+    const tbody = $("smsUserList");
+    if (!tbody || tbody.dataset.rowBindDone === "Y") return;
 
-  // ===== Bind =====
+    tbody.dataset.rowBindDone = "Y";
+
+    tbody.addEventListener("click", (e) => {
+      const checkbox = e.target.closest('input.alert-toggle[type="checkbox"]');
+      if (checkbox) {
+        const tr = checkbox.closest("tr");
+        if (tr) tr.classList.toggle("table-active", checkbox.checked);
+        return;
+      }
+
+      const tr = e.target.closest("tr[data-user-id]");
+      if (!tr) return;
+      const cb = tr.querySelector('input.alert-toggle[type="checkbox"]');
+      if (!cb) return;
+
+      cb.checked = !cb.checked;
+      tr.classList.toggle("table-active", cb.checked);
+    });
+  }
+
   function bindSmsEvents() {
-    // 버튼 id는 충돌 방지를 위해 SMS 전용을 권장
-    // (둘 중 존재하는 걸 잡도록)
     const btnAdd = $("sms_btn_register") || $("sms-btn-register");
     const btnEdit = $("sms_btn_edit") || $("sms-btn-edit");
     const btnDel = $("sms_btn_disable") || $("sms-btn-disable");
@@ -275,7 +370,11 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     if (!isSmsView()) return;
-    bindSmsEvents();
+
+    smsUsers = collectInitialSmsRows();
+    currentPage = 1;
+    renderSmsTable();
     bindRowClickSelection();
+    bindSmsEvents();
   });
 })();
