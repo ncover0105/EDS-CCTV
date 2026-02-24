@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -74,6 +75,54 @@ public class GstProcessManager {
             boolean alive = waitUntilAlive(key, waitAliveMs);
             log.info("[{}] gstreamer started (alive={}): {}", key, alive, resp);
             return true;
+        } catch (WebClientResponseException e) {
+            if (e.getStatusCode().value() == 409) {
+                String errBody = e.getResponseBodyAsString();
+                log.warn("[{}] /start returned 409 (already running or busy). body={}", key, errBody);
+
+                // 1) status로 실제 alive면 성공 처리
+                boolean aliveNow = false;
+                try {
+                    aliveNow = isAliveByStatus(key);
+                } catch (Exception ignore) {
+                }
+                if (aliveNow) {
+                    running.put(key, true);
+                    log.info("[{}] treat 409 as success (confirmed alive by /status)", key);
+                    return true;
+                }
+
+                // 2) 아니면 stop 후 1회 재시도
+                stopAndWait(key, 8_000);
+                try {
+                    String resp2 = webClient.post()
+                            .uri(gstApiBaseUrl + "/start")
+                            .headers(this::applyAuth)
+                            .bodyValue(body)
+                            .retrieve()
+                            .bodyToMono(String.class)
+                            .timeout(Duration.ofSeconds(10))
+                            .block();
+
+                    running.put(key, true);
+                    boolean alive2 = waitUntilAlive(key, waitAliveMs);
+                    log.info("[{}] gstreamer started after retry (alive={}): {}", key, alive2, resp2);
+                    return true;
+
+                } catch (Exception e2) {
+                    running.remove(key);
+                    log.error("[{}] retry start failed after 409", key, e2);
+                    return false;
+                }
+            }
+
+            running.remove(key);
+            log.error("[{}] gstreamer start failed. status={} body={}",
+                    key,
+                    e.getStatusCode().value(), // ✅ 대체 방식
+                    e.getResponseBodyAsString(),
+                    e);
+            return false;
         } catch (Exception e) {
             running.remove(key);
             log.error("[{}] gstreamer start failed", key, e);

@@ -116,7 +116,7 @@ public class WeatherDataService {
             if (line.isBlank())
                 continue;
             if (line.startsWith("#"))
-                continue; // ✅ contains("#") 말고 startsWith("#")
+                continue;
 
             String[] values = line.split(",");
             if (values.length > 14) {
@@ -126,9 +126,6 @@ public class WeatherDataService {
                 data.setTA(values[8] != null ? values[8].trim() : null);
                 data.setRN(values[10] != null ? values[10].trim() : null);
                 data.setHM(values[14] != null ? values[14].trim() : null);
-
-                // ✅ “마지막 유효 라인” 기준으로 계속 갱신되게 하고 싶으면 break 하지 마세요.
-                // ✅ “첫 유효 라인”만 쓰려면 여기서 break;
             }
         }
 
@@ -144,7 +141,7 @@ public class WeatherDataService {
 
         try {
             dto.setWinddirection(getSimpleDirection(Double.parseDouble(wd1)) + "풍");
-        } catch (Exception e) { // ✅ NumberFormatException만 잡으면 NPE 못 막음
+        } catch (Exception e) {
             dto.setWinddirection("N/A");
         }
 
@@ -153,6 +150,7 @@ public class WeatherDataService {
 
     /** 예보 데이터 호출 */
     private Mono<WeatherResponseDTO> fetchForecastDataInternal() {
+
         LocalDateTime now = LocalDateTime.now();
         String baseDate = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String baseTime = now.getHour() >= 5 ? "0500" : "2350";
@@ -166,6 +164,7 @@ public class WeatherDataService {
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(response -> {
+
                     JSONObject jsonObj = new JSONObject(response);
                     JSONArray jsonArray = jsonObj
                             .getJSONObject("response")
@@ -179,21 +178,38 @@ public class WeatherDataService {
                     for (int i = 0; i < jsonArray.length(); i++) {
                         JSONObject item = jsonArray.getJSONObject(i);
                         String fcstTime = item.getString("fcstTime");
+
                         if (fcstTime.equals(targetTime)) {
-                            weatherDataMap.put(item.getString("category"), item.getString("fcstValue"));
+                            weatherDataMap.put(
+                                    item.getString("category"),
+                                    item.getString("fcstValue"));
                         }
                     }
 
-                    WeatherCondition weatherCondition = WeatherCondition.fromSkyAndPty(
-                            weatherDataMap.get("SKY"),
-                            weatherDataMap.get("PTY"));
+                    String sky = weatherDataMap.get("SKY");
+                    String pty = weatherDataMap.get("PTY");
+                    String pcp = weatherDataMap.get("PCP"); // "강수없음" 같은 문자열일 수 있음
+                    String sno = weatherDataMap.get("SNO");
+                    String tmp = weatherDataMap.get("TMP");
+
+                    log.info("[Forecast] targetTime={} SKY={}, PTY={}", targetTime, sky, pty);
+
+                    if (sky == null || pty == null) {
+                        log.warn("[Forecast] SKY 또는 PTY 데이터 누락 - map={}", weatherDataMap);
+                    }
+
+                    WeatherCondition weatherCondition = WeatherCondition.fromForecast(sky, pty, pcp, sno, tmp);
+
+                    // WeatherCondition weatherCondition = WeatherCondition.fromSkyAndPty(sky, pty);
 
                     WeatherResponseDTO dto = new WeatherResponseDTO();
                     dto.setRainfall(weatherDataMap.get("POP"));
                     dto.setWeather(weatherCondition.getCondition());
                     dto.setIcon(weatherCondition.getIcon());
+
                     return dto;
-                });
+                })
+                .doOnError(e -> log.error("[Forecast] 처리 실패", e));
     }
 
     // 풍향 변환

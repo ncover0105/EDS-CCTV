@@ -647,6 +647,7 @@
     cursor: pointer;
     transition: all var(--t-fast);
     white-space: nowrap;
+    justify-content: center;
 }
 
 .set-btn:hover {

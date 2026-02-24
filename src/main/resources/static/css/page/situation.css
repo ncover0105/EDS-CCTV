@@ -1310,17 +1310,17 @@ select.sit-input {
         overflow-x: hidden;
     }
 
-    .sit-hist-surface {
+    /* .sit-hist-surface {
         flex: none;
         height: auto;
         overflow: visible;
-    }
+    } */
 
-    .sit-hist-table-wrap {
+    /* .sit-hist-table-wrap {
         flex: none;
         min-height: 400px;
         max-height: 65vh;
-    }
+    } */
 }
 
 /* ── 768px: 패딩 및 폰트 축소 ── */
@@ -1352,13 +1352,13 @@ select.sit-input {
 
 /* ── 480px: 모바일 레이아웃 ── */
 @media (max-width: 480px) {
-    .sit-hist-surface {
+    /* .sit-hist-surface {
         padding: var(--sp-xs);
-    }
+    } */
 
-    .sit-hist-table-wrap {
+    /* .sit-hist-table-wrap {
         max-height: 55vh;
-    }
+    } */
 
     .sit-page-title {
         font-size: 14px;
