@@ -35,7 +35,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
     Logs.init();
 
-    const modalEl = document.getElementById("broadcast_modal");
+    // Mqtt 연동
+    SSE_MQTT.connect();
+
+    // const modalEl = document.getElementById("broadcast_modal");
 
     // modalEl.addEventListener("shown.bs.modal", () => {
     //     console.log("broadcast_modal opened → running init()");
@@ -54,7 +57,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 스트리밍 서버 동작
     CCTVJanus.initSignaling(cameras);
-    SSE_MQTT.connect();
+
+    // ===== Ticker: specialReportPanel 데이터 연동 =====
+    initTicker();
+    setInterval(updateTickerCamStatus, 5000); // 5초마다 카메라 상태 업데이트
 
     document.getElementById("reconnectAllBtn")?.addEventListener("click", () => {
         showConfirmModal("전체 재연결", "모든 CCTV를 재연결할까요?", async () => {
@@ -155,6 +161,17 @@ document.addEventListener("DOMContentLoaded", function () {
         document.querySelectorAll(".dropdown-container .btn-dropdown").forEach(b => b.classList.remove("active"));
     });
 
+    document.querySelectorAll("a[href]").forEach(link => {
+        link.addEventListener("click", function () {
+            const href = this.getAttribute("href");
+            // 현재 페이지(main)를 벗어나는 링크일 때만 정리
+            if (href && !href.includes("main") && !href.startsWith("#")) {
+                try { window.CCTVJanus?.destroy(); } catch (e) { }
+                try { window.CCTVLayout?.destroy(); } catch (e) { }
+            }
+        });
+    });
+
 });
 
 async function callRestartAllServer() {
@@ -206,7 +223,6 @@ function showEmergencyToastr(camName, msg, boundaryNum) {
     };
 }
 
-// 전역 함수 (어느 JS 파일에서든 호출 가능)
 window.openBroadcastModal = function (camName, boundaryNum) {
     const modalEl = document.getElementById("speaker_broadcast_modal");
     if (!modalEl) return;
@@ -226,7 +242,6 @@ window.openBroadcastModal = function (camName, boundaryNum) {
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
 };
-
 
 window.onload = function () {
 
@@ -299,6 +314,9 @@ function showToast(message, type) {
     }, 3500);
 }
 
+function CctvStream() {
+
+}
 
 function updateSpeakerSettings(speakerId) {
     console.log('스피커 설정 로드:', speakerId);
@@ -407,6 +425,10 @@ window.addEventListener("beforeunload", () => {
         signalingSocket.close();
         console.log("WebSocket closed due to page unload");
     }
+
+    // WebRTC 핸들 + video 트랙 정리
+    try { window.CCTVJanus?.destroy(); } catch (e) { }
+    try { window.CCTVLayout?.destroy(); } catch (e) { }
 });
 
 async function renderSpeakerPanel() {
@@ -595,3 +617,104 @@ function selectLayout(itemEl) {
     menu?.classList.remove("show");
     itemEl.closest(".dropdown-container")?.querySelector(".btn-dropdown")?.classList.remove("active");
 }
+
+// ===================== Ticker Bar =====================
+
+/**
+ * specialReportPanel의 .sr-wrn-text 항목을 읽어서 ticker에 렌더링
+ */
+function initTicker() {
+    // syncTickerTime();
+    renderTickerFromSpecialReport();
+}
+
+/**
+ * specialReportPanel → ticker 데이터 동기화
+ * specialReportPanel이 업데이트될 때마다 호출하면 실시간 반영
+ */
+function renderTickerFromSpecialReport() {
+    const inner = document.getElementById("tickerInner");
+    const tag = document.getElementById("tickerTag");
+    const tagLabel = document.getElementById("tickerTagLabel");
+    if (!inner) return;
+
+    // specialReportPanel에서 텍스트 항목 수집
+    const reportItems = [];
+    document.querySelectorAll("#specialReportLine .sr-wrn-text").forEach(el => {
+        const text = el.textContent?.trim();
+        if (text) reportItems.push({ text, level: getTickerLevel(el) });
+    });
+
+    if (reportItems.length === 0) {
+        // 데이터 없음
+        inner.innerHTML = `<span class="t-item t-empty">수신된 특보 정보가 없습니다.</span>`;
+        inner.classList.remove("scrolling");
+        tag?.classList.add("no-data");
+        if (tagLabel) tagLabel.textContent = "특보";
+        return;
+    }
+
+    // 태그 활성화
+    tag?.classList.remove("no-data");
+    const highCount = reportItems.filter(i => i.level === "hi").length;
+    if (tagLabel) tagLabel.textContent = highCount > 0 ? `긴급 ${highCount}` : "특보";
+
+    // 아이템 HTML 생성 (seamless loop을 위해 2배 복제)
+    const itemsHtml = reportItems.map((item, i) =>
+        `<span class="t-item ${item.level}">${item.text}</span>` +
+        (i < reportItems.length - 1 ? `<span class="t-sep">◆</span>` : "")
+    ).join("");
+
+    inner.innerHTML = itemsHtml + `<span class="t-sep" style="margin:0 32px"></span>` + itemsHtml;
+    inner.classList.add("scrolling");
+
+    // 항목 수에 따라 스크롤 속도 조절
+    const duration = Math.max(20, reportItems.length * 10);
+    inner.style.animationDuration = `${duration}s`;
+}
+
+/**
+ * 항목의 심각도에 따라 ticker 클래스 반환
+ */
+function getTickerLevel(el) {
+    const parent = el.closest("[class]");
+    const cls = parent?.className || "";
+    if (cls.includes("danger") || cls.includes("red") || cls.includes("emergency")) return "hi";
+    if (cls.includes("warn") || cls.includes("orange") || cls.includes("warning")) return "warn";
+    return "";
+}
+
+/**
+ * ticker 오른쪽 카메라 상태 업데이트
+ */
+function updateTickerCamStatus() {
+    const onlineEl = document.getElementById("tickerOnline");
+    const totalEl = document.getElementById("tickerTotal");
+    if (!onlineEl || !totalEl) return;
+
+    const online = parseInt(document.getElementById("onlineCount")?.textContent || "0", 10);
+    const offline = parseInt(document.getElementById("offlineCount")?.textContent || "0", 10);
+    const maint = parseInt(document.getElementById("maintenanceCount")?.textContent || "0", 10);
+    const total = online + offline + maint;
+
+    onlineEl.textContent = online;
+    totalEl.textContent = total;
+}
+
+/**
+ * ticker 오른쪽 시간 업데이트
+ */
+// function syncTickerTime() {
+//     const el = document.getElementById("tickerTime");
+//     if (!el) return;
+//     const now = new Date();
+//     const pad = v => String(v).padStart(2, "0");
+//     el.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+// }
+
+/**
+ * specialReportPanel이 외부에서 업데이트될 때 ticker도 갱신
+ * 기존 specialReportPanel 업데이트 함수 호출 후 이 함수도 호출하세요.
+ * 예: renderTickerFromSpecialReport();
+ */
+window.refreshTicker = renderTickerFromSpecialReport;

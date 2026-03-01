@@ -56,7 +56,7 @@ public class WeatherDataService {
                 "?authKey=" + APIHUB_KEY +
                 "&stn=" + APIHUB_STN +
                 "&disp=1&help=0";
-
+        log.info("AWS 날씨 데이터 갱신 URL: {}", apiUrl);
         webClient.get()
                 .uri(apiUrl)
                 .retrieve()
@@ -159,6 +159,7 @@ public class WeatherDataService {
                 "&base_date=" + baseDate + "&base_time=" + baseTime +
                 "&nx=" + nx + "&ny=" + ny + "&authKey=" + APIHUB_KEY;
 
+        log.info("예보 날씨 데이터 갱신 URL: {}", apiUrl);
         return webClient.get()
                 .uri(apiUrl)
                 .retrieve()
@@ -185,6 +186,7 @@ public class WeatherDataService {
                                     item.getString("fcstValue"));
                         }
                     }
+                    log.info("예보 날씨 데이터 갱신 완료: {}", weatherDataMap);
 
                     String sky = weatherDataMap.get("SKY");
                     String pty = weatherDataMap.get("PTY");

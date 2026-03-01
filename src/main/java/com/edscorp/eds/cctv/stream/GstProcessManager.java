@@ -74,7 +74,12 @@ public class GstProcessManager {
 
             boolean alive = waitUntilAlive(key, waitAliveMs);
             log.info("[{}] gstreamer started (alive={}): {}", key, alive, resp);
-            return true;
+            // return true;
+            if (!alive) {
+                // start 호출은 성공했지만 status가 alive로 안 올라오면 "실패"로 취급
+                running.remove(key);
+            }
+            return alive;
         } catch (WebClientResponseException e) {
             if (e.getStatusCode().value() == 409) {
                 String errBody = e.getResponseBodyAsString();
@@ -107,7 +112,11 @@ public class GstProcessManager {
                     running.put(key, true);
                     boolean alive2 = waitUntilAlive(key, waitAliveMs);
                     log.info("[{}] gstreamer started after retry (alive={}): {}", key, alive2, resp2);
-                    return true;
+                    // return true;
+                    if (!alive2) {
+                        running.remove(key);
+                    }
+                    return alive2;
 
                 } catch (Exception e2) {
                     running.remove(key);
@@ -180,20 +189,17 @@ public class GstProcessManager {
     }
 
     public boolean isAlive(String key) {
-        // running 캐시는 참고만. 실제 판단은 /status 기준
-        if (!running.getOrDefault(key, false)) {
-            // 캐시가 false여도 실제로 살아있을 수 있으니 /status 한번은 확인해준다
-            try {
-                return isAliveByStatus(key);
-            } catch (Exception e) {
-                return false;
-            }
-        }
-
         try {
-            return isAliveByStatus(key);
+            boolean statusAlive = isAliveByStatus(key);
+            // status API 결과와 running 맵 동기화
+            if (statusAlive) {
+                running.put(key, true);
+            } else {
+                running.remove(key);
+            }
+            return statusAlive;
         } catch (Exception e) {
-            // status 호출 실패 시 캐시로 폴백
+            // status API 실패 시 running 맵 fallback
             return running.getOrDefault(key, false);
         }
     }

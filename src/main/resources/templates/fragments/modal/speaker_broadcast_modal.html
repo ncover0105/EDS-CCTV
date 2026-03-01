@@ -1,4 +1,262 @@
-<div th:fragment="speaker_broadcast_modal">
+<div th:fragment="speaker_broadcast_modal" class="modal fade speaker-modal dark" id="speaker_broadcast_modal"
+    tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+
+            <!-- 상단 액센트 바 -->
+            <div class="modal-accent" id="bc_mode_accent"></div>
+
+            <!-- ── 헤더 ── -->
+            <div class="modal-header">
+                <div class="d-flex align-items-center gap-3 flex-grow-1">
+                    <div class="modal-icon">
+                        <i class="fa-solid fa-tower-broadcast"></i>
+                    </div>
+                    <div>
+                        <div class="modal-title">발령 모달</div>
+                        <div class="d-flex align-items-center gap-2 mt-1">
+                            <span class="mode-badge" id="bc_mode_badge">
+                                <span class="dot"></span>
+                                <span id="bc_mode_badge_text">실제 방송</span>
+                            </span>
+                            <small id="bc_hint" style="font-size:12px;color:var(--m-text-muted);">
+                                스피커 선택 후 발령 단계로 진행됩니다.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="close-btn" data-bs-dismiss="modal" aria-label="닫기">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <!-- ── 바디 ── -->
+            <div class="modal-body">
+
+                <!-- 왼쪽: 스피커 선택 -->
+                <div class="panel-left">
+                    <div class="panel-header">
+                        <div class="panel-label">
+                            스피커 리스트
+                            <span class="badge-count" id="bc_speaker_count">0</span>
+                        </div>
+                        <div class="panel-actions">
+                            <button type="button" class="panel-action-btn" id="bc_toggle_all">
+                                <i class="bi bi-check2-all"></i> 전체선택
+                            </button>
+                            <button type="button" class="panel-action-btn" id="bc_refresh_speaker">
+                                <i class="fas fa-rotate-right"></i> 갱신
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 선택된 스피커 칩 영역 -->
+                    <div class="selected-chips-wrap" id="bcchipswrap">
+                        <span class="selected-chips-empty" id="bc_chips_empty">선택된 스피커 없음</span>
+                    </div>
+
+                    <!-- 빈 상태 -->
+                    <div id="bc_empty_speaker" class="text-center py-4 d-none"
+                        style="color:var(--m-text-muted);font-size:13px;">
+                        <i class="bi bi-speaker mb-2 d-block fs-4"></i>
+                        등록된 스피커가 없습니다.
+                    </div>
+
+                    <!-- 스피커 카드 목록 -->
+                    <div class="speaker-list-wrap">
+                        <div id="bc_speaker_list" class="d-flex flex-column"></div>
+                    </div>
+
+                    <!-- 하단 카운트 바 -->
+                    <div class="speaker-count-bar">
+                        <strong id="bc_selected_count_bar" style="color:var(--m-primary);">0</strong>개 선택
+                    </div>
+
+                    <!-- JS 호환 숨김 필드 -->
+                    <input id="bc_selected_speaker_name" class="d-none" readonly placeholder="스피커를 선택하세요">
+                </div>
+
+                <!-- 오른쪽: 발령 설정 -->
+                <div class="panel-right">
+
+                    <!-- 방송 모드 -->
+                    <div class="m-card">
+                        <div class="m-card-title">방송 모드</div>
+                        <div class="m-radio-group">
+                            <label class="m-radio-option">
+                                <input type="radio" name="bc_mode_radio" value="1" checked onchange="document.getElementById('bc_mode').value=this.value;
+                                 BroadcastModal._onModeChange();">
+                                <span class="m-radio-label"><span class="me-1">🟢</span> 실제 방송</span>
+                            </label>
+                            <label class="m-radio-option mode-test">
+                                <input type="radio" name="bc_mode_radio" value="0" onchange="document.getElementById('bc_mode').value=this.value;
+                                 BroadcastModal._onModeChange();">
+                                <span class="m-radio-label"><span class="me-1">🧪</span> 시험 방송</span>
+                            </label>
+                        </div>
+                        <!-- JS가 직접 읽는 select (숨김) -->
+                        <select id="bc_mode" class="d-none">
+                            <option value="0">시험 방송</option>
+                            <option value="1" selected>실제 방송</option>
+                        </select>
+                    </div>
+
+                    <!-- 방송 유형 -->
+                    <div class="m-card">
+                        <div class="m-card-title">방송 종류</div>
+                        <div class="m-radio-group">
+                            <label class="m-radio-option">
+                                <input type="radio" name="bc_type_radio" value="1" checked
+                                    onchange="document.getElementById('bc_broadcast_type').value=this.value;
+                                 document.getElementById('bc_broadcast_type').dispatchEvent(new Event('change',{bubbles:true}));">
+                                <span class="m-radio-label"><span class="me-1">🔊</span> TTS</span>
+                            </label>
+                            <label class="m-radio-option">
+                                <input type="radio" name="bc_type_radio" value="2"
+                                    onchange="document.getElementById('bc_broadcast_type').value=this.value;
+                                 document.getElementById('bc_broadcast_type').dispatchEvent(new Event('change',{bubbles:true}));">
+                                <span class="m-radio-label"><span class="me-1">💾</span> 저장메시지</span>
+                            </label>
+                            <label class="m-radio-option">
+                                <input type="radio" name="bc_type_radio" value="3"
+                                    onchange="document.getElementById('bc_broadcast_type').value=this.value;
+                                 document.getElementById('bc_broadcast_type').dispatchEvent(new Event('change',{bubbles:true}));">
+                                <span class="m-radio-label"><span class="me-1">📡</span> 기타</span>
+                            </label>
+                        </div>
+                        <!-- JS가 직접 읽는 select (숨김) -->
+                        <select id="bc_broadcast_type" class="d-none">
+                            <option value="1" selected>TTS</option>
+                            <option value="2">저장메시지</option>
+                            <option value="3">기타</option>
+                        </select>
+                    </div>
+
+                    <!-- 재난 선택 -->
+                    <div class="m-card">
+                        <div class="m-card-title">재난 선택</div>
+                        <label class="m-field-label" for="bc_disaster">
+                            재난 코드 <span style="color:var(--m-danger)">*</span>
+                        </label>
+                        <select id="bc_disaster" class="m-select">
+                            <option value="" selected>재난을 선택하세요</option>
+                        </select>
+                    </div>
+
+                    <!-- TTS 설정 -->
+                    <div class="m-card" id="bc_tts_wrap">
+                        <div class="m-card-title">TTS 메시지</div>
+                        <div class="mb-3">
+                            <label class="m-field-label" for="bc_tts_list">TTS 프리셋</label>
+                            <select id="bc_tts_list" class="m-select">
+                                <option value="">TTS를 선택하세요</option>
+                            </select>
+                        </div>
+                        <div>
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <label class="m-field-label mb-0" for="bc_tts">방송 내용</label>
+                                <button type="button" class="panel-action-btn d-none" id="bc_open_tts_manage"
+                                    style="flex:none;padding:5px 10px;">
+                                    <i class="bi bi-gear"></i> TTS 관리
+                                </button>
+                                <button type="button" class="panel-action-btn d-none" id="bc_open_tts_save"
+                                    style="flex:none;padding:5px 10px;">
+                                    현재 내용 저장
+                                </button>
+                            </div>
+                            <textarea id="bc_tts" class="m-textarea" rows="5" placeholder="TTS를 선택하거나 직접 입력하세요" oninput="document.getElementById('bc_tts_char_count').textContent=this.value.length;
+                                 BroadcastModal.refreshPreview?.();"></textarea>
+                            <div class="char-counter">
+                                <span id="bc_tts_char_count">0</span> / 240
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BGM -->
+                    <div class="m-card">
+                        <div class="m-card-title">BGM 제어</div>
+                        <div class="toggle-row">
+                            <div>
+                                <div class="toggle-label-text">BGM 사용</div>
+                                <div style="font-size:12px;color:var(--m-text-muted);margin-top:2px;">
+                                    방송 중 배경음악 재생
+                                </div>
+                            </div>
+                            <label class="toggle-wrap">
+                                <input type="checkbox" id="bc_bgm_check" onchange="this.checked
+                         ? document.getElementById('bc_bgm_on').click()
+                         : document.getElementById('bc_bgm_off').click();
+                         document.getElementById('bc_volume_row')
+                           .classList.toggle('d-none', !this.checked);">
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+                        <div class="volume-row d-none" id="bc_volume_row">
+                            <span class="vol-label">볼륨</span>
+                            <input type="range" class="m-slider" id="bc_bgm_volume" min="0" max="100" value="50"
+                                oninput="document.getElementById('bc_vol_display').textContent=this.value;
+                              this.style.background='linear-gradient(90deg,var(--m-primary) '
+                                +this.value+'%,var(--m-border) '+this.value+'%)';">
+                            <span class="vol-value" id="bc_vol_display">50</span>
+                        </div>
+                        <!-- JS가 참조하는 기존 BGM 버튼 (숨김 유지) -->
+                        <div class="d-none">
+                            <button type="button" id="bc_bgm_on">BGM ON</button>
+                            <button type="button" id="bc_bgm_off">BGM OFF</button>
+                        </div>
+                    </div>
+
+                    <!-- 페이로드 프리뷰 -->
+                    <div class="m-card d-none">
+                        <div class="m-card-title">페이로드 미리보기</div>
+                        <pre id="bc_preview" class="preview-box mb-0"></pre>
+                    </div>
+
+                    <!-- JS 호환 숨김 필드 (기존 매핑 유지) -->
+                    <div class="d-none">
+                        <select id="bc_alert_type">
+                            <option value="0" selected>CFW</option>
+                            <option value="1">ACL</option>
+                        </select>
+                        <select id="bc_priority">
+                            <option value="0">없음</option>
+                            <option value="1">주의</option>
+                            <option value="2">경계</option>
+                            <option value="3" selected>위험</option>
+                        </select>
+                        <select id="bc_scope">
+                            <option value="1">시/도</option>
+                            <option value="2">군/구</option>
+                            <option value="3" selected>스피커</option>
+                        </select>
+                        <small id="bc_step_text">스피커를 선택하세요.</small>
+                    </div>
+
+                </div><!-- /panel-right -->
+            </div><!-- /modal-body -->
+
+            <!-- ── 푸터 ── -->
+            <div class="modal-footer">
+                <div class="footer-info">
+                    선택된 스피커:
+                    <strong><span id="bc_selected_count_footer">0</span>개</strong>
+                </div>
+                <div class="footer-actions">
+                    <button type="button" class="m-btn m-btn-ghost" data-bs-dismiss="modal">
+                        닫기
+                    </button>
+                    <button type="button" class="m-btn m-btn-primary" id="bc_send">
+                        <i class="fa-solid fa-play"></i></i> 방송
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<!-- <div th:fragment="speaker_broadcast_modal">
     <div class="modal fade modal-dark speaker-modal" id="speaker_broadcast_modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content bg-dark">
@@ -336,4 +594,4 @@
             </div>
         </div>
     </div>
-</div>
+</div> -->

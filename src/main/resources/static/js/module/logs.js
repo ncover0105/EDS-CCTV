@@ -92,17 +92,17 @@ window.Logs = (function () {
             item.onclick = () => {
                 const modalEl = document.getElementById("broadcast_modal");
                 if (!modalEl) return;
-            
+
                 // 모달 열기
                 const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
                 modal.show();
-            
+
                 // boundaryNum 전달 (옵션)
                 if (window.BroadcastModal?.setBoundary) {
                     window.BroadcastModal.setBoundary(log.boundaryNum);
                 }
             };
-            
+
 
             logContainer.appendChild(item);
         });
@@ -110,7 +110,7 @@ window.Logs = (function () {
         updateLogCount(logs.length);
     }
 
-    
+
     function updateLogCount(count) {
         const logCount = document.getElementById("logCount");
         logCount.textContent = `${count}건`;

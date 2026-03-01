@@ -488,88 +488,115 @@
     if (!listDiv || !emptyMsg) return;
 
     emptyMsg.classList.toggle('d-none', scheduleList.length > 0);
-
-    if (countSpan) {
-      countSpan.textContent = `총 ${scheduleList.length}개의 스케줄 | 방송 스케줄과 대상 스피커를 관리하세요`;
-    }
-
+    if (countSpan) countSpan.textContent = scheduleList.length;
     listDiv.innerHTML = '';
     if (!scheduleList.length) return;
 
-    const badgeByPriority = (p) => {
-      const v = String(p ?? 'NONE').toUpperCase();
-      if (v === 'DANGER') return 'status-danger';
-      if (v === 'WARNING') return 'status-warning';
-      if (v === 'CAUTION') return 'status-info';
-      return 'status-primary';
+    /* ─ 내부 헬퍼: 기존 위치 유지 ─ */
+    const weekStrOf = s => {
+      if (!yn(s.repeatEnabled)) return '';
+      const labels = weekDays
+        .filter(d => !!s.week && s.week[d.key])
+        .map(d => d.label);
+      return labels.length ? labels.join(', ') : '-';
     };
 
-    const weekStrOf = (s) => {
-      if (!yn(s.repeatEnabled)) return '반복 없음';
-      const labels = weekDays.filter(d => !!(s.week && s.week[d.key])).map(d => d.label);
-      return labels.length ? labels.join(', ') : '-';
+    const priorityMeta = {
+      DANGER: { cls: 'sc3-badge--danger', icon: 'bi-exclamation-octagon-fill', label: '위험' },
+      WARNING: { cls: 'sc3-badge--warning', icon: 'bi-exclamation-triangle-fill', label: '경고' },
+      CAUTION: { cls: 'sc3-badge--caution', icon: 'bi-info-circle-fill', label: '주의' },
+      NONE: { cls: 'sc3-badge--none', icon: 'bi-dash-circle', label: 'NONE' },
     };
 
     scheduleList.forEach(s => {
       const isExpanded = expandedSchedule === s.id;
-
-      const enabledBadge = yn(s.enabledYn)
-        ? `<span class="status-badge status-success">사용</span>`
-        : `<span class="status-badge status-secondary">미사용</span>`;
-
-      const speakerCount = (Array.isArray(s.speakers) && s.speakers.length)
+      const pm = priorityMeta[String(s.bcPriority ?? 'NONE').toUpperCase()] ?? priorityMeta.NONE;
+      const bcType = String(s.bcBroadcastType ?? 'TTS').toUpperCase();
+      const bcMode = String(s.bcMode ?? 'REAL').toUpperCase();
+      const btypeCls = bcType === 'TTS' ? 'sc3-badge--tts' : 'sc3-badge--stored';
+      const modeCls = bcMode === 'REAL' ? 'sc3-chip--real' : 'sc3-chip--test';
+      const enabledCls = yn(s.enabledYn) ? 'sc3-badge--on' : 'sc3-badge--off';
+      const enabledTxt = yn(s.enabledYn) ? '활성' : '비활성';
+      const enabledIcon = yn(s.enabledYn) ? 'bi-check-circle-fill' : 'bi-x-circle-fill';
+      const speakerCount = Array.isArray(s.speakers)
         ? s.speakers.length
-        : (Array.isArray(s.speakerIds) ? s.speakerIds.length : 0);
-
+        : Array.isArray(s.speakerIds) ? s.speakerIds.length : 0;
       const timeRange = `${escapeHtml(fmtTimeHHMM(s.startTime))} ~ ${escapeHtml(fmtTimeHHMM(s.endTime))}`;
-      const weekStr = weekStrOf(s);
+      const weekStr = weekStrOf(s) || '-';
 
+      /* ─ TTS 미리보기 ─ */
+      const ttsPrev = bcType === 'TTS' && s.ttsMessage
+        ? `<div class="sc3-tts-preview">
+           <i class="bi bi-chat-left-text-fill sc3-tts-icon"></i>
+           <span>${escapeHtml(s.ttsMessage)}</span>
+         </div>`
+        : '';
+
+      /* ─ 확장 스피커 영역 ─ */
+      const expandBody = isExpanded
+        ? `<div class="sc3-expand-body">${renderSpeakerTable(s)}</div>`
+        : '';
+
+      /* ─ 카드 생성 ─ */
       const card = document.createElement('div');
-      card.className = 'schedule-card-v2';
+      card.className = 'sc3-card' + (isExpanded ? ' is-expanded' : '');
       card.innerHTML = `
-        <div class="d-flex justify-content-between align-items-start gap-3">
-          <div class="flex-grow-1" style="min-width:260px;">
-            <div class="d-flex align-items-center gap-2 mb-2">
-              <button class="icon-btn" type="button" data-action="toggle" data-id="${s.id}" aria-label="toggle">
-                <i class="bi bi-chevron-${isExpanded ? 'up' : 'down'}"></i>
-              </button>
-
-              <i class="bi bi-calendar-event text-info"></i>
-              <div class="fw-semibold text-white fs-6">${escapeHtml(s.name || '이름 없는 스케줄')}</div>
-
-              ${enabledBadge}
-              <span class="status-badge ${badgeByPriority(s.bcPriority)} ms-1">${escapeHtml(String(s.bcPriority ?? 'NONE'))}</span>
-              <span class="status-badge status-purple ms-1">${escapeHtml(String(s.bcBroadcastType ?? 'TTS'))}</span>
-            </div>
-
-            <div class="schedule-meta">
-              <span class="meta-item"><i class="bi bi-clock"></i>${timeRange}</span>
-              <span class="meta-item"><i class="bi bi-calendar-week"></i>${escapeHtml(weekStr)}</span>
-              <span class="meta-item"><i class="bi bi-gear"></i>${escapeHtml(String(s.bcMode ?? 'REAL'))} / ${escapeHtml(String(s.bcAlertType ?? 'CFW'))} / ${escapeHtml(String(s.bcScope ?? 'SPEAKER'))}</span>
-              <span class="meta-item"><i class="bi bi-megaphone"></i>${escapeHtml(String(s.disasterCode || '-'))}</span>
-              <span class="meta-item text-muted"><i class="bi bi-speaker"></i>${speakerCount}대</span>
-              <span class="meta-item text-muted"><i class="bi bi-calendar3"></i>${escapeHtml(s.updatedAt || s.createdAt || '-')}</span>
-            </div>
-
-            ${(String(s.bcBroadcastType ?? '').toUpperCase() === 'TTS' && s.ttsMessage)
-          ? `<div class="mt-2 small text-white-50"><i class="bi bi-chat-left-text me-1"></i>${escapeHtml(s.ttsMessage)}</div>`
-          : ''
-        }
-          </div>
-
-          <div class="schedule-actions flex-shrink-0">
-            <button class="icon-btn" type="button" data-action="edit" data-id="${s.id}" aria-label="edit">
-              <i class="bi bi-pencil-square"></i>
-            </button>
-            <button class="icon-btn delete" type="button" data-action="delete" data-id="${s.id}" aria-label="delete">
-              <i class="bi bi-trash3"></i>
-            </button>
-          </div>
+      <div class="sc3-card-header">
+        <div class="sc3-card-title-wrap">
+          <button class="sc3-toggle-btn" type="button"
+                  data-action="toggle" data-id="${s.id}" aria-label="toggle">
+            <i class="bi bi-chevron-${isExpanded ? 'up' : 'down'}"></i>
+          </button>
+          <span class="sc3-name">${escapeHtml(s.name)}</span>
+          <span class="sc3-badge ${enabledCls}">
+            <i class="bi ${enabledIcon}"></i>${enabledTxt}
+          </span>
+          <span class="sc3-badge ${pm.cls}">
+            <i class="bi ${pm.icon}"></i>${pm.label}
+          </span>
+          <span class="sc3-badge ${btypeCls}">
+            <i class="bi bi-volume-up-fill"></i>${escapeHtml(String(s.bcBroadcastType ?? 'TTS'))}
+          </span>
         </div>
+        <div class="sc3-card-actions">
+          <button class="sc3-action-btn" type="button"
+                  data-action="edit" data-id="${s.id}" aria-label="edit">
+            <i class="bi bi-pencil-square"></i>
+          </button>
+          <button class="sc3-action-btn sc3-action-btn--delete" type="button"
+                  data-action="delete" data-id="${s.id}" aria-label="delete">
+            <i class="bi bi-trash3"></i>
+          </button>
+        </div>
+      </div>
 
-        ${isExpanded ? renderSpeakerTable(s) : ''}
-      `;
+      <div class="sc3-meta-row">
+        <span class="sc3-chip sc3-chip--time">
+          <i class="bi bi-clock-fill"></i>${timeRange}
+        </span>
+        <span class="sc3-chip sc3-chip--week">
+          <i class="bi bi-calendar-week-fill"></i>${escapeHtml(weekStr)}
+        </span>
+        <span class="sc3-chip ${modeCls}">
+          <i class="bi bi-broadcast"></i>
+          ${escapeHtml(String(s.bcMode ?? 'REAL'))}
+          <span class="sc3-chip-sep">·</span>${escapeHtml(String(s.bcAlertType ?? 'CFW'))}
+          <span class="sc3-chip-sep">·</span>${escapeHtml(String(s.bcScope ?? 'SPEAKER'))}
+        </span>
+        <span class="sc3-chip sc3-chip--disaster">
+          <i class="bi bi-megaphone-fill"></i>${escapeHtml(String(s.disasterCode || '-'))}
+        </span>
+        <span class="sc3-chip sc3-chip--speaker">
+          <i class="bi bi-speaker-fill"></i>${speakerCount}
+        </span>
+        <span class="sc3-chip sc3-chip--date">
+          <i class="bi bi-calendar3"></i>${escapeHtml(s.updatedAt || s.createdAt || '-')}
+        </span>
+      </div>
 
+      ${ttsPrev}
+      ${expandBody}
+    `;
       listDiv.appendChild(card);
     });
   }

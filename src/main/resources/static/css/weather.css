@@ -1,0 +1,343 @@
+/* ================================================
+   weather.css — 날씨 배너 FX 전용 스타일
+   대응 JS: js/module/weather.js
+   ================================================ */
+
+/* ── 배너 배경 테마 ── */
+.sb-wx-banner.wx-clear {
+    background: linear-gradient(135deg, #0a2a6e 0%, #1565c0 60%, #42a5f5 100%);
+}
+
+.sb-wx-banner.wx-cloudy {
+    background: linear-gradient(135deg, #1c2a3a 0%, #37474f 60%, #607d8b 100%);
+}
+
+.sb-wx-banner.wx-overcast {
+    background: linear-gradient(135deg, #111820 0%, #263238 60%, #455a64 100%);
+}
+
+.sb-wx-banner.wx-rain,
+.sb-wx-banner.wx-shower {
+    background: linear-gradient(135deg, #0d1b2a 0%, #1a2a3a 60%, #2e4a6a 100%);
+}
+
+.sb-wx-banner.wx-sleet {
+    background: linear-gradient(135deg, #0d1b2a 0%, #1f3444 60%, #4a6a80 100%);
+}
+
+.sb-wx-banner.wx-snow {
+    background: linear-gradient(135deg, #1a2a3a 0%, #2e4a6a 60%, #7eafd4 100%);
+}
+
+.sb-wx-banner.wx-thunderstorm {
+    background: linear-gradient(135deg, #080c14 0%, #0d1b2a 60%, #1a2540 100%);
+}
+
+.sb-wx-banner.wx-unknown {
+    background: linear-gradient(135deg, #0f1318 0%, #1a2030 100%);
+}
+
+/* ── 공통 FX 컨테이너 ── */
+.sb-wx-fx {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* ── 구름 ── */
+.sb-wx-cloud {
+    position: absolute;
+    background: rgba(200, 220, 255, 0.12);
+    border-radius: 50px;
+    filter: blur(6px);
+}
+
+/* ── 맑음 — 태양 글로우 ── */
+.sb-wx-sun {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 220, 100, 0.55) 0%, rgba(255, 180, 40, 0.18) 55%, transparent 75%);
+    animation: sunPulse 3s ease-in-out infinite;
+}
+
+@keyframes sunPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.85;
+    }
+
+    50% {
+        transform: scale(1.08);
+        opacity: 1;
+    }
+}
+
+/* ── 맑음 — 광선 ── */
+.sb-wx-sun-ray {
+    position: absolute;
+    background: linear-gradient(transparent, rgba(255, 220, 100, 0.22), transparent);
+    transform-origin: center bottom;
+    border-radius: 2px;
+    animation: rayRotate 8s linear infinite;
+}
+
+@keyframes rayRotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ── 맑음 — 별(반짝임) ── */
+.sb-wx-star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    animation: starTwinkle 2.5s ease-in-out infinite;
+}
+
+@keyframes starTwinkle {
+
+    0%,
+    100% {
+        opacity: 0.2;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.6);
+    }
+}
+
+/* ── 비 컨테이너 ── */
+.sb-wx-rain {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.sb-wx-rain-line {
+    position: absolute;
+    width: 1.5px;
+    background: linear-gradient(transparent, rgba(180, 210, 255, 0.55));
+    border-radius: 1px;
+    animation: rainFall 0.7s linear infinite;
+}
+
+/* 소나기·뇌우용 굵은 빗줄기 */
+.sb-wx-rain-line.heavy {
+    width: 2px;
+    background: linear-gradient(transparent, rgba(160, 200, 255, 0.70));
+}
+
+@keyframes rainFall {
+    0% {
+        transform: translateY(0);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    90% {
+        opacity: 0.7;
+    }
+
+    100% {
+        transform: translateY(60px);
+        opacity: 0;
+    }
+}
+
+/* ── 진눈깨비 — 짧은 빗줄기 ── */
+.sb-wx-sleet-line {
+    position: absolute;
+    width: 1px;
+    background: linear-gradient(transparent, rgba(200, 230, 255, 0.45));
+    border-radius: 1px;
+    animation: sleetFall 0.9s linear infinite;
+}
+
+@keyframes sleetFall {
+    0% {
+        transform: translateY(0) translateX(0px);
+        opacity: 0;
+    }
+
+    15% {
+        opacity: 0.8;
+    }
+
+    85% {
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: translateY(55px) translateX(4px);
+        opacity: 0;
+    }
+}
+
+/* ── 눈 컨테이너 ── */
+.sb-wx-snow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.sb-wx-snow-flake {
+    position: absolute;
+    top: -10px;
+    background: rgba(255, 255, 255, 0.75);
+    border-radius: 50%;
+    animation: snowFall 1.8s linear infinite;
+}
+
+/* 크기 변형 */
+.sb-wx-snow-flake.sm {
+    width: 3px;
+    height: 3px;
+}
+
+.sb-wx-snow-flake.md {
+    width: 5px;
+    height: 5px;
+}
+
+.sb-wx-snow-flake.lg {
+    width: 7px;
+    height: 7px;
+    background: rgba(255, 255, 255, 0.55);
+}
+
+@keyframes snowFall {
+    0% {
+        transform: translateY(-10px) translateX(0px);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    90% {
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: translateY(100px) translateX(6px);
+        opacity: 0;
+    }
+}
+
+/* ── 번개 플래시 (뇌우) ── */
+.sb-wx-lightning {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: rgba(255, 255, 220, 0);
+    animation: lightningFlash 4s infinite;
+}
+
+@keyframes lightningFlash {
+
+    0%,
+    89% {
+        background: rgba(255, 255, 220, 0);
+    }
+
+    90% {
+        background: rgba(255, 255, 220, 0.18);
+    }
+
+    91% {
+        background: rgba(255, 255, 220, 0);
+    }
+
+    93% {
+        background: rgba(255, 255, 220, 0.12);
+    }
+
+    94%,
+    100% {
+        background: rgba(255, 255, 220, 0);
+    }
+}
+
+/* ── 번개 볼트 SVG 컨테이너 ── */
+.sb-wx-bolt {
+    position: absolute;
+    pointer-events: none;
+    animation: boltFlash 4s infinite;
+    opacity: 0;
+}
+
+@keyframes boltFlash {
+
+    0%,
+    88% {
+        opacity: 0;
+    }
+
+    90% {
+        opacity: 1;
+    }
+
+    92% {
+        opacity: 0;
+    }
+
+    93% {
+        opacity: 0.7;
+    }
+
+    95%,
+    100% {
+        opacity: 0;
+    }
+}
+
+/* ── 안개(흐림/overcast) — 흐릿한 레이어 ── */
+.sb-wx-mist {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: linear-gradient(transparent, rgba(150, 180, 200, 0.10), transparent);
+    animation: mistDrift 6s ease-in-out infinite alternate;
+}
+
+@keyframes mistDrift {
+    from {
+        transform: translateX(-8px);
+        opacity: 0.6;
+    }
+
+    to {
+        transform: translateX(8px);
+        opacity: 1;
+    }
+}
+
+/* ── 공통 하단 그라데이션 ── */
+.sb-wx-fade-bottom {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 18px;
+    background: linear-gradient(transparent, rgba(8, 14, 20, 0.95));
+    pointer-events: none;
+}

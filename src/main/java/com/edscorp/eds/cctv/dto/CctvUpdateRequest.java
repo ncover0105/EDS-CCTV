@@ -14,8 +14,16 @@ public class CctvUpdateRequest {
     private String id;
     private String password;
     private String rtspUrl;
+    private String lowRtspUrl;
+    private String highRtspUrl;
     private String type;
     private String wsPort;
     private String latitude;
     private String longitude;
+
+    // RTSP 품질별 설정
+    private Integer lowMountpointId;
+    private Integer highMountpointId;
+    private Integer lowVideoPort;
+    private Integer highVideoPort;
 }

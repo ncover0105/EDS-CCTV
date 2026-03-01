@@ -5,13 +5,15 @@
 <head>
     <meta charset="UTF-8">
     <title th:text="${title}">Home</title>
-    <script src="/js/footer.js"></script>
+    <!-- <script src="/js/footer.js"></script> -->
 
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
     <!-- <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=66sw7wk0ye&callback=initMap"></script> -->
+    <link rel="stylesheet" href="css/weather.css">
+    <link rel="stylesheet" href="css/modal.css">
     <!-- OpenLayers 라이브러리 (필수) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@7.4.0/ol.css" />
     <script src="https://cdn.jsdelivr.net/npm/ol@7.4.0/dist/ol.js"></script>
@@ -52,11 +54,11 @@
 
 <body>
     <!-- Main -->
-    <div class="main-container" layout:fragment="content">
-        <div class="control-bar">
+    <div class="main-container p-0" layout:fragment="content">
+        <div class="control-bar p-2 rounded-0">
             <div class="control-group">
-                <div class="dropdown-container">
-                    <button class="btn-apple-base btn-apple-light btn-dropdown" onclick="toggleDropdown(this)">
+                <div class="dropdown-container dropdown-sm">
+                    <button class="btn-apple-base btn-apple-light btn-dropdown btn-sm" onclick="toggleDropdown(this)">
                         <span id="selected-layout">4분할 화면 (2x2)</span>
                         <span class="dropdown-arrow">▼</span>
                     </button>
@@ -87,17 +89,17 @@
                         <li><a class="dropdown-item" href="#" data-layout="16">4x4</a></li>
                     </ul>
                 </div> -->
-                <button class="btn-apple-base btn-apple-light" id="mapBtn">
+                <button class="btn-apple-base btn-apple-light btn-sm" id="mapBtn">
                     <i class="bi bi-geo-alt-fill"></i>
                     <span class="d-none d-md-inline">지도화면</span>
                 </button>
-                <button class="btn-apple-base btn-apple-light" id="speakerList" data-bs-toggle="modal"
+                <button class="btn-apple-base btn-apple-light btn-sm" id="speakerList" data-bs-toggle="modal"
                     data-bs-target="#speaker_setting_modal">
                     <i class="bi bi-list"></i>
                     <span class="d-none d-md-inline">스피커 정보</span>
                 </button>
                 <button type="button" data-bs-toggle="modal" data-bs-target="#speaker_broadcast_modal"
-                    class="btn-apple-base btn-apple-danger">
+                    class="btn-apple-base btn-apple-danger btn-sm">
                     <i class="bi bi-exclamation-triangle"></i>
                     <span class="d-none d-md-inline">수동발령</span>
                 </button>
@@ -123,7 +125,7 @@
                 </button>
 
                 <!-- 스트리밍 서버 재시작 -->
-                <button class="btn-apple-base btn-apple-warning" id="restartAllServerBtn" type="button">
+                <button class="btn-apple-base btn-apple-warning btn-sm" id="restartAllServerBtn" type="button">
                     <i class="bi bi-arrow-clockwise"></i>
                     <span class="d-none d-md-inline">CCTV 전체 재시작</span>
                 </button>
@@ -133,8 +135,8 @@
             </div>
         </div>
 
-        <div class="content-wrapper">
-            <div class="main-section">
+        <div class="content-wrapper p-2">
+            <div class="main-section rounded-0 p-0">
                 <div id="cctv-container">
                     <!-- CCTV 피드 동적 생성 -->
                 </div>
@@ -172,121 +174,165 @@
             </div>
 
             <div class="sidebar">
-                <div class="panel">
-                    <div class="panel-header">
-                        <span>출입기록</span>
-                        <span id="logCount" class="status-badge status-info">0건</span>
+
+                <!-- ══════════════════════════════
+                     § 1  출입기록
+                ══════════════════════════════ -->
+                <div class="sb-sec">
+                    <div class="sb-hd">
+                        <span class="sb-hd-title">
+                            <i class="bi bi-door-open-fill" style="opacity:.6;"></i>
+                            출입기록
+                        </span>
+                        <div class="sb-hd-right">
+                            <span id="logCount" class="sb-cnt-badge">0건</span>
+                        </div>
                     </div>
-                    <div class="panel-content flex-column">
+                    <div class="sb-log-body">
                         <div id="logContainer"></div>
                         <div id="emptyLogMessage"
                             class="d-none d-flex flex-column align-items-center justify-content-center text-center flex-grow-1">
-                            <i class="bi bi-exclamation-circle mb-2 fs-3 text-muted"></i>
-                            <p class="mb-0 small text-muted">출입 기록이 없습니다.</p>
+                            <i class="bi bi-exclamation-circle mb-2 fs-5" style="color:rgba(255,255,255,.2);"></i>
+                            <p class="mb-0" style="font-size:11px;color:rgba(255,255,255,.25);">출입 기록이 없습니다.</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="panel d-none">
-                    <div class="panel-header">
-                        <span>스피커 상태</span>
+                <!-- ══════════════════════════════
+                     § 2  특보  (숨김 처리)
+                ══════════════════════════════ -->
+                <div class="sb-sec d-none" id="specialReportPanel">
+                    <div class="sb-hd d-none">
+                        <span class="sb-hd-title">
+                            <i class="bi bi-exclamation-triangle-fill" style="opacity:.6;"></i>
+                            특보
+                        </span>
+                        <span class="sb-cnt-badge" id="specialReportBadge">오늘</span>
                     </div>
-                    <div class="panel-content">
-                        <div id="speakerContainer"></div>
-                        <div id="emptySpeakerMessage"
-                            class="d-none d-flex flex-column align-items-center justify-content-center text-center flex-grow-1">
-                            <i class="bi bi-exclamation-circle mb-2 fs-3 text-muted"></i>
-                            <p class="mb-0 small text-muted">스피커 상태 정보가 없습니다.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="panel p-0" id="specialReportPanel">
-                    <div class="panel-header d-none">
-                        <span>특보</span>
-                        <span class="badge info" id="specialReportBadge">오늘</span>
-                    </div>
-
-                    <div class="panel-content p-0">
-                        <div id="specialReportLine" class="special-line" style="opacity: 0.9;">
+                    <div class="sb-special-body">
+                        <div id="specialReportLine" class="special-line" style="opacity:0.92;">
                             불러오는 중...
                         </div>
-
-                        <div id="specialReportEmpty" class="d-none special-line" style="opacity: 0.9;">
-                            <i class="bi bi-exclamation-circle fs-5 text-muted"></i>
+                        <div id="specialReportEmpty" class="d-none special-line" style="opacity:0.92;">
+                            <i class="bi bi-exclamation-circle fs-6 text-muted"></i>
                             <span class="sr-wrn-text text-muted">오늘 특보 없음</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="panel weather-panel">
-                    <div class="panel-header">
-                        <span>현재 날씨</span>
+                <!-- ══════════════════════════════
+                     § 3  현재 날씨
+                ══════════════════════════════ -->
+                <div class="sb-sec">
+                    <div class="sb-hd">
+                        <span class="sb-hd-title">
+                            <i class="bi bi-cloud-sun-fill" style="opacity:.6;"></i>
+                            현재 날씨
+                        </span>
                     </div>
-                    <div class="weather-main">
-                        <div class="weather-info">
-                            <img id="weather_icon" alt="Weather icon" class="weather-icon" />
-                            <div class="text-white">
-                                <div class="weather-temp" id="temperature"></div>
-                                <div style="opacity: 0.8;" id="weather"></div>
+
+                    <!-- 하늘 배너 -->
+                    <div class="sb-wx-banner wx-clear" id="sbWxBanner">
+                        <div class="sb-wx-fx" aria-hidden="true" id="sbWxFx"></div>
+                        <!-- <div class="sb-wx-cloud" style="width:70px;height:22px;top:12px;left:60px;"></div>
+                        <div class="sb-wx-cloud"
+                            style="width:50px;height:16px;top:20px;left:90px;background:rgba(200,220,255,.06);"></div>
+                        <div class="sb-wx-cloud" style="width:60px;height:18px;top:26px;left:170px;"></div>
+                        <div
+                            style="position:absolute;bottom:0;left:0;right:0;height:18px;background:linear-gradient(transparent,rgba(8,14,20,.95));">
+                        </div>
+                        <div class="sb-wx-rain" id="sbWxRain">
+                            <div class="sb-wx-rain-line" style="top:-12px;left:25px; height:18px;animation-delay:0s;">
+                            </div>
+                            <div class="sb-wx-rain-line" style="top:-12px;left:70px; height:16px;animation-delay:.18s;">
+                            </div>
+                            <div class="sb-wx-rain-line" style="top:-12px;left:120px;height:20px;animation-delay:.35s;">
+                            </div>
+                            <div class="sb-wx-rain-line" style="top:-12px;left:175px;height:17px;animation-delay:.08s;">
+                            </div>
+                            <div class="sb-wx-rain-line" style="top:-12px;left:220px;height:19px;animation-delay:.25s;">
+                            </div>
+                            <div class="sb-wx-rain-line" style="top:-12px;left:270px;height:16px;animation-delay:.42s;">
+                            </div>
+                            <div class="sb-wx-rain-line" style="top:-12px;left:320px;height:18px;animation-delay:.15s;">
                             </div>
                         </div>
-                        <div class="weather-details">
-                            <div class="weather-item-container">
-                                <div class="weather-item">
-                                    <div class="weather-label">강수량</div>
-                                    <div class="weather-value" id="rainfall"></div>
-                                </div>
-                                <div class="weather-item">
-                                    <div class="weather-label">습도</div>
-                                    <div class="weather-value" id="humidity"></div>
-                                </div>
-                                <div class="weather-item">
-                                    <div class="weather-label">풍속</div>
-                                    <div class="weather-value" id="windSpeed"></div>
-                                </div>
-                                <div class="weather-item">
-                                    <div class="weather-label">풍향</div>
-                                    <div class="weather-value" id="windDirection">
-                                        <i id="windIcon" class="fa-solid fa-location-arrow text-primary me-1"></i>
-                                        <span id="windText"></span>
-                                    </div>
-                                </div>
+                        <div class="sb-wx-snow" id="sbWxSnow" style="display:none;">
+                            <div class="sb-wx-snow-flake" style="top:-10px;left:30px; animation-delay:0s;"></div>
+                            <div class="sb-wx-snow-flake" style="top:-10px;left:80px; animation-delay:.3s;"></div>
+                            <div class="sb-wx-snow-flake" style="top:-10px;left:140px;animation-delay:.6s;"></div>
+                            <div class="sb-wx-snow-flake" style="top:-10px;left:200px;animation-delay:.15s;"></div>
+                            <div class="sb-wx-snow-flake" style="top:-10px;left:260px;animation-delay:.45s;"></div>
+                            <div class="sb-wx-snow-flake" style="top:-10px;left:310px;animation-delay:.2s;"></div>
+                        </div> -->
+                        <!-- 콘텐츠 -->
+                        <div class="sb-wx-banner-content">
+                            <img id="weather_icon" alt="날씨" class="sb-wx-icon" />
+                            <div style="display:flex;align-items:baseline;gap:3px;">
+                                <span class="sb-wx-temp" id="temperature"></span>
+                            </div>
+                            <div class="sb-wx-meta">
+                                <div class="sb-wx-cond" id="weather"></div>
+                                <div class="sb-wx-loc">현재 날씨 정보</div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="air-quality-main">
-                        <!-- PM10 -->
-                        <div class="air-quality-item">
-                            <div class="air-quality-top">
-                                <span class="air-quality-label">미세먼지 (PM10)</span>
+                    <!-- 4-셀 수치 그리드: 강수량/습도/풍속/풍향 -->
+                    <div class="sb-wx-metrics">
+                        <div class="sb-wx-cell">
+                            <div class="sb-wx-lbl">강수량</div>
+                            <div class="sb-wx-val" id="rainfall">-</div>
+                        </div>
+                        <div class="sb-wx-cell">
+                            <div class="sb-wx-lbl">습도</div>
+                            <div class="sb-wx-val" id="humidity">-</div>
+                        </div>
+                        <div class="sb-wx-cell">
+                            <div class="sb-wx-lbl">풍속</div>
+                            <div class="sb-wx-val" id="windSpeed">-</div>
+                        </div>
+                        <div class="sb-wx-cell">
+                            <div class="sb-wx-lbl">풍향</div>
+                            <div class="sb-wx-val" id="windDirection" style="display:flex;align-items:center;gap:3px;">
+                                <i id="windIcon" class="fa-solid fa-location-arrow"
+                                    style="font-size:12px;color:#4fc3f7;"></i>
+                                <span id="windText"></span>
                             </div>
-                            <div class="air-quality-bottom">
+                        </div>
+                    </div>
+
+                    <!-- 공기질 2셀 -->
+                    <div class="sb-aq-row">
+                        <div class="sb-aq-cell">
+                            <span class="sb-aq-lbl">미세먼지(PM10)</span>
+                            <div class="sb-aq-right">
                                 <span class="air-quality-grade" id="pm10Grade">-</span>
-
-                                <span class="air-quality-value" id="pm10Value">-</span>
+                                <span class="air-quality-value" id="pm10Value"
+                                    style="font-size:10px;font-weight:700;">-</span>
                             </div>
                         </div>
-
-                        <!-- PM2.5 -->
-                        <div class="air-quality-item">
-                            <div class="air-quality-top">
-                                <span class="air-quality-label">초미세먼지 (PM2.5)</span>
-                            </div>
-                            <div class="air-quality-bottom">
+                        <div class="sb-aq-cell">
+                            <span class="sb-aq-lbl">초미세먼지(PM2.5)</span>
+                            <div class="sb-aq-right">
                                 <span class="air-quality-grade" id="pm25Grade">-</span>
-
-                                <span class="air-quality-value" id="pm25Value">-</span>
+                                <span class="air-quality-value" id="pm25Value"
+                                    style="font-size:10px;font-weight:700;">-</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="panel weather-panel">
-                    <div class="panel-header">
-                        <span>레이더 영상</span>
-                        <div style="display: flex; gap: 0.5rem;">
+                <!-- ══════════════════════════════
+                     § 4  레이더 / 위성
+                ══════════════════════════════ -->
+                <div class="sb-sec sb-sec-fluid">
+                    <div class="sb-hd">
+                        <span class="sb-hd-title">
+                            <i class="fa-solid fa-satellite" style="opacity:.6;font-size:9px;"></i>
+                            레이더 영상
+                        </span>
+                        <div class="sb-radar-toggle">
                             <button class="toggle-btn active" onclick="Weather.switchRadarType('radar', this)">
                                 <i class="fa-solid fa-broadcast-tower me-1"></i>레이더
                             </button>
@@ -295,32 +341,60 @@
                             </button>
                         </div>
                     </div>
-                    <div class="panel-content">
-                        <div class="weather-map w-100 position-relative" id="radar-map">
-                            <div id="loadingSpinnerRadar"
-                                class="d-flex justify-content-center align-items-center flex-column position-absolute w-100 h-100">
-                                <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
-                                <div class="mt-2 small text-white-50">레이더 로딩중...</div>
+                    <div class="sb-radar-body">
+                        <div class="sb-radar-map-wrap">
+                            <!-- 레이더 지도 -->
+                            <div class="weather-map w-100 position-relative" id="radar-map">
+                                <div id="loadingSpinnerRadar"
+                                    class="d-flex justify-content-center align-items-center flex-column position-absolute w-100 h-100">
+                                    <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
+                                    <div class="mt-2 small text-white-50" style="font-size:10px;">레이더 로딩중...</div>
+                                </div>
+                                <img id="radarImg" class="d-none w-100" alt="레이더 지도">
                             </div>
-                            <img id="radarImg" class="d-none w-100" alt="레이더 지도">
-                        </div>
-
-                        <!-- 위성 지도 -->
-                        <div class="weather-map w-100 d-none position-relative" id="satellite-map">
-                            <div id="loadingSpinnerSatellite"
-                                class="d-flex justify-content-center align-items-center flex-column position-absolute w-100 h-100">
-                                <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
-                                <div class="mt-2 small text-white-50">위성 로딩중...</div>
+                            <!-- 위성 지도 -->
+                            <div class="weather-map w-100 d-none position-relative" id="satellite-map">
+                                <div id="loadingSpinnerSatellite"
+                                    class="d-flex justify-content-center align-items-center flex-column position-absolute w-100 h-100">
+                                    <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
+                                    <div class="mt-2 small text-white-50" style="font-size:10px;">위성 로딩중...</div>
+                                </div>
+                                <img id="satelliteImg" class="d-none w-100" alt="위성 지도">
                             </div>
-                            <img id="satelliteImg" class="d-none w-100" alt="위성 지도">
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
 
-        <div class="footer-custom d-none">
-            <div th:replace="~{fragments/footer :: footerFragment}"></div>
+        <!-- ==================== 하단 Ticker Bar ==================== -->
+        <div class="ticker-bar" id="tickerBar">
+
+            <!-- 왼쪽: 특보 태그 -->
+            <div class="ticker-tag" id="tickerTag">
+                <div class="ticker-tag-dot"></div>
+                <span id="tickerTagLabel">특보</span>
+            </div>
+
+            <!-- 중앙: 스크롤 텍스트 -->
+            <div class="ticker-track">
+                <div class="ticker-inner" id="tickerInner">
+                    <!-- specialReportPanel 데이터가 JS로 채워짐 -->
+                    <span class="t-item t-empty">수신된 특보 정보가 없습니다.</span>
+                </div>
+            </div>
+
+            <!-- 오른쪽: 시스템 상태 칩 -->
+            <div class="ticker-sys">
+                <div class="ts-chip">
+                    CAM <b id="tickerOnline">0</b>/<b id="tickerTotal">0</b>
+                </div>
+                <!-- <div class="ts-chip">
+                    <span id="tickerTime">--:--:--</span>
+                </div> -->
+            </div>
+
         </div>
 
         <!-- 전체화면 뷰 -->

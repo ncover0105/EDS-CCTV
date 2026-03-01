@@ -1,307 +1,435 @@
-// package com.edscorp.eds.service;
+// package com.edscorp.eds.cctv.service;
 
-// import java.io.IOException;
-// import java.net.URLEncoder;
-// import java.nio.charset.StandardCharsets;
-// import java.time.Instant;
 // import java.util.ArrayList;
 // import java.util.HashMap;
 // import java.util.List;
 // import java.util.Map;
-// import java.util.Set;
 // import java.util.concurrent.ConcurrentHashMap;
-// import java.util.stream.Collectors;
 
 // import org.springframework.stereotype.Service;
 // import org.springframework.transaction.annotation.Transactional;
 
-// import com.edscorp.eds.model.CameraCache;
-// import com.edscorp.eds.model.entity.CctvEntity;
-// import com.edscorp.eds.repository.CctvRepository;
+// import com.edscorp.eds.cctv.domain.CctvEntity;
+// import com.edscorp.eds.cctv.dto.CctvCreateRequest;
+// import com.edscorp.eds.cctv.dto.CctvUpdateRequest;
+// import com.edscorp.eds.cctv.repository.CctvRepository;
+// import com.edscorp.eds.cctv.stream.JanusApi;
+// import com.edscorp.eds.cctv.stream.JanusManager;
 
 // import jakarta.annotation.PostConstruct;
 // import lombok.RequiredArgsConstructor;
 
-// import org.springframework.beans.factory.annotation.Value;
-// import org.springframework.scheduling.TaskScheduler;
-// import org.springframework.scheduling.annotation.EnableAsync;
+// import org.springframework.scheduling.annotation.Async;
 // import lombok.extern.slf4j.Slf4j;
 
 // @Service
 // @Slf4j
 // @RequiredArgsConstructor
-// @EnableAsync
 // public class CctvService {
-    
-//     private final CctvRepository cctvRepository;
-//     private final CameraCache cameraCache;
-//     // private final JanusManager janusManager;
-//     private final GstProcessManager gstProcessManager;
-//     private final TaskScheduler scheduler;
-//     private final JanusService janusService;
 
-//     // private final ConcurrentHashMap<Integer, JanusApi.JanusSession> janusSessions = new ConcurrentHashMap<>();
+// private final CctvRepository cctvRepository;
+// private final CameraCache cameraCache;
+// private final JanusManager janusManager;
+// private final JanusApi janusApi;
 
-//     private final ConcurrentHashMap<String, Integer> cctvPortMap = new ConcurrentHashMap<>();
+// private final ConcurrentHashMap<Integer, JanusApi.JanusSession> janusSessions
+// = new ConcurrentHashMap<>();
 
-//     // properties에서 값 주입
-//     @Value("${janus.public.url")
-//     private String janusHost;
+// // mountpointId 단위 락
+// private final ConcurrentHashMap<Integer, Object> restartLocks = new
+// ConcurrentHashMap<>();
 
-//     @Value("${gstreamer.video-port-start}")
-//     private int portStart;
-    
-//     @Value("${gstreamer.video-port-end}")
-//     private int portEnd;
+// // mountpointId 단위 쿨다운(최근 재시작 시간)
+// private final ConcurrentHashMap<Integer, Long> lastRestartAt = new
+// ConcurrentHashMap<>();
 
-//     /**
-//      * 애플리케이션 시작 시 포트 할당
-//      */
-//     @PostConstruct
-//     public void initializePorts() {
-//         log.info("CCTV 포트 초기화 시작");
+// private static final long RESTART_COOLDOWN_MS = 30_000;
 
-//         List<CctvEntity> cameras = cctvRepository.findByStatusCam("0");
-//         for (CctvEntity camera : cameras) {
-//             // videoPort가 null 혹은 0인 경우에만 할당
-//             if (camera.getVideoPort() == null || camera.getVideoPort() == 0) {
-//                 int assignedPort = assignAvailablePort();
-//                 if (assignedPort != -1) {
-//                     camera.setVideoPort(assignedPort);
-//                     cctvRepository.save(camera);
-//                     log.info("포트 자동 할당: {} -> {}", camera.getCctvCode(), assignedPort);
-//                 } else {
-//                     log.error("사용 가능한 포트를 찾지 못함: {}", camera.getCctvCode());
-//                 }
-//             }
+// private Object lockFor(Integer mountId) {
+// return restartLocks.computeIfAbsent(mountId, k -> new Object());
+// }
 
-//             // 할당된 포트가 있으면 자동으로 스트리밍 시작
-//             Integer port = camera.getVideoPort();
-//             if (port != null && port > 0) {
-//                 boolean started = start(camera.getCctvCode());
-//                 log.info("자동 스트리밍 시작 ({}): {}", camera.getCctvCode(), started ? "성공" : "실패");
-//             }
-//         }
+// private boolean isInCooldown(Integer mountId) {
+// long now = System.currentTimeMillis();
+// long last = lastRestartAt.getOrDefault(mountId, 0L);
+// return (now - last) < RESTART_COOLDOWN_MS;
+// }
 
-//         log.info("CCTV 포트 초기화 완료");
-//     }
+// private void markRestart(Integer mountId) {
+// lastRestartAt.put(mountId, System.currentTimeMillis());
+// }
 
-//     /**
-//      * 사용 가능한 포트를 범위 내에서 찾음
-//      */
-//     private int assignAvailablePort() {
-//         Set<Integer> usedPorts = cctvRepository.findAll().stream()
-//             .map(CctvEntity::getVideoPort)
-//             .filter(p -> p != null && p > 0)
-//             .collect(Collectors.toSet());
+// @PostConstruct
+// public void init() {
 
-//         for (int port = portStart; port <= portEnd; port++) {
-//             if (!usedPorts.contains(port)) {
-//                 return port;
-//             }
-//         }
-//         return -1;
-//     }
+// log.info("CctvService: 초기화 시작");
 
-//     /**
-//      * 특정 CCTV 스트리밍 시작
-//      */
-//     @Transactional
-//     public boolean start(String cctvCode) {
-//         try {
-//             CctvEntity cctv = cctvRepository.findByCctvCode(cctvCode)
-//                 .orElseThrow(() -> new IllegalArgumentException("CCTV not found: " + cctvCode));
+// // Janus 연결 확인
+// if (!janusApi.checkJanusConnection()) {
+// log.error("Janus 연결 실패, Mountpoint 생성을 중단합니다.");
+// getCameras();
+// return;
+// }
 
-//             int videoPort = cctv.getVideoPort();
-//             if (videoPort == 0) {
-//                 log.error("Invalid videoPort for {}: {}", cctvCode, videoPort);
-//                 return false;
-//             }
+// // ensureAllStreamsAsync();
+// log.info("CctvService: 초기화 완료");
+// }
 
-//             // ① 먼저 Janus에 RTP 스트림 등록
-//             String janusResult = janusService.createRtpStream(cctv.getMountpointId(), cctv.getName(), videoPort, 96, "H264/90000");
-//             if (janusResult == null || !isJanusSuccess(janusResult)) {
-//                 log.error("Janus RTP 스트림 등록 실패: {}", cctvCode);
-//                 return false;
-//             }
+// @Async
+// public void ensureAllStreamsAsync() {
+// getCameras().forEach(cam -> {
+// String locationCode = (String) cam.get("locationCode");
+// String cctvCode = (String) cam.get("cctvCode");
+// Integer mountId = (Integer) cam.get("mountpointId");
+// Integer videoPort = (Integer) cam.get("videoPort");
+// String rtspUrl = (String) cam.get("rtspUrl");
+// String rtspId = (String) cam.get("id");
+// String rtspPw = (String) cam.get("password");
+// String type = (String) cam.get("type");
 
-//             // ② 잠시 대기 (Janus가 포트 바인딩할 시간 제공)
-//             Thread.sleep(1000);
+// if (mountId == null || videoPort == null || rtspUrl == null ||
+// rtspUrl.isBlank())
+// return;
 
-//             // ③ GStreamer 시작
-//             boolean gstStarted = gstProcessManager.start(cctvCode, cctv.getRtspUrl(), videoPort);
-//             if (!gstStarted) {
-//                 log.error("GStreamer 시작 실패: {}", cctvCode);
-//                 // Janus 스트림 정리
-//                 janusService.destroyRtpStream(videoPort);
-//                 return false;
-//             }
+// Object lock = lockFor(mountId);
+// synchronized (lock) {
+// try {
+// janusManager.ensureStream(mountId, videoPort, rtspUrl, rtspId, rtspPw, type);
+// if (locationCode != null && cctvCode != null)
+// updateStatusProc(locationCode, cctvCode, 1);
+// } catch (Exception e) {
+// log.error("ensureStream failed mountpoint={} url={}", mountId, rtspUrl, e);
+// if (locationCode != null && cctvCode != null)
+// updateStatusProc(locationCode, cctvCode, 0);
+// }
+// }
+// });
+// }
 
-//             log.info("스트리밍 시작 성공: {} -> 포트 {}", cctvCode, videoPort);
-//             return true;
+// public List<CctvEntity> getAllCCTVList() {
+// return cctvRepository.findAll();
+// }
 
-//             // // 1) GStreamer 시작
-//             // boolean gstStarted = gstProcessManager.start(cctvCode, cctv.getRtspUrl(), videoPort);
-//             // if (!gstStarted) {
-//             //     log.error("GStreamer 시작 실패: {}", cctvCode);
-//             //     return false;
-//             // }
+// public List<Map<String, Object>> getCameras() {
+// log.info("getCameras() 카메라 리스트 캐싱 >>>>>>>>>>>");
+// List<CctvEntity> entityList = cctvRepository.findAll();
+// List<Map<String, Object>> cameras = new ArrayList<>();
 
-//             // // 2) Janus에 RTP 스트림 등록 (videoPort를 ID로 사용)
-//             // janusService.createRtpStream(videoPort, cctv.getName(), videoPort, 96, "H264/90000");
-//             // log.info("Janus RTP 스트림 등록 완료: {} -> 포트 {}", cctvCode, videoPort);
+// for (CctvEntity entity : entityList) {
+// Map<String, Object> camera = new HashMap<>();
+// camera.put("name", entity.getName());
+// camera.put("cctvCode", entity.getCctvCode());
+// camera.put("address", entity.getAddress());
+// camera.put("id", entity.getId());
+// camera.put("password", entity.getPassword());
+// camera.put("rtspUrl", buildRtspUrl(entity));
+// camera.put("type", entity.getType());
+// camera.put("wsPort", parsePort(entity.getWsPort()));
+// camera.put("locationCode", entity.getLocationCode());
+// camera.put("latitude", entity.getLatitude());
+// camera.put("longitude", entity.getLongitude());
+// camera.put("status", entity.getStatusCam());
+// camera.put("mountpointId", entity.getMountpointId());
+// camera.put("videoPort", entity.getVideoPort());
+// cameras.add(camera);
+// }
+// cameraCache.setCameras(cameras);
+// return cameras;
+// }
 
-//             // return true;
-//         } catch (Exception e) {
-//             log.error("스트리밍 시작 실패: {}", cctvCode, e);
-//             return false;
-//         }
-//     }
+// private String buildRtspUrl(CctvEntity entity) {
+// String raw = entity.getRtspUrl();
+// if (raw == null)
+// return "rtsp://";
 
-//     // Janus 응답 성공 여부 확인 메서드 추가 필요
-//     private boolean isJanusSuccess(String response) {
-//         // JSON 파싱해서 "janus": "success" 또는 "ack" 확인
-//         return response != null && (response.contains("\"janus\":\"success\"") || response.contains("\"janus\":\"ack\""));
-//     }
+// String base = raw.startsWith("rtsp://") ? raw.substring("rtsp://".length()) :
+// raw;
 
-//     /**
-//      * CCTV 스트리밍 중지
-//      */    
-//     @Transactional
-//     public boolean stop(String cctvCode) {
-//         try {
-//             CctvEntity cctv = cctvRepository.findByCctvCode(cctvCode)
-//                 .orElseThrow(() -> new IllegalArgumentException("CCTV not found: " + cctvCode));
-            
-//             // 1) GStreamer 프로세스 중지
-//             gstProcessManager.stop(cctvCode);
-            
-//             // 2) Janus RTP 스트림 제거
-//             if (cctv.getVideoPort() != null) {
-//                 try {
-//                     janusService.destroyRtpStream(cctv.getVideoPort());
-//                     log.info("Janus RTP 스트림 제거 완료: {}", cctvCode);
-//                 } catch (Exception e) {
-//                     log.error("Janus RTP 스트림 제거 실패: {}", cctvCode, e);
-//                 }
-//             }
-            
-//             log.info("CCTV 스트리밍 중지 완료: {}", cctvCode);
-//             return true;
-            
-//         } catch (Exception e) {
-//             log.error("CCTV 스트리밍 중지 실패: {}", cctvCode, e);
-//             return false;
-//         }
-//     }
+// if (entity.getId() != null && !entity.getId().isEmpty()) {
+// return "rtsp://" + entity.getId() + ":" + entity.getPassword() + "@" + base;
+// } else {
+// return "rtsp://" + base;
+// }
+// }
 
-//     /**
-//      * 모든 카메라 재시작
-//      */
-//     public void restartAll() {
-//         log.info("모든 카메라 재시작 시작");
-        
-//         // 모든 프로세스 중지
-//         gstProcessManager.stopAll();
-        
-//         // 활성 카메라 다시 시작
-//         List<CctvEntity> activeCameras = cctvRepository.findByStatusCam("0");
-//         for (CctvEntity camera : activeCameras) {
-//             try {
-//                 Thread.sleep(1000); // 시작 간격 조정
-//                 start(camera.getCctvCode());
-//             } catch (Exception e) {
-//                 log.error("카메라 재시작 실패: {}", camera.getCctvCode(), e);
-//             }
-//         }
-        
-//         log.info("모든 카메라 재시작 완료");
-//     }
+// private int parsePort(String wsPort) {
+// try {
+// return Integer.parseInt(wsPort);
+// } catch (NumberFormatException e) {
+// return -1;
+// }
+// }
 
-//     /**
-//      * CCTV 스트리밍 상태 확인
-//      */
-//     public boolean isRunning(String cctvCode) {
-//         return gstProcessManager.isRunning(cctvCode);
-//     }
-    
-//     /**
-//      * 특정 CCTV에 할당된 포트 조회
-//      */
-//     public Integer getAssignedPort(String cctvCode) {
-//         return cctvPortMap.get(cctvCode);
-//     }
+// // 모든 카메라 정보 제공
+// public List<Map<String, Object>> getAllCameras() {
+// return cameraCache.getCameras();
+// }
 
-//     /**
-//      * 모든 CCTV 목록 반환
-//      */
-//     public List<CctvEntity> getAllCCTVList() {
-//         return cctvRepository.findAll();
-//     }
+// private void refreshCache() {
+// try {
+// getCameras(); // 내부에서 cameraCache.setCameras(...)
+// } catch (Exception ex) {
+// log.error("camera cache refresh failed", ex);
+// }
+// }
 
-//     public List<Map<String, Object>> getCameras() {
-//         List<CctvEntity> entityList = cctvRepository.findAll();
-//         List<Map<String, Object>> cameras = new ArrayList<>();
+// @Transactional
+// public CctvEntity create(CctvCreateRequest req) {
+// if (req.getCctvCode() == null || req.getCctvCode().isBlank()) {
+// throw new IllegalArgumentException("cctvCode는 필수입니다.");
+// }
+// if (req.getName() == null || req.getName().isBlank()) {
+// throw new IllegalArgumentException("name은 필수입니다.");
+// }
 
-//         for (CctvEntity entity : entityList) {
-//             Map<String, Object> camera = new HashMap<>();
-//             camera.put("name", entity.getName());
-//             camera.put("cctvCode", entity.getCctvCode());
-//             camera.put("address", entity.getAddress());
-//             camera.put("id", entity.getId());
-//             camera.put("password", entity.getPassword());
-//             camera.put("rtspUrl", buildRtspUrl(entity));
-//             camera.put("wsPort", parsePort(entity.getWsPort()));
-//             camera.put("locationCode", entity.getLocationCode());
-//             camera.put("latitude", entity.getLatitude());
-//             camera.put("longitude", entity.getLongitude());
-//             camera.put("status", entity.getStatusCam());
-//             camera.put("mountpointId", entity.getMountpointId());
-//             camera.put("videoPort", entity.getVideoPort());
-//             cameras.add(camera);
-//         }
-//         cameraCache.setCameras(cameras);
-//         return cameras;
-//     }
+// // cctvRepository.findByCctvCode(req.getCctvCode()).ifPresent(e -> {
+// // throw new IllegalArgumentException("이미 존재하는 cctvCode 입니다: " +
+// // req.getCctvCode());
+// // });
 
-//     private String buildRtspUrl(CctvEntity entity) {
-//         String base = "rtsp://";
-//         if (entity.getRtspUrl() != null && !entity.getRtspUrl().isEmpty()) {
+// String locationCode = (req.getLocationCode() != null &&
+// !req.getLocationCode().isBlank())
+// ? req.getLocationCode()
+// : req.getCctvCode();
 
-//             return base + entity.getRtspUrl();
-//         } else {
-//             return base;
-//         }
-//         // String id = entity.getId();
-//         // String pw = entity.getPassword();
+// if (cctvRepository.existsByLocationCodeAndCctvCode(locationCode,
+// req.getCctvCode())) {
+// throw new IllegalArgumentException("이미 존재하는 CCTV 입니다: " + locationCode + "/"
+// + req.getCctvCode());
+// }
 
-//         // String encodedId = URLEncoder.encode(id, StandardCharsets.UTF_8);
-//         // String endcodedPw = URLEncoder.encode(pw, StandardCharsets.UTF_8);
+// CctvEntity e = new CctvEntity();
+// e.setLocationCode(req.getLocationCode() != null ? req.getLocationCode() :
+// req.getCctvCode());
 
-//         // String url = entity.getRtspUrl();
+// e.setCctvCode(req.getCctvCode());
+// e.setName(req.getName());
+// e.setRtspUrl(req.getRtspUrl());
+// e.setLatitude(req.getLatitude());
+// e.setLongitude(req.getLongitude());
+// e.setId(req.getId());
+// e.setPassword(req.getPassword());
 
-//         // String rtspURL = String.format("rtsp://%s:%s@%s", encodedId, endcodedPw, url);
+// e.setMountpointId(req.getMountpointId());
+// e.setVideoPort(req.getVideoPort());
+// e.setAddress(req.getAddress());
+// e.setType(req.getType());
+// e.setWsPort(req.getWsPort());
+// e.setStatusCam(req.getStatusCam());
 
-//         // log.info("✅ rtspURL {} 생성 완료", rtspURL);
+// CctvEntity saved = cctvRepository.save(e);
 
-//         // return rtspURL;
-//         // if (entity.getId() != null && !entity.getId().isEmpty()) {
-//         //     return base + entity.getId() + ":" + entity.getPassword() + "@" + entity.getRtspUrl();
-//         // } else {
-//         //     return base + entity.getRtspUrl();
-//         // }
-//     }
+// refreshCache();
 
-//     private int parsePort(String wsPort) {
-//         try {
-//             return Integer.parseInt(wsPort);
-//         } catch (NumberFormatException e) {
-//             return -1;
-//         }
-//     }
+// // mountpointId/videoPort/rtspUrl이 실제 스트림에 필요하면 켜는 것을 권장
+// try {
+// if (saved.getMountpointId() != null) {
+// // janusManager.ensureStream(
+// // saved.getMountpointId(),
+// // saved.getVideoPort(),
+// // saved.getRtspUrl(),
+// // saved.getId(),
+// // saved.getPassword(),
+// // saved.getType());
+// String rtsp = buildRtspUrl(saved);
 
-//     // 모든 카메라 정보 제공
-//     public List<Map<String, Object>> getAllCameras() {
-//         return cameraCache.getCameras();
-//     }
+// janusManager.ensureStream(
+// saved.getMountpointId(),
+// saved.getVideoPort(),
+// rtsp,
+// saved.getId(),
+// saved.getPassword(),
+// saved.getType());
+
+// }
+// } catch (Exception ex) {
+// log.error("ensureStream failed after create: cctvCode={}",
+// saved.getCctvCode(), ex);
+// }
+
+// return saved;
+// }
+
+// @Async
+// public void restartAsync(String locationCode, String cctvCode) {
+// restart(locationCode, cctvCode, true);
+// }
+
+// @Async
+// public void restartAllStreamsAsync() {
+// restartAllStreams(false);
+// }
+
+// // CCTV 개별 재연결
+// @Transactional(readOnly = true)
+// public void restart(String locationCode, String cctvCode) {
+// restart(locationCode, cctvCode, false);
+// }
+
+// @Transactional(readOnly = true)
+// public void restart(String locationCode, String cctvCode, boolean force) {
+// CctvEntity e = cctvRepository.findByLocationCodeAndCctvCode(locationCode,
+// cctvCode)
+// .orElseThrow(() -> new IllegalArgumentException("CCTV not found: " +
+// locationCode + "/" + cctvCode));
+
+// Integer mountId = e.getMountpointId();
+// Integer videoPort = e.getVideoPort();
+// String rtspUrl = e.getRtspUrl();
+
+// // init() 스킵 조건과 동일하게
+// if (mountId == null || videoPort == null || rtspUrl == null ||
+// rtspUrl.isBlank()) {
+// throw new IllegalStateException("mountpointId/videoPort/rtspUrl이 없습니다. " +
+// locationCode + "/" + cctvCode);
+// }
+
+// Object lock = lockFor(mountId);
+
+// synchronized (lock) {
+// // 쿨다운 (수동/관리자 force 요청이면 무시)
+// if (!force && isInCooldown(mountId)) {
+// log.info("restart skipped (cooldown) {} / {} mountId={}", locationCode,
+// cctvCode, mountId);
+// return;
+// }
+
+// String rtsp = buildRtspUrl(e);
+
+// janusManager.restartStream(
+// mountId,
+// videoPort,
+// rtsp,
+// e.getId(),
+// e.getPassword(),
+// e.getType());
+
+// markRestart(mountId);
+// log.info("restart done {} / {} mountId={}", locationCode, cctvCode, mountId);
+// }
+// }
+
+// // CCTV 전체 재연결
+// @Async
+// public void restartAllStreamsAsync(boolean force) {
+// restartAllStreams(force);
+// }
+
+// @Transactional(readOnly = true)
+// public void restartAllStreams(boolean force) {
+// if (!janusApi.checkJanusConnection()) {
+// throw new IllegalStateException("Janus 연결 실패 상태입니다.");
+// }
+
+// List<CctvEntity> all = cctvRepository.findAll();
+
+// for (CctvEntity e : all) {
+// Integer mountId = e.getMountpointId();
+// Integer videoPort = e.getVideoPort();
+// String rtspUrl = e.getRtspUrl();
+
+// if (mountId == null || videoPort == null || rtspUrl == null ||
+// rtspUrl.isBlank())
+// continue;
+
+// Object lock = lockFor(mountId);
+// synchronized (lock) {
+
+// // ✅ force=true면 쿨다운 무시
+// if (!force && isInCooldown(mountId)) {
+// log.info("restartAll skipped (cooldown) cctvCode={} mountId={}",
+// e.getCctvCode(), mountId);
+// continue;
+// }
+
+// String rtsp = buildRtspUrl(e);
+
+// try {
+// janusManager.restartStream(
+// mountId,
+// videoPort,
+// rtsp,
+// e.getId(),
+// e.getPassword(),
+// e.getType());
+
+// markRestart(mountId);
+// } catch (Exception ex) {
+// log.error("restartAll failed cctvCode={} mountId={}", e.getCctvCode(),
+// mountId, ex);
+// }
+// }
+// }
+// }
+
+// @Transactional
+// public void updateStatusCam(
+// String locationCode,
+// String cctvCode,
+// int statusCam) {
+// CctvEntity entity = cctvRepository
+// .findByLocationCodeAndCctvCode(locationCode, cctvCode)
+// .orElseThrow(() -> new IllegalArgumentException(
+// "CCTV not found: " + locationCode + "/" + cctvCode));
+
+// String newVal = String.valueOf(statusCam);
+
+// if (!newVal.equals(entity.getStatusCam())) {
+// entity.setStatusCam(newVal);
+// }
+// }
+
+// @Transactional
+// public CctvEntity update(String locationCode, String cctvCode,
+// CctvUpdateRequest req) {
+// CctvEntity e = cctvRepository.findByLocationCodeAndCctvCode(locationCode,
+// cctvCode)
+// .orElseThrow(() -> new IllegalArgumentException("CCTV not found: " +
+// locationCode + "/" + cctvCode));
+
+// e.setName(req.getName());
+// e.setMountpointId(req.getMountpointId());
+// e.setVideoPort(req.getVideoPort());
+// e.setAddress(req.getAddress());
+// e.setId(req.getId());
+
+// if (req.getPassword() != null && !req.getPassword().isBlank()) {
+// e.setPassword(req.getPassword());
+// }
+
+// e.setRtspUrl(req.getRtspUrl());
+// e.setType(req.getType());
+// e.setWsPort(req.getWsPort());
+// e.setLatitude(req.getLatitude());
+// e.setLongitude(req.getLongitude());
+
+// refreshCache();
+// return e;
+// }
+
+// @Transactional
+// public void updateStatusProc(String locationCode, String cctvCode, int
+// statusProc) {
+// CctvEntity entity = cctvRepository
+// .findByLocationCodeAndCctvCode(locationCode, cctvCode)
+// .orElseThrow(() -> new IllegalArgumentException(
+// "CCTV not found: " + locationCode + "/" + cctvCode));
+
+// String newVal = String.valueOf(statusProc);
+// if (!newVal.equals(entity.getStatusProc())) {
+// entity.setStatusProc(newVal);
+// }
+// }
+
+// @Transactional
+// public void delete(String locationCode, String cctvCode) {
+// if (!cctvRepository.existsByLocationCodeAndCctvCode(locationCode, cctvCode))
+// {
+// throw new IllegalArgumentException("CCTV not found: " + locationCode + "/" +
+// cctvCode);
+// }
+// cctvRepository.deleteByLocationCodeAndCctvCode(locationCode, cctvCode);
+// refreshCache();
+// }
+
 // }

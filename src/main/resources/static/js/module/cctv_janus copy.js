@@ -10,39 +10,13 @@ window.CCTVJanus = (function () {
     // mountpoint handle 저장
     const pluginHandles = {};
 
-    // ===================== 4. 페이지 이탈 시 정리 =====================
-    /**
-     * 모든 Janus 핸들 detach + video srcObject 해제
-     * 서버 GStreamer/mountpoint는 건드리지 않음
-     */
-    function destroy() {
-        console.log("[CCTVJanus] destroy() 시작 - 핸들 수:", Object.keys(pluginHandles).length);
-
-        for (const mountId in pluginHandles) {
-            const handle = pluginHandles[mountId];
-            try {
-                handle.send({ message: { request: "stop" } });
-                handle.detach();
-            } catch (e) { }
-            delete pluginHandles[mountId];
-        }
-
-        // Janus 세션 자체는 keepAlive 타임아웃으로 자연 소멸
-        // (강제 destroy하면 서버 mountpoint도 영향받을 수 있음)
-        janus = null;
-
-        console.log("[CCTVJanus] destroy() 완료");
-    }
-
-
     // 외부에서 접근 필요한 값 공개
     const exports = {
         initSignaling,
         initJanusCam,
         pluginHandles,
         reconnectAll,
-        reconnectOne,
-        destroy,
+        reconnectOne
     };
 
     // ------------------------------

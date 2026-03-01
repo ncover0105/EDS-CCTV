@@ -56,11 +56,11 @@ public enum WeatherCondition {
             case "4":
                 return SHOWER; // 소나기 (예보 전용)
             case "5":
-                return RAIN; // ✅ 빗방울 (실황 전용)
+                return RAIN; // 빗방울 (실황 전용)
             case "6":
-                return SLEET; // ✅ 빗방울눈날림 (실황 전용)
+                return SLEET; // 빗방울눈날림 (실황 전용)
             case "7":
-                return SNOW; // ✅ 눈날림 (실황 전용)
+                return SNOW; // 눈날림 (실황 전용)
             default:
                 break;
         }
@@ -92,7 +92,7 @@ public enum WeatherCondition {
         if (isMissing(skyCode))
             skyCode = 1;
 
-        // ✅ 1) 적설이 관측되면 눈 우선
+        // 1) 적설이 관측되면 눈 우선
         if (snoCm > 0.0) {
             // 기온이 양수이고 강수도 있으면 진눈개비로 표시할지 선택 가능
             if (!Double.isNaN(tmpC) && tmpC >= 0.0 && tmpC <= 2.0 && pcpMm > 0.0)
@@ -100,14 +100,14 @@ public enum WeatherCondition {
             return SNOW;
         }
 
-        // ✅ 2) 강수가 관측되면 비/진눈개비 판정
+        // 2) 강수가 관측되면 비/진눈개비 판정
         if (pcpMm > 0.0) {
             if (!Double.isNaN(tmpC) && tmpC >= 0.0 && tmpC <= 2.0)
                 return SLEET;
             return RAIN;
         }
 
-        // ✅ 3) PTY 기반 fallback (단기예보)
+        // 3) PTY 기반 fallback (단기예보)
         switch (ptyCode) {
             case 0:
                 break;
@@ -129,7 +129,7 @@ public enum WeatherCondition {
                 break;
         }
 
-        // ✅ 4) SKY 기반
+        // 4) SKY 기반
         switch (skyCode) {
             case 1:
                 return CLEAR;

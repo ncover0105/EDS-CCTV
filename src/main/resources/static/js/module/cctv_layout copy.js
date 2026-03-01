@@ -516,42 +516,13 @@ window.CCTVLayout = (function () {
             });
     }
 
-    /**
-     * 모든 video srcObject 트랙 정지 + 캐시 초기화
-     * 페이지 이탈 시 호출
-     */
-    function destroy() {
-        console.log("[CCTVLayout] destroy() 시작");
-
-        // 모든 video 트랙 정지
-        for (const mountId in videoCache) {
-            const video = videoCache[mountId];
-            try {
-                video.srcObject?.getTracks().forEach(t => t.stop());
-                video.srcObject = null;
-            } catch (e) { }
-        }
-
-        videoCache = {};
-        cameras = [];
-
-        // fullscreen 열려있으면 닫기
-        const fullView = document.getElementById("fullscreenView");
-        if (fullView?.classList.contains("active")) {
-            closeFullscreen();
-        }
-
-        console.log("[CCTVLayout] destroy() 완료");
-    }
-
     return {
         init,
         renderGrid,
         attachStreamToVideo,
         showPlaceholder,
         setFocusedCameraByIndex,
-        closeFullscreen,
-        destroy,
+        closeFullscreen
     };
 
 })();

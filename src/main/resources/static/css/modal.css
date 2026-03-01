@@ -1,0 +1,891 @@
+/* ================================================
+   modal.css — 방송 모달 전용 스타일
+   paste-3.txt 디자인 기반 / Bootstrap 호환
+   ================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap');
+
+/* ── CSS 변수 ── */
+.speaker-modal {
+    --m-bg: #ffffff;
+    --m-surface: #f7f8fb;
+    --m-border: #e4e7ef;
+    --m-border-light: #eef0f5;
+    --m-text-primary: #1a1d2e;
+    --m-text-secondary: #6b7280;
+    --m-text-muted: #9ca3af;
+    --m-primary: #3b6ef6;
+    --m-primary-light: #ebf0ff;
+    --m-primary-dark: #2a57d9;
+    --m-success: #10b981;
+    --m-success-light: #d1fae5;
+    --m-danger: #ef4444;
+    --m-danger-light: #fee2e2;
+    --m-warning: #f59e0b;
+    --m-warning-light: #fef3c7;
+    --m-shadow-sm: 0 1px 3px rgba(0, 0, 0, .06), 0 1px 2px rgba(0, 0, 0, .04);
+    --m-shadow-md: 0 4px 16px rgba(0, 0, 0, .08), 0 2px 6px rgba(0, 0, 0, .05);
+    --m-shadow-lg: 0 20px 60px rgba(0, 0, 0, .14), 0 8px 24px rgba(0, 0, 0, .08);
+    --m-radius: 14px;
+    --m-radius-sm: 8px;
+    --m-radius-xs: 6px;
+    --m-font: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --m-transition: 180ms cubic-bezier(.4, 0, .2, 1);
+}
+
+.speaker-modal.dark {
+    /* Neutral charcoal base (less navy) */
+    --m-bg: #0f1115;
+    /* modal base */
+    --m-surface: #141821;
+    /* cards/panels */
+    --m-border: #2a3142;
+    --m-border-light: #222838;
+
+    /* Text contrast up */
+    --m-text-primary: #f8fafc;
+    --m-text-secondary: #cbd5e1;
+    /* ↑ 기존 94a3b8 보다 밝게 */
+    --m-text-muted: #94a3b8;
+    /* muted도 너무 어둡지 않게 */
+
+    /* Primary: brighter + clearer tint */
+    --m-primary: #60a5fa;
+    /* 밝은 블루 */
+    --m-primary-dark: #3b82f6;
+    --m-primary-light: rgba(96, 165, 250, .22);
+    /* 기존 .15 → .22 */
+
+    /* Status colors a bit brighter */
+    --m-success: #34d399;
+    --m-success-light: rgba(52, 211, 153, .20);
+    --m-danger: #fb7185;
+    --m-danger-light: rgba(251, 113, 133, .20);
+    --m-warning: #fbbf24;
+    --m-warning-light: rgba(251, 191, 36, .22);
+
+    /* Shadows */
+    --m-shadow-sm: 0 1px 2px rgba(0, 0, 0, .65);
+    --m-shadow-md: 0 6px 22px rgba(0, 0, 0, .55);
+    --m-shadow-lg: 0 24px 70px rgba(0, 0, 0, .65);
+}
+
+/* ── 모달 오버레이 ── */
+.speaker-modal .modal-dialog {
+    max-width: 980px;
+}
+
+.speaker-modal .modal-content {
+    font-family: var(--m-font);
+    background: var(--m-bg);
+    border: none;
+    border-radius: 20px;
+    box-shadow: var(--m-shadow-lg);
+    overflow: hidden;
+    max-height: calc(100vh - 40px);
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── 상단 액센트 바 ── */
+.speaker-modal .modal-accent {
+    height: 4px;
+    background: var(--m-primary);
+    flex-shrink: 0;
+    transition: background var(--m-transition);
+}
+
+.speaker-modal .modal-accent.test {
+    background: linear-gradient(90deg, var(--m-warning), #f97316);
+}
+
+/* ── 헤더 ── */
+.speaker-modal .modal-header {
+    padding: 20px 28px 16px;
+    border-bottom: 1px solid var(--m-border-light);
+    background: var(--m-bg);
+    flex-shrink: 0;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.speaker-modal .modal-icon {
+    width: 44px;
+    height: 44px;
+    background: var(--m-primary-light);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: var(--m-primary);
+    flex-shrink: 0;
+}
+
+.speaker-modal .modal-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--m-text-primary);
+    line-height: 1.2;
+}
+
+.speaker-modal .modal-subtitle {
+    font-size: 13px;
+    color: var(--m-text-secondary);
+    margin-top: 3px;
+    font-weight: 400;
+}
+
+.speaker-modal .mode-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--m-primary-light);
+    color: var(--m-primary);
+    transition: all var(--m-transition);
+}
+
+.speaker-modal .mode-badge.test {
+    background: var(--m-warning-light);
+    color: #b45309;
+}
+
+.speaker-modal .mode-badge .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.speaker-modal .close-btn {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--m-border);
+    background: var(--m-bg);
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--m-text-secondary);
+    font-size: 18px;
+    transition: all var(--m-transition);
+    flex-shrink: 0;
+    opacity: 1;
+}
+
+.speaker-modal .close-btn:hover {
+    background: var(--m-surface);
+    color: var(--m-text-primary);
+    border-color: var(--m-border);
+}
+
+/* ── 바디 레이아웃 ── */
+.speaker-modal .modal-body {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+    padding: 0;
+}
+
+/* ── 왼쪽 패널 (스피커 목록) ── */
+.speaker-modal .panel-left {
+    border-right: 1px solid var(--m-border-light);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--m-surface);
+}
+
+.speaker-modal .panel-header {
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid var(--m-border-light);
+    flex-shrink: 0;
+    background: var(--m-bg);
+}
+
+.speaker-modal .panel-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--m-text-muted);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.speaker-modal .panel-label .badge-count {
+    background: var(--m-primary-light);
+    color: var(--m-primary);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+
+/* 토글/리프레시 버튼 행 */
+.speaker-modal .panel-actions {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.speaker-modal .panel-action-btn {
+    font-family: var(--m-font);
+    flex: 1;
+    padding: 7px 10px;
+    border: 1.5px solid var(--m-border);
+    border-radius: var(--m-radius-xs);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--m-text-secondary);
+    background: var(--m-bg);
+    cursor: pointer;
+    transition: all var(--m-transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.speaker-modal .panel-action-btn:hover {
+    border-color: var(--m-primary);
+    color: var(--m-primary);
+    background: var(--m-primary-light);
+}
+
+/* 선택된 스피커 칩 영역 */
+.speaker-modal .selected-chips-wrap {
+    padding: 8px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    border-bottom: 1px solid var(--m-border-light);
+    min-height: 40px;
+    align-items: center;
+    background: var(--m-bg);
+}
+
+.speaker-modal .selected-chips-empty {
+    font-size: 12px;
+    color: var(--m-text-muted);
+}
+
+.speaker-modal .bc-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px 3px 10px;
+    background: var(--m-primary-light);
+    color: var(--m-primary);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* 스피커 리스트 */
+.speaker-modal .speaker-list-wrap {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 12px 12px;
+}
+
+.speaker-modal .speaker-list-wrap::-webkit-scrollbar {
+    width: 4px;
+}
+
+.speaker-modal .speaker-list-wrap::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.speaker-modal .speaker-list-wrap::-webkit-scrollbar-thumb {
+    background: var(--m-border);
+    border-radius: 4px;
+}
+
+/* 스피커 카드 */
+/* ── 스피커 아이템 (paste.txt 기준) ── */
+.speaker-modal .speaker-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--m-radius-sm);
+    cursor: pointer;
+    transition: background var(--m-transition);
+    position: relative;
+    margin-bottom: 6px;
+}
+
+.speaker-modal .speaker-item:hover:not(.offline) {
+    background: #fff;
+    box-shadow: var(--m-shadow-sm);
+}
+
+.speaker-modal .speaker-item.selected {
+    background: #fff;
+    box-shadow: var(--m-shadow-sm);
+}
+
+.speaker-modal .speaker-item.offline {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+/* 체크박스 */
+.speaker-modal .speaker-cb {
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid var(--m-border);
+    border-radius: 5px;
+    background: var(--m-surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all var(--m-transition);
+}
+
+.speaker-modal .speaker-item.selected .speaker-cb {
+    background: var(--m-primary);
+    border-color: var(--m-primary);
+}
+
+.speaker-modal .speaker-cb svg {
+    display: none;
+}
+
+.speaker-modal .speaker-item.selected .speaker-cb svg {
+    display: block;
+}
+
+
+.speaker-modal .speaker-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.speaker-modal .speaker-name {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--m-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.speaker-modal .speaker-loc {
+    font-size: 11.5px;
+    color: var(--m-text-muted);
+    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.speaker-modal .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--m-success);
+    box-shadow: 0 0 0 3px var(--m-success-light);
+}
+
+.speaker-modal .speaker-item.offline .status-dot {
+    background: #d1d5db;
+    box-shadow: none;
+}
+
+.speaker-modal .speaker-name {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--m-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.speaker-modal .speaker-id {
+    font-size: 11.5px;
+    color: var(--m-text-muted);
+    margin-top: 1px;
+}
+
+.speaker-modal .speaker-count-bar {
+    padding: 6px 20px;
+    font-size: 11.5px;
+    color: var(--m-text-muted);
+    flex-shrink: 0;
+    border-top: 1px solid var(--m-border-light);
+    background: var(--m-bg);
+}
+
+/* ── 오른쪽 패널 (방송 설정) ── */
+.speaker-modal .panel-right {
+    overflow-y: auto;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    background: var(--m-bg);
+}
+
+.speaker-modal .panel-right::-webkit-scrollbar {
+    width: 4px;
+}
+
+.speaker-modal .panel-right::-webkit-scrollbar-thumb {
+    background: var(--m-border);
+    border-radius: 4px;
+}
+
+/* 설정 카드 */
+.speaker-modal .m-card {
+    background: var(--m-surface);
+    border: 1.5px solid var(--m-border-light);
+    border-radius: var(--m-radius);
+    padding: 14px 16px;
+}
+
+.speaker-modal .m-card-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--m-text-muted);
+    margin-bottom: 10px;
+}
+
+/* 라디오 그룹 */
+.speaker-modal .m-radio-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.speaker-modal .m-radio-option {
+    position: relative;
+}
+
+.speaker-modal .m-radio-option input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.speaker-modal .m-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1.5px solid var(--m-border);
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--m-text-secondary);
+    cursor: pointer;
+    background: var(--m-bg);
+    transition: all var(--m-transition);
+    user-select: none;
+}
+
+.speaker-modal .m-radio-label:hover {
+    border-color: var(--m-primary);
+    color: var(--m-primary);
+}
+
+.speaker-modal .m-radio-option input:checked+.m-radio-label {
+    border-color: var(--m-primary);
+    background: var(--m-primary-light);
+    color: var(--m-primary);
+    font-weight: 600;
+}
+
+.speaker-modal .m-radio-option.mode-test input:checked+.m-radio-label {
+    border-color: var(--m-warning);
+    background: var(--m-warning-light);
+    color: #92400e;
+}
+
+/* 폼 셀렉트 */
+.speaker-modal .m-select {
+    font-family: var(--m-font);
+    width: 100%;
+    padding: 9px 32px 9px 12px;
+    border: 1.5px solid var(--m-border);
+    border-radius: var(--m-radius-sm);
+    font-size: 13.5px;
+    color: var(--m-text-primary);
+    background: var(--m-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center;
+    -webkit-appearance: none;
+    outline: none;
+    cursor: pointer;
+    transition: border-color var(--m-transition), box-shadow var(--m-transition);
+}
+
+.speaker-modal .m-select:focus {
+    border-color: var(--m-primary);
+    box-shadow: 0 0 0 3px rgba(59, 110, 246, .1);
+}
+
+/* 텍스트에어리어 */
+.speaker-modal .m-textarea {
+    font-family: var(--m-font);
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--m-border);
+    border-radius: var(--m-radius-sm);
+    font-size: 13.5px;
+    color: var(--m-text-primary);
+    background: var(--m-bg);
+    resize: vertical;
+    min-height: 90px;
+    outline: none;
+    line-height: 1.5;
+    transition: border-color var(--m-transition), box-shadow var(--m-transition);
+}
+
+.speaker-modal .m-textarea::placeholder {
+    color: var(--m-text-muted);
+}
+
+.speaker-modal .m-textarea:focus {
+    border-color: var(--m-primary);
+    box-shadow: 0 0 0 3px rgba(59, 110, 246, .1);
+}
+
+.speaker-modal .char-counter {
+    text-align: right;
+    font-size: 11.5px;
+    color: var(--m-text-muted);
+    margin-top: 4px;
+}
+
+/* 필드 라벨 */
+.speaker-modal .m-field-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--m-text-primary);
+    margin-bottom: 6px;
+}
+
+/* BGM 토글 */
+.speaker-modal .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.speaker-modal .toggle-label-text {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--m-text-primary);
+}
+
+.speaker-modal .toggle-wrap {
+    position: relative;
+}
+
+.speaker-modal .toggle-wrap input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.speaker-modal .toggle-track {
+    width: 44px;
+    height: 24px;
+    background: #d1d5db;
+    border-radius: 12px;
+    cursor: pointer;
+    display: block;
+    transition: background var(--m-transition);
+    position: relative;
+}
+
+.speaker-modal .toggle-track::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+    transition: transform var(--m-transition);
+}
+
+.speaker-modal .toggle-wrap input:checked~.toggle-track {
+    background: var(--m-primary);
+}
+
+.speaker-modal .toggle-wrap input:checked~.toggle-track::after {
+    transform: translateX(20px);
+}
+
+/* 볼륨 슬라이더 */
+.speaker-modal .volume-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.speaker-modal .volume-row.d-none {
+    display: none !important;
+}
+
+.speaker-modal .vol-label {
+    font-size: 12px;
+    color: var(--m-text-secondary);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.speaker-modal .vol-value {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--m-primary);
+    min-width: 32px;
+    text-align: right;
+}
+
+.speaker-modal .m-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--m-border);
+    outline: none;
+    cursor: pointer;
+}
+
+.speaker-modal .m-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--m-primary);
+    box-shadow: 0 1px 4px rgba(59, 110, 246, .4);
+    transition: transform var(--m-transition);
+}
+
+.speaker-modal .m-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+}
+
+/* 프리뷰 박스 */
+.speaker-modal .preview-box {
+    background: #0f1220;
+    border-radius: var(--m-radius-sm);
+    padding: 12px 14px;
+    font-size: 11.5px;
+    color: #a5f3fc;
+    font-family: 'Courier New', monospace;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-all;
+    border: 1px solid #1e293b;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* ── 푸터 ── */
+.speaker-modal .modal-footer {
+    padding: 14px 28px;
+    border-top: 1px solid var(--m-border-light) !important;
+    background: var(--m-bg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.speaker-modal .footer-info {
+    font-size: 12.5px;
+    color: var(--m-text-muted);
+}
+
+.speaker-modal .footer-info strong {
+    color: var(--m-primary);
+}
+
+.speaker-modal .footer-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* 푸터 버튼 */
+.speaker-modal .m-btn {
+    font-family: var(--m-font);
+    padding: 9px 20px;
+    border-radius: var(--m-radius-sm);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all var(--m-transition);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
+}
+
+.speaker-modal .m-btn-ghost {
+    background: transparent;
+    color: var(--m-text-secondary);
+    border: 1.5px solid var(--m-border);
+}
+
+.speaker-modal .m-btn-ghost:hover {
+    background: var(--m-surface);
+    color: var(--m-text-primary);
+}
+
+.speaker-modal .m-btn-primary {
+    background: var(--m-primary);
+    color: #fff;
+    box-shadow: 0 3px 12px rgba(59, 110, 246, .3);
+}
+
+.speaker-modal .m-btn-primary:hover {
+    background: var(--m-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(59, 110, 246, .35);
+}
+
+.speaker-modal .m-btn-primary.test-mode {
+    background: var(--m-warning);
+    box-shadow: 0 3px 12px rgba(245, 158, 11, .3);
+}
+
+.speaker-modal .m-btn-primary.test-mode:hover {
+    background: #d97706;
+}
+
+.speaker-modal .m-btn-primary:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* 에러 메시지 */
+.speaker-modal .m-err {
+    font-size: 12px;
+    color: var(--m-danger);
+    margin-top: 5px;
+    display: none;
+}
+
+.speaker-modal .m-err.show {
+    display: block;
+}
+
+/* ── 반응형 ── */
+@media (max-width: 768px) {
+    .speaker-modal .modal-body {
+        grid-template-columns: 1fr;
+    }
+
+    .speaker-modal .panel-left {
+        border-right: none;
+        border-bottom: 1px solid var(--m-border-light);
+        max-height: 300px;
+    }
+
+    .speaker-modal .modal-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .speaker-modal .footer-actions {
+        justify-content: flex-end;
+    }
+}
+
+.speaker-modal .no-results {
+    text-align: center;
+    padding: 24px 12px;
+    color: var(--m-text-muted);
+    font-size: 13px;
+}
+
+.speaker-modal .bc-chip-remove:hover {
+    background: var(--m-primary) !important;
+    color: #fff !important;
+}
+
+#bc_tts_wrap.tts-locked {
+    opacity: .3;
+    pointer-events: none;
+}
+
+/* Speaker card visibility boost */
+.speaker-modal.dark .speaker-item {
+    background: transparent;
+}
+
+.speaker-modal.dark .speaker-item:hover:not(.offline) {
+    background: rgba(255, 255, 255, .04);
+    outline: 1px solid rgba(255, 255, 255, .06);
+}
+
+.speaker-modal.dark .speaker-item.selected {
+    background: rgba(96, 165, 250, .10);
+    /* primary tint */
+    outline: 1px solid rgba(96, 165, 250, .35);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .35);
+}
+
+/* Checkbox contrast */
+.speaker-modal.dark .speaker-cb {
+    background: rgba(255, 255, 255, .04);
+    border-color: rgba(255, 255, 255, .12);
+}
+
+.speaker-modal.dark .speaker-item.selected .speaker-cb {
+    background: var(--m-primary);
+    border-color: var(--m-primary);
+}
+
+/* Make muted text readable */
+.speaker-modal.dark .panel-label,
+.speaker-modal.dark .speaker-loc,
+.speaker-modal.dark .speaker-id,
+.speaker-modal.dark .char-counter,
+.speaker-modal.dark .footer-info {
+    color: var(--m-text-secondary);
+}
+
+/* Subtitle too dim -> slightly brighter */
+.speaker-modal.dark .modal-subtitle {
+    color: var(--m-text-secondary);
+}
+
+/* Stronger focus ring in dark mode */
+.speaker-modal.dark .m-select:focus,
+.speaker-modal.dark .m-textarea:focus {
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, .28);
+    border-color: rgba(96, 165, 250, .85);
+}
+
+.speaker-modal.dark .m-radio-option input:checked+.m-radio-label {
+    background: rgba(96, 165, 250, .16);
+    border-color: rgba(96, 165, 250, .85);
+    color: #dbeafe;
+}

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.edscorp.eds.cctv.service.CctvService;
+import com.edscorp.eds.cctv.service.CctvManagementService;
 import com.edscorp.eds.mqtt.dto.EmergencyLogRowDTO;
 import com.edscorp.eds.mqtt.service.EmergencyService;
 import com.edscorp.eds.speaker.domain.SpeakerStatusEntity;
@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MenuController {
 
-    private final CctvService cctvService;
+    private final CctvManagementService cctvManagementService;
     private final UserService userService;
     private final SpeakerService speakerService;
     private final BroadcastScheduleService broadcastScheduleService;
@@ -91,7 +91,7 @@ public class MenuController {
             Model model) {
         model.addAttribute("title", "EDS");
         model.addAttribute("currentPage", "cctv");
-        model.addAttribute("cctvList", cctvService.getAllCCTVList());
+        model.addAttribute("cctvList", cctvManagementService.getAllCCTVList());
         return "page/menu/cctvListPage";
     }
 

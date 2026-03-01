@@ -12,6 +12,7 @@
     <script defer src="/js/page/setting/setting_user.js"></script>
     <script defer src="/js/page/setting/setting_sms.js"></script>
     <script defer src="/js/page/setting/setting_schedule.js"></script>
+    <script defer src="/js/page/setting/setting_set.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast/dist/css/iziToast.min.css">
     <script src="https://cdn.jsdelivr.net/npm/izitoast/dist/js/iziToast.min.js"></script>
     <script th:inline="javascript">
@@ -804,143 +805,165 @@
                         <!-- SETTING -->
                         <div th:if="${view == 'set'}"
                             class="set-hist-pane h-100 w-100 d-flex flex-column animate-fade-in">
+
+                            <!-- ── Topbar (기존 유지) ── -->
                             <header class="set-hist-topbar">
                                 <div class="set-hist-title">
                                     <div class="set-hist-icon"><i class="bi bi-gear-fill"></i></div>
                                     <div class="set-hist-title-text">
                                         <h3>시스템 설정</h3>
-                                        <p>안전 관리 프로그램 시스템 설정 및 관리</p>
+                                        <p></p>
                                     </div>
                                 </div>
                                 <div class="set-hist-actions">
                                     <div class="set-hist-action-buttons">
-                                        <button id="btn-setting-save" class="btn-soft" onclick="saveSetting()"><i
-                                                class="bi bi-check"></i><span>저장</span></button>
+                                        <button id="btn-setting-save" class="btn-soft" onclick="saveSetting()">
+                                            <i class="bi bi-check"></i><span>저장</span><span></span>
+                                        </button>
                                     </div>
                                 </div>
                             </header>
+
+                            <!-- ══════════════════════════════════════════
+                                SECTION – 리디자인 영역
+                            ══════════════════════════════════════════ -->
                             <section class="set-hist-surface overflow-auto">
-                                <div class="d-flex flex-column gap-3 p-4 flex-grow-1">
-                                    <div class="col-12 d-flex flex-grow-1 flex-column gap-3">
-                                        <div
-                                            class="card card-dark bg-transparent flex-grow-1 d-flex flex-column border-0">
-                                            <div class="card-body d-flex flex-column min-h-0 p-4">
-                                                <div class="setting-section">
-                                                    <h6 class="section-title fw-semibold pb-3">
-                                                        기본 설정
-                                                    </h6>
-                                                    <div class="setting-item">
-                                                        <div
-                                                            class="d-flex justify-content-between align-items-start flex-wrap">
-                                                            <div class="flex-grow-1 flex-column">
-                                                                <div class="setting-label">자동 승인 사용</div>
-                                                                <div class="setting-description">
-                                                                    발령 정보를 자동으로 승인하는 기능을 활성화합니다
-                                                                </div>
-                                                            </div>
-                                                            <div class="form-check form-switch">
-                                                                <input class="form-check-input" type="checkbox"
-                                                                    role="switch" id="autoApproval">
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                <div class="setting-redesign-wrap">
 
-                                                <div class="setting-section">
-                                                    <h6 class="section-title fw-semibold pb-3">
-                                                        자동 승인 옵션
-                                                    </h6>
-
-                                                    <div class="row">
-                                                        <div class="col-md-4 col-sm-6 mb-3">
-                                                            <div class="setting-item">
-                                                                <div class="setting-label">발령모드</div>
-                                                                <div class="radio-group flex-column">
-                                                                    <div class="form-check mb-3">
-                                                                        <input class="form-check-input" type="radio"
-                                                                            name="mode" id="modeReal" value="real">
-                                                                        <label class="form-check-label"
-                                                                            for="modeReal">실제발령</label>
-                                                                    </div>
-                                                                    <div class="form-check">
-                                                                        <input class="form-check-input" type="radio"
-                                                                            name="mode" id="modeTest" value="test">
-                                                                        <label class="form-check-label"
-                                                                            for="modeTest">시험발령</label>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="col-md-4 col-sm-6 mb-3">
-                                                            <div class="setting-item">
-                                                                <div class="setting-label">발령매체</div>
-                                                                <div class="radio-group flex-column">
-                                                                    <div class="form-check mb-3">
-                                                                        <input class="form-check-input" type="radio"
-                                                                            name="media" id="mediaCable" value="cable">
-                                                                        <label class="form-check-label"
-                                                                            for="mediaCable">유선</label>
-                                                                    </div>
-                                                                    <div class="form-check">
-                                                                        <input class="form-check-input" type="radio"
-                                                                            name="media" id="mediaDmb" value="dmb">
-                                                                        <label class="form-check-label"
-                                                                            for="mediaDmb">DMB</label>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="col-md-4 col-sm-6 mb-3">
-                                                            <div class="setting-item">
-                                                                <div class="setting-label">발령종류</div>
-                                                                <div class="radio-group flex-column">
-                                                                    <div class="form-check mb-3">
-                                                                        <input class="form-check-input" type="radio"
-                                                                            name="type" id="typeTts" value="tts">
-                                                                        <label class="form-check-label"
-                                                                            for="typeTts">TTS</label>
-                                                                    </div>
-                                                                    <div class="form-check">
-                                                                        <input class="form-check-input" type="radio"
-                                                                            name="type" id="typeSaved" value="saved">
-                                                                        <label class="form-check-label"
-                                                                            for="typeSaved">저장메시지</label>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="setting-section text-wrap">
-                                                    <h6 class="section-title fw-semibold pb-3">
-                                                        시스템 연동 설정
-                                                    </h6>
-
-                                                    <div class="setting-item">
-                                                        <div class="setting-label">
-                                                            지도 인증키 설정
-                                                        </div>
-                                                        <div class="setting-description">
-                                                            지도 서비스 이용을 위한 API 인증키를 입력하세요
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <input type="text" class="form-control" id="mapApiKey"
-                                                                placeholder="예: AIzaSyDxvL7nMsF4tKlX9QrYzKpR3wE8...">
-                                                            <div class="form-text">
-                                                                VWorld 지도 서비스 API 키를 입력하세요. (지도이미지: © <a
-                                                                    href="https://www.vworld.kr" target="_blank">국토교통부 ·
-                                                                    VWorld</a>)
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                    <!-- ① 자동 승인 ─────────────────────────── -->
+                                    <div class="scard">
+                                        <div class="scard-header">
+                                            <span class="scard-icon"><i class="bi bi-person-check-fill"></i></span>
+                                            <div>
+                                                <p class="scard-title">사용자 자동 승인
+                                                </p>
+                                                <p class="scard-desc">
+                                                    발령 정보를 자동으로 승인하는 기능을 활성화합니다.
+                                                </p>
                                             </div>
                                         </div>
+                                        <label class="stoggle" title="자동 승인 토글">
+                                            <input class="form-check-input stoggle-input" type="checkbox" role="switch"
+                                                id="autoApproval">
+                                            <span class="stoggle-track"></span>
+                                        </label>
                                     </div>
+
+                                    <!-- ② 운용 설정 3-col ─────────────────────── -->
+                                    <div class="scard scard--grid3">
+
+                                        <!-- 운용 모드 -->
+                                        <div class="scard-group">
+                                            <p class="scard-group-label">
+                                                <i class="bi bi-toggles"></i>
+                                                <span>운용 모드</span>
+                                            </p>
+                                            <div class="sradio-stack">
+                                                <label class="sradio-item">
+                                                    <input type="radio" name="mode" id="modeReal" value="real">
+                                                    <span class="sradio-box">
+                                                        <i class="bi bi-broadcast"></i>
+                                                        <span>실제발령</span>
+                                                    </span>
+                                                </label>
+                                                <label class="sradio-item">
+                                                    <input type="radio" name="mode" id="modeTest" value="test">
+                                                    <span class="sradio-box">
+                                                        <i class="bi bi-bug"></i>
+                                                        <span>시험발령</span>
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="scard-divider"></div>
+
+                                        <!-- 전송 매체 -->
+                                        <div class="scard-group">
+                                            <p class="scard-group-label">
+                                                <i class="bi bi-wifi"></i>
+                                                <span>전송 매체</span>
+                                            </p>
+                                            <div class="sradio-stack">
+                                                <label class="sradio-item">
+                                                    <input type="radio" name="media" id="mediaCable" value="cable">
+                                                    <span class="sradio-box">
+                                                        <i class="bi bi-ethernet"></i>
+                                                        <span>유선</span>
+                                                    </span>
+                                                </label>
+                                                <label class="sradio-item">
+                                                    <input type="radio" name="media" id="mediaDmb" value="dmb">
+                                                    <span class="sradio-box">
+                                                        <i class="bi bi-broadcast-pin"></i>
+                                                        <span>DMB</span>
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="scard-divider"></div>
+
+                                        <!-- 방송 유형 -->
+                                        <div class="scard-group">
+                                            <p class="scard-group-label">
+                                                <i class="bi bi-volume-up-fill"></i>
+                                                <span>방송 유형</span>
+                                            </p>
+                                            <div class="sradio-stack">
+                                                <label class="sradio-item">
+                                                    <input type="radio" name="type" id="typeTts" value="tts">
+                                                    <span class="sradio-box">
+                                                        <i class="bi bi-chat-left-text"></i>
+                                                        <span>TTS</span>
+                                                    </span>
+                                                </label>
+                                                <label class="sradio-item">
+                                                    <input type="radio" name="type" id="typeSaved" value="saved">
+                                                    <span class="sradio-box">
+                                                        <i class="bi bi-music-note-beamed"></i>
+                                                        <span>저장 메시지</span>
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div><!-- /scard--grid3 -->
+
+                                    <!-- ③ 지도 API 키 ──────────────────────────── -->
+                                    <div class="scard scard--api">
+                                        <div class="scard-header">
+                                            <span class="scard-icon"><i class="bi bi-map-fill"></i></span>
+                                            <div>
+                                                <p class="scard-title">지도 API 키</p>
+                                                <p class="scard-desc">
+                                                    지도 표시에 사용할 VWorld / Google Maps API 키를 입력하세요.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="scard-api-body">
+                                            <div class="sapi-input-wrap">
+                                                <i class="bi bi-key-fill sapi-icon"></i>
+                                                <input type="text" class="sapi-input" id="mapApiKey"
+                                                    placeholder="AIzaSyDxvL7nMsF4tKlX9QrYzKpR3wE8..."
+                                                    autocomplete="off">
+                                                <button type="button" class="sapi-eye"
+                                                    onclick="toggleApiKeyVisibility()" title="키 표시/숨김">
+                                                    <i class="bi bi-eye" id="apiEyeIcon"></i>
+                                                </button>
+                                            </div>
+                                            <p class="sapi-hint">
+                                                <i class="bi bi-info-circle"></i>
+                                                VWorld 지도 서비스 API 키를 입력하세요. (지도이미지: © <a href="https://www.vworld.kr"
+                                                    target="_blank">국토교통부 · VWorld</a>)
+                                            </p>
+                                        </div>
+                                    </div><!-- /scard--api -->
+
+                                </div><!-- /setting-redesign-wrap -->
                             </section>
+                            <!-- ══════════════════════════════════════════ -->
+
+                        </div>
                 </main>
             </div>
             <!-- 모바일 오버레이 -->

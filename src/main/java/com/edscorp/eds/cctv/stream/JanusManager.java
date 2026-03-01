@@ -32,32 +32,39 @@ public class JanusManager {
         scheduler.scheduleAtFixedRate(this::keepAliveAll, KEEPALIVE_INTERVAL, KEEPALIVE_INTERVAL, TimeUnit.SECONDS);
     }
 
-    /**
-     * ✅ 최초 보장/ensure 경로: gst는 startEnsure 사용 (살아있으면 stopAndWait 후 start)
-     */
-    public JanusApi.JanusSession ensureStream(int mountpointId, int videoPort, String rtspUrl, String rtspId,
-            String rtspPw, String type) {
+    // ===================== ensureStream =====================
+    public JanusApi.JanusSession ensureStream(
+            int mountpointId, int videoPort,
+            String rtspUrl, String rtspId, String rtspPw, String type) {
 
         return janusSessions.computeIfAbsent(mountpointId, id -> {
+            // 1. Janus 세션 + 핸들 생성
             JsonNode sess = janusApi.createSession();
             long sessionId = sess.path("data").path("id").asLong();
-
             JsonNode attach = janusApi.attachPlugin(sessionId);
             long handleId = attach.path("data").path("id").asLong();
 
+            // 2. Mountpoint 없으면 생성
             JsonNode list = janusApi.listMountpoints(sessionId, handleId);
             boolean exists = list.path("plugindata").path("data").path("list")
                     .findValuesAsText("id").contains(String.valueOf(mountpointId));
 
             if (!exists) {
                 janusApi.createMountpoint(sessionId, handleId, rtspUrl, mountpointId, videoPort, rtspId, rtspPw);
-                log.info("Mountpoint {} 생성 완료 (port={})", mountpointId, videoPort);
+                log.info("Mountpoint 생성 완료 mountpoint={} port={}", mountpointId, videoPort);
             }
 
-            boolean started = gstProcessManager.startEnsure(String.valueOf(mountpointId), rtspUrl, videoPort, type);
+            // 3. GStreamer 시작 (startEnsure = 기존 프로세스 정리 후 시작)
+            boolean started = gstProcessManager.startEnsure(
+                    String.valueOf(mountpointId), rtspUrl, videoPort, type);
+
             if (!started) {
-                log.warn("GStreamer start failed now. mountpoint={}", mountpointId);
+                log.warn("GStreamer start failed mountpoint={}", mountpointId);
+                throw new IllegalStateException(
+                        "GStreamer not alive after startEnsure. mountpoint=" + mountpointId);
             }
+
+            log.info("ensureStream 완료 mountpoint={} url={}", mountpointId, rtspUrl);
 
             JanusApi.JanusSession js = new JanusApi.JanusSession();
             js.sessionId = sessionId;
@@ -66,10 +73,7 @@ public class JanusManager {
         });
     }
 
-    /**
-     * ✅ stopStream은 stop 요청 + janus 정리
-     * (여기서는 stopAndWait까지는 넣지 않는다: restart 흐름에서 순서를 통제)
-     */
+    // ===================== stopStream =====================
     public synchronized void stopStream(int mountpointId) {
         gstProcessManager.stop(String.valueOf(mountpointId));
 
@@ -80,7 +84,6 @@ public class JanusManager {
             } catch (Exception e) {
                 log.warn("destroyMountpoint failed mountpoint={}", mountpointId, e);
             }
-
             try {
                 janusApi.destroySession(s.sessionId);
             } catch (Exception e) {
@@ -89,20 +92,17 @@ public class JanusManager {
         }
     }
 
-    /**
-     * ✅ restartStream: "중복 STOP"이 나오지 않도록 순서를 고정한다
-     * 1) gst stopAndWait (실제 내려갈 때까지)
-     * 2) janus destroy/session 정리
-     * 3) 새 session/handle/mountpoint 보장
-     * 4) gst startNoStop (여기서는 절대 stop 하지 않음)
-     */
+    // ===================== restartStream =====================
+    // 순서: 1) gst stopAndWait → 2) janus destroy → 3) mountpoint 재생성 → 4) gst
+    // startNoStop
     public synchronized JanusApi.JanusSession restartStream(
-            int mountpointId, int videoPort, String rtspUrl, String rtspId, String rtspPw, String type) {
+            int mountpointId, int videoPort,
+            String rtspUrl, String rtspId, String rtspPw, String type) {
 
-        // 1) gst 완전 종료 대기 (레이스 제거)
-        gstProcessManager.stopAndWait(String.valueOf(mountpointId), 8_000);
+        // 1. GStreamer 정지 대기
+        gstProcessManager.stopAndWait(String.valueOf(mountpointId), 8000);
 
-        // 2) janus 정리
+        // 2. Janus 세션/핸들/mountpoint 제거
         JanusApi.JanusSession prev = janusSessions.remove(mountpointId);
         if (prev != null) {
             try {
@@ -117,10 +117,9 @@ public class JanusManager {
             }
         }
 
-        // 3) 새 세션 + mountpoint 보장
+        // 3. Janus 세션/핸들/mountpoint 재생성
         JsonNode sess = janusApi.createSession();
         long sessionId = sess.path("data").path("id").asLong();
-
         JsonNode attach = janusApi.attachPlugin(sessionId);
         long handleId = attach.path("data").path("id").asLong();
 
@@ -130,14 +129,20 @@ public class JanusManager {
 
         if (!exists) {
             janusApi.createMountpoint(sessionId, handleId, rtspUrl, mountpointId, videoPort, rtspId, rtspPw);
-            log.info("Mountpoint {} 생성 완료 (port={})", mountpointId, videoPort);
+            log.info("Mountpoint 재생성 완료 mountpoint={} port={}", mountpointId, videoPort);
         }
 
-        // 4) gst start (stop 절대 금지)
-        boolean started = gstProcessManager.startNoStop(String.valueOf(mountpointId), rtspUrl, videoPort, type);
+        // 4. GStreamer 재시작 (stop 없이 시작 = startNoStop)
+        boolean started = gstProcessManager.startNoStop(
+                String.valueOf(mountpointId), rtspUrl, videoPort, type);
+
         if (!started) {
             log.warn("GStreamer start failed after restart. mountpoint={}", mountpointId);
+            throw new IllegalStateException(
+                    "GStreamer not alive after restart. mountpoint=" + mountpointId);
         }
+
+        log.info("restartStream 완료 mountpoint={} url={}", mountpointId, rtspUrl);
 
         JanusApi.JanusSession js = new JanusApi.JanusSession();
         js.sessionId = sessionId;
@@ -146,6 +151,7 @@ public class JanusManager {
         return js;
     }
 
+    // ===================== keepAlive =====================
     private void keepAliveAll() {
         janusSessions.forEach((mpId, session) -> {
             try {

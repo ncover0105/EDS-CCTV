@@ -9,6 +9,8 @@ public class CctvCreateRequest {
     private String cctvCode;
     private String name;
     private String rtspUrl;
+    private String lowRtspUrl;
+    private String highRtspUrl;
     private String latitude;
     private String longitude;
     private String id;
@@ -21,4 +23,10 @@ public class CctvCreateRequest {
     private String type;
     private String wsPort;
     private String statusCam;
+
+    // RTSP 품질별 설정
+    private Integer lowMountpointId;
+    private Integer highMountpointId;
+    private Integer lowVideoPort;
+    private Integer highVideoPort;
 }

@@ -9,9 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.edscorp.eds.cctv.service.CameraCache;
-import com.edscorp.eds.cctv.service.CctvService;
 import com.edscorp.eds.common.domain.SystemSetting;
-import com.edscorp.eds.speaker.service.SpeakerService;
 import com.edscorp.eds.web.service.SystemSettingService;
 
 import lombok.RequiredArgsConstructor;
@@ -24,9 +22,7 @@ public class MainController {
 
     private final CameraCache cameraCache;
     // private final JanusManager janusManager;
-    private final CctvService cctvService;
     private final SystemSettingService systemSettingService;
-    private final SpeakerService speakerService;
 
     @GetMapping("/main")
     public String showMainPage(Model model) {
@@ -42,57 +38,6 @@ public class MainController {
 
         return "page/homePage";
     }
-
-    // @PostMapping("/start/{code}")
-    // public ResponseEntity<String> start(@PathVariable String code) {
-    // try {
-    // cctvService.start(code);
-    // return ResponseEntity.ok("Started");
-    // } catch (Exception e) {
-    // return ResponseEntity.status(500).body(e.getMessage());
-    // }
-    // }
-
-    // @PostMapping("/stop/{code}")
-    // public ResponseEntity<String> stop(@PathVariable String code) {
-    // try {
-    // cctvService.stop(code);
-    // return ResponseEntity.ok("Stopped");
-    // } catch (Exception e) {
-    // return ResponseEntity.status(500).body(e.getMessage());
-    // }
-    // }
-
-    // @PostMapping("/{cctvCode}/start")
-    // public ResponseEntity<Map<String, Object>> start(@PathVariable String
-    // cctvCode) {
-    // try {
-    // cctvService.start(cctvCode);
-    // return ResponseEntity.ok(Map.of("cctvCode", cctvCode, "status", "started"));
-    // } catch (IOException e) {
-    // return ResponseEntity.status(500).body(Map.of("cctvCode", cctvCode, "status",
-    // "error", "message", e.getMessage()));
-    // }
-    // }
-
-    // @PostMapping("/{cctvCode}/stop")
-    // public ResponseEntity<Map<String, Object>> stop(@PathVariable String
-    // cctvCode) {
-    // try {
-    // cctvService.stop(cctvCode);
-    // return ResponseEntity.ok(Map.of("cctvCode", cctvCode, "status", "stopped"));
-    // } catch (Exception e) {
-    // return ResponseEntity.status(500).body(Map.of("cctvCode", cctvCode, "status",
-    // "error", "message", e.getMessage()));
-    // }
-    // }
-
-    // @GetMapping("/{cctvCode}/status")
-    // public ResponseEntity<Map<String, Object>> status(@PathVariable String
-    // cctvCode) {
-    // boolean running = cctvService.isRunning(cctvCode);
-    // return ResponseEntity.ok(Map.of("cctvCode", cctvCode, "running", running));
-    // }
 
     @GetMapping("/api/settings")
     public ResponseEntity<SystemSetting> getSettings() {
