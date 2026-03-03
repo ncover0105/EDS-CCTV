@@ -105,7 +105,13 @@ window.Weather = (function () {
     function updateSkyBanner(condition) {
         const banner = document.getElementById('sbWxBanner');
         const fxEl = document.getElementById('sbWxFx');
-        if (!banner || !fxEl) return;
+
+        console.log("[SkyBanner] raw condition:", condition);
+
+        if (!banner || !fxEl) {
+            console.warn("[SkyBanner] banner 또는 fxEl 없음");
+            return;
+        }
 
         const cond = (condition ?? '').toUpperCase();
 
@@ -115,6 +121,7 @@ window.Weather = (function () {
             'wx-rain', 'wx-sleet', 'wx-snow',
             'wx-shower', 'wx-thunderstorm', 'wx-unknown'
         );
+
         const bannerClassMap = {
             CLEAR: 'wx-clear',
             CLOUDY: 'wx-cloudy',
@@ -124,11 +131,23 @@ window.Weather = (function () {
             SNOW: 'wx-snow',
             SHOWER: 'wx-shower',
             THUNDERSTORM: 'wx-thunderstorm',
-        };
-        banner.classList.add(bannerClassMap[cond] ?? 'wx-unknown');
 
-        // 2) FX 영역을 날씨에 맞게 완전 교체
-        fxEl.innerHTML = buildFxHtml(cond);
+            "맑음": 'wx-clear',
+            "구름많음": 'wx-cloudy',
+            "흐림": 'wx-overcast',
+            "비": 'wx-rain',
+            "비/눈": 'wx-sleet',
+            "눈": 'wx-snow',
+            "소나기": 'wx-shower',
+            "천둥번개": 'wx-thunderstorm'
+        };
+
+        const appliedClass = bannerClassMap[cond] ?? 'wx-unknown';
+        banner.classList.add(appliedClass);
+
+        // 2) FX 영역 교체
+        const fxHtml = buildFxHtml(cond);
+        fxEl.innerHTML = fxHtml;
     }
 
     // =============================================

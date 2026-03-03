@@ -23,12 +23,12 @@ function setVal(id, v) {
 function show(id) { document.getElementById(id)?.classList.remove("d-none"); }
 function hide(id) { document.getElementById(id)?.classList.add("d-none"); }
 
-function showTab(btnId) {
-    const btn = document.getElementById(btnId);
-    if (!btn) return;
-    if (typeof bootstrap === "undefined" || !bootstrap.Tab) return;
-    bootstrap.Tab.getOrCreateInstance(btn).show();
-}
+// function showTab(btnId) {
+//     const btn = document.getElementById(btnId);
+//     if (!btn) return;
+//     if (typeof bootstrap === "undefined" || !bootstrap.Tab) return;
+//     bootstrap.Tab.getOrCreateInstance(btn).show();
+// }
 
 function notify(msg, type = "warning") {
     try {

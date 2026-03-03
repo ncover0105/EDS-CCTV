@@ -52,12 +52,64 @@ window.CCTVLayout = (function () {
     /* ============================
      *      GRID RENDERING
      * ============================ */
+    // ===== 스트림 선택 유틸 =====
+    function ensureDefaults(cam) {
+        // 최초 1회만 기본값을 저장(서버가 내려준 mountpointId = 기본)
+        if (cam.__defaultMountpointId === undefined) cam.__defaultMountpointId = cam.mountpointId ?? null;
+
+        // 기본 URL은 low/high 중 존재하는 걸로 잡아둠(서버 데이터 형태에 맞춤)
+        if (cam.__defaultRtspUrl === undefined) {
+            cam.__defaultRtspUrl = cam.lowRtspUrl || cam.highRtspUrl || null;
+        }
+    }
+
+    // prefer: "low" | "high"
+    function pickStream(cam, prefer) {
+        ensureDefaults(cam);
+
+        const low = { mp: cam.lowMountpointId ?? null, url: cam.lowRtspUrl ?? null };
+        const high = { mp: cam.highMountpointId ?? null, url: cam.highRtspUrl ?? null };
+        const def = { mp: cam.__defaultMountpointId ?? null, url: cam.__defaultRtspUrl ?? null };
+
+        let chosen = def;
+        if (prefer === "low") chosen = (low.mp && low.url) ? low : def;
+        if (prefer === "high") chosen = (high.mp && high.url) ? high : def;
+
+        // 최종 검증: mp/url 둘 중 하나라도 없으면 “스트리밍 금지”
+        const ok = !!(chosen.mp && chosen.url);
+        return { ok, mountpointId: chosen.mp, rtspUrl: chosen.url, used: (chosen === low ? "low" : chosen === high ? "high" : "default") };
+    }
+
+    function applyStreamPreferenceForLayout(layout) {
+        // 분할: 전부 low 우선
+        if (layout !== 1) {
+            cameras.forEach(cam => {
+                const s = pickStream(cam, "low");
+                cam.mountpointId = s.ok ? s.mountpointId : null;
+                cam.__streamBlocked = !s.ok;
+                cam.__streamUsed = s.used;
+            });
+            return;
+        }
+
+        // 1x1: 선택된 1대는 high 우선
+        const focusedCam = cameras[focusedCamIndex];
+        if (focusedCam) {
+            const s = pickStream(focusedCam, "high");
+            focusedCam.mountpointId = s.ok ? s.mountpointId : null;
+            focusedCam.__streamBlocked = !s.ok;
+            focusedCam.__streamUsed = s.used;
+        }
+    }
+
     function renderGrid(layout) {
         log("renderGrid()", `layout = ${layout}`);
         if (layout !== 1) {
             focusedCamIndex = 0;
         }
         currentLayout = layout;
+
+        applyStreamPreferenceForLayout(layout);
 
         const container = document.getElementById("cctv-container");
         container.innerHTML = "";
@@ -98,6 +150,15 @@ window.CCTVLayout = (function () {
 
         const cam = cameras[camIndex];
 
+        if (cam.__streamBlocked || !cam.mountpointId) {
+            log("createFeed()", `스트리밍 차단: ${cam.name} (used=${cam.__streamUsed})`);
+            feed.innerHTML = emptySlotHtml();
+            // 식별용 dataset은 남겨도 됨
+            feed.dataset.cctvCode = cam.cctvCode || "";
+            feed.dataset.camName = cam.name || "";
+            return feed;
+        }
+
         feed.dataset.mountpointId = cam.mountpointId;
         feed.dataset.cctvCode = cam.cctvCode || "";
         feed.dataset.camName = cam.name || "";
@@ -134,11 +195,7 @@ window.CCTVLayout = (function () {
     function createVideo(cam) {
         let video = videoCache[cam.mountpointId];
 
-        if (video) {
-            log("createVideo()", `캐시 HIT → video-${cam.mountpointId}`);
-        } else {
-            log("createVideo()", `캐시 MISS → 생성: video-${cam.mountpointId}`);
-
+        if (!video) {
             video = document.createElement("video");
             video.id = `video-${cam.mountpointId}`;
             video.className = "w-100 h-100 d-none";
@@ -146,7 +203,13 @@ window.CCTVLayout = (function () {
             video.muted = true;
             video.playsInline = true;
 
+            // ✅ 고정 키로 DOM 탐색 가능하게
+            video.dataset.cctvCode = cam.cctvCode || "";
+
             videoCache[cam.mountpointId] = video;
+        } else {
+            // ✅ 캐시 HIT에서도 보정
+            video.dataset.cctvCode = cam.cctvCode || "";
         }
         return video;
     }
@@ -171,6 +234,9 @@ window.CCTVLayout = (function () {
         const placeholder = document.createElement("div");
         placeholder.id = `placeholder-${cam.mountpointId}`;
         placeholder.className = "cctv-placeholder";
+
+        placeholder.dataset.cctvCode = cam.cctvCode || "";
+
         placeholder.style.cssText = `
             width: 100%; height: 100%; background: var(--bs-black);
             display: flex; align-items: center; justify-content: center;
@@ -224,15 +290,13 @@ window.CCTVLayout = (function () {
         fullscreenBtn.innerHTML = `<i class="bi bi-arrows-fullscreen"></i>`;
         fullscreenBtn.title = "전체화면";
 
-        fullscreenBtn.addEventListener('click', e => {
+        fullscreenBtn.addEventListener("click", (e) => {
             e.stopPropagation();
-            console.log(`[FULLSCREEN BTN CLICK] camera: ${cam.name}`);
 
-            if (!video.classList.contains('d-none')) {
-                console.log(`[FULLSCREEN START] ${cam.name} 영상 표시 중`);
+            if (!video.classList.contains("d-none")) {
+                // ✅ 기존 방식: 스트리밍 중인 video를 그대로 확대 (끊김 없음)
                 showFullscreen(video);
             } else {
-                console.warn(`[FULLSCREEN FAIL] ${cam.name} 영상 없음`);
                 showConfirmModal("확인 요청", `${cam.name} 카메라에 연결된 영상이 없습니다.`);
             }
         });
@@ -299,6 +363,55 @@ window.CCTVLayout = (function () {
     /* ============================
      *   전체화면
      * ============================ */
+
+    let fsCam = null; // 현재 fullscreen 대상 cam
+
+    function openFullscreen(cam) {
+        const fullscreenView = document.getElementById("fullscreenView");
+        const fullscreenContent = fullscreenView.querySelector(".fullscreen-content");
+
+        fsCam = cam;
+
+        fullscreenContent.innerHTML = `
+    <div class="w-100 h-100 position-relative" style="background: black;">
+      <video id="fs-video" class="w-100 h-100" autoplay muted playsinline style="object-fit:contain;"></video>
+      <div id="fs-placeholder" class="cctv-placeholder d-none"
+           style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff;">
+        <div style="text-align:center;">
+          <i class="bi bi-camera-video-off"></i><br>
+          <small>연결없음</small>
+        </div>
+      </div>
+    </div>
+  `;
+
+        fullscreenView.classList.remove("d-none");
+        fullscreenView.classList.add("active");
+    }
+
+    function attachStreamToFullscreen(cam, stream) {
+        // 다른 cam의 stream이 섞이는 것 방지
+        if (!fsCam || String(fsCam.cctvCode) !== String(cam.cctvCode)) return;
+
+        const v = document.getElementById("fs-video");
+        const ph = document.getElementById("fs-placeholder");
+        if (!v) return;
+
+        if (v.srcObject) {
+            try { v.srcObject.getTracks().forEach(t => t.stop()); } catch (e) { }
+        }
+        v.srcObject = stream;
+
+        ph?.classList.add("d-none");
+        v.play().catch(() => { });
+    }
+
+    function showFullscreenPlaceholder(cam) {
+        if (!fsCam || String(fsCam.cctvCode) !== String(cam.cctvCode)) return;
+        const ph = document.getElementById("fs-placeholder");
+        if (ph) ph.classList.remove("d-none");
+    }
+
     function showFullscreen(videoEl) {
 
         const fullscreenView = document.getElementById('fullscreenView');
@@ -324,41 +437,28 @@ window.CCTVLayout = (function () {
     }
 
     function closeFullscreen() {
-
-        const fullView = document.getElementById("fullscreenView");
-        const content = fullView.querySelector(".fullscreen-content");
+        const fullscreenView = document.getElementById("fullscreenView");
+        const fullscreenContent = fullscreenView.querySelector(".fullscreen-content");
 
         if (originalParent && originalElement) {
-            const mountId = originalElement.id.replace("video-", "");
-            const placeholder = document.getElementById(`placeholder-${mountId}`);
-
-            // 원래 자리 복귀
+            fullscreenContent.innerHTML = "";
             originalParent.appendChild(originalElement);
 
-            syncVisibilityByMountId(mountId);
-
-            // video 표시 보장
-            // originalElement.classList.remove("d-none");
-            // originalElement.style.display = "block";
-
-            // placeholder 숨기기
-            // if (placeholder) {
-            //     placeholder.classList.add("d-none");
-            //     placeholder.style.display = "none";
-            // }
+            originalElement.style.width = "";
+            originalElement.style.height = "";
+            originalElement.style.objectFit = "";
+        } else {
+            fullscreenContent.innerHTML = "";
         }
 
-        // fullscreen 영역 초기화
-        content.innerHTML = "";
-        fullView.classList.add("d-none");
-        fullView.classList.remove("active");
+        fullscreenView.classList.add("d-none");
+        fullscreenView.classList.remove("active");
 
         originalParent = null;
         originalElement = null;
 
-        log("전체화면 종료 완료");
+        log("전체화면 종료 완료(기존 방식)");
     }
-
 
     /* ============================
      *   상태 카운트
@@ -426,16 +526,59 @@ window.CCTVLayout = (function () {
     }
 
     async function reportStatusCam(cam, statusCam) {
-        if (!cam.locationCode || !cam.cctvCode) {
-            console.warn("locationCode/cctvCode 없음", cam);
+        if (!cam?.locationCode || !cam?.cctvCode) return;
+
+        const payload = {
+            locationCode: String(cam.locationCode),
+            cctvCode: String(cam.cctvCode),
+            statusCam: Number(statusCam),
+        };
+
+        const res = await fetch("/api/cctv/status", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+            console.warn("[reportStatusCam] failed:", res.status, await res.text().catch(() => ""));
+        }
+    }
+
+    async function switchCamToHighAndReconnect(cam) {
+        // 기본값 저장(없으면 생성)
+        if (cam.__defaultMountpointId === undefined) cam.__defaultMountpointId = cam.mountpointId ?? null;
+        if (cam.__defaultRtspUrl === undefined) cam.__defaultRtspUrl = cam.lowRtspUrl || cam.highRtspUrl || null;
+
+        const highMp = cam.highMountpointId ?? null;
+        const highUrl = cam.highRtspUrl ?? null;
+
+        const defMp = cam.__defaultMountpointId ?? null;
+        const defUrl = cam.__defaultRtspUrl ?? null;
+
+        // HIGH 우선, 없으면 기본
+        const chosenMp = (highMp && highUrl) ? highMp : defMp;
+        const chosenUrl = (highMp && highUrl) ? highUrl : defUrl;
+
+        // 최종 검증: 둘 중 하나라도 없으면 스트리밍 요청 막기
+        if (!chosenMp || !chosenUrl) {
+            console.warn("[switchCamToHighAndReconnect] blocked (no mp/url)", {
+                name: cam?.name, chosenMp, chosenUrl
+            });
+            CCTVLayout.showPlaceholder(cam);
             return;
         }
-        await fetch(
-            `/api/cctv/status?locationCode=${encodeURIComponent(cam.locationCode)}`
-            + `&cctvCode=${encodeURIComponent(cam.cctvCode)}`
-            + `&statusCam=${statusCam}`,
-            { method: "POST" }
-        );
+
+        // cam.mountpointId를 HIGH(또는 기본)으로 갱신
+        cam.mountpointId = chosenMp;
+        cam.__streamBlocked = false;
+        cam.__streamUsed = (highMp && highUrl) ? "high" : "default";
+
+        // ✅ 해당 카메라만 재연결 (전체 reconnectAll 말고)
+        await CCTVJanus.reconnectOne(cameras, cam.mountpointId);
     }
 
     /* ============================
@@ -444,26 +587,32 @@ window.CCTVLayout = (function () {
     function attachStreamToVideo(cam, stream) {
         log("attachStreamToVideo()", cam.name);
 
-        const videoEl = document.getElementById(`video-${cam.mountpointId}`);
-        const placeholder = document.getElementById(`placeholder-${cam.mountpointId}`);
+        const videoEl =
+            document.querySelector(`video[data-cctv-code="${cam.cctvCode}"]`) ||
+            document.getElementById(`video-${cam.mountpointId}`); // fallback
+
+        const placeholder =
+            document.querySelector(`div.cctv-placeholder[data-cctv-code="${cam.cctvCode}"]`) ||
+            document.getElementById(`placeholder-${cam.mountpointId}`); // fallback
 
         if (!videoEl) {
-            console.error("❌ Video element 없음:", `video-${cam.mountpointId}`);
+            console.error("❌ Video element 없음:", {
+                expectedCctvCode: cam.cctvCode,
+                mountpointId: cam.mountpointId,
+            });
             return;
         }
 
-        // placeholder 상태 초기화
         videoEl.dataset.hasPlayed = "0";
         videoEl.classList.add("d-none");
         placeholder?.classList.remove("d-none");
 
-
         if (videoEl.srcObject) {
-            log("기존 stream stop()", "");
             try { videoEl.srcObject.getTracks().forEach(t => t.stop()); } catch (e) { }
         }
 
         videoEl.srcObject = stream;
+
 
         if (!videoEl.dataset.statusBound) {
             videoEl.dataset.statusBound = "1";
@@ -551,6 +700,9 @@ window.CCTVLayout = (function () {
         showPlaceholder,
         setFocusedCameraByIndex,
         closeFullscreen,
+        openFullscreen,
+        attachStreamToFullscreen,
+        showFullscreenPlaceholder,
         destroy,
     };
 

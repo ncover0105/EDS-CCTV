@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.edscorp.eds.cctv.domain.CctvEntity;
 import com.edscorp.eds.cctv.dto.CctvCreateRequest;
+import com.edscorp.eds.cctv.dto.CctvStatusRequest;
 import com.edscorp.eds.cctv.dto.CctvUpdateRequest;
 import com.edscorp.eds.cctv.service.CctvManagementService;
 import com.edscorp.eds.cctv.service.CctvStreamService;
@@ -73,15 +74,24 @@ public class CctvController {
     }
 
     // ===================== 상태 관리 =====================
+    // @PostMapping("/status")
+    // public ResponseEntity<Void> updateStatus(
+    // @RequestParam("locationCode") String locationCode,
+    // @RequestParam("cctvCode") String cctvCode,
+    // @RequestParam("statusCam") int statusCam) {
+    // if (statusCam != 0 && statusCam != 1) {
+    // return ResponseEntity.badRequest().build();
+    // }
+    // cctvManagementService.updateStatusCam(locationCode, cctvCode, statusCam);
+    // return ResponseEntity.ok().build();
+    // }
+
     @PostMapping("/status")
-    public ResponseEntity<Void> updateStatus(
-            @RequestParam("locationCode") String locationCode,
-            @RequestParam("cctvCode") String cctvCode,
-            @RequestParam("statusCam") int statusCam) {
-        if (statusCam != 0 && statusCam != 1) {
+    public ResponseEntity<Void> updateStatus(@RequestBody CctvStatusRequest req) {
+        if (req.getStatusCam() != 0 && req.getStatusCam() != 1) {
             return ResponseEntity.badRequest().build();
         }
-        cctvManagementService.updateStatusCam(locationCode, cctvCode, statusCam);
+        cctvManagementService.updateStatusCam(req.getLocationCode(), req.getCctvCode(), req.getStatusCam());
         return ResponseEntity.ok().build();
     }
 }

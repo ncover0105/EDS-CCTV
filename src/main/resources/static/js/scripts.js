@@ -181,11 +181,11 @@ async function callRestartAllServer() {
         const res = await fetch("/api/cctv/stream/restart-all", { method: "POST" });
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        showToast("전체 스트리밍 서버 재시작 요청 완료", "success");
-        // App.utils.showGlobalAlert("전체 스트리밍 서버 재시작 완료", "success");
+        // showToast("전체 스트리밍 서버 재시작 요청 완료", "success");
+        App.utils.showGlobalAlert("전체 스트리밍 서버 재시작 완료", "success");
     } catch (e) {
         console.error(e);
-        showToast("전체 재시작 실패", "danger");
+        // showToast("전체 재시작 실패", "danger");
         App.utils.showGlobalAlert("전체 재시작 실패", "danger");
     } finally {
         setServerRestartBusy(false);
@@ -612,6 +612,7 @@ function selectLayout(itemEl) {
 
     // 그리드 레이아웃 변경
     window.CCTVLayout?.renderGrid(layout);
+    window.CCTVJanus?.reconnectAll?.(cameras);
 
     // 드롭다운 닫기
     menu?.classList.remove("show");

@@ -42,6 +42,8 @@ window.CCTVJanus = (function () {
         pluginHandles,
         reconnectAll,
         reconnectOne,
+        openFullscreenHigh,
+        closeFullscreenHigh,
         destroy,
     };
 
@@ -77,100 +79,91 @@ window.CCTVJanus = (function () {
     // ------------------------------
     // 2) Mountpoint attach + Watch
     // ------------------------------
-    async function initJanusCam(cam) {
+    async function initJanusCam(cam, opts = {}) {
+        const key = opts.key ?? String(cam.mountpointId);
+        const watchId = opts.watchId ?? cam.mountpointId;
 
-        // 재연결/재시작 구간: placeholder 강제
-        try { window.CCTVLayout?.prepareReconnect?.(cam); } catch (e) { }
+        // placeholder 강제는 grid용만( fullscreen은 건드리지 않음 )
+        if (!opts.skipPrepareReconnect) {
+            try { window.CCTVLayout?.prepareReconnect?.(cam); } catch (e) { }
+        }
 
-        if (pluginHandles[cam.mountpointId]) {
-            console.log(`🔄 Mountpoint 중복 제거: ${cam.mountpointId}`);
-            const old = pluginHandles[cam.mountpointId];
-            old.send({ message: { request: "stop" } });
-            old.detach();
-            delete pluginHandles[cam.mountpointId];
-            // window.CCTVLayout?.syncLayoutToConnectedCameras?.();
+        if (pluginHandles[key]) {
+            console.log(`🔄 Handle 중복 제거: key=${key}`);
+            const old = pluginHandles[key];
+            try { old.send({ message: { request: "stop" } }); } catch (e) { }
+            try { old.detach(); } catch (e) { }
+            delete pluginHandles[key];
         }
 
         return new Promise((resolve) => {
-
-            let handle = null;  // onremotetrack에서 사용할 handle
+            let handle = null;
 
             janus.attach({
                 plugin: "janus.plugin.streaming",
 
                 success: function (h) {
-                    console.log(`Mountpoint attach 완료: ${cam.mountpointId}`);
-
-                    handle = h;  // 저장
-                    pluginHandles[cam.mountpointId] = h;
+                    handle = h;
+                    pluginHandles[key] = h;
                     h._started = false;
 
                     setTimeout(() => {
-                        console.log(`▶ Watch 요청: ${cam.mountpointId}`);
-                        h.send({ message: { request: "watch", id: cam.mountpointId } });
+                        console.log(`▶ Watch 요청: key=${key}, id=${watchId}`);
+                        h.send({ message: { request: "watch", id: watchId } });
                         resolve();
                     }, 100);
                 },
 
                 error: err => {
-                    console.error(`attach 실패(${cam.mountpointId}):`, err);
+                    console.error(`attach 실패(key=${key}, id=${watchId}):`, err);
                     resolve();
                 },
 
                 onmessage: (msg, jsep) => {
-                    if (!handle) return; // 안전 처리
+                    if (!handle) return;
 
                     if (msg.error) {
-                        console.error(`[${cam.mountpointId}] 서버 메시지 오류:`, msg.error);
+                        console.error(`[key=${key}, id=${watchId}] 서버 오류:`, msg.error);
                         return;
                     }
 
                     if (jsep && !handle._started) {
                         handle._started = true;
-                        console.log(`Offer 수신 → Answer 생성 (${cam.mountpointId})`);
-
                         handle.createAnswer({
                             jsep,
                             media: { audioRecv: false, audioSend: false, videoRecv: true, videoSend: false },
-                            success: ans => {
-                                handle.send({
-                                    message: { request: "start" },
-                                    jsep: ans
-                                });
-                            },
-                            error: err => {
-                                console.error(`[${cam.mountpointId}] createAnswer 실패:`, err);
-                            }
+                            success: ans => handle.send({ message: { request: "start" }, jsep: ans }),
+                            error: err => console.error(`[key=${key}, id=${watchId}] createAnswer 실패:`, err)
                         });
                     }
                 },
 
-                // ------------------------------------------------
-                //  handle 변수 사용 가능해짐
-                // ------------------------------------------------
                 onremotetrack: (track, mid, on) => {
-                    if (!handle) return;  // 안전 처리
+                    if (!handle) return;
                     if (track.kind !== "video") return;
 
                     if (on) {
-                        console.log(`스트림 ON (${cam.name})`);
                         const stream = new MediaStream([track]);
-                        CCTVLayout.attachStreamToVideo(cam, stream);
                         handle._hasVideo = true;
-                        // window.CCTVLayout?.syncLayoutToConnectedCameras?.();
+
+                        // ✅ fullscreen용이면 opts.onStream으로 전달
+                        if (typeof opts.onStream === "function") {
+                            opts.onStream(stream);
+                        } else {
+                            CCTVLayout.attachStreamToVideo(cam, stream);
+                        }
                     } else {
-                        console.log(`스트림 OFF (${cam.name})`);
                         handle._hasVideo = false;
-                        CCTVLayout.showPlaceholder(cam);
-                        // window.CCTVLayout?.syncLayoutToConnectedCameras?.();
+                        if (typeof opts.onOff === "function") opts.onOff();
+                        else CCTVLayout.showPlaceholder(cam);
                     }
                 },
 
                 oncleanup: () => {
-                    console.log(`cleanup 발생: ${cam.mountpointId}`);
-                    delete pluginHandles[cam.mountpointId];
-                    CCTVLayout.showPlaceholder(cam);
-                    // window.CCTVLayout?.syncLayoutToConnectedCameras?.();
+                    console.log(`cleanup: key=${key}, id=${watchId}`);
+                    delete pluginHandles[key];
+                    if (typeof opts.onCleanup === "function") opts.onCleanup();
+                    else CCTVLayout.showPlaceholder(cam);
                 }
             });
         });
@@ -214,6 +207,49 @@ window.CCTVJanus = (function () {
         } catch (e) {
             console.error("선택 재연결 실패:", cam.mountpointId, e);
         }
+    }
+
+    async function openFullscreenHigh(cam) {
+        if (!janus) {
+            console.warn("janus 세션 없음");
+            return;
+        }
+
+        // high 우선, 없으면 default (네 layout.js 로직과 동일)
+        const highMp = cam.highMountpointId ?? null;
+        const highUrl = cam.highRtspUrl ?? null; // 여기서는 존재 검사용
+        const defMp = cam.__defaultMountpointId ?? cam.mountpointId ?? null;
+        const defUrl = cam.__defaultRtspUrl ?? cam.lowRtspUrl ?? cam.highRtspUrl ?? null;
+
+        const chosenMp = (highMp && highUrl) ? highMp : defMp;
+        const chosenUrl = (highMp && highUrl) ? highUrl : defUrl;
+
+        if (!chosenMp || !chosenUrl) {
+            console.warn("[openFullscreenHigh] blocked (no mp/url)", cam?.name, chosenMp, chosenUrl);
+            window.CCTVLayout?.showFullscreenPlaceholder?.(cam);
+            return;
+        }
+
+        const key = `fs-${cam.cctvCode}`;
+
+        // ✅ fullscreen video에만 붙인다
+        await initJanusCam(cam, {
+            key,
+            watchId: chosenMp,
+            skipPrepareReconnect: true, // grid 건드리지 않기
+            onStream: (stream) => window.CCTVLayout?.attachStreamToFullscreen?.(cam, stream),
+            onCleanup: () => window.CCTVLayout?.showFullscreenPlaceholder?.(cam),
+        });
+    }
+
+    function closeFullscreenHigh(cam) {
+        const key = `fs-${cam.cctvCode}`;
+        const h = pluginHandles[key];
+        if (!h) return;
+
+        try { h.send({ message: { request: "stop" } }); } catch (e) { }
+        try { h.detach(); } catch (e) { }
+        delete pluginHandles[key];
     }
 
     return exports;

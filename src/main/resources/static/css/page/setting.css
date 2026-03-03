@@ -4334,3 +4334,657 @@ select.set-input option {
         padding: 0.8rem 0.85rem 0.7rem;
     }
 }
+
+#scheduleModal .sc-modal-box {
+    --sc-surface: #151822;
+    --sc-surface-2: #1c1f2e;
+    --sc-surface-3: #222639;
+    --sc-border: #2a2f45;
+    --sc-border-light: #232740;
+    --sc-text-primary: #e8eaf6;
+    --sc-text-sec: #8b90b0;
+    --sc-text-muted: #555a7a;
+    --sc-primary: #5b8af5;
+    --sc-primary-bg: rgba(91, 138, 245, .14);
+    --sc-primary-dark: #4070e0;
+    --sc-success: #34d399;
+    --sc-success-bg: rgba(52, 211, 153, .12);
+    --sc-danger: #f87171;
+    --sc-danger-bg: rgba(248, 113, 113, .12);
+    --sc-warning: #fbbf24;
+    --sc-warning-bg: rgba(251, 191, 36, .12);
+    --sc-purple: #a78bfa;
+    --sc-purple-bg: rgba(167, 139, 250, .12);
+    --sc-r: 14px;
+    --sc-r-sm: 8px;
+    --sc-r-xs: 6px;
+    --sc-font: 'Pretendard', 'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --sc-ease: 180ms cubic-bezier(.4, 0, .2, 1);
+}
+
+/* ── 다이얼로그 크기 ── */
+#scheduleModal .sc-modal-dialog {
+    max-width: 1020px;
+}
+
+/* ── modal-content 오버라이드 → sc-modal-box ── */
+#scheduleModal .sc-modal-box {
+    font-family: var(--sc-font);
+    background: var(--sc-surface);
+    border: 1px solid var(--sc-border-light);
+    border-radius: 20px;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, .65), 0 8px 32px rgba(0, 0, 0, .45);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    max-height: calc(100vh - 40px);
+    color: var(--sc-text-primary);
+    padding: 0;
+}
+
+/* ── 상단 액센트 바 ── */
+#scheduleModal .sc-modal-accent {
+    height: 4px;
+    background: var(--sc-primary);
+    flex-shrink: 0;
+    transition: background var(--sc-ease);
+}
+
+/* ── 헤더 ── */
+#scheduleModal .sc-modal-header {
+    padding: 20px 26px 16px;
+    border-bottom: 1px solid var(--sc-border-light);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    gap: 16px;
+}
+
+#scheduleModal .sc-modal-hd-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+#scheduleModal .sc-modal-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: var(--sc-primary-bg);
+    border: 1px solid rgba(91, 138, 245, .25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    color: var(--sc-primary);
+    flex-shrink: 0;
+}
+
+#scheduleModal .sc-modal-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--sc-text-primary);
+}
+
+#scheduleModal .sc-modal-subtitle {
+    font-size: 12.5px;
+    color: var(--sc-text-muted);
+    margin-top: 2px;
+}
+
+#scheduleModal .sc-modal-close {
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--sc-border);
+    background: var(--sc-surface-2);
+    border-radius: 9px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--sc-text-muted);
+    font-size: 15px;
+    transition: all var(--sc-ease);
+    flex-shrink: 0;
+    opacity: 1;
+}
+
+#scheduleModal .sc-modal-close:hover {
+    background: var(--sc-surface-3);
+    color: var(--sc-text-primary);
+}
+
+/* ── 바디 레이아웃 ── */
+#scheduleModal .sc-modal-body {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* ── 왼쪽: 폼 설정 ── */
+#scheduleModal .sc-m-left {
+    border-right: 1px solid var(--sc-border-light);
+    overflow-y: auto;
+    padding: 20px;
+    background: var(--sc-surface-2);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+#scheduleModal .sc-m-left::-webkit-scrollbar {
+    width: 4px;
+}
+
+#scheduleModal .sc-m-left::-webkit-scrollbar-thumb {
+    background: var(--sc-border);
+    border-radius: 4px;
+}
+
+/* ── 섹션 그룹 ── */
+#scheduleModal .sc-form-section {
+    margin-bottom: 18px;
+}
+
+#scheduleModal .sc-form-section:last-child {
+    margin-bottom: 0;
+}
+
+#scheduleModal .sc-form-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--sc-text-muted);
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--sc-border-light);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+#scheduleModal .sc-form-section-title::before {
+    content: '';
+    width: 3px;
+    height: 13px;
+    border-radius: 2px;
+    background: var(--sc-primary);
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+/* ── 폼 컨트롤 ── */
+#scheduleModal .sc-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+#scheduleModal .sc-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+#scheduleModal .sc-form-group.sc-full {
+    grid-column: 1 / -1;
+}
+
+#scheduleModal .sc-form-label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--sc-text-sec);
+    letter-spacing: .03em;
+}
+
+#scheduleModal .sc-req {
+    color: var(--sc-danger);
+    margin-left: 2px;
+}
+
+#scheduleModal .sc-form-input,
+#scheduleModal .sc-form-select,
+#scheduleModal .sc-form-textarea {
+    font-family: var(--sc-font);
+    padding: 8px 11px;
+    background: var(--sc-surface-3);
+    border: 1.5px solid var(--sc-border);
+    border-radius: var(--sc-r-xs);
+    font-size: 13px;
+    color: var(--sc-text-primary);
+    outline: none;
+    width: 100%;
+    transition: border-color var(--sc-ease), box-shadow var(--sc-ease);
+}
+
+#scheduleModal .sc-form-input::placeholder,
+#scheduleModal .sc-form-textarea::placeholder {
+    color: var(--sc-text-muted);
+}
+
+#scheduleModal .sc-form-input:focus,
+#scheduleModal .sc-form-select:focus,
+#scheduleModal .sc-form-textarea:focus {
+    border-color: var(--sc-primary);
+    box-shadow: 0 0 0 3px rgba(91, 138, 245, .15);
+}
+
+#scheduleModal .sc-form-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23555a7a' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    padding-right: 28px;
+    -webkit-appearance: none;
+    cursor: pointer;
+}
+
+#scheduleModal .sc-form-textarea {
+    resize: vertical;
+    min-height: 80px;
+    line-height: 1.5;
+}
+
+/* ── 시간 입력 ── */
+#scheduleModal .sc-time-wrap {
+    position: relative;
+}
+
+#scheduleModal .sc-time-wrap i {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--sc-text-muted);
+    pointer-events: none;
+    font-size: 13px;
+}
+
+#scheduleModal .sc-time-wrap .sc-form-input {
+    padding-left: 32px;
+    color-scheme: dark;
+}
+
+#scheduleModal input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(.4);
+    cursor: pointer;
+}
+
+/* ── 요일 버튼 ── */
+#scheduleModal .sc-weekday-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+#scheduleModal .wd-btn {
+    font-family: var(--sc-font);
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--sc-surface-3);
+    border: 1.5px solid var(--sc-border);
+    color: var(--sc-text-muted);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--sc-ease);
+}
+
+#scheduleModal .wd-btn:hover {
+    border-color: var(--sc-primary);
+    color: var(--sc-primary);
+}
+
+#scheduleModal .wd-btn.active {
+    background: var(--sc-primary-bg);
+    border-color: var(--sc-primary);
+    color: var(--sc-primary);
+}
+
+#scheduleModal .wd-btn.sun.active {
+    background: var(--sc-danger-bg);
+    border-color: rgba(248, 113, 113, .4);
+    color: var(--sc-danger);
+}
+
+/* ── 반복 토글 ── */
+#scheduleModal .sc-repeat-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--sc-surface-3);
+    border: 1.5px solid var(--sc-border);
+    border-radius: var(--sc-r-sm);
+}
+
+#scheduleModal .sc-repeat-label {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--sc-text-sec);
+}
+
+#scheduleModal .sc-toggle {
+    position: relative;
+    width: 38px;
+    height: 22px;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+#scheduleModal .sc-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+#scheduleModal .sc-toggle-track {
+    position: absolute;
+    inset: 0;
+    background: var(--sc-border);
+    border-radius: 11px;
+    cursor: pointer;
+    transition: background var(--sc-ease);
+}
+
+#scheduleModal .sc-toggle-track::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform var(--sc-ease);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
+}
+
+#scheduleModal .sc-toggle input:checked+.sc-toggle-track {
+    background: var(--sc-primary);
+}
+
+#scheduleModal .sc-toggle input:checked+.sc-toggle-track::after {
+    transform: translateX(16px);
+}
+
+/* ── 오른쪽: 스피커 패널 ── */
+#scheduleModal .sc-m-right {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: var(--sc-surface);
+}
+
+#scheduleModal .sc-spk-head {
+    padding: 14px 20px 10px;
+    border-bottom: 1px solid var(--sc-border-light);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+#scheduleModal .sc-spk-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--sc-text-muted);
+}
+
+#scheduleModal .sc-spk-btns {
+    display: flex;
+    gap: 6px;
+}
+
+#scheduleModal .sc-spk-btn {
+    font-family: var(--sc-font);
+    padding: 5px 12px;
+    border: 1.5px solid var(--sc-border);
+    background: var(--sc-surface-2);
+    border-radius: var(--sc-r-xs);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--sc-text-sec);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all var(--sc-ease);
+    white-space: nowrap;
+}
+
+#scheduleModal .sc-spk-btn:hover {
+    border-color: var(--sc-primary);
+    color: var(--sc-primary);
+    background: var(--sc-primary-bg);
+}
+
+#scheduleModal .sc-spk-search-wrap {
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--sc-border-light);
+    flex-shrink: 0;
+}
+
+#scheduleModal .sc-spk-search-inner {
+    position: relative;
+}
+
+#scheduleModal .sc-spk-search-inner i {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--sc-text-muted);
+    font-size: 13px;
+}
+
+#scheduleModal .sc-spk-search {
+    width: 100%;
+    padding: 8px 10px 8px 32px;
+    background: var(--sc-surface-3);
+    border: 1.5px solid var(--sc-border);
+    border-radius: var(--sc-r-sm);
+    font-size: 13px;
+    color: var(--sc-text-primary);
+    outline: none;
+    font-family: var(--sc-font);
+    transition: border-color var(--sc-ease), box-shadow var(--sc-ease);
+}
+
+#scheduleModal .sc-spk-search::placeholder {
+    color: var(--sc-text-muted);
+}
+
+#scheduleModal .sc-spk-search:focus {
+    border-color: var(--sc-primary);
+    box-shadow: 0 0 0 3px rgba(91, 138, 245, .15);
+}
+
+#scheduleModal .sc-spk-table-wrap {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+#scheduleModal .sc-spk-table-wrap::-webkit-scrollbar {
+    width: 4px;
+}
+
+#scheduleModal .sc-spk-table-wrap::-webkit-scrollbar-thumb {
+    background: var(--sc-border);
+    border-radius: 4px;
+}
+
+#scheduleModal .sc-spk-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+#scheduleModal .sc-spk-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--sc-surface-3);
+    padding: 9px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--sc-text-muted);
+    border-bottom: 1px solid var(--sc-border);
+    text-align: left;
+}
+
+#scheduleModal .sc-spk-table thead th:first-child {
+    width: 44px;
+    text-align: center;
+}
+
+#scheduleModal .sc-spk-table tbody tr {
+    border-bottom: 1px solid var(--sc-border-light);
+    cursor: pointer;
+    transition: background var(--sc-ease);
+}
+
+#scheduleModal .sc-spk-table tbody tr:hover {
+    background: var(--sc-surface-2);
+}
+
+#scheduleModal .sc-spk-table tbody tr.is-selected {
+    background: var(--sc-primary-bg);
+}
+
+#scheduleModal .sc-spk-table td {
+    padding: 9px 12px;
+    color: var(--sc-text-sec);
+}
+
+#scheduleModal .sc-spk-table td:first-child {
+    text-align: center;
+}
+
+#scheduleModal .sc-spk-table .mono {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 11.5px;
+    color: var(--sc-text-muted);
+}
+
+#scheduleModal .sc-spk-table input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    accent-color: var(--sc-primary);
+    cursor: pointer;
+}
+
+#scheduleModal .sc-spk-footer {
+    padding: 10px 20px;
+    border-top: 1px solid var(--sc-border-light);
+    font-size: 12.5px;
+    color: var(--sc-text-muted);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#scheduleModal .sc-spk-count {
+    font-weight: 700;
+    color: var(--sc-primary);
+}
+
+/* ── 푸터 ── */
+#scheduleModal .sc-modal-footer {
+    padding: 14px 26px;
+    border-top: 1px solid var(--sc-border-light);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    gap: 12px;
+    background: var(--sc-surface);
+}
+
+#scheduleModal .sc-footer-info {
+    font-size: 12px;
+    color: var(--sc-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+#scheduleModal .sc-footer-btns {
+    display: flex;
+    gap: 8px;
+}
+
+#scheduleModal .sc-btn {
+    font-family: var(--sc-font);
+    padding: 9px 20px;
+    border-radius: var(--sc-r-sm);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all var(--sc-ease);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+#scheduleModal .sc-btn-ghost {
+    background: transparent;
+    color: var(--sc-text-sec);
+    border: 1.5px solid var(--sc-border);
+}
+
+#scheduleModal .sc-btn-ghost:hover {
+    background: var(--sc-surface-2);
+    color: var(--sc-text-primary);
+}
+
+#scheduleModal .sc-btn-primary {
+    background: var(--sc-primary);
+    color: #fff;
+    box-shadow: 0 3px 14px rgba(91, 138, 245, .35);
+}
+
+#scheduleModal .sc-btn-primary:hover {
+    background: var(--sc-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(91, 138, 245, .4);
+}
+
+/* ── 반응형 ── */
+@media (max-width: 768px) {
+    #scheduleModal .sc-modal-body {
+        grid-template-columns: 1fr;
+    }
+
+    #scheduleModal .sc-m-left {
+        border-right: none;
+        border-bottom: 1px solid var(--sc-border-light);
+        max-height: 50vh;
+    }
+
+    #scheduleModal .sc-modal-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #scheduleModal .sc-footer-btns {
+        justify-content: flex-end;
+    }
+}
