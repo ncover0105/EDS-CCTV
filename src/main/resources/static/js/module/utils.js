@@ -5,11 +5,8 @@
 // 2) renderPagination(containerId, currentPage, totalItems, itemsPerPage, onPageChange)
 export function renderPagination(...args) {
     let containerId, currentPage, totalItems, itemsPerPage, onPageChange;
-
-    // 추가 옵션(빈 데이터 tbody 채우기)
     let emptyTargetTbodyId, emptyRowColspan, emptyRowHtml, emptyRowCount;
 
-    // Backward compatibility
     if (typeof args[0] === 'string') {
         [containerId, currentPage, totalItems, itemsPerPage, onPageChange] = args;
     } else {
@@ -19,7 +16,6 @@ export function renderPagination(...args) {
         totalItems = opt.totalItems;
         itemsPerPage = opt.itemsPerPage;
         onPageChange = opt.onPageChange;
-
         emptyTargetTbodyId = opt.emptyTargetTbodyId;
         emptyRowColspan = opt.emptyRowColspan;
         emptyRowHtml = opt.emptyRowHtml;
@@ -45,73 +41,56 @@ export function renderPagination(...args) {
         if (tbody) {
             const col = Number(emptyRowColspan) || 1;
             const msg = (typeof emptyRowHtml === 'string' && emptyRowHtml.trim().length > 0)
-                ? emptyRowHtml
-                : `조회된 데이터가 없습니다.`;
-
+                ? emptyRowHtml : `조회된 데이터가 없습니다.`;
             const rows = Math.max(1, Number(emptyRowCount) || 1);
 
-            let html = `
-            <tr>
-                <td colspan="${col}" class="text-center text-white-50 py-5">
-                ${msg}
-                </td>
-            </tr>
-            `;
-
+            let html = `<tr><td colspan="${col}" class="text-center text-white-50 py-5">${msg}</td></tr>`;
             for (let i = 1; i < rows; i++) {
-                html += `
-                    <tr class="table-empty-row">
-                    <td colspan="${col}" class="py-3"></td>
-                    </tr>
-                `;
+                html += `<tr class="table-empty-row"><td colspan="${col}" class="py-3"></td></tr>`;
             }
-
             tbody.innerHTML = html;
         }
     }
 
-    // util
+    const go = (p) => { if (typeof onPageChange === 'function') onPageChange(p); };
+
     const createLi = (html, { disabled = false, active = false, onClick } = {}) => {
         const li = document.createElement('li');
         li.className = 'page-item';
         if (disabled) li.classList.add('disabled');
         if (active) li.classList.add('active');
         li.innerHTML = html;
-
-        const a = li.querySelector('a,button');
+        const a = li.querySelector('a, button');
         if (a && !disabled && typeof onClick === 'function') {
-            a.addEventListener('click', (e) => {
-                e.preventDefault();
-                onClick();
-            });
+            a.addEventListener('click', (e) => { e.preventDefault(); onClick(); });
         }
         return li;
     };
 
-    const iconBtn = ({ icon, label, disabled, onClick }) => {
-        const html = `
-            <a class="page-link page-btn" href="#">
-            <i class="bi ${icon}"></i>
-            <span class="d-none d-sm-inline">${label}</span>
-            </a>
-        `;
-        return createLi(html, { disabled, onClick });
-    };
+    const iconBtn = ({ icon, label, disabled, onClick }) =>
+        createLi(
+            `<a class="page-link page-btn" href="#" title="${label}">
+               <i class="bi ${icon}"></i>
+               <span class="d-none d-sm-inline ms-1">${label}</span>
+             </a>`,
+            { disabled, onClick }
+        );
 
-    const numberBtn = ({ page, active, disabled, onClick }) => {
-        const html = `
-            <a class="page-link page-num" href="#">
-            ${page}
-            </a>
-        `;
-        return createLi(html, { active, disabled, onClick });
-    };
+    const numberBtn = ({ page, active, onClick }) =>
+        createLi(
+            `<a class="page-link page-num" href="#">${page}</a>`,
+            { active, onClick }
+        );
 
-    const go = (p) => {
-        if (typeof onPageChange === 'function') onPageChange(p);
-    };
+    // ---- 첫 페이지
+    pagination.appendChild(iconBtn({
+        icon: 'bi-chevron-double-left',
+        label: '처음',
+        disabled: isEmpty || safeCurrent === 1,
+        onClick: () => go(1),
+    }));
 
-    // ---- Prev
+    // ---- 이전
     pagination.appendChild(iconBtn({
         icon: 'bi-chevron-left',
         label: '이전',
@@ -119,29 +98,34 @@ export function renderPagination(...args) {
         onClick: () => go(safeCurrent - 1),
     }));
 
-    // ---- Numbers (prev / current / next only)
-    const pages = [];
+    // ---- 페이지 번호: 현재 기준 좌 1개 · 현재 · 우 1개
     if (!isEmpty) {
-        if (safeCurrent - 1 >= 1) pages.push(safeCurrent - 1);
-        pages.push(safeCurrent);
-        if (safeCurrent + 1 <= totalPages) pages.push(safeCurrent + 1);
+        const pages = [safeCurrent - 1, safeCurrent, safeCurrent + 1]
+            .filter(p => p >= 1 && p <= totalPages);
+
+        pages.forEach(p => {
+            pagination.appendChild(numberBtn({
+                page: p,
+                active: p === safeCurrent,
+                onClick: () => go(p),
+            }));
+        });
     }
 
-    pages.forEach((p) => {
-        pagination.appendChild(numberBtn({
-            page: p,
-            active: p === safeCurrent,
-            disabled: isEmpty,
-            onClick: () => go(p),
-        }));
-    });
-
-    // ---- Next
+    // ---- 다음
     pagination.appendChild(iconBtn({
         icon: 'bi-chevron-right',
         label: '다음',
         disabled: isEmpty || safeCurrent === totalPages,
         onClick: () => go(safeCurrent + 1),
+    }));
+
+    // ---- 마지막 페이지
+    pagination.appendChild(iconBtn({
+        icon: 'bi-chevron-double-right',
+        label: '마지막',
+        disabled: isEmpty || safeCurrent === totalPages,
+        onClick: () => go(totalPages),
     }));
 }
 

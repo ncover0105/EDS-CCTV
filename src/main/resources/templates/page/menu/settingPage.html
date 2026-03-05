@@ -536,7 +536,7 @@
                                     <div class="set-hist-icon"><i class="bi bi-calendar-check-fill"></i></div>
                                     <div class="set-hist-title-text">
                                         <h3>스케줄 관리</h3>
-                                        <p id="schedule-count">총 0개의 스케줄 | 재생 스케줄과 단말 정보를 관리하세요</p>
+                                        <p>총 <span id="schedule-count">0</span>개의 스케줄 | 재생 스케줄과 단말 정보를 관리하세요</p>
                                     </div>
                                 </div>
                                 <div class="set-hist-actions">
@@ -608,8 +608,8 @@
                                                             <label class="sc-form-label" for="sc_enabled">사용 여부</label>
                                                             <select class="sc-form-select" id="sc_enabled"
                                                                 name="enabledYn">
-                                                                <option value="Y" selected>✅ 사용</option>
-                                                                <option value="N">⛔ 미사용</option>
+                                                                <option value="Y" selected>사용</option>
+                                                                <option value="N">미사용</option>
                                                             </select>
                                                         </div>
                                                     </div>
@@ -666,8 +666,8 @@
                                                             <label class="sc-form-label">방송 모드 <span
                                                                     class="sc-req">*</span></label>
                                                             <select class="sc-form-select" id="sc_mode" required>
-                                                                <option value="REAL">🔴 실제 방송</option>
-                                                                <option value="TEST">🔶 시험 방송</option>
+                                                                <option value="REAL">실제 방송</option>
+                                                                <option value="TEST">시험 방송</option>
                                                             </select>
                                                         </div>
                                                         <div class="sc-form-group">
@@ -683,16 +683,16 @@
                                                                     class="sc-req">*</span></label>
                                                             <select class="sc-form-select" id="sc_broadcast_type"
                                                                 required>
-                                                                <option value="TTS">🔤 TTS</option>
-                                                                <option value="STORED">💾 저장메시지</option>
-                                                                <option value="ETC">📌 기타</option>
+                                                                <option value="TTS">TTS</option>
+                                                                <option value="STORED">저장메시지</option>
+                                                                <option value="ETC">기타</option>
                                                             </select>
                                                         </div>
                                                         <div class="sc-form-group">
                                                             <label class="sc-form-label">우선순위 <span
                                                                     class="sc-req">*</span></label>
                                                             <select class="sc-form-select" id="sc_priority" required>
-                                                                <option value="NONE">— 없음</option>
+                                                                <option value="NONE">없음</option>
                                                                 <option value="CAUTION">🔵 주의</option>
                                                                 <option value="WARNING">🟡 경계</option>
                                                                 <option value="DANGER">🔴 위험</option>

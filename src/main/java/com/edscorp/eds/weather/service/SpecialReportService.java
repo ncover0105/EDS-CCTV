@@ -50,7 +50,7 @@ public class SpecialReportService {
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private static final DateTimeFormatter TM_IN_FMT = DateTimeFormatter.ofPattern("yyyyMMddHHmm"); // 12자리
 
-    // 로그 샘플 출력 개수(너무 많으면 로그 폭발)
+    // 로그 샘플 출력 개수
     private static final int SAMPLE_LOG_LIMIT = 5;
     // raw body 로그 길이 제한
     private static final int RAW_PREVIEW_LIMIT = 800;
@@ -222,7 +222,6 @@ public class SpecialReportService {
             String lvl = mapLvlToCode(v.getLVL());
             String cmd = mapCmdToCode(v.getCMD());
 
-            // ✅ 동일 이벤트면 아무것도 하지 않고 스킵
             // boolean exists = tbWeatherWarningListRepository
             // .existsByIdStnAndIdRegIdAndIdWrnAndTmFcAndTmEfAndLvlAndCmd(
             // stn, regId, wrnCode, tmFc, tmEf, lvl, cmd);
@@ -246,10 +245,10 @@ public class SpecialReportService {
 
             if (existsToday) {
                 skippedSame++;
-                continue; // ✅ 이게 맞음
+                continue;
             }
 
-            // ✅ 신규 이벤트면 저장 (TM_IN은 저장시각으로만 사용)
+            // 신규 이벤트면 저장 (TM_IN은 저장시각으로만 사용)
             TbWeatherWarningListKey key = new TbWeatherWarningListKey(
                     stn,
                     regId,
@@ -334,7 +333,7 @@ public class SpecialReportService {
         String d = s.replaceAll("\\D", "");
         if (d.length() >= 12)
             return d.substring(0, 12);
-        return d; // 원문이 12자리 미만이면 그대로(필요하면 null 처리해도 됨)
+        return d;
     }
 
     private String mapWrnToCode(String wrn) {
@@ -342,7 +341,6 @@ public class SpecialReportService {
             return null;
         String s = wrn.trim();
 
-        // 이미 코드면 그대로 (W,R,S...)
         if (s.length() == 1)
             return s;
 
@@ -359,7 +357,7 @@ public class SpecialReportService {
             case "황사" -> "Y";
             case "폭염" -> "H";
             case "안개" -> "F";
-            default -> null; // 모르는 값은 저장 스킵(원하면 s 저장도 가능)
+            default -> null; // 모르는 값은 저장 스킵
         };
     }
 
@@ -368,7 +366,6 @@ public class SpecialReportService {
             return null;
         String s = lvl.trim();
 
-        // 이미 숫자면 그대로
         if (s.matches("\\d+"))
             return s;
 

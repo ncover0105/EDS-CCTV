@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.edscorp.eds.cctv.domain.CctvEntity;
@@ -28,5 +29,12 @@ public interface CctvRepository extends JpaRepository<CctvEntity, CctvId> {
     @Query("delete from CctvEntity c where c.locationCode = :locationCode and c.cctvCode = :cctvCode")
     void deleteByLocationCodeAndCctvCode(@Param("locationCode") String locationCode,
             @Param("cctvCode") String cctvCode);
+
+    @Modifying
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Query("update CctvEntity c set c.statusProc = :statusProc where c.locationCode = :locationCode and c.cctvCode = :cctvCode")
+    int updateStatusProc(@Param("locationCode") String locationCode,
+            @Param("cctvCode") String cctvCode,
+            @Param("statusProc") String statusProc);
 
 }

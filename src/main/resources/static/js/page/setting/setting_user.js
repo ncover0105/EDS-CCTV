@@ -7,7 +7,7 @@
 (() => {
   const API_BASE = "/api/users";
   const IS_MANAGER = !!window.IS_MANAGER;
-  const PAGE_SIZE = 10;
+  const PAGESIZE = 10;
 
   let userRows = [];
   let currentPage = 1;
@@ -48,95 +48,59 @@
     return rows;
   }
 
-  function getTotalPages() {
-    return Math.max(1, Math.ceil(userRows.length / PAGE_SIZE));
-  }
-
   function renderUserTable() {
-    const tbody = document.getElementById("userList");
+    const tbody = document.getElementById('userList');
     if (!tbody) return;
 
-    const totalPages = getTotalPages();
+    const totalPages = Math.max(1, Math.ceil(userRows.length / PAGESIZE));
     if (currentPage > totalPages) currentPage = totalPages;
-    const start = (currentPage - 1) * PAGE_SIZE;
-    const pageRows = userRows.slice(start, start + PAGE_SIZE);
+
+    const start = (currentPage - 1) * PAGESIZE;
+    const pageRows = userRows.slice(start, start + PAGESIZE);
 
     if (pageRows.length === 0) {
       tbody.innerHTML = `
-        <tr class="text-center">
-          <td colspan="6" style="height: 60vh;">
-            <div class="d-flex align-items-center justify-content-center h-100">
-              <span class="text-muted">
-                <i class="bi bi-inbox me-2"></i>
-                등록된 사용자가 없습니다.
-              </span>
-            </div>
-          </td>
-        </tr>
-      `;
-      renderPagination();
+            <tr class="text-center">
+                <td colspan="6" style="height:60vh;">
+                    <div class="d-flex align-items-center justify-content-center h-100">
+                        <span class="text-muted"><i class="bi bi-inbox me-2"></i>등록된 사용자가 없습니다.</span>
+                    </div>
+                </td>
+            </tr>`;
+
+      window.App.utils.renderPagination({
+        containerId: 'userPagination',
+        currentPage: currentPage,
+        totalItems: userRows.length,
+        itemsPerPage: PAGESIZE,
+        onPageChange: (p) => { currentPage = p; renderUserTable(); },
+      });
       return;
     }
 
-    tbody.innerHTML = pageRows
-      .map((user, idx) => {
-        const no = start + idx + 1;
-        const roleBadge =
-          user.role === "MANAGER"
-            ? `<span class="status-badge status-danger"><i class="bi bi-shield-check"></i><span>관리자</span></span>`
-            : `<span class="status-badge status-info"><i class="bi bi-person"></i><span>사용자</span></span>`;
+    tbody.innerHTML = pageRows.map((user, idx) => {
+      const no = start + idx + 1;
+      const roleBadge = user.role === 'MANAGER'
+        ? `<span class="status-badge status-danger"><i class="bi bi-shield-check"></i>관리자</span>`
+        : `<span class="status-badge status-info"><i class="bi bi-person"></i>사용자</span>`;
+      return `
+            <tr data-user-id="${escapeHtml(user.id)}">
+                <td><input type="checkbox" name="selectedUserIds" value="${escapeHtml(user.id)}"></td>
+                <td>${no}</td>
+                <td>${escapeHtml(user.id)}</td>
+                <td>${escapeHtml(user.name) || '-'}</td>
+                <td>${escapeHtml(user.phnNo) || '-'}</td>
+                <td>${roleBadge}</td>
+            </tr>`;
+    }).join('');
 
-        return `
-          <tr data-user-id="${escapeHtml(user.id)}">
-            <td><input type="checkbox" name="selectedUserIds" value="${escapeHtml(user.id)}"></td>
-            <td>${no}</td>
-            <td>${escapeHtml(user.id)}</td>
-            <td>${escapeHtml(user.name || "-")}</td>
-            <td>${escapeHtml(user.phnNo || "-")}</td>
-            <td>${roleBadge}</td>
-          </tr>
-        `;
-      })
-      .join("");
-
-    renderPagination();
-  }
-
-  function renderPagination() {
-    const el = document.getElementById("userPagination");
-    if (!el) return;
-
-    const totalPages = getTotalPages();
-    const canPrev = currentPage > 1;
-    const canNext = currentPage < totalPages;
-    const windowSize = 5;
-    let start = Math.max(1, currentPage - Math.floor(windowSize / 2));
-    let end = Math.min(totalPages, start + windowSize - 1);
-    start = Math.max(1, end - windowSize + 1);
-
-    const items = [];
-    items.push(pageBtn("«", 1, !canPrev));
-    items.push(pageBtn("‹", currentPage - 1, !canPrev));
-    for (let p = start; p <= end; p += 1) {
-      items.push(pageBtn(String(p), p, false, p === currentPage));
-    }
-    items.push(pageBtn("›", currentPage + 1, !canNext));
-    items.push(pageBtn("»", totalPages, !canNext));
-
-    el.innerHTML = items.join("");
-    el.querySelectorAll("button[data-page]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const page = Number(btn.dataset.page || "1");
-        if (Number.isNaN(page)) return;
-        currentPage = Math.min(Math.max(1, page), getTotalPages());
-        renderUserTable();
-      });
+    window.App.utils.renderPagination({
+      containerId: 'userPagination',
+      currentPage: currentPage,
+      totalItems: userRows.length,
+      itemsPerPage: PAGESIZE,
+      onPageChange: (p) => { currentPage = p; renderUserTable(); },
     });
-  }
-
-  function pageBtn(label, page, disabled, active = false) {
-    const itemClass = `page-item${disabled ? " disabled" : ""}${active ? " active" : ""}`;
-    return `<li class="${itemClass}"><button type="button" class="page-link" data-page="${page}" ${disabled ? "disabled" : ""}>${label}</button></li>`;
   }
 
   function bindRowToggle(tbody) {

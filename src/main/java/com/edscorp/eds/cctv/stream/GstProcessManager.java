@@ -161,7 +161,7 @@ public class GstProcessManager {
     }
 
     /**
-     * ✅ STOP 요청 후 /status 가 내려갈 때까지 대기
+     * STOP 요청 후 /status 가 내려갈 때까지 대기
      * - "stopping" 상태에서 바로 start하면 레이스로 새 프로세스가 죽을 수 있음
      */
     public void stopAndWait(String key, long maxWaitMs) {
@@ -237,8 +237,24 @@ public class GstProcessManager {
         return parseAlive(resp);
     }
 
+    public boolean isServerReachable() {
+        try {
+            String resp = webClient.get()
+                    .uri(gstApiBaseUrl + "/healthz")
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .timeout(Duration.ofSeconds(2))
+                    .onErrorReturn("")
+                    .block();
+            return resp != null && resp.contains("\"ok\":true");
+        } catch (Exception e) {
+            log.warn("GST 서버 헬스체크 실패: {}", e.getMessage());
+            return false;
+        }
+    }
+
     /**
-     * ✅ /status 응답 포맷이 뭐든 최대한 안전하게 살아있음을 판정
+     * /status 응답 포맷이 뭐든 최대한 안전하게 살아있음을 판정
      * 지원 예:
      * - true / false
      * - {"alive":true}

@@ -31,6 +31,16 @@ public class CctvEntity {
     @Column(name = "name")
     private String name;
 
+    // 기본(레거시) 스트림: 현재 운영 기본 경로
+    @Column(name = "rtspUrl")
+    private String rtspUrl;
+
+    @Column(name = "mountpointId")
+    private Integer mountpointId;
+
+    @Column(name = "videoPort")
+    private Integer videoPort;
+
     // ✅ Low / High를 Embedded VO로 관리
     @Embedded
     @AttributeOverrides({

@@ -10,6 +10,37 @@ window.CCTVJanus = (function () {
     // mountpoint handle 저장
     const pluginHandles = {};
 
+    function toPositiveInt(value) {
+        const n = Number(value);
+        return Number.isInteger(n) && n > 0 ? n : null;
+    }
+
+    function getTargetCameras(cameras) {
+        const visible = window.CCTVLayout?.getVisibleCameras?.();
+        if (Array.isArray(visible) && visible.length > 0) return visible;
+        return Array.isArray(cameras) ? cameras : [];
+    }
+
+    function cleanupHiddenHandles(targetCams) {
+        const allowedKeys = new Set(
+            (targetCams || [])
+                .map(cam => toPositiveInt(cam?.mountpointId))
+                .filter(id => id != null)
+                .map(id => String(id))
+        );
+
+        for (const key in pluginHandles) {
+            // fullscreen 전용 핸들은 별도 수명주기
+            if (String(key).startsWith("fs-")) continue;
+            if (allowedKeys.has(String(key))) continue;
+
+            const h = pluginHandles[key];
+            try { h.send({ message: { request: "stop" } }); } catch (e) { }
+            try { h.detach(); } catch (e) { }
+            delete pluginHandles[key];
+        }
+    }
+
     // ===================== 4. 페이지 이탈 시 정리 =====================
     /**
      * 모든 Janus 핸들 detach + video srcObject 해제
@@ -64,7 +95,15 @@ window.CCTVJanus = (function () {
                     success: async () => {
                         console.log("✅ Janus 연결 성공");
 
-                        Promise.all(cameras.map(cam => initJanusCam(cam)))
+                        const targetCams = getTargetCameras(cameras);
+                        const validCams = targetCams.filter(cam => toPositiveInt(cam?.mountpointId) != null);
+                        const skipped = targetCams.length - validCams.length;
+                        if (skipped > 0) {
+                            console.warn(`mountpointId가 유효하지 않은 CCTV ${skipped}건은 watch를 건너뜁니다.`);
+                        }
+
+                        cleanupHiddenHandles(validCams);
+                        Promise.all(validCams.map(cam => initJanusCam(cam)))
                             .then(() => console.log("🎉 모든 카메라 초기화 완료"))
                             .catch(err => console.error("카메라 초기화 오류:", err));
                     },
@@ -80,8 +119,16 @@ window.CCTVJanus = (function () {
     // 2) Mountpoint attach + Watch
     // ------------------------------
     async function initJanusCam(cam, opts = {}) {
-        const key = opts.key ?? String(cam.mountpointId);
-        const watchId = opts.watchId ?? cam.mountpointId;
+        const watchId = toPositiveInt(opts.watchId ?? cam?.mountpointId);
+        if (watchId == null) {
+            console.warn("유효하지 않은 mountpointId로 watch를 건너뜁니다:", {
+                cctvCode: cam?.cctvCode,
+                mountpointId: cam?.mountpointId,
+            });
+            return;
+        }
+
+        const key = opts.key ?? String(watchId);
 
         // placeholder 강제는 grid용만( fullscreen은 건드리지 않음 )
         if (!opts.skipPrepareReconnect) {
@@ -176,8 +223,14 @@ window.CCTVJanus = (function () {
             return initSignaling(cameras);
         }
 
+        const targetCams = getTargetCameras(cameras);
+        cleanupHiddenHandles(targetCams);
+
         console.log("전체 재연결 시작");
-        for (const cam of cameras) {
+        for (const cam of targetCams) {
+            if (toPositiveInt(cam?.mountpointId) == null) {
+                continue;
+            }
             try {
                 await initJanusCam(cam); // 내부에서 stop/detach 후 watch 재시작함
             } catch (e) {
@@ -215,14 +268,15 @@ window.CCTVJanus = (function () {
             return;
         }
 
-        // high 우선, 없으면 default (네 layout.js 로직과 동일)
-        const highMp = cam.highMountpointId ?? null;
-        const highUrl = cam.highRtspUrl ?? null; // 여기서는 존재 검사용
+        // 기본 운영은 항상 legacy mountpointId 사용
+        // (향후 high 우선 정책 필요 시 highMp/highUrl 로직 복원)
+        // const highMp = cam.highMountpointId ?? null;
+        // const highUrl = cam.highRtspUrl ?? null;
         const defMp = cam.__defaultMountpointId ?? cam.mountpointId ?? null;
-        const defUrl = cam.__defaultRtspUrl ?? cam.lowRtspUrl ?? cam.highRtspUrl ?? null;
+        const defUrl = cam.__defaultRtspUrl ?? cam.rtspUrl ?? cam.lowRtspUrl ?? cam.highRtspUrl ?? null;
 
-        const chosenMp = (highMp && highUrl) ? highMp : defMp;
-        const chosenUrl = (highMp && highUrl) ? highUrl : defUrl;
+        const chosenMp = defMp;
+        const chosenUrl = defUrl;
 
         if (!chosenMp || !chosenUrl) {
             console.warn("[openFullscreenHigh] blocked (no mp/url)", cam?.name, chosenMp, chosenUrl);

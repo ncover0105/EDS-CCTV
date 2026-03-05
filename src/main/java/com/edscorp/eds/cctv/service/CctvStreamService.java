@@ -115,6 +115,16 @@ public class CctvStreamService {
                 rtsp, e.getId(), e.getPassword(), e.getType());
     }
 
+    public void ensureLegacyIfPresent(CctvEntity e) {
+        if (!hasText(e.getRtspUrl()) || e.getMountpointId() == null || e.getVideoPort() == null) {
+            return;
+        }
+        String rtsp = buildRtspUrlWithAuth(e, e.getRtspUrl());
+        ensureOne(e.getLocationCode(), e.getCctvCode(),
+                e.getMountpointId(), e.getVideoPort(),
+                rtsp, e.getId(), e.getPassword(), e.getType());
+    }
+
     public void ensureAllQualitiesIfPresent(CctvEntity e) {
         for (StreamQuality quality : StreamQuality.values()) {
             ensureStreamIfPresent(e, quality);
@@ -125,7 +135,8 @@ public class CctvStreamService {
     public void ensureAllStreamsAsync() {
         List<CctvEntity> all = cctvRepository.findAll();
         for (CctvEntity e : all) {
-            ensureAllQualitiesIfPresent(e); // ✅ LOW/HIGH 자동 순회
+            // 기본은 legacy(rtspUrl/mountpointId/videoPort)만 생성
+            ensureLegacyIfPresent(e);
         }
     }
 
@@ -140,19 +151,17 @@ public class CctvStreamService {
         restartAllStreams(force);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public void restart(String locationCode, String cctvCode) {
         restart(locationCode, cctvCode, false);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public void restart(String locationCode, String cctvCode, boolean force) {
         CctvEntity e = cctvRepository.findByLocationCodeAndCctvCode(locationCode, cctvCode)
                 .orElseThrow(() -> new IllegalArgumentException("CCTV not found: " + locationCode + "/" + cctvCode));
 
-        for (StreamQuality quality : StreamQuality.values()) {
-            restartStreamIfPresent(e, quality, force); // LOW/HIGH 자동 순회
-        }
+        restartLegacyIfPresent(e, force);
     }
 
     private void restartStreamIfPresent(CctvEntity e, StreamQuality quality, boolean force) {
@@ -180,7 +189,31 @@ public class CctvStreamService {
         }
     }
 
-    @Transactional(readOnly = true)
+    private void restartLegacyIfPresent(CctvEntity e, boolean force) {
+        if (!hasText(e.getRtspUrl()) || e.getMountpointId() == null || e.getVideoPort() == null) {
+            return;
+        }
+
+        Integer mountId = e.getMountpointId();
+        Object lock = lockFor(mountId);
+        synchronized (lock) {
+            if (!force && isInCooldown(mountId))
+                return;
+            String rtsp = buildRtspUrlWithAuth(e, e.getRtspUrl());
+            try {
+                janusManager.restartStream(mountId, e.getVideoPort(),
+                        rtsp, e.getId(), e.getPassword(), e.getType());
+                updateStatusProcIfPresent(e.getLocationCode(), e.getCctvCode(), 1);
+                markRestart(mountId);
+            } catch (Exception ex) {
+                log.error("restartStream failed (LEGACY) mountpoint={} url={}",
+                        mountId, rtsp, ex);
+                updateStatusProcIfPresent(e.getLocationCode(), e.getCctvCode(), 0);
+            }
+        }
+    }
+
+    @Transactional
     public void restartAllStreams(boolean force) {
         List<CctvEntity> all = cctvRepository.findAll();
         for (CctvEntity e : all) {
@@ -189,16 +222,11 @@ public class CctvStreamService {
     }
 
     // ===================== statusProc =====================
-    @Transactional
     public void updateStatusProc(String locationCode, String cctvCode, int statusProc) {
-        CctvEntity entity = cctvRepository
-                .findByLocationCodeAndCctvCode(locationCode, cctvCode)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "CCTV not found: " + locationCode + "/" + cctvCode));
-
         String newVal = String.valueOf(statusProc);
-        if (!newVal.equals(entity.getStatusProc())) {
-            entity.setStatusProc(newVal);
+        int updated = cctvRepository.updateStatusProc(locationCode, cctvCode, newVal);
+        if (updated == 0) {
+            throw new IllegalArgumentException("CCTV not found: " + locationCode + "/" + cctvCode);
         }
     }
 

@@ -1,6 +1,6 @@
 (() => {
     const MENT_API_BASE = "/api/disaster";
-    const PAGE_SIZE = 10;
+    const PAGESIZE = 10;
 
     let mentData = [];
     let currentPage = 1;
@@ -85,131 +85,92 @@
         applyRowSelectionStyles();
     }
 
-    function getTotalPages() {
-        return Math.max(1, Math.ceil(mentData.length / PAGE_SIZE));
-    }
-
     function renderMentTable() {
-        const tbody = document.getElementById("mentList");
+        const tbody = document.getElementById('mentList');
         if (!tbody) return;
 
-        const totalPages = getTotalPages();
+        const totalPages = Math.max(1, Math.ceil(mentData.length / PAGESIZE));
         if (currentPage > totalPages) currentPage = totalPages;
-        const start = (currentPage - 1) * PAGE_SIZE;
-        const pageData = mentData.slice(start, start + PAGE_SIZE);
+
+        const start = (currentPage - 1) * PAGESIZE;
+        const pageData = mentData.slice(start, start + PAGESIZE);
 
         if (pageData.length === 0) {
             tbody.innerHTML = `
-                <tr class="text-center">
-                    <td colspan="5" style="height: 60vh;">
-                        <div class="d-flex align-items-center justify-content-center h-100">
-                            <span class="text-muted">
-                                <i class="bi bi-inbox me-2"></i>
-                                등록된 문안이 없습니다.
-                            </span>
-                        </div>
-                    </td>
-                </tr>
-            `;
-            renderMentPagination();
+            <tr>
+                <td colspan="5" style="height:60vh;">
+                    <div class="d-flex align-items-center justify-content-center h-100">
+                        <span class="text-muted"><i class="bi bi-inbox me-2"></i>등록된 방송 멘트가 없습니다.</span>
+                    </div>
+                </td>
+            </tr>`;
+
+            // 빈 상태에서도 페이지네이션 렌더 (비활성 상태로)
+            window.App.utils.renderPagination({
+                containerId: 'mentPagination',
+                currentPage: currentPage,
+                totalItems: mentData.length,
+                itemsPerPage: PAGESIZE,
+                onPageChange: (p) => {
+                    currentPage = p;
+                    clearMentSelection();
+                    renderMentTable();
+                },
+            });
             return;
         }
 
-        tbody.innerHTML = "";
-
+        tbody.innerHTML = '';
         pageData.forEach((item, idx) => {
-            const isUse = item.useFlag === "Use";
+            const isUse = item.useFlag === 'Use';
             const no = start + idx + 1;
-
-            const tr = document.createElement("tr");
+            const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>
-                    <input type="checkbox"
-                        name="selectedIds"
-                        value="${escapeHtml(item.id)}"
-                        data-name="${escapeHtml(item.name)}"
-                        data-content="${escapeHtml(item.content)}"
-                        data-useflag="${escapeHtml(item.useFlag)}">
-                </td>
-                <td>${no}</td>
-                <td>${escapeHtml(item.name || "-")}</td>
-                <td class="text-wrap">${escapeHtml(item.content || "-")}</td>
-                <td>
-                    <span class="status-badge ${isUse ? "status-success" : "status-primary"}">
-                        ${isUse
-                    ? `<i class="bi bi-check-circle-fill me-1 text-success"></i>사용중`
-                    : `<i class="bi bi-x-circle-fill me-1 text-secondary"></i>미사용`
-                }
-                    </span>
-                </td>
-            `;
+            <td><input type="checkbox" name="selectedIds" value="${escapeHtml(item.id)}"
+                data-name="${escapeHtml(item.name)}"
+                data-content="${escapeHtml(item.content)}"
+                data-useflag="${escapeHtml(item.useFlag)}">
+            </td>
+            <td>${no}</td>
+            <td>${escapeHtml(item.name) || '-'}</td>
+            <td class="text-wrap">${escapeHtml(item.content) || '-'}</td>
+            <td>
+                <span class="status-badge ${isUse ? 'status-success' : 'status-primary'}">
+                    ${isUse
+                    ? `<i class="bi bi-check-circle-fill me-1 text-success"></i>사용`
+                    : `<i class="bi bi-x-circle-fill me-1 text-secondary"></i>미사용`}
+                </span>
+            </td>`;
 
             const cb = tr.querySelector('input[name="selectedIds"]');
-
-            cb.addEventListener("click", (e) => {
+            cb.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (cb.checked) {
-                    selectOnlyThisCheckbox(cb);
-                } else {
-                    applyRowSelectionStyles();
-                }
+                if (cb.checked) selectOnlyThisCheckbox(cb);
+                else applyRowSelectionStyles();
             });
-
-            tr.addEventListener("click", () => {
+            tr.addEventListener('click', () => {
                 const willCheck = !cb.checked;
-                if (willCheck) {
-                    cb.checked = true;
-                    selectOnlyThisCheckbox(cb);
-                } else {
-                    cb.checked = false;
-                    applyRowSelectionStyles();
-                }
+                if (willCheck) { cb.checked = true; selectOnlyThisCheckbox(cb); }
+                else { cb.checked = false; applyRowSelectionStyles(); }
             });
 
             tbody.appendChild(tr);
         });
 
         applyRowSelectionStyles();
-        renderMentPagination();
-    }
 
-    function renderMentPagination() {
-        const el = document.getElementById("mentPagination");
-        if (!el) return;
-
-        const totalPages = getTotalPages();
-        const canPrev = currentPage > 1;
-        const canNext = currentPage < totalPages;
-        const windowSize = 5;
-
-        let start = Math.max(1, currentPage - Math.floor(windowSize / 2));
-        let end = Math.min(totalPages, start + windowSize - 1);
-        start = Math.max(1, end - windowSize + 1);
-
-        const items = [];
-        items.push(pageBtn("«", 1, !canPrev));
-        items.push(pageBtn("‹", currentPage - 1, !canPrev));
-        for (let p = start; p <= end; p += 1) {
-            items.push(pageBtn(String(p), p, false, p === currentPage));
-        }
-        items.push(pageBtn("›", currentPage + 1, !canNext));
-        items.push(pageBtn("»", totalPages, !canNext));
-
-        el.innerHTML = items.join("");
-        el.querySelectorAll("button[data-page]").forEach((btn) => {
-            btn.addEventListener("click", () => {
-                const page = Number(btn.dataset.page || "1");
-                if (Number.isNaN(page)) return;
-                currentPage = Math.min(Math.max(1, page), getTotalPages());
+        // ✅ 공통 페이지네이션
+        window.App.utils.renderPagination({
+            containerId: 'mentPagination',
+            currentPage: currentPage,
+            totalItems: mentData.length,
+            itemsPerPage: PAGESIZE,
+            onPageChange: (p) => {
+                currentPage = p;
                 clearMentSelection();
                 renderMentTable();
-            });
+            },
         });
-    }
-
-    function pageBtn(label, page, disabled, active = false) {
-        const itemClass = `page-item${disabled ? " disabled" : ""}${active ? " active" : ""}`;
-        return `<li class="${itemClass}"><button type="button" class="page-link" data-page="${page}" ${disabled ? "disabled" : ""}>${label}</button></li>`;
     }
 
     window.mentInsert = function mentInsert() {

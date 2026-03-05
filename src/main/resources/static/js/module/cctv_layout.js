@@ -57,9 +57,9 @@ window.CCTVLayout = (function () {
         // 최초 1회만 기본값을 저장(서버가 내려준 mountpointId = 기본)
         if (cam.__defaultMountpointId === undefined) cam.__defaultMountpointId = cam.mountpointId ?? null;
 
-        // 기본 URL은 low/high 중 존재하는 걸로 잡아둠(서버 데이터 형태에 맞춤)
+        // 기본 URL은 legacy(rtspUrl) 우선
         if (cam.__defaultRtspUrl === undefined) {
-            cam.__defaultRtspUrl = cam.lowRtspUrl || cam.highRtspUrl || null;
+            cam.__defaultRtspUrl = cam.rtspUrl || cam.lowRtspUrl || cam.highRtspUrl || null;
         }
     }
 
@@ -67,17 +67,20 @@ window.CCTVLayout = (function () {
     function pickStream(cam, prefer) {
         ensureDefaults(cam);
 
-        const low = { mp: cam.lowMountpointId ?? null, url: cam.lowRtspUrl ?? null };
-        const high = { mp: cam.highMountpointId ?? null, url: cam.highRtspUrl ?? null };
         const def = { mp: cam.__defaultMountpointId ?? null, url: cam.__defaultRtspUrl ?? null };
 
-        let chosen = def;
-        if (prefer === "low") chosen = (low.mp && low.url) ? low : def;
-        if (prefer === "high") chosen = (high.mp && high.url) ? high : def;
+        // 기본 운영은 항상 legacy mountpointId 사용
+        // (향후 low/high 전환 필요 시 아래 로직 복원)
+        // const low = { mp: cam.lowMountpointId ?? null, url: cam.lowRtspUrl ?? null };
+        // const high = { mp: cam.highMountpointId ?? null, url: cam.highRtspUrl ?? null };
+        // let chosen = def;
+        // if (prefer === "low") chosen = (low.mp && low.url) ? low : def;
+        // if (prefer === "high") chosen = (high.mp && high.url) ? high : def;
+        const chosen = def;
 
         // 최종 검증: mp/url 둘 중 하나라도 없으면 “스트리밍 금지”
         const ok = !!(chosen.mp && chosen.url);
-        return { ok, mountpointId: chosen.mp, rtspUrl: chosen.url, used: (chosen === low ? "low" : chosen === high ? "high" : "default") };
+        return { ok, mountpointId: chosen.mp, rtspUrl: chosen.url, used: "default" };
     }
 
     function applyStreamPreferenceForLayout(layout) {
@@ -127,6 +130,25 @@ window.CCTVLayout = (function () {
         }
 
         container.appendChild(grid);
+    }
+
+    function getVisibleCameras() {
+        const visible = [];
+        if (!Array.isArray(cameras) || cameras.length === 0) return visible;
+
+        if (currentLayout === 1) {
+            const cam = cameras[focusedCamIndex];
+            if (cam && !cam.__streamBlocked && cam.mountpointId) visible.push(cam);
+            return visible;
+        }
+
+        for (let i = 0; i < currentLayout; i++) {
+            const cam = cameras[i];
+            if (!cam) continue;
+            if (cam.__streamBlocked || !cam.mountpointId) continue;
+            visible.push(cam);
+        }
+        return visible;
     }
 
     function createFeed(index) {
@@ -696,6 +718,7 @@ window.CCTVLayout = (function () {
     return {
         init,
         renderGrid,
+        getVisibleCameras,
         attachStreamToVideo,
         showPlaceholder,
         setFocusedCameraByIndex,

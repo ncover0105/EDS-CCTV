@@ -60,6 +60,20 @@ public class CctvManagementService {
             camera.put("longitude", entity.getLongitude());
             camera.put("status", entity.getStatusCam());
 
+            // 기본/low/high 필드는 항상 내려준다(null 포함)
+            camera.put("rtspUrl", hasText(entity.getRtspUrl())
+                    ? cctvStreamService.buildRtspUrlWithAuth(entity, entity.getRtspUrl())
+                    : null);
+            camera.put("mountpointId", entity.getMountpointId());
+            camera.put("videoPort", entity.getVideoPort());
+
+            camera.put("lowRtspUrl", null);
+            camera.put("lowMountpointId", null);
+            camera.put("lowVideoPort", null);
+            camera.put("highRtspUrl", null);
+            camera.put("highMountpointId", null);
+            camera.put("highVideoPort", null);
+
             // low / high 스트림 정보
             for (StreamQuality quality : StreamQuality.values()) {
                 CctvStream stream = entity.getStream(quality);
@@ -71,16 +85,6 @@ public class CctvManagementService {
                     camera.put(prefix + "VideoPort", stream.getVideoPort());
                 }
             }
-
-            // ✅ 초기 mountpointId: 분할화면(split) 기본값 → LOW 우선, 없으면 HIGH
-            CctvStream low = entity.getStream(StreamQuality.LOW);
-            CctvStream high = entity.getStream(StreamQuality.HIGH);
-            Integer initMountpointId = null;
-            if (low != null && low.isValid())
-                initMountpointId = low.getMountpointId();
-            else if (high != null && high.isValid())
-                initMountpointId = high.getMountpointId();
-            camera.put("mountpointId", initMountpointId);
 
             cameras.add(camera);
         }
@@ -135,6 +139,9 @@ public class CctvManagementService {
         e.setType(req.getType());
         e.setWsPort(req.getWsPort());
         e.setStatusCam(req.getStatusCam());
+        e.setRtspUrl(req.getRtspUrl());
+        e.setMountpointId(req.getMountpointId());
+        e.setVideoPort(req.getVideoPort());
 
         // ✅ CctvStream VO로 low/high 설정
         if (hasText(req.getLowRtspUrl())) {
@@ -156,7 +163,8 @@ public class CctvManagementService {
         refreshCache();
 
         try {
-            cctvStreamService.ensureAllQualitiesIfPresent(saved); // 통합 호출
+            // 기본 생성은 legacy 스트림만 수행 (low/high 생성 제외)
+            cctvStreamService.ensureLegacyIfPresent(saved);
 
         } catch (Exception ex) {
             log.error("ensureStream failed after create: cctvCode={}", saved.getCctvCode(), ex);
@@ -183,6 +191,9 @@ public class CctvManagementService {
         e.setWsPort(req.getWsPort());
         e.setLatitude(req.getLatitude());
         e.setLongitude(req.getLongitude());
+        e.setRtspUrl(req.getRtspUrl());
+        e.setMountpointId(req.getMountpointId());
+        e.setVideoPort(req.getVideoPort());
 
         // CctvStream VO로 low/high 업데이트
         if (hasText(req.getLowRtspUrl())) {

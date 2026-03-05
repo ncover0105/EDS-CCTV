@@ -407,79 +407,54 @@
   // UI: Schedule list rendering
   // -------------------------
   function renderSpeakerTable(schedule) {
-    // schedule.speakers가 있으면 상세 표시, 없으면 speakerIds만 표시
     const speakers = Array.isArray(schedule.speakers) ? schedule.speakers : [];
 
-    const onlyIds = (!speakers.length && Array.isArray(schedule.speakerIds) && schedule.speakerIds.length)
-      ? schedule.speakerIds.map(id => ({ speakerKey: id, speakerId: id, speakerName: '-', locationName: '-', speakerAdr: '-' }))
-      : [];
+    let list = speakers;
 
-    const list = speakers.length ? speakers : onlyIds;
-
-    if (!list.length) {
-      return `
-        <div class="mt-3 p-3 rounded-3" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06);">
-          <div class="text-white-50 small">할당된 스피커가 없습니다.</div>
-        </div>
-      `;
+    if (!list.length && Array.isArray(schedule.speakerIds) && schedule.speakerIds.length) {
+      const cacheMap = new Map(
+        (Array.isArray(allSpeakersCache) ? allSpeakersCache : [])
+          .map(sp => [String(sp.speakerKey), sp])
+      );
+      list = schedule.speakerIds.map(id => {
+        const key = String(id);
+        const cached = cacheMap.get(key);
+        return cached
+          ? { ...cached }
+          : { speakerKey: key, speakerId: id, speakerName: '(미조회)', locationName: '', locationCode: '' };
+      });
     }
 
-    return `
-      <div class="mt-3">
-        <h6 class="text-white-50 fw-semibold mb-2">
-          <i class="bi bi-speaker me-1"></i>
-          할당 스피커 (${list.length}개)
-        </h6>
+    if (!list.length) return `
+    <div class="d-flex align-items-center gap-2 mt-2" style="color:var(--text-muted);font-size:12px;">
+      <i class="bi bi-speaker" style="color:var(--text-disabled)"></i>
+      <span>지정된 스피커 없음</span>
+    </div>`;
 
-        <div class="table-responsive rounded-3 schedule-table-wrap">
-          <table class="table table-dark align-middle mb-0 w-100">
-            <colgroup>
-              <col style="width: 10%;">
-              <col style="width: 18%;">
-              <col style="width: 18%;">
-              <col style="width: 22%;">
-              <col style="width: 16%;">
-              <col style="width: 16%;">
-            </colgroup>
-            <thead>
-              <tr>
-                <th>Key</th>
-                <th>단말 ID</th>
-                <th>단말명</th>
-                <th>지역</th>
-                <th>접속주소</th>
-                <th>좌표</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${list.map(sp => {
-      const key = sp.speakerKey ?? '-';
+    return `
+    <div class="mt-2">
+      <div class="d-flex align-items-center gap-1 mb-2" style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);">
+        <i class="bi bi-speaker-fill" style="color:#38bdf8;font-size:12px;"></i>
+        <span style="color:#7dd3fc;">${list.length}개 스피커</span>
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        ${list.map(sp => {
       const sid = sp.speakerId ?? '-';
       const name = sp.speakerName ?? '-';
-      const loc = (sp.locationName || sp.locationCode) ? `${sp.locationName ?? ''} ${sp.locationCode ? '(' + sp.locationCode + ')' : ''}`.trim() : '-';
-      const adr = sp.speakerAdr ?? '-';
-
-      const lat = sp.speakerLatitude ?? '';
-      const lng = sp.speakerLongitude ?? '';
-      const coord = (lat && lng) ? `${lat}, ${lng}` : '-';
-
+      const loc = (sp.locationName || sp.locationCode)
+        ? [sp.locationName, sp.locationCode].filter(Boolean).join(' / ')
+        : '';
       return `
-                  <tr style="border-color:#30363D;">
-                    <td style="border-color:#30363D;"><small style="color:#8B949E;">${escapeHtml(String(key))}</small></td>
-                    <td style="border-color:#30363D;">${escapeHtml(String(sid))}</td>
-                    <td style="border-color:#30363D;">${escapeHtml(String(name))}</td>
-                    <td style="border-color:#30363D;">${escapeHtml(String(loc))}</td>
-                    <td style="border-color:#30363D;">${escapeHtml(String(adr))}</td>
-                    <td style="border-color:#30363D;"><small style="color:#8B949E;">${escapeHtml(String(coord))}</small></td>
-                  </tr>
-                `;
+            <span class="sc3-chip sc3-chip--speaker" style="gap:6px;padding:4px 11px;">
+              <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--text-muted);letter-spacing:.03em;">${escapeHtml(String(sid))}</span>
+              <span style="color:var(--text-secondary);font-size:12px;font-weight:500;">${escapeHtml(String(name))}</span>
+              ${loc ? `<span style="color:var(--text-muted);font-size:11px;">${escapeHtml(loc)}</span>` : ''}
+            </span>`;
     }).join('')}
-            </tbody>
-          </table>
-        </div>
       </div>
-    `;
+    </div>`;
   }
+
 
   function renderScheduleList() {
     const listDiv = document.getElementById('schedule-list');

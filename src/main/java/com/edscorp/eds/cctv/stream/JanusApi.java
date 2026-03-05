@@ -5,8 +5,10 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
@@ -22,10 +24,26 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class JanusApi {
 
-    private static final String JANUS_URL = "http://localhost:8088/janus";
-    private final RestTemplate restTemplate = new RestTemplate();
+    @Value("${janus.public.url:http://127.0.0.1:8088/janus}")
+    private String janusUrl;
+    @Value("${janus.http.connect-timeout-ms:3000}")
+    private int connectTimeoutMs;
+    @Value("${janus.http.read-timeout-ms:5000}")
+    private int readTimeoutMs;
+
+    private RestTemplate restTemplate;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(connectTimeoutMs);
+        factory.setReadTimeout(readTimeoutMs);
+        this.restTemplate = new RestTemplate(factory);
+        log.info("JanusApi initialized janusUrl={} connectTimeoutMs={} readTimeoutMs={}",
+                janusUrl, connectTimeoutMs, readTimeoutMs);
+    }
 
     /**
      * Janus 연결 상태 확인
@@ -33,7 +51,7 @@ public class JanusApi {
      * @return true = 연결 가능, false = 연결 불가
      */
     public boolean checkJanusConnection() {
-        String url = JANUS_URL + "/info";
+        String url = janusUrl + "/info";
         try {
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
             log.info("checkJanusConnection() 응답: {}", response.getBody());
@@ -57,7 +75,7 @@ public class JanusApi {
     }
 
     public JsonNode createSession() {
-        String url = JANUS_URL;
+        String url = janusUrl;
         String body = Jsons.toString(Map.of("janus", "create", "transaction", "txn-" + System.currentTimeMillis()));
         log.info("createSession() 요청 URL: {}, Body: {}", url, body);
         try {
@@ -71,7 +89,7 @@ public class JanusApi {
     }
 
     public JsonNode attachPlugin(long sessionId) {
-        String url = JANUS_URL + "/" + sessionId;
+        String url = janusUrl + "/" + sessionId;
         String body = Jsons.toString(Map.of(
                 "janus", "attach",
                 "plugin", "janus.plugin.streaming",
@@ -89,7 +107,7 @@ public class JanusApi {
 
     public JsonNode createMountpoint(long sessionId, long handleId, String rtspUrl, int mountpointId, int videoPort,
             String rtspId, String rtspPw) {
-        String url = JANUS_URL + "/" + sessionId + "/" + handleId;
+        String url = janusUrl + "/" + sessionId + "/" + handleId;
 
         // Map<String, Object> body = Map.of(
         // "janus", "message",
@@ -152,7 +170,7 @@ public class JanusApi {
      * 스트림 목록 조회
      */
     public JsonNode listMountpoints(long sessionId, long handleId) {
-        String url = JANUS_URL + "/" + sessionId + "/" + handleId;
+        String url = janusUrl + "/" + sessionId + "/" + handleId;
         Map<String, Object> bodyMap = Map.of(
                 "janus", "message",
                 "transaction", "txn-" + System.currentTimeMillis(),
@@ -183,7 +201,7 @@ public class JanusApi {
     }
 
     public JsonNode keepAlive(long sessionId) {
-        String url = JANUS_URL + "/" + sessionId;
+        String url = janusUrl + "/" + sessionId;
         String body = Jsons.toString(Map.of(
                 "janus", "keepalive",
                 "transaction", "txn-" + System.currentTimeMillis()));
@@ -198,7 +216,7 @@ public class JanusApi {
     }
 
     public JsonNode destroySession(long sessionId) {
-        String url = JANUS_URL + "/" + sessionId;
+        String url = janusUrl + "/" + sessionId;
 
         String body = Jsons.toString(Map.of(
                 "janus", "destroy",
@@ -213,9 +231,43 @@ public class JanusApi {
         }
     }
 
+    public JsonNode getMountpointInfoNode(long sessionId, long handleId, long mountpointId) {
+        String s = getMountpointInfo(sessionId, handleId, mountpointId);
+        try {
+            return objectMapper.readTree(s);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse mountpoint info JSON", e);
+        }
+    }
+
+    public String getMountpointInfo(long sessionId, long handleId, long mountpointId) {
+        // streaming plugin message: { "janus":"message", "body": { "request":"info",
+        // "id": ... } }
+        Map<String, Object> body = new HashMap<>();
+        body.put("request", "info");
+        body.put("id", mountpointId);
+
+        Map<String, Object> req = new HashMap<>();
+        req.put("janus", "message");
+        req.put("transaction", "txn-info-" + System.currentTimeMillis());
+        req.put("body", body);
+
+        // 이미 구현돼 있을 가능성이 높은 형태:
+        // POST /janus/{sessionId}/{handleId}
+        String url = janusUrl + "/" + sessionId + "/" + handleId;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(req, headers);
+        ResponseEntity<String> resp = restTemplate.postForEntity(url, entity, String.class);
+
+        return resp.getBody();
+    }
+
     // Janus Mountpoint 제거
     public JsonNode destroyMountpoint(long sessionId, long handleId, int mountpointId) {
-        String url = JANUS_URL + "/" + sessionId + "/" + handleId;
+        String url = janusUrl + "/" + sessionId + "/" + handleId;
 
         Map<String, Object> body = Map.of(
                 "janus", "message",
