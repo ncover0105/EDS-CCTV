@@ -17,5 +17,5 @@ public class TtsUpsertRequest {
     private String ttsMsg;
 
     @Builder.Default
-    private String ttsUseFlag = "Use";
+    private Boolean ttsUseFlag = true;
 }

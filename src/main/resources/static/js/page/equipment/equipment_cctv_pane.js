@@ -1,4 +1,4 @@
-(() => {
+﻿(() => {
     const PAGE_SIZE = 10;
 
     let fullList = [];        // API에서 가져온 원본 전체 목록
@@ -167,6 +167,7 @@
         const tbody = document.getElementById("cctvTbody");
         const emptyEl = document.getElementById("cctvEmpty");
         const tableEl = document.getElementById("cctvTable");
+        const tableResponsiveEl = tableEl?.closest(".table-responsive");
         const pagingEl = document.getElementById("cctvPagination");
 
         if (!tbody) return;
@@ -175,12 +176,14 @@
             tbody.innerHTML = "";
             emptyEl?.classList.remove("d-none");
             tableEl?.classList.add("d-none");
+            tableResponsiveEl?.classList.add("d-none");
             if (pagingEl) pagingEl.innerHTML = "";
             return;
         }
 
         emptyEl?.classList.add("d-none");
         tableEl?.classList.remove("d-none");
+        tableResponsiveEl?.classList.remove("d-none");
 
         const totalPages = Math.max(1, Math.ceil(filteredList.length / PAGE_SIZE));
         if (currentPage > totalPages) currentPage = totalPages;
@@ -466,4 +469,6 @@
     }
 
 })();
+
+
 

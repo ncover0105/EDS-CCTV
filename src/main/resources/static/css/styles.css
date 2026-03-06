@@ -1,4 +1,4 @@
-@charset "UTF-8";
+﻿@charset "UTF-8";
 
 /*!
 * Start Bootstrap - SB Admin v7.0.7 (https://startbootstrap.com/template/sb-admin)
@@ -20710,6 +20710,12 @@ section.card.card-surface {
   color: rgba(255, 255, 255, 0.88) !important;
 }
 
+
+/* Logs boundary left accent color */
+.sb-log-body .log-item.log-boundary-1::before { background: #3b9eff !important; }
+.sb-log-body .log-item.log-boundary-2::before { background: #2ecc71 !important; }
+.sb-log-body .log-item.log-boundary-3::before { background: #ff4757 !important; }
+.sb-log-body .log-item.log-boundary-4::before { background: #ff6eb4 !important; }
 /* 시간 텍스트 */
 .sb-log-body .log-item small {
   font-size: 10px !important;
@@ -21026,3 +21032,4 @@ section.card.card-surface {
     padding: 5px 8px;
   }
 }
+

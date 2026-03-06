@@ -195,6 +195,25 @@
         }
     }
 
+    function bindCrudButtons() {
+        const addBtn = s$("#speakerAddBtn");
+        const updateBtn = s$("#speakerUpdateBtn");
+        const deleteBtn = s$("#speakerDeleteBtn");
+
+        if (addBtn && !addBtn.dataset.bound) {
+            addBtn.addEventListener("click", speakerAdd);
+            addBtn.dataset.bound = "1";
+        }
+        if (updateBtn && !updateBtn.dataset.bound) {
+            updateBtn.addEventListener("click", speakerUpdate);
+            updateBtn.dataset.bound = "1";
+        }
+        if (deleteBtn && !deleteBtn.dataset.bound) {
+            deleteBtn.addEventListener("click", speakerDeleted);
+            deleteBtn.dataset.bound = "1";
+        }
+    }
+
     // ===== Dynamic rows 계산 =====
     // function calculateSpeakerPageSize() {
     //     const wrap = s$(".speaker-table-wrap") || s$(".table-container");
@@ -720,6 +739,7 @@
 
         // 검색 바인딩
         bindSpeakerSearchUI();
+        bindCrudButtons();
 
         // 리사이즈 시 리렌더 (활성 pane일 때만)
         window.addEventListener("resize", () => {

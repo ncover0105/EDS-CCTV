@@ -42,13 +42,13 @@
                             <input id="speakerSearchInput" type="text" placeholder="ID / 이름 / 지역 검색" autocomplete="off">
                         </div>
                         <div class="panel-actions">
-                            <button class="icon-btn" type="button" onclick="speakerAdd()" title="추가">
+                            <button class="icon-btn" id="speakerAddBtn" type="button" title="추가">
                                 <i class="bi bi-plus"></i>
                             </button>
-                            <button class="icon-btn" type="button" onclick="speakerUpdate()" title="수정">
+                            <button class="icon-btn" id="speakerUpdateBtn" type="button" title="수정">
                                 <i class="bi bi-pencil-square"></i>
                             </button>
-                            <button class="icon-btn delete" type="button" onclick="speakerDeleted()" title="삭제">
+                            <button class="icon-btn delete" id="speakerDeleteBtn" type="button" title="삭제">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
@@ -164,6 +164,90 @@
                     </div>
                 </section>
 
+            </div>
+        </div>
+    </div>
+
+    <!-- Speaker Add Modal -->
+    <div class="modal fade common-modal" id="speaker_add_modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="cm-header">
+                    <div class="cm-title-wrap">
+                        <i class="bi bi-megaphone cm-icon"></i>
+                        <h5 class="cm-title">스피커 추가</h5>
+                    </div>
+                    <button type="button" class="cm-close" data-bs-dismiss="modal" aria-label="닫기">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <div class="cm-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="eq-label">ID</label><input class="eq-input"
+                                id="add_speakerId" placeholder="예: SPK-001"></div>
+                        <div class="col-md-6"><label class="eq-label">단말명</label><input class="eq-input"
+                                id="add_speakerName" placeholder="스피커 이름"></div>
+                        <div class="col-md-6"><label class="eq-label">전화번호(CDMA)</label><input class="eq-input"
+                                id="add_cdmaNumber"></div>
+                        <div class="col-md-6"><label class="eq-label">위치</label><input class="eq-input"
+                                id="add_locationName"></div>
+                        <div class="col-12"><label class="eq-label">URL/IP</label><input class="eq-input"
+                                id="add_speakerAdr" placeholder="예: http://... 또는 IP:PORT"></div>
+                        <div class="col-md-6"><label class="eq-label">위도</label><input class="eq-input"
+                                id="add_speakerLatitude"></div>
+                        <div class="col-md-6"><label class="eq-label">경도</label><input class="eq-input"
+                                id="add_speakerLongitude"></div>
+                        <div class="col-12"><label class="eq-label">설명</label><textarea class="eq-input"
+                                id="add_description"></textarea></div>
+                    </div>
+                </div>
+
+                <div class="cm-footer">
+                    <button class="cm-btn cm-btn-primary" type="button" id="btnSpeakerAddSave">등록</button>
+                    <button class="cm-btn cm-btn-ghost" type="button" data-bs-dismiss="modal">닫기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Speaker Update Modal -->
+    <div class="modal fade common-modal" id="speaker_update_modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="cm-header">
+                    <div class="cm-title-wrap">
+                        <i class="bi bi-pencil-square cm-icon"></i>
+                        <h5 class="cm-title">장비 정보 수정</h5>
+                    </div>
+                    <button type="button" class="cm-close" data-bs-dismiss="modal" aria-label="닫기">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <div class="cm-body p-4">
+                    <input type="hidden" id="edit_speakerKey">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="eq-label">ID</label><input class="eq-input"
+                                id="edit_speakerId" readonly></div>
+                        <div class="col-md-6"><label class="eq-label">단말명</label><input class="eq-input"
+                                id="edit_speakerName"></div>
+                        <div class="col-md-6"><label class="eq-label">전화번호(CDMA)</label><input class="eq-input"
+                                id="edit_cdmaNumber"></div>
+                        <div class="col-md-6"><label class="eq-label">위치</label><input class="eq-input"
+                                id="edit_locationName"></div>
+                        <div class="col-12"><label class="eq-label">URL/IP</label><input class="eq-input"
+                                id="edit_speakerAdr"></div>
+                        <div class="col-md-6"><label class="eq-label">위도</label><input class="eq-input"
+                                id="edit_speakerLatitude"></div>
+                        <div class="col-md-6"><label class="eq-label">경도</label><input class="eq-input"
+                                id="edit_speakerLongitude"></div>
+                        <div class="col-12"><label class="eq-label">설명</label><textarea class="eq-input"
+                                id="edit_description"></textarea></div>
+                    </div>
+                </div>
+                <div class="cm-footer">
+                    <button class="cm-btn cm-btn-primary" type="button" id="btnSpeakerSave">수정</button>
+                    <button class="cm-btn cm-btn-ghost" type="button" data-bs-dismiss="modal">닫기</button>
+                </div>
             </div>
         </div>
     </div>

@@ -8,13 +8,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.edscorp.eds.speaker.typeb.domain.SpkAlertDispatch;
 import com.edscorp.eds.speaker.typeb.domain.SpkAlertHistory;
 import com.edscorp.eds.speaker.typeb.domain.SpkConfig;
-import com.edscorp.eds.speaker.typeb.domain.SpkDisaster;
 import com.edscorp.eds.speaker.typeb.domain.SpkSettingEntity;
 import com.edscorp.eds.speaker.typeb.domain.SpkSystemConfigEntity;
 import com.edscorp.eds.speaker.typeb.domain.SpkTestResultEntity;
@@ -39,7 +37,6 @@ public class BtypeQueryController {
 
     private final BTypeSpkService btypeSpkService;
     private final SpkConfigService spkConfigService;
-    private final SpkDisasterService spkDisasterService;
     private final SpkSettingService spkSettingService;
     private final SpkSystemConfigService spkSystemConfigService;
     private final SpkTestResultService spkTestResultService;

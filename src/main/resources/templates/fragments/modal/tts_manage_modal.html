@@ -1,104 +1,98 @@
 <div th:fragment="tts_manage_modal">
-    <div class="modal fade modal-dark speaker-modal" id="tts_manage_modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content bg-dark">
+    <div class="modal fade speaker-modal dark" id="tts_manage_modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
 
-                <div class="modal-header border-0 d-flex align-items-center justify-content-between">
-                    <h5 class="modal-title text-white fw-bold">TTS 관리</h5>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn-apple info" id="tts_save">
-                            저장
-                        </button>
-                        <button type="button" class="btn-apple danger" id="tts_delete">
-                            삭제
-                        </button>
+                <div class="modal-accent"></div>
+
+                <div class="modal-header">
+                    <div class="d-flex align-items-center gap-3 flex-grow-1">
+                        <div class="modal-icon">
+                            <i class="bi bi-chat-square-text"></i>
+                        </div>
+                        <div>
+                            <div class="modal-title">TTS 관리</div>
+                            <div class="modal-subtitle">저장된 TTS 프리셋을 검색, 생성, 수정, 삭제합니다.</div>
+                        </div>
                     </div>
+                    <button type="button" class="close-btn" data-bs-dismiss="modal" aria-label="닫기">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
                 </div>
 
-                <div class="modal-body d-flex flex-column">
+                <div class="modal-body">
 
-                    <div class="row flex-grow-1 h-100">
-                        <!-- LEFT: TTS 리스트 -->
-                        <div class="col-12 col-lg-5 d-flex h-100">
-                            <div class="setting-card h-100 w-100 p-0">
-                                <div class="setting-title px-3 pt-3 pb-1 mb-0">
-                                    <div class="d-flex flex-column gap-3 w-100">
-                                        <span class="fw-semibold text-white">TTS 목록</span>
-                                        <input id="tts_search" class="form-control-dark mb-3" placeholder="이름 / 메시지 검색">
-                                        <div class="d-flex gap-2 d-none">
-                                            <select id="tts_filter_use" class="form-select-dark form-select-sm">
-                                                <option value="ALL">전체</option>
-                                                <option value="Use" selected>Use</option>
-                                                <option value="NotUse">NotUse</option>
-                                            </select>
-                                            <button type="button" class="btn-apple-base btn-apple light btn-sm"
-                                                id="tts_refresh">
-                                                갱신
-                                            </button>
-                                        </div>
-                                    </div>
+                    <div class="panel-left">
+                        <div class="panel-header">
+                            <div class="panel-label">
+                                TTS 목록
+                                <span class="badge-count" id="tts_count_badge">0</span>
+                            </div>
+                            <div class="tts-search-wrap">
+                                <i class="bi bi-search"></i>
+                                <input id="tts_search" class="tts-search-input" placeholder="이름 / 메시지 검색">
+                            </div>
+                            <div class="d-none">
+                                <select id="tts_filter_use" class="m-select">
+                                    <option value="ALL">전체</option>
+                                    <option value="true" selected>사용</option>
+                                    <option value="false">미사용</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="speaker-list-wrap">
+                            <div id="tts_list" class="d-flex flex-column"></div>
+                        </div>
+                    </div>
+
+                    <div class="panel-right">
+                        <div class="m-card">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="m-card-title mb-0">기본 정보</div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="mode-badge" id="tts_mode_badge">
+                                        <span class="dot"></span>
+                                        <span id="tts_mode_badge_text">신규</span>
+                                    </span>
+                                    <button type="button" class="panel-action-btn d-none" id="tts_delete">
+                                        <i class="bi bi-trash3"></i> 삭제
+                                    </button>
                                 </div>
-
-                                <div class="setting-body flex-fill overflow-auto position-relative ps-3">
-                                    <!-- <input id="tts_search"
-                                    class="form-control-dark mb-3"
-                                    placeholder="이름 / 메시지 검색"> -->
-
-                                    <div class="speaker-list-container d-flex flex-column pb-3">
-                                        <div id="tts_list" class="d-flex flex-column gap-2 pe-1"></div>
-                                    </div>
+                            </div>
+                            <input type="hidden" id="tts_id">
+                            <div class="tts-form-grid">
+                                <div>
+                                    <label class="m-field-label" for="tts_name">TTS 이름</label>
+                                    <input id="tts_name" class="tts-input" placeholder="예: 지진 대피 안내">
+                                </div>
+                                <div>
+                                    <label class="m-field-label" for="tts_use_flag">사용 여부</label>
+                                    <select id="tts_use_flag" class="m-select">
+                                        <option value="true" selected>사용</option>
+                                        <option value="false">미사용</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- RIGHT: 편집 -->
-                        <div class="col-12 col-lg-7 d-flex">
-                            <div class="setting-card h-100 w-100">
-                                <div class="setting-title">
-                                    <div class="d-flex flex-column gap-3">
-                                        <span class="fw-semibold text-white">TTS 정보</span>
-                                        <small class="text-white-50">
-                                            목록을 선택하여 수정하거나 새 내용을 입력 후 저장하세요.
-                                        </small>
-                                    </div>
-                                </div>
-
-                                <div class="setting-body d-flex flex-column justify-content-center">
-
-                                    <input type="hidden" id="tts_id">
-
-                                    <!-- ✅ 간격 넓힘 -->
-                                    <div class="mb-4">
-                                        <label class="form-label text-white-50">TTS 이름</label>
-                                        <input id="tts_name" class="form-control-dark" placeholder="예: 지진 대피 안내">
-                                    </div>
-
-                                    <div class="mb-4">
-                                        <label class="form-label text-white-50">사용 여부</label>
-                                        <select id="tts_use_flag" class="form-select-dark">
-                                            <option value="Use" selected>Use</option>
-                                            <option value="NotUse">NotUse</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="d-flex flex-column flex-grow-1 mb-0">
-                                        <label class="form-label text-white-50 mb-2">메시지</label>
-                                        <textarea id="tts_msg" class="form-control-dark flex-grow-1" rows="8"
-                                            placeholder="TTS 메시지를 입력하세요">
-                                    </textarea>
-                                    </div>
-
-                                </div>
+                        <div class="m-card tts-message-card">
+                            <div class="m-card-title">메시지</div>
+                            <div class="tts-form-stack">
+                                <label class="m-field-label" for="tts_msg">TTS 메시지</label>
+                                <textarea id="tts_msg" class="m-textarea tts-message-textarea" rows="8"
+                                    placeholder="TTS 메시지를 입력하세요"></textarea>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="modal-footer border-top-0">
-                    <button type="button" class="btn-apple secondary" data-bs-dismiss="modal"
-                        style="flex: 1;">닫기</button>
+                <div class="modal-footer">
+                    <div class="footer-actions">
+                        <button type="button" class="m-btn m-btn-primary" id="tts_save">저장</button>
+                        <button type="button" class="m-btn m-btn-ghost" data-bs-dismiss="modal">닫기</button>
+                    </div>
                 </div>
-
             </div>
         </div>
     </div>

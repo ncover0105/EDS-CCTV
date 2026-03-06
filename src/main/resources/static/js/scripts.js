@@ -31,19 +31,12 @@ document.addEventListener("DOMContentLoaded", function () {
         hideMethod: "fadeOut"
     };
 
-    setTime();
+    App.utils.startClock("currentDate");
 
     Logs.init();
 
     // Mqtt 연동
     SSE_MQTT.connect();
-
-    // const modalEl = document.getElementById("broadcast_modal");
-
-    // modalEl.addEventListener("shown.bs.modal", () => {
-    //     console.log("broadcast_modal opened → running init()");
-    //     BroadcastModal.init();
-    // });
 
     Weather.init();          // AWS, 예보, 레이더, 위성 (2분 주기)
     loadTodayLatestDisasterOneLine();
@@ -136,25 +129,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // loadSpeakerList();
     // renderSpeakerPanel();
 
-
-    const entryTestBtn = document.getElementById("entryTestBtn");
-
-    if (entryTestBtn) {
-        entryTestBtn.addEventListener("click", () => {
-
-            // ===== 테스트용 더미 데이터 =====
-            const camName = "CCTV-01";
-            const msg = "허가되지 않은 인원이 위험구역에 진입했습니다.";
-            const boundaryNum = 2;
-
-            if (typeof window.triggerEmergencyScreenEffect === "function") {
-                window.triggerEmergencyScreenEffect();
-            }
-
-            showEmergencyToastr(camName, msg, boundaryNum);
-        });
-    }
-
     document.addEventListener("click", (e) => {
         if (e.target.closest(".dropdown-container")) return;
         document.querySelectorAll(".dropdown-container .dropdown-menu").forEach(m => m.classList.remove("show"));
@@ -196,31 +170,6 @@ function setServerRestartBusy(busy) {
     const btn = document.getElementById("restartAllServerBtn");
     if (!btn) return;
     btn.disabled = busy;
-}
-
-function showEmergencyToastr(camName, msg, boundaryNum) {
-    const box = document.querySelector(".notification");
-    const overlay = document.getElementById("emergencyOverlay");
-
-    document.getElementById("notification-title").innerText =
-        `${camName}\n위험구역 출입 발생`;
-
-    document.getElementById("notification-message").innerText = msg;
-
-    box.classList.add("show");
-
-    // ===== 5초 후 자동 제거 =====
-    clearTimeout(box.__timer);
-    box.__timer = setTimeout(() => {
-        box.classList.remove("show");
-        overlay?.classList.remove("active");
-    }, 5000);
-
-    box.onclick = () => {
-        window.openBroadcastModal(camName, boundaryNum);
-        box.classList.remove("show");
-        overlay?.classList.remove("active");
-    };
 }
 
 window.openBroadcastModal = function (camName, boundaryNum) {
@@ -381,33 +330,6 @@ function showConfirmModal(title, message, onConfirm) {
 function getCameraNameByCode(cctvCode) {
     const camera = cameras.find(cam => cam.cctvCode === cctvCode);
     return camera ? camera.name : 'Unknown';
-}
-
-// 현재 날짜 및 시간을 반환
-function getCurrentDateTime() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = (now.getMonth() + 1).toString().padStart(2, '0');
-    const date = now.getDate().toString().padStart(2, '0');
-    const hours = now.getHours().toString().padStart(2, '0');
-    const minutes = now.getMinutes().toString().padStart(2, '0');
-    const seconds = now.getSeconds().toString().padStart(2, '0');
-
-    return `${year}년 ${month}월 ${date}일 ${hours} : ${minutes} : ${seconds}`;
-}
-
-function setTime() {
-    const datetimeElement = document.getElementById("currentDate");
-
-    if (datetimeElement) {
-        // 초기 시간 설정
-        datetimeElement.textContent = getCurrentDateTime();
-
-        // 1초마다 시간 업데이트
-        setInterval(() => {
-            datetimeElement.textContent = getCurrentDateTime();
-        }, 1000);
-    }
 }
 
 // 볼륨 슬라이더 업데이트

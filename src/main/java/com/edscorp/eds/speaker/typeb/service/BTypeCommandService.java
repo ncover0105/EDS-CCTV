@@ -112,6 +112,15 @@ public class BTypeCommandService {
     // 발령 (JS sendAlert 포팅)
     // =========================
     public void sendAlert(BTypeAlertRequest req, HttpServletRequest httpReq) throws Exception {
+        String clientIp = (httpReq != null && httpReq.getRemoteAddr() != null)
+                ? httpReq.getRemoteAddr()
+                : "127.0.0.1";
+        String userId = getCurrentUserId();
+        sendAlert(req, clientIp, userId);
+    }
+
+    // 스케줄러/내부 호출용
+    public void sendAlert(BTypeAlertRequest req, String clientIp, String userId) throws Exception {
         final String commandCode = "41";
 
         log.info("[BTYPE ALERT] request received");
@@ -188,8 +197,12 @@ public class BTypeCommandService {
 
         String argumentStr = objectMapper.writeValueAsString(argumentJson);
 
-        String clientIp = httpReq.getRemoteAddr();
-        String userId = getCurrentUserId();
+        if (clientIp == null || clientIp.isBlank()) {
+            clientIp = "127.0.0.1";
+        }
+        if (userId == null || userId.isBlank()) {
+            userId = "system";
+        }
 
         if (alertTTSmessage == null)
             alertTTSmessage = "";
@@ -210,12 +223,8 @@ public class BTypeCommandService {
                 .build();
 
         try {
-            // sendToPlayRadio(req.getDeviceId(), httpReq.getRemoteAddr(),
-            // req.getCommandCode(), argumentStr);
-
             // 실제 전송
-            // sendToPlayRadio(req.getDeviceId(), clientIp, req.getCommandCode(),
-            // argumentStr);
+            sendToPlayRadio(req.getDeviceId(), clientIp, commandCode, argumentStr);
 
             alertLog.setStatus("SENT");
         } catch (Exception e) {
@@ -229,8 +238,6 @@ public class BTypeCommandService {
             }
             spkWebAlertLogQueryService.save(alertLog);
         }
-        // sendToPlayRadio(req.getDeviceId(), clientIp, req.getCommandCode(),
-        // argumentStr);
     }
 
     // =========================

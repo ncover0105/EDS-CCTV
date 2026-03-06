@@ -39,7 +39,9 @@
   }
 
   function yn(v) {
-    return String(v ?? '').toUpperCase() === 'Y';
+    if (v === true || v === 1) return true;
+    const s = String(v ?? '').trim().toUpperCase();
+    return s === 'Y' || s === '1' || s === 'TRUE' || s === 'YES';
   }
 
   function toY(v) {
@@ -174,15 +176,18 @@
       wrap.appendChild(btn);
     });
 
-    wrap.addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-weekday]');
-      if (!btn) return;
+    if (!wrap.dataset.bound) {
+      wrap.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-weekday]');
+        if (!btn) return;
 
-      const on = !btn.classList.contains('active');
-      btn.classList.toggle('active', on);
-      btn.classList.toggle('btn-primary', on);
-      btn.classList.toggle('btn-outline-secondary', !on);
-    });
+        const on = !btn.classList.contains('active');
+        btn.classList.toggle('active', on);
+        btn.classList.toggle('btn-primary', on);
+        btn.classList.toggle('btn-outline-secondary', !on);
+      });
+      wrap.dataset.bound = '1';
+    }
   }
 
   // -------------------------

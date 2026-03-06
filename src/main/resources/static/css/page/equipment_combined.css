@@ -129,7 +129,7 @@
 /* ============================================
    Per-Screen Accent Overrides
    ============================================ */
-#equipment-speaker-pane {
+/* #equipment-speaker-pane {
     --accent: #3b82f6;
     --accent-hover: #2563eb;
     --accent-glow: rgba(59, 130, 246, 0.22);
@@ -151,7 +151,7 @@
     --accent-glow: rgba(6, 182, 212, 0.22);
     --accent-soft: rgba(6, 182, 212, 0.10);
     --accent-border: rgba(6, 182, 212, 0.28);
-}
+} */
 
 /* ============================================
    Base Reset — Critical Overflow Structure
@@ -2329,6 +2329,8 @@ select.eq-input option {
 
 /* Empty state */
 .cctv-empty {
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;

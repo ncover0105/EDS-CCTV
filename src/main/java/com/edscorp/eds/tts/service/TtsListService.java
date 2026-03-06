@@ -90,11 +90,8 @@ public class TtsListService {
         ttsListRepository.deleteById(id);
     }
 
-    private String normalizeUseFlag(String flag) {
-        if (flag == null || flag.isBlank()) {
-            return "Use";
-        }
-        return (flag.equals("Use") || flag.equals("NotUse")) ? flag : "Use";
+    private Boolean normalizeUseFlag(Boolean flag) {
+        return flag == null ? true : flag;
     }
 
     private TtsResponse toResponse(TtsList e) {

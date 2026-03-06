@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.edscorp.eds.speaker.typeb.domain.SpkAlertDispatch;
 import com.edscorp.eds.speaker.typeb.domain.SpkAlertHistory;
@@ -26,7 +25,6 @@ public class BTypeSpkService {
     private final SpkStatusRepository btypeSpkStatusRepository;
     private final SpkAlertDispatchRepository btypeSpkAlertDispatchRepository;
     private final SpkAlertHistoryRepository btypeSpkAlertHistoryRepository;
-    private final SpkStatusRepository spkStatusRepository;
 
     // 스피커 상태 조회
     public SpkStatusResponse getBtypeSpkStauts(Integer speakerKey) {

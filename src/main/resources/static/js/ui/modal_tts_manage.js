@@ -2,12 +2,12 @@
 
 const TtsManageApi = {
     async list({ page = 0, size = 200 } = {}) {
-    const res = await fetch(`/api/tts?page=${page}&size=${size}`, { method: "GET" });
-    if (!res.ok) throw new Error("TTS list failed");
-    const data = await res.json().catch(() => null);
+        const res = await fetch(`/api/tts?page=${page}&size=${size}`, { method: "GET" });
+        if (!res.ok) throw new Error("TTS list failed");
+        const data = await res.json().catch(() => null);
 
-    // Page(content) 또는 배열 대응
-    return Array.isArray(data) ? data : (data?.content ?? []);
+        // Page(content) 또는 배열 대응
+        return Array.isArray(data) ? data : (data?.content ?? []);
     },
 
     async create(payload) {
@@ -39,32 +39,30 @@ const TtsManageApi = {
 
 window.TtsManageModal = {
     state: {
-    items: [],
-    selectedId: null,
-    mode: "create",
+        items: [],
+        selectedId: null,
+        mode: "create",
     },
 
     els() {
-    return {
-        list: document.getElementById("tts_list"),
-        filterUse: document.getElementById("tts_filter_use"),
-        search: document.getElementById("tts_search"),
-        refresh: document.getElementById("tts_refresh"),
-        btnSave: document.getElementById("tts_save"),
-        btnDelete: document.getElementById("tts_delete"),
+        return {
+            list: document.getElementById("tts_list"),
+            filterUse: document.getElementById("tts_filter_use"),
+            search: document.getElementById("tts_search"),
+            btnSave: document.getElementById("tts_save"),
+            btnDelete: document.getElementById("tts_delete"),
 
-        id: document.getElementById("tts_id"),
-        name: document.getElementById("tts_name"),
-        useFlag: document.getElementById("tts_use_flag"),
-        msg: document.getElementById("tts_msg"),
-    };
+            id: document.getElementById("tts_id"),
+            name: document.getElementById("tts_name"),
+            useFlag: document.getElementById("tts_use_flag"),
+            msg: document.getElementById("tts_msg"),
+        };
     },
 
     init() {
         const el = this.els();
         if (!el.list) return; // 모달 fragment가 포함되지 않은 페이지일 수 있음
 
-        el.refresh?.addEventListener("click", () => this.loadList());
         el.filterUse?.addEventListener("change", () => this.renderList());
         el.search?.addEventListener("input", () => this.renderList());
 
@@ -99,22 +97,34 @@ window.TtsManageModal = {
 
         return (this.state.items ?? [])
             .filter(x => {
-            if (use === "ALL") return true;
-            return (x.ttsUseFlag ?? "Use") === use;
+                if (use === "ALL") return true;
+                return String(x.ttsUseFlag) === use;
             })
             .filter(x => {
-            if (!q) return true;
-            const name = String(x.ttsName ?? "").toLowerCase();
-            const msg = String(x.ttsMsg ?? "").toLowerCase();
-            return name.includes(q) || msg.includes(q);
+                if (!q) return true;
+                const name = String(x.ttsName ?? "").toLowerCase();
+                const msg = String(x.ttsMsg ?? "").toLowerCase();
+                return name.includes(q) || msg.includes(q);
             })
             .sort((a, b) => (b.ttsId ?? 0) - (a.ttsId ?? 0));
     },
 
     updateUiMode() {
         const el = this.els();
-        if (el.btnSave) el.btnSave.textContent = (this.state.mode === "edit") ? "수정" : "신규 생성";
-        if (el.btnDelete) el.btnDelete.disabled = (this.state.mode !== "edit");
+        const isEdit = this.state.mode === "edit";
+        if (el.btnSave) el.btnSave.textContent = isEdit ? "수정" : "저장";
+        if (el.btnDelete) {
+            el.btnDelete.disabled = !isEdit;
+            el.btnDelete.classList.toggle("d-none", !isEdit);
+        }
+
+        const modeTextEl = document.getElementById("tts_mode_badge_text");
+        if (modeTextEl) modeTextEl.textContent = isEdit ? "편집" : "신규";
+    },
+
+    updateCountUi(items = []) {
+        const totalEl = document.getElementById("tts_count_badge");
+        if (totalEl) totalEl.textContent = String(items.length);
     },
 
     renderList() {
@@ -123,11 +133,12 @@ window.TtsManageModal = {
         if (!listEl) return;
 
         const items = this.getFilteredItems();
+        this.updateCountUi(items);
 
         if (items.length === 0) {
             listEl.innerHTML = `
-            <div class="text-center text-white-50 py-3">
-                <small>표시할 TTS가 없습니다.</small>
+            <div class="no-results">
+                표시할 TTS가 없습니다.
             </div>
             `;
             return;
@@ -135,29 +146,41 @@ window.TtsManageModal = {
 
         listEl.innerHTML = "";
         items.forEach(item => {
-            const row = document.createElement("button");
-            row.type = "button";
-            row.className = "btn-apple-base btn-apple-secondary btn-sm w-100 d-flex flex-column align-items-start text-start p-2";
-            row.style.border = (String(item.ttsId) === String(this.state.selectedId))
-            ? "1px solid rgba(255,255,255,0.35)"
-            : "1px solid rgba(255,255,255,0.10)";
+            const row = document.createElement("div");
+            row.setAttribute("role", "button");
+            row.tabIndex = 0;
+            row.className = "speaker-item tts-item";
+            if (String(item.ttsId) === String(this.state.selectedId)) {
+                row.classList.add("selected");
+            }
 
-            const flag = item.ttsUseFlag ?? "Use";
+            const flag = item.ttsUseFlag ?? true;
+            const safeName = this.escapeHtml(item.ttsName ?? "");
+            const safeMsg = this.escapeHtml(item.ttsMsg ?? "");
             row.innerHTML = `
-            <div class="d-flex justify-content-between w-100">
-                <span class="fw-semibold text-white">${this.escapeHtml(item.ttsName ?? "")}</span>
-                <span class="badge ${flag === "Use" ? "info" : "secondary"}">${this.escapeHtml(flag)}</span>
+            <span class="status-dot ${flag ? "ok" : "off"}"></span>
+                        <div class="speaker-info">
+                            <div class="speaker-name">${safeName}</div>
+                            <div class="speaker-loc">${safeMsg}</div>
+                        </div>
+            <div class="tts-flag ${flag ? "use" : "not-use"}">
+                ${flag ? "Use" : "NotUse"}
             </div>
-            <small class="text-white-50 mt-1" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">
-                ${this.escapeHtml(item.ttsMsg ?? "")}
-            </small>
             `;
 
-            row.addEventListener("click", () => {
+            const onSelect = () => {
                 if (String(this.state.selectedId) === String(item.ttsId)) {
                     this.resetForm();
                 } else {
                     this.selectItem(item.ttsId);
+                }
+            };
+
+            row.addEventListener("click", onSelect);
+            row.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onSelect();
                 }
             });
             listEl.appendChild(row);
@@ -174,7 +197,7 @@ window.TtsManageModal = {
         const el = this.els();
         if (el.id) el.id.value = String(item.ttsId ?? "");
         if (el.name) el.name.value = String(item.ttsName ?? "");
-        if (el.useFlag) el.useFlag.value = String(item.ttsUseFlag ?? "Use");
+        if (el.useFlag) el.useFlag.value = String(item.ttsUseFlag ?? true);
         if (el.msg) el.msg.value = String(item.ttsMsg ?? "");
 
         this.updateUiMode();
@@ -188,7 +211,7 @@ window.TtsManageModal = {
         const el = this.els();
         if (el.id) el.id.value = "";
         if (el.name) el.name.value = "";
-        if (el.useFlag) el.useFlag.value = "Use";
+        if (el.useFlag) el.useFlag.value = "true";
         if (el.msg) el.msg.value = "";
 
         this.updateUiMode();
@@ -200,7 +223,7 @@ window.TtsManageModal = {
         const idVal = (el.id?.value ?? "").trim();
         const ttsName = (el.name?.value ?? "").trim();
         const ttsMsg = (el.msg?.value ?? "").trim();
-        const ttsUseFlag = (el.useFlag?.value ?? "Use").trim() || "Use";
+        const ttsUseFlag = (el.useFlag?.value === "true");
 
         // Validation을 서버에서 안 쓰는 구성이라면, 프론트에서 최소 체크 권장
         if (!ttsName) {
@@ -218,14 +241,14 @@ window.TtsManageModal = {
             let saved;
             if (!idVal) saved = await TtsManageApi.create(payload);
             else saved = await TtsManageApi.update(idVal, payload);
-        
+
             await this.loadList();
-        
+
             // 정책에 따라 유지 or 해제
             this.resetForm(); // 요청대로: 저장 후 해제
-        
+
             if (window.BroadcastModal?.loadTtsList) await BroadcastModal.loadTtsList();
-        
+
             alert("저장되었습니다.");
         } catch (e) {
             console.error(e);
@@ -252,7 +275,7 @@ window.TtsManageModal = {
 
             // 발령 모달 select 갱신
             if (window.BroadcastModal?.loadTtsList) {
-            await BroadcastModal.loadTtsList();
+                await BroadcastModal.loadTtsList();
             }
 
             alert("삭제되었습니다.");

@@ -36,9 +36,9 @@ public class TtsList {
     @Column(name = "tts_msg", nullable = false)
     private String ttsMsg;
 
-    @Column(name = "tts_use_flag", nullable = false, length = 10)
+    @Column(name = "tts_use_flag", nullable = false)
     @Builder.Default
-    private String ttsUseFlag = "Use";
+    private Boolean ttsUseFlag = true;
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;

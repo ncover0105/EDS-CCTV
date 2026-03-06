@@ -1,4 +1,4 @@
-<div th:fragment="cctvPane" style="display:flex; flex-direction:column; flex:1; min-height:0;">
+﻿<div th:fragment="cctvPane" style="display:flex; flex-direction:column; flex:1; min-height:0;">
 
     <div class="cctv-pane">
 
@@ -17,7 +17,7 @@
             <div class="cctv-actions">
                 <div class="cctv-search">
                     <i class="bi bi-search"></i>
-                    <input id="cctvSearch" type="text" placeholder="이름 / 코드 / Location / RTSP 검색" autocomplete="off">
+                    <input id="cctvSearch" type="text" placeholder="이름 / 코드 검색" autocomplete="off">
                 </div>
                 <div class="cctv-action-buttons">
                     <button type="button" class="btn-soft" id="cctv-btn-refresh">
@@ -116,22 +116,22 @@
         </section>
 
         <!-- ======================================================
-             Modal: CCTV 추가
-             ====================================================== -->
-        <div class="modal fade pinterest-modal" id="cctvAddModal" tabindex="-1" aria-labelledby="addCctvModalLabel"
+                Modal: CCTV 추가
+            ====================================================== -->
+        <div class="modal fade common-modal" id="cctvAddModal" tabindex="-1" aria-labelledby="addCctvModalLabel"
             aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content pinterest-modal-content">
-                    <div class="pinterest-modal-header">
-                        <div class="modal-header-left">
-                            <i class="bi bi-camera-video-fill modal-icon"></i>
-                            <h5 class="pinterest-modal-title" id="addCctvModalLabel">새 CCTV 추가</h5>
+                <div class="modal-content">
+                    <div class="cm-header">
+                        <div class="cm-title-wrap">
+                            <i class="bi bi-camera-video-fill cm-icon"></i>
+                            <h5 class="cm-title" id="addCctvModalLabel">새 CCTV 추가</h5>
                         </div>
-                        <button type="button" class="sp-close" data-bs-dismiss="modal" aria-label="닫기">
+                        <button type="button" class="cm-close" data-bs-dismiss="modal" aria-label="닫기">
                             <i class="bi bi-x-lg"></i>
                         </button>
                     </div>
-                    <div class="pinterest-modal-body">
+                    <div class="cm-body">
                         <form id="addCctvForm">
                             <div class="pinterest-form-grid">
                                 <div class="pinterest-form-group full-width">
@@ -194,9 +194,9 @@
                             </div>
                         </form>
                     </div>
-                    <div class="pinterest-modal-footer">
-                        <button type="button" class="pinterest-btn-secondary" data-bs-dismiss="modal">취소</button>
-                        <button type="button" class="pinterest-btn-primary" onclick="submitAddCctv()">
+                    <div class="cm-footer">
+                        <button type="button" class="cm-btn cm-btn-ghost" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="cm-btn cm-btn-primary" onclick="submitAddCctv()">
                             <i class="bi bi-check-lg"></i> 추가
                         </button>
                     </div>
@@ -207,20 +207,20 @@
         <!-- ======================================================
              Modal: CCTV 수정
              ====================================================== -->
-        <div class="modal fade pinterest-modal" id="cctvEditModal" tabindex="-1" aria-labelledby="editCctvModalLabel"
+        <div class="modal fade common-modal" id="cctvEditModal" tabindex="-1" aria-labelledby="editCctvModalLabel"
             aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content pinterest-modal-content">
-                    <div class="pinterest-modal-header">
-                        <div class="modal-header-left">
-                            <i class="bi bi-pencil-square modal-icon"></i>
-                            <h5 class="pinterest-modal-title" id="editCctvModalLabel">CCTV 수정</h5>
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="cm-header">
+                        <div class="cm-title-wrap">
+                            <i class="bi bi-pencil-square cm-icon"></i>
+                            <h5 class="cm-title" id="editCctvModalLabel">CCTV 수정</h5>
                         </div>
-                        <button type="button" class="sp-close" data-bs-dismiss="modal" aria-label="닫기">
+                        <button type="button" class="cm-close" data-bs-dismiss="modal" aria-label="닫기">
                             <i class="bi bi-x-lg"></i>
                         </button>
                     </div>
-                    <div class="pinterest-modal-body">
+                    <div class="cm-body">
                         <form id="editCctvForm">
                             <div class="pinterest-form-grid">
                                 <div class="pinterest-form-group">
@@ -273,9 +273,9 @@
                             </div>
                         </form>
                     </div>
-                    <div class="pinterest-modal-footer">
-                        <button type="button" class="pinterest-btn-secondary" data-bs-dismiss="modal">취소</button>
-                        <button type="button" class="pinterest-btn-primary" id="btn-save-edit-cctv">
+                    <div class="cm-footer">
+                        <button type="button" class="cm-btn cm-btn-ghost" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="cm-btn cm-btn-primary" id="btn-save-edit-cctv">
                             <i class="bi bi-check-lg"></i> 저장
                         </button>
                     </div>

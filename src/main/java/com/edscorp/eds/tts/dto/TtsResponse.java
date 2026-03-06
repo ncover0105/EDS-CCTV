@@ -15,6 +15,6 @@ public class TtsResponse {
     private Long ttsId;
     private String ttsName;
     private String ttsMsg;
-    private String ttsUseFlag;
+    private Boolean ttsUseFlag;
     private LocalDateTime createdAt;
 }

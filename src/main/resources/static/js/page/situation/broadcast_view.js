@@ -235,213 +235,86 @@
         const esc = window.SituationCommon?.escapeHtml || ((s) => String(s));
 
         const card = document.createElement("div");
-        card.className = "broadcast-card-dark fade-in";
+        card.className = "broadcast-card-modern fade-in";
         card.dataset.id = item.id;
 
         const modeText = modeToText(item.alertMode);
         const priorityText = priorityToText(item.alertPriority);
         const kindText = kindToText(item.alertKind);
         const statusText = String(item.status || "-").toUpperCase();
+        const isSuccess = statusText === "SENT" || statusText === "SUCCESS";
 
         const msg = (item.ttsMessage || "").trim() || "메시지 없음";
+        const stoCd = (item.alertStoCd || "-").trim();
+        const sirenCd = (item.alertSirenCd || "-").trim();
+
+        const statusClass = isSuccess ? "status-ok" : "status-fail";
+        const priorityClass = priorityText.toLowerCase();
+
+        // 고유 ID (아코디언용)
+        const accId = `bcm_acc_${item.id}`;
 
         card.innerHTML = `
-    <div class="broadcast-card-header">
-        <div class="broadcast-card-title">
-        <i class="bi bi-broadcast-pin"></i>
-        <span>${esc(item.disasterCode)} · ${esc(kindText)}</span>
+    <div class="bcm-header" style="margin-bottom: 12px;">
+        <div class="bcm-title-wrap">
+            <div class="bcm-icon ${isSuccess ? 'ok' : 'fail'}">
+                <i class="bi bi-broadcast-pin"></i>
+            </div>
+            <div class="bcm-title-info">
+                <h4 class="bcm-title">${esc(item.disasterCode)} · ${esc(kindText)}</h4>
+                <span class="bcm-time"><i class="bi bi-clock"></i> ${esc(item.time)}</span>
+            </div>
         </div>
-        <div class="broadcast-card-time">
-        <i class="bi bi-clock"></i>
-        ${esc(item.time)}
+        <div class="bcm-status-badge ${statusClass}">
+            ${isSuccess ? '<i class="bi bi-check-circle-fill"></i>' : '<i class="bi bi-exclamation-triangle-fill"></i>'}
+            ${esc(statusText)}
         </div>
     </div>
 
-    <div class="broadcast-card-meta">
-        <span class="chip chip-mode">${esc(modeText)}</span>
-        <span class="chip chip-priority">${esc(priorityText)}</span>
-        <span class="chip chip-kind">${esc(kindText)}</span>
-        <span class="chip chip-status ${statusText === "SENT" ? "success" : "failed"}">
-        ${esc(statusText)}
-        </span>
+    <!-- 컴팩트하게 정리된 기본 정보 영역 -->
+    <div class="bcm-meta-compact">
+        <span class="bcm-compact-val"><i class="bi bi-hdd-network"></i> ${esc(item.deviceId)}</span>
+        <span class="bcm-compact-val priority-${priorityClass}">${esc(priorityText)}</span>
+        <span class="bcm-compact-val">${esc(modeText)}</span>
+        <span class="bcm-compact-val"><i class="bi bi-diagram-3"></i> 범위: ${esc(item.alertRange ?? "-")}</span>
     </div>
 
-    <div class="broadcast-card-meta">
-        <span class="chip chip-info">
-        <i class="bi bi-hdd-network me-1"></i>
-        ${esc(item.deviceId)}
-        </span>
-
-        <span class="chip chip-info">
-        <i class="bi bi-diagram-3 me-1"></i>
-        범위 ${esc(item.alertRange ?? "-")}
-        </span>
-
-        <span class="chip chip-info">
-        <i class="bi bi-terminal me-1"></i>
-        CMD ${esc(item.commandCode || "-")}
-        </span>
-    </div>
-
-    <!-- MESSAGE -->
-    <div class="broadcast-card-message">
-        ${esc(msg)}
-    </div>
-
-    <!-- ACTION -->
-    <div class="broadcast-card-actions">
-        <button type="button" class="btn-apple-base btn-apple-secondary" data-action="detail">
-        <i class="bi bi-eye"></i> 상세
+    <!-- 아코디언 영역 (상세) -->
+    <div class="bcm-inline-accordion" id="${accId}_parent">
+        <button class="bcm-inline-acc-btn collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#${accId}_body" aria-expanded="false" aria-controls="${accId}_body">
+            상세 정보 보기 <i class="bi bi-chevron-down"></i>
         </button>
+        
+        <div id="${accId}_body" class="collapse bcm-inline-acc-body" data-bs-parent="#${accId}_parent">
+            <!-- 부가 정보 그리드 -->
+            <div class="bcm-meta-grid" style="margin-bottom: 12px;">
+                <div class="bcm-meta-item">
+                    <span class="bcm-meta-label">CMD</span>
+                    <span class="bcm-meta-val">${esc(item.commandCode || "-")}</span>
+                </div>
+                <div class="bcm-meta-item">
+                    <span class="bcm-meta-label">STO 코드</span>
+                    <span class="bcm-meta-val">${esc(stoCd)}</span>
+                </div>
+                <div class="bcm-meta-item">
+                    <span class="bcm-meta-label">사이렌 코드</span>
+                    <span class="bcm-meta-val">${esc(sirenCd)}</span>
+                </div>
+            </div>
+
+            <!-- 메시지 박스 -->
+            <div class="bcm-message-box" style="margin-top:0; padding-top:12px; border-top: 1px dashed rgba(255, 255, 255, 0.1);">
+                <div class="bcm-msg-label"><i class="bi bi-chat-square-text"></i> TTS 메시지</div>
+                <div class="bcm-msg-content">${esc(msg)}</div>
+            </div>
+        </div>
     </div>
     `;
-
-        card
-            .querySelector('[data-action="detail"]')
-            ?.addEventListener("click", (e) => {
-                e.stopPropagation();
-                openBroadcastDetail(item);
-            });
 
         return card;
     }
 
-    /* ---------------------------
-    * 상세 모달
-    * --------------------------- */
-    function ensureBroadcastDetailModal() {
-        if (document.getElementById('broadcastDetailModal')) return;
-
-        const wrap = document.createElement('div');
-        wrap.innerHTML = `
-        <div class="modal modal-dark fade" id="broadcastDetailModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-            <div class="modal-header border-0">
-                <div class="d-flex flex-column">
-                <h5 class="modal-title mb-1" id="bd_title">발령 상세</h5>
-                <div class="small text-secondary" id="bd_subtitle"></div>
-                </div>
-            </div>
-
-            <div class="modal-body">
-                <div class="row g-3 mb-3">
-                <div class="col-md-6">
-                    <div class="composer-block p-3 h-100">
-                    <div class="small text-secondary mb-1">장비 ID</div>
-                    <div class="fw-semibold" id="bd_device">-</div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="composer-block p-3 h-100">
-                    <div class="small text-secondary mb-1">발령 범위</div>
-                    <div class="fw-semibold" id="bd_range">-</div>
-                    </div>
-                </div>
-                </div>
-
-                <div class="row g-3 mb-3">
-                <div class="col-md-6">
-                    <div class="composer-block p-3 h-100">
-                    <div class="small text-secondary mb-1">STO 코드</div>
-                    <div class="fw-semibold" id="bd_sto">-</div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="composer-block p-3 h-100">
-                    <div class="small text-secondary mb-1">사이렌 코드</div>
-                    <div class="fw-semibold" id="bd_siren">-</div>
-                    </div>
-                </div>
-                </div>
-
-                    <div class="composer-block p-3 h-100">
-                <div class="fw-semibold mb-2">TTS 메시지</div>
-                <pre class="mb-0" id="bd_message"
-                    style="white-space:pre-wrap; word-break:break-word; max-height:220px; overflow:auto;"></pre>
-                </div>
-
-                <div class="accordion accordion-dark mt-3" id="bd_acc">
-                <div class="accordion-item">
-                    <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#bd_more">
-                        추가 정보
-                    </button>
-                    </h2>
-                    <div id="bd_more" class="accordion-collapse collapse" data-bs-parent="#bd_acc">
-                    <div class="accordion-body">
-                        <div class="row g-2">
-                        <div class="col-md-6">
-                            <div class="small text-secondary">방송모드</div>
-                            <div class="fw-semibold" id="bd_mode">-</div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="small text-secondary">우선순위</div>
-                            <div class="fw-semibold" id="bd_priority">-</div>
-                        </div>
-                        <div class="col-md-6 mt-2">
-                            <div class="small text-secondary">발령 유형</div>
-                            <div class="fw-semibold" id="bd_kind">-</div>
-                        </div>
-                        <div class="col-md-6 mt-2">
-                            <div class="small text-secondary">CMD</div>
-                            <div class="fw-semibold" id="bd_cmd">-</div>
-                        </div>
-                        <div class="col-md-6 mt-2">
-                            <div class="small text-secondary">상태</div>
-                            <div class="fw-semibold" id="bd_status">-</div>
-                        </div>
-                        <div class="col-md-6 mt-2">
-                            <div class="small text-secondary">재난 코드</div>
-                            <div class="fw-semibold" id="bd_disaster">-</div>
-                        </div>
-                        </div>
-                    </div>
-                    </div>
-                </div>
-                </div>
-
-            </div>
-
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
-            </div>
-            </div>
-        </div>
-        </div>
-    `;
-        document.body.appendChild(wrap.firstElementChild);
-    }
-
-    function openBroadcastDetail(item) {
-        ensureBroadcastDetailModal();
-
-        const title = item.title || '발령 상세';
-        const subtitle = item.time || '-';
-
-        document.getElementById('bd_title').textContent = title;
-        document.getElementById('bd_subtitle').textContent = subtitle;
-
-        document.getElementById('bd_device').textContent = item.deviceId || '-';
-        document.getElementById('bd_range').textContent = (item.alertRange ?? '-') + '';
-
-        document.getElementById('bd_sto').textContent = item.alertStoCd || '-';
-        document.getElementById('bd_siren').textContent = item.alertSirenCd || '-';
-
-        const msg = (item.ttsMessage || '').trim();
-        document.getElementById('bd_message').textContent = msg || '메시지 없음';
-
-        document.getElementById('bd_mode').textContent = modeToText(item.alertMode);
-        document.getElementById('bd_priority').textContent = priorityToText(item.alertPriority);
-        document.getElementById('bd_kind').textContent = kindToText(item.alertKind);
-        document.getElementById('bd_cmd').textContent = item.commandCode ? `CMD ${item.commandCode}` : '-';
-        document.getElementById('bd_status').textContent = item.status || '-';
-        document.getElementById('bd_disaster').textContent = item.disasterCode || '-';
-
-        const modalEl = document.getElementById('broadcastDetailModal');
-        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modal.show();
-    }
+    // Modal 관련 함수들 모두 제거 (이제 아코디언에서 처리)
 
     /* ---------------------------
     * 조회(검색 버튼 기준)

@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+﻿document.addEventListener("DOMContentLoaded", () => {
   bindTopButtons();
   loadCctvList();
 
@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const editBtn = event.target.closest(".card-action-edit");
       if (editBtn) {
         event.stopPropagation();
-        const card = editBtn.closest(".pinterest-card");
+        const card = editBtn.closest(".cctv-card");
         if (card) openEditModalFromCard(card);
         return;
       }
@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const delBtn = event.target.closest(".card-action-delete");
       if (delBtn) {
         event.stopPropagation();
-        const card = delBtn.closest(".pinterest-card");
+        const card = delBtn.closest(".cctv-card");
         if (card) deleteCctvFromCard(card);
       }
     });
@@ -172,7 +172,7 @@ function submitEditCctv() {
 }
 
 /* -----------------------------
- * 목록 - Pinterest 카드 그리드 렌더링
+ * 목록 - CCTV 카드 그리드 렌더링
  * ----------------------------- */
 function loadCctvList() {
   fetch("/api/cctv/list")
@@ -199,7 +199,7 @@ function renderCctvCards(list) {
   // 빈 목록일 때 Empty State
   if (!Array.isArray(list) || list.length === 0) {
     container.innerHTML = `
-      <div class="pinterest-empty-state">
+      <div class="cctv-empty-state">
         <div class="empty-state-icon">
           <i class="bi bi-camera-video"></i>
         </div>
@@ -207,7 +207,7 @@ function renderCctvCards(list) {
         <p class="empty-state-description">
           새 CCTV를 추가하여 실시간 모니터링을 시작하세요
         </p>
-        <button class="pinterest-btn-secondary" onclick="document.getElementById('btn-register').click()">
+        <button class="cctv-btn-secondary" onclick="document.getElementById('btn-register').click()">
           <i class="bi bi-plus-lg"></i>
           첫 CCTV 추가하기
         </button>
@@ -230,21 +230,21 @@ function renderCctvCards(list) {
     let statusBadgeHtml = "";
     if (statusCam === "1") {
       statusBadgeHtml = `
-        <span class="pinterest-badge pinterest-badge-success">
+        <span class="cctv-badge cctv-badge-success">
           <i class="bi bi-check-circle-fill"></i>
           <span>정상</span>
         </span>
       `;
     } else if (statusCam === "0") {
       statusBadgeHtml = `
-        <span class="pinterest-badge pinterest-badge-error">
+        <span class="cctv-badge cctv-badge-error">
           <i class="bi bi-x-circle-fill"></i>
           <span>신호없음</span>
         </span>
       `;
     } else {
       statusBadgeHtml = `
-        <span class="pinterest-badge pinterest-badge-unknown">
+        <span class="cctv-badge cctv-badge-unknown">
           <i class="bi bi-question-circle-fill"></i>
           <span>알 수 없음</span>
         </span>
@@ -253,7 +253,7 @@ function renderCctvCards(list) {
 
     // 카드 엘리먼트 생성
     const card = document.createElement("div");
-    card.className = "pinterest-card";
+    card.className = "cctv-card";
 
     // 데이터 속성 설정
     card.dataset.locationCode = locationCode;
@@ -271,12 +271,12 @@ function renderCctvCards(list) {
     // 카드 HTML 구성
     card.innerHTML = `
       <!-- 카드 헤더 -->
-      <div class="pinterest-card-header">
+      <div class="cctv-card-header">
         <div class="card-checkbox-wrapper">
           <input type="checkbox"
             name="selectedCctv"
             value="${escapeHtml(locationCode)}|${escapeHtml(code)}"
-            class="form-check-input cctv-checkbox pinterest-checkbox"
+            class="form-check-input cctv-checkbox"
             id="cctv-check-${index}" />
           <label for="cctv-check-${index}" class="checkbox-label"></label>
         </div>
@@ -286,7 +286,7 @@ function renderCctvCards(list) {
       </div>
 
       <!-- 카드 바디 -->
-      <div class="pinterest-card-body">
+      <div class="cctv-card-body">
         <!-- CCTV 코드 -->
         <div class="card-main-info">
           <h3 class="card-title">${escapeHtml(name || code)}</h3>
@@ -322,7 +322,7 @@ function renderCctvCards(list) {
       </div>
 
       <!-- 카드 푸터 -->
-      <div class="pinterest-card-footer">
+      <div class="cctv-card-footer">
         <button class="card-action-btn card-action-edit" 
           data-code="${escapeHtml(code)}"
           title="수정">
@@ -394,7 +394,7 @@ function updateCctvCount(count) {
 // Thymeleaf에서 직접 호출하는 함수들을 window에 노출
 window.editCctv = function (locationCode, cctvCode) {
   // 해당 카드 찾기
-  const cards = document.querySelectorAll('.pinterest-card');
+  const cards = document.querySelectorAll('.cctv-card');
   for (const card of cards) {
     if (card.dataset.locationCode === locationCode &&
       card.dataset.cctvCode === cctvCode) {
@@ -407,7 +407,7 @@ window.editCctv = function (locationCode, cctvCode) {
 
 window.deleteCctv = function (locationCode, cctvCode) {
   // 해당 카드 찾기
-  const cards = document.querySelectorAll('.pinterest-card');
+  const cards = document.querySelectorAll('.cctv-card');
   for (const card of cards) {
     if (card.dataset.locationCode === locationCode &&
       card.dataset.cctvCode === cctvCode) {
@@ -436,3 +436,4 @@ function escapeHtml(str) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+

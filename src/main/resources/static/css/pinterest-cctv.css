@@ -1,5 +1,5 @@
-/* ========================================
-   Pinterest CCTV Style - Cyber Command Center Theme
+﻿/* ========================================
+   CCTV Style - Cyber Command Center Theme
    ======================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Rajdhani:wght@400;500;600;700&display=swap');
@@ -9,24 +9,24 @@
    ==================== */
 :root {
     /* Cyber Midnight Palette */
-    --pinterest-bg-main: #050510;
-    --pinterest-bg-panel: #0f1020;
-    --pinterest-bg-panel-hover: #161830;
-    --pinterest-white: #0f1020;
-    --pinterest-bg-soft: #161830;
+    --cctv-bg-main: #050510;
+    --cctv-bg-panel: #0f1020;
+    --cctv-bg-panel-hover: #161830;
+    --cctv-white: #0f1020;
+    --cctv-bg-soft: #161830;
 
     /* Text Colors */
-    --pinterest-dark: #e0e6ed;
-    --pinterest-gray: #8b9bb4;
-    --pinterest-light-gray: rgba(255, 255, 255, 0.03);
+    --cctv-dark: #e0e6ed;
+    --cctv-gray: #8b9bb4;
+    --cctv-light-gray: rgba(255, 255, 255, 0.03);
 
     /* Borders */
-    --pinterest-border: rgba(60, 240, 255, 0.15);
-    --pinterest-border-glow: rgba(60, 240, 255, 0.4);
+    --cctv-border: rgba(60, 240, 255, 0.15);
+    --cctv-border-glow: rgba(60, 240, 255, 0.4);
 
     /* Accent Colors */
-    --pinterest-red: #ff2a6d;
-    --pinterest-red-hover: #ff5c7a;
+    --cctv-red: #ff2a6d;
+    --cctv-red-hover: #ff5c7a;
     --accent-cyan: #00f2ff;
     --accent-blue: #2d7aff;
     --accent-purple: #bd00ff;
@@ -78,8 +78,8 @@
    Global Overrides 
    ==================== */
 body {
-    background-color: var(--pinterest-bg-main);
-    color: var(--pinterest-dark);
+    background-color: var(--cctv-bg-main);
+    color: var(--cctv-dark);
     font-family: var(--font-ui);
 }
 
@@ -92,8 +92,8 @@ body::before {
     width: 100%;
     height: 100%;
     background-image:
-        linear-gradient(var(--pinterest-border) 1px, transparent 1px),
-        linear-gradient(90deg, var(--pinterest-border) 1px, transparent 1px);
+        linear-gradient(var(--cctv-border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--cctv-border) 1px, transparent 1px);
     background-size: 40px 40px;
     opacity: 0.03;
     pointer-events: none;
@@ -101,21 +101,21 @@ body::before {
 }
 
 /* ==================== 
-   Pinterest Header 
+   CCTV Header 
    ==================== */
-.pinterest-header {
-    background: var(--pinterest-bg-panel);
+.cctv-header {
+    background: var(--cctv-bg-panel);
     border-radius: var(--radius-lg);
     padding: var(--spacing-xl);
     margin-bottom: var(--spacing-xl);
     box-shadow: var(--shadow-sm);
     transition: all var(--transition-normal);
-    border: 1px solid var(--pinterest-border);
+    border: 1px solid var(--cctv-border);
     position: relative;
 }
 
 /* Corner Accent */
-.pinterest-header::after {
+.cctv-header::after {
     content: "";
     position: absolute;
     top: 0;
@@ -126,12 +126,12 @@ body::before {
     opacity: 0.3;
 }
 
-.pinterest-header:hover {
+.cctv-header:hover {
     box-shadow: var(--shadow-md);
-    border-color: var(--pinterest-border-glow);
+    border-color: var(--cctv-border-glow);
 }
 
-.pinterest-header-content {
+.cctv-header-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -139,36 +139,36 @@ body::before {
     flex-wrap: wrap;
 }
 
-.pinterest-header-left {
+.cctv-header-left {
     flex: 1;
     min-width: 250px;
 }
 
-.pinterest-title-wrapper {
+.cctv-title-wrapper {
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
     margin-bottom: var(--spacing-sm);
 }
 
-.pinterest-title-icon {
+.cctv-title-icon {
     font-size: 1.75rem;
-    color: var(--pinterest-red);
+    color: var(--cctv-red);
 }
 
-.pinterest-title {
+.cctv-title {
     font-size: 1.75rem;
     font-weight: 700;
     margin: 0;
     letter-spacing: 2px;
     text-transform: uppercase;
-    background: linear-gradient(90deg, #fff, var(--pinterest-gray));
+    background: linear-gradient(90deg, #fff, var(--cctv-gray));
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
-.pinterest-description {
+.cctv-description {
     font-size: 0.875rem;
     color: var(--accent-cyan);
     margin: 0;
@@ -177,15 +177,15 @@ body::before {
     opacity: 0.8;
 }
 
-.pinterest-header-right {
+.cctv-header-right {
     display: flex;
     gap: var(--spacing-sm);
 }
 
 /* ==================== 
-   Pinterest Buttons 
+   CCTV Buttons 
    ==================== */
-.pinterest-btn-primary {
+.cctv-btn-primary {
     background: rgba(45, 122, 255, 0.1);
     border: 1px solid var(--accent-blue);
     color: var(--accent-blue);
@@ -204,25 +204,25 @@ body::before {
     white-space: nowrap;
 }
 
-.pinterest-btn-primary:hover {
+.cctv-btn-primary:hover {
     background: var(--accent-blue);
     color: #fff;
     box-shadow: var(--glow-blue);
 }
 
-.pinterest-btn-primary:active {
+.cctv-btn-primary:active {
     transform: scale(0.98);
 }
 
-.pinterest-btn-primary:focus {
+.cctv-btn-primary:focus {
     outline: 2px solid var(--accent-cyan);
     outline-offset: 2px;
 }
 
-.pinterest-btn-secondary {
+.cctv-btn-secondary {
     background: rgba(255, 255, 255, 0.03);
-    color: var(--pinterest-gray);
-    border: 1px solid var(--pinterest-border);
+    color: var(--cctv-gray);
+    border: 1px solid var(--cctv-border);
     padding: 10px 20px;
     border-radius: 6px;
     font-family: var(--font-ui);
@@ -237,17 +237,17 @@ body::before {
     transition: all var(--transition-normal);
 }
 
-.pinterest-btn-secondary:hover {
+.cctv-btn-secondary:hover {
     background: rgba(255, 255, 255, 0.06);
     color: #fff;
-    border-color: var(--pinterest-border-glow);
+    border-color: var(--cctv-border-glow);
 }
 
-.pinterest-btn-secondary:active {
+.cctv-btn-secondary:active {
     transform: scale(0.98);
 }
 
-.pinterest-btn-secondary:focus {
+.cctv-btn-secondary:focus {
     outline: 3px solid rgba(255, 255, 255, 0.1);
     outline-offset: 2px;
 }
@@ -255,14 +255,14 @@ body::before {
 /* ==================== 
     Grid Container
     ==================== */
-.pinterest-grid-container {
+.cctv-grid-container {
     background: transparent;
     flex: 1;
     overflow: auto;
     padding-bottom: var(--spacing-lg);
 }
 
-.pinterest-grid {
+.cctv-grid {
     display: grid;
     gap: var(--spacing-lg);
     align-items: stretch;
@@ -277,10 +277,10 @@ body::before {
 }
 
 /* ==================== 
-    Pinterest Card 
+    CCTV Card 
     ==================== */
-.pinterest-card {
-    background: var(--pinterest-bg-soft);
+.cctv-card {
+    background: var(--cctv-bg-soft);
     border-radius: var(--radius-lg);
     padding: var(--spacing-lg);
     box-shadow: var(--shadow-sm);
@@ -288,7 +288,7 @@ body::before {
     display: flex;
     flex-direction: column;
     height: 100%;
-    border: 1px solid var(--pinterest-border);
+    border: 1px solid var(--cctv-border);
     max-width: 600px;
     /* 카드 최대 너비 제한 */
     margin: 0 auto;
@@ -296,34 +296,34 @@ body::before {
     width: 100%;
 }
 
-.pinterest-card:hover {
+.cctv-card:hover {
     box-shadow: var(--shadow-hover);
     transform: translateY(-2px);
-    border-color: var(--pinterest-border-glow);
+    border-color: var(--cctv-border-glow);
 }
 
-.pinterest-card:active {
+.cctv-card:active {
     transform: translateY(0);
 }
 
 /* Card Header */
-.pinterest-card-header {
+.cctv-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: var(--spacing-md);
     padding-bottom: var(--spacing-md);
-    border-bottom: 1px solid var(--pinterest-border);
+    border-bottom: 1px solid var(--cctv-border);
 }
 
 .card-checkbox-wrapper {
     position: relative;
 }
 
-.pinterest-checkbox {
+.cctv-checkbox {
     width: 20px;
     height: 20px;
-    border: 2px solid var(--pinterest-border);
+    border: 2px solid var(--cctv-border);
     border-radius: 3px;
     cursor: pointer;
     transition: all var(--transition-fast);
@@ -333,18 +333,18 @@ body::before {
     -webkit-appearance: none;
 }
 
-.pinterest-checkbox:checked {
+.cctv-checkbox:checked {
     background-color: var(--accent-cyan);
     border-color: var(--accent-cyan);
     box-shadow: var(--glow-cyan);
 }
 
-.pinterest-checkbox:hover {
+.cctv-checkbox:hover {
     border-color: var(--accent-cyan);
     transform: scale(1.05);
 }
 
-.pinterest-checkbox:focus {
+.cctv-checkbox:focus {
     outline: 2px solid var(--accent-cyan);
     outline-offset: 2px;
 }
@@ -354,8 +354,8 @@ body::before {
     align-items: center;
 }
 
-/* Pinterest Badges */
-.pinterest-badge {
+/* CCTV Badges */
+.cctv-badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -369,32 +369,32 @@ body::before {
     font-family: var(--font-ui);
 }
 
-.pinterest-badge i {
+.cctv-badge i {
     font-size: 0.875rem;
 }
 
-.pinterest-badge-success {
+.cctv-badge-success {
     background: var(--status-success-bg);
     color: var(--status-success);
     border: 1px solid var(--status-success);
     box-shadow: 0 0 5px var(--status-success);
 }
 
-.pinterest-badge-error {
+.cctv-badge-error {
     background: var(--status-error-bg);
     color: var(--status-error);
     border: 1px solid var(--status-error);
     box-shadow: 0 0 5px var(--status-error);
 }
 
-.pinterest-badge-unknown {
+.cctv-badge-unknown {
     background: var(--status-unknown-bg);
     color: var(--status-unknown);
     border: 1px solid var(--status-unknown);
 }
 
 /* Card Body */
-.pinterest-card-body {
+.cctv-card-body {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -408,7 +408,7 @@ body::before {
 .card-title {
     font-size: 1.125rem;
     font-weight: 700;
-    color: var(--pinterest-dark);
+    color: var(--cctv-dark);
     margin: 0 0 4px 0;
     line-height: 1.3;
     font-family: var(--font-ui);
@@ -418,7 +418,7 @@ body::before {
 
 .card-subtitle {
     font-size: 0.875rem;
-    color: var(--pinterest-gray);
+    color: var(--cctv-gray);
     margin: 0;
 }
 
@@ -449,7 +449,7 @@ body::before {
 
 .card-url-value {
     font-size: 0.8125rem;
-    color: var(--pinterest-dark);
+    color: var(--cctv-dark);
     word-break: break-all;
     /* 긴 단어 강제 줄바꿈 */
     overflow-wrap: break-word;
@@ -467,7 +467,7 @@ body::before {
 }
 
 .card-location-item {
-    background: var(--pinterest-light-gray);
+    background: var(--cctv-light-gray);
     padding: var(--spacing-sm);
     border-radius: var(--radius-sm);
 }
@@ -475,23 +475,23 @@ body::before {
 .card-value {
     font-size: 0.9375rem;
     font-weight: 600;
-    color: var(--pinterest-dark);
+    color: var(--cctv-dark);
     margin-top: 2px;
 }
 
 /* Card Footer */
-.pinterest-card-footer {
+.cctv-card-footer {
     display: flex;
     gap: var(--spacing-xs);
     margin-top: var(--spacing-sm);
     padding-top: var(--spacing-md);
-    border-top: 1px solid var(--pinterest-border);
+    border-top: 1px solid var(--cctv-border);
 }
 
 .card-action-btn {
     flex: 1;
     background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--pinterest-border);
+    border: 1px solid var(--cctv-border);
     padding: 10px 16px;
     border-radius: var(--radius-sm);
     font-size: 0.8125rem;
@@ -511,7 +511,7 @@ body::before {
     transform: translateY(-1px);
     box-shadow: var(--shadow-sm);
     background: rgba(255, 255, 255, 0.06);
-    border-color: var(--pinterest-border-glow);
+    border-color: var(--cctv-border-glow);
 }
 
 .card-action-btn:active {
@@ -529,40 +529,40 @@ body::before {
 }
 
 .card-action-delete {
-    color: var(--pinterest-red);
+    color: var(--cctv-red);
 }
 
 .card-action-delete:hover {
     background: rgba(255, 42, 109, 0.1);
-    border-color: var(--pinterest-red);
+    border-color: var(--cctv-red);
     box-shadow: 0 0 10px rgba(255, 42, 109, 0.3);
 }
 
 .card-action-btn:focus {
-    outline: 2px solid var(--pinterest-gray);
+    outline: 2px solid var(--cctv-gray);
     outline-offset: 2px;
 }
 
 /* ==================== 
    Empty State 
    ==================== */
-.pinterest-empty-state {
+.cctv-empty-state {
     grid-column: 1 / -1;
     text-align: center;
     padding: var(--spacing-xxl) var(--spacing-xl);
-    background: var(--pinterest-bg-soft);
+    background: var(--cctv-bg-soft);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
     margin: var(--spacing-xl) auto;
     max-width: 500px;
-    border: 1px solid var(--pinterest-border);
+    border: 1px solid var(--cctv-border);
 }
 
 .empty-state-icon {
     width: 80px;
     height: 80px;
     margin: 0 auto var(--spacing-lg);
-    background: var(--pinterest-light-gray);
+    background: var(--cctv-light-gray);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -571,37 +571,37 @@ body::before {
 
 .empty-state-icon i {
     font-size: 2.5rem;
-    color: var(--pinterest-gray);
+    color: var(--cctv-gray);
 }
 
 .empty-state-title {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--pinterest-dark);
+    color: var(--cctv-dark);
     margin: 0 0 var(--spacing-sm) 0;
 }
 
 .empty-state-description {
     font-size: 1rem;
-    color: var(--pinterest-gray);
+    color: var(--cctv-gray);
     margin: 0 0 var(--spacing-xl) 0;
     line-height: 1.6;
 }
 
 /* ==================== 
-   Pinterest Modal 
+   CCTV Modal 
    ==================== */
-.pinterest-modal .modal-content {
-    border: 1px solid var(--pinterest-border-glow);
+.cctv-modal .modal-content {
+    border: 1px solid var(--cctv-border-glow);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-lg);
     overflow: hidden;
-    background-color: var(--pinterest-bg-panel);
+    background-color: var(--cctv-bg-panel);
 }
 
-.pinterest-modal-header {
-    background: var(--pinterest-bg-panel);
-    border-bottom: 1px solid var(--pinterest-border);
+.cctv-modal-header {
+    background: var(--cctv-bg-panel);
+    border-bottom: 1px solid var(--cctv-border);
     padding: var(--spacing-xl);
     display: flex;
     justify-content: space-between;
@@ -610,7 +610,7 @@ body::before {
 }
 
 /* Corner Accent for Modal */
-.pinterest-modal-header::after {
+.cctv-modal-header::after {
     content: "";
     position: absolute;
     top: 0;
@@ -632,19 +632,19 @@ body::before {
     color: var(--accent-cyan);
 }
 
-.pinterest-modal-title {
+.cctv-modal-title {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--pinterest-dark);
+    color: var(--cctv-dark);
     margin: 0;
     font-family: var(--font-ui);
     text-transform: uppercase;
     letter-spacing: 1px;
 }
 
-.pinterest-close-btn {
+.cctv-close-btn {
     background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--pinterest-border);
+    border: 1px solid var(--cctv-border);
     width: 40px;
     height: 40px;
     border-radius: 4px;
@@ -653,33 +653,33 @@ body::before {
     justify-content: center;
     cursor: pointer;
     transition: all var(--transition-fast);
-    color: var(--pinterest-gray);
+    color: var(--cctv-gray);
 }
 
-.pinterest-close-btn:hover {
+.cctv-close-btn:hover {
     background: rgba(255, 42, 109, 0.1);
-    border-color: var(--pinterest-red);
-    color: var(--pinterest-red);
+    border-color: var(--cctv-red);
+    color: var(--cctv-red);
     transform: rotate(90deg);
 }
 
-.pinterest-close-btn:focus {
+.cctv-close-btn:focus {
     outline: 3px solid rgba(255, 255, 255, 0.1);
     outline-offset: 2px;
 }
 
-.pinterest-close-btn i {
+.cctv-close-btn i {
     font-size: 1.25rem;
 }
 
-.pinterest-modal-body {
+.cctv-modal-body {
     padding: var(--spacing-xl);
-    background: var(--pinterest-bg-main);
+    background: var(--cctv-bg-main);
 }
 
-.pinterest-modal-footer {
-    background: var(--pinterest-bg-panel);
-    border-top: 1px solid var(--pinterest-border);
+.cctv-modal-footer {
+    background: var(--cctv-bg-panel);
+    border-top: 1px solid var(--cctv-border);
     padding: var(--spacing-lg) var(--spacing-xl);
     display: flex;
     justify-content: flex-end;
@@ -687,28 +687,28 @@ body::before {
 }
 
 /* ==================== 
-   Pinterest Form 
+   CCTV Form 
    ==================== */
-.pinterest-form-grid {
+.cctv-form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: var(--spacing-lg);
 }
 
-.pinterest-form-group {
+.cctv-form-group {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-xs);
 }
 
-.pinterest-form-group.full-width {
+.cctv-form-group.full-width {
     grid-column: 1 / -1;
 }
 
-.pinterest-form-label {
+.cctv-form-label {
     font-size: 0.875rem;
     font-weight: 600;
-    color: var(--pinterest-gray);
+    color: var(--cctv-gray);
     display: flex;
     align-items: center;
     gap: 4px;
@@ -718,35 +718,35 @@ body::before {
 }
 
 .required-mark {
-    color: var(--pinterest-red);
+    color: var(--cctv-red);
 }
 
-.pinterest-form-control {
+.cctv-form-control {
     padding: 12px 16px;
-    border: 2px solid var(--pinterest-border);
+    border: 2px solid var(--cctv-border);
     border-radius: var(--radius-sm);
     font-size: 1rem;
-    color: var(--pinterest-dark);
+    color: var(--cctv-dark);
     background: rgba(0, 0, 0, 0.3);
     transition: all var(--transition-fast);
     font-family: var(--font-data);
 }
 
-.pinterest-form-control:focus {
+.cctv-form-control:focus {
     outline: none;
     border-color: var(--accent-cyan);
     box-shadow: 0 0 10px rgba(0, 242, 255, 0.2);
 }
 
-.pinterest-form-control:hover:not(:focus) {
-    border-color: var(--pinterest-gray);
+.cctv-form-control:hover:not(:focus) {
+    border-color: var(--cctv-gray);
 }
 
-.pinterest-form-control::placeholder {
-    color: var(--pinterest-gray);
+.cctv-form-control::placeholder {
+    color: var(--cctv-gray);
 }
 
-.pinterest-form-control:read-only {
+.cctv-form-control:read-only {
     opacity: 0.6;
     cursor: not-allowed;
 }
@@ -755,42 +755,42 @@ body::before {
    Responsive Grid 
    ==================== */
 @media (max-width: 992px) {
-    .pinterest-header-content {
+    .cctv-header-content {
         flex-direction: column;
         align-items: stretch;
     }
 
-    .pinterest-header-right {
+    .cctv-header-right {
         justify-content: stretch;
     }
 
-    .pinterest-btn-primary,
-    .pinterest-btn-secondary {
+    .cctv-btn-primary,
+    .cctv-btn-secondary {
         width: 100%;
         justify-content: center;
     }
 
-    .pinterest-form-grid {
+    .cctv-form-grid {
         grid-template-columns: 1fr;
     }
 
-    .pinterest-form-group {
+    .cctv-form-group {
         grid-column: 1 / -1 !important;
     }
 }
 
 @media (max-width: 768px) {
-    .pinterest-header {
+    .cctv-header {
         padding: var(--spacing-lg);
     }
 
-    .pinterest-title {
+    .cctv-title {
         font-size: 1.5rem;
     }
 
-    .pinterest-modal-header,
-    .pinterest-modal-body,
-    .pinterest-modal-footer {
+    .cctv-modal-header,
+    .cctv-modal-body,
+    .cctv-modal-footer {
         padding: var(--spacing-lg);
     }
 
@@ -811,17 +811,17 @@ body::before {
 
 /* Focus visible for keyboard navigation */
 *:focus-visible {
-    outline: 3px solid var(--pinterest-red);
+    outline: 3px solid var(--cctv-red);
     outline-offset: 2px;
 }
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
-    .pinterest-card {
-        border: 2px solid var(--pinterest-dark);
+    .cctv-card {
+        border: 2px solid var(--cctv-dark);
     }
 
-    .pinterest-badge {
+    .cctv-badge {
         border: 1px solid currentColor;
     }
 }
@@ -829,22 +829,22 @@ body::before {
 /* ==================== 
    Scrollbar Styling 
    ==================== */
-.pinterest-grid-container::-webkit-scrollbar {
+.cctv-grid-container::-webkit-scrollbar {
     width: 8px;
 }
 
-.pinterest-grid-container::-webkit-scrollbar-track {
-    background: var(--pinterest-white);
+.cctv-grid-container::-webkit-scrollbar-track {
+    background: var(--cctv-white);
     border-radius: var(--radius-sm);
 }
 
-.pinterest-grid-container::-webkit-scrollbar-thumb {
-    background: var(--pinterest-light-gray);
+.cctv-grid-container::-webkit-scrollbar-thumb {
+    background: var(--cctv-light-gray);
     border-radius: var(--radius-sm);
 }
 
-.pinterest-grid-container::-webkit-scrollbar-thumb:hover {
-    background: var(--pinterest-border);
+.cctv-grid-container::-webkit-scrollbar-thumb:hover {
+    background: var(--cctv-border);
 }
 
 /* ==================== 
@@ -862,7 +862,7 @@ body::before {
     }
 }
 
-.pinterest-card {
+.cctv-card {
     animation: fadeIn 0.3s ease;
 }
 
@@ -875,13 +875,13 @@ body::before {
         color: black;
     }
 
-    .pinterest-header-right,
-    .pinterest-card-footer,
+    .cctv-header-right,
+    .cctv-card-footer,
     .card-checkbox-wrapper {
         display: none !important;
     }
 
-    .pinterest-card {
+    .cctv-card {
         break-inside: avoid;
         box-shadow: none;
         border: 1px solid #ddd;
@@ -905,3 +905,4 @@ body::before {
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+

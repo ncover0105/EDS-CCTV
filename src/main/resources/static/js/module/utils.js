@@ -380,7 +380,7 @@ export async function fetchJson(url, options = {}) {
     }
 }
 
-
+// ===== Clock / DateTime Utils (module exports) =====
 export function formatDateTime(date = new Date()) {
     const pad = n => n.toString().padStart(2, "0");
 
@@ -392,4 +392,52 @@ export function formatDateTime(date = new Date()) {
     const ss = pad(date.getSeconds());
 
     return `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
+}
+
+// 한국어 포맷: YYYY년 MM월 DD일 HH : mm : ss
+export function formatKoreanDateTime(date = new Date()) {
+    const pad = (n) => String(n).padStart(2, "0");
+    const y = date.getFullYear();
+    const m = pad(date.getMonth() + 1);
+    const d = pad(date.getDate());
+    const hh = pad(date.getHours());
+    const mm = pad(date.getMinutes());
+    const ss = pad(date.getSeconds());
+    return `${y}년 ${m}월 ${d}일 ${hh} : ${mm} : ${ss}`;
+}
+
+// target별 interval 관리 (중복 실행 방지)
+const __clockIntervals = new Map();
+
+/**
+ * @param {string|HTMLElement} target - element id or element
+ * @param {number} intervalMs
+ */
+export function startClock(target, intervalMs = 1000) {
+    const el = typeof target === "string" ? document.getElementById(target) : target;
+    if (!el) return;
+
+    stopClock(el);
+
+    const render = () => {
+        el.textContent = formatKoreanDateTime(new Date());
+    };
+
+    render();
+    const id = setInterval(render, intervalMs);
+    __clockIntervals.set(el, id);
+}
+
+/**
+ * @param {string|HTMLElement} target - element id or element
+ */
+export function stopClock(target) {
+    const el = typeof target === "string" ? document.getElementById(target) : target;
+    if (!el) return;
+
+    const id = __clockIntervals.get(el);
+    if (id) {
+        clearInterval(id);
+        __clockIntervals.delete(el);
+    }
 }

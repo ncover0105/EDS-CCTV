@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
     Logs 모듈 (출입기록 패널)
     - scripts.js 기존 코드와 동일한 동작을 모듈화
 ============================================================ */
@@ -64,7 +64,7 @@ window.Logs = (function () {
 
         logs.slice(0, 50).forEach(log => {
             const item = document.createElement("div");
-            item.className = "log-item";
+            item.className = `log-item log-boundary-${Number(log.boundaryNum)}`;
             item.dataset.boundary = log.boundaryNum;
 
             item.innerHTML = `
@@ -133,3 +133,4 @@ window.Logs = (function () {
     return { init, add };
 
 })();
+
