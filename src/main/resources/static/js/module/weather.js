@@ -732,10 +732,14 @@ window.SpecialReport = (function () {
     // ====== 설정 ======
     const API_URL = "/api/weather/special/latest";
     const REFRESH_MS = 5 * 60 * 1000; // 서비스 refresh(5분)와 맞춤
+    let tickerResizeTimer = null;
+    let tickerItemsCache = [];
 
     function init() {
         load();
         setInterval(load, REFRESH_MS);
+        bindTickerResize();
+        window.refreshTicker = () => renderTicker(tickerItemsCache);
     }
 
     async function load() {
@@ -766,8 +770,8 @@ window.SpecialReport = (function () {
     function showEmpty(lineEl, emptyEl) {
         lineEl.classList.add("d-none");
         emptyEl.classList.remove("d-none");
-
-        window.refreshTicker?.();
+        tickerItemsCache = [];
+        renderTicker(tickerItemsCache);
     }
 
     function showLine(lineEl, emptyEl) {
@@ -802,8 +806,90 @@ window.SpecialReport = (function () {
         `;
 
         showLine(lineEl, emptyEl);
+        tickerItemsCache = [{
+            text: `${regionName} - ${wrnName}${lvlNum ? " " + (LVL_LABEL[lvlNum] || "") : ""}${cmdName ? " " + cmdName : ""}`.trim(),
+            level: getTickerLevelByLvl(lvlNum)
+        }];
+        renderTicker(tickerItemsCache);
+    }
 
-        window.refreshTicker?.();
+    function bindTickerResize() {
+        window.addEventListener("resize", () => {
+            clearTimeout(tickerResizeTimer);
+            tickerResizeTimer = setTimeout(() => renderTicker(tickerItemsCache), 120);
+        });
+    }
+
+    function getTickerLevelByLvl(lvlNum) {
+        if (lvlNum >= 3) return "hi";
+        if (lvlNum === 2) return "warn";
+        return "";
+    }
+
+    function renderTicker(reportItems) {
+        const inner = document.getElementById("tickerInner");
+        const track = inner?.parentElement;
+        const tag = document.getElementById("tickerTag");
+        const tagLabel = document.getElementById("tickerTagLabel");
+        if (!inner || !track) return;
+
+        if (!reportItems || reportItems.length === 0) {
+            inner.innerHTML = `<span class="t-item t-empty">수신된 특보 정보가 없습니다.</span>`;
+            inner.classList.remove("scrolling", "single");
+            inner.style.removeProperty("--ticker-shift");
+            inner.style.removeProperty("animationDuration");
+            tag?.classList.add("no-data");
+            if (tagLabel) tagLabel.textContent = "특보";
+            return;
+        }
+
+        tag?.classList.remove("no-data");
+        const highCount = reportItems.filter(i => i.level === "hi").length;
+        if (tagLabel) tagLabel.textContent = highCount > 0 ? `긴급 ${highCount}` : "특보";
+
+        if (reportItems.length === 1) {
+            const item = reportItems[0];
+            inner.innerHTML = `<span class="t-item ${item.level}">${item.text}</span>`;
+            inner.classList.remove("scrolling");
+            inner.classList.add("single");
+            inner.style.removeProperty("--ticker-shift");
+            inner.style.removeProperty("animationDuration");
+            return;
+        }
+
+        inner.classList.remove("single");
+
+        let loopItems = [...reportItems];
+        let shiftPx = 0;
+        const makeItemsHtml = (items) => items.map((item, i) =>
+            `<span class="t-item ${item.level}">${item.text}</span>` +
+            (i < items.length - 1 ? `<span class="t-sep">·</span>` : "")
+        ).join("");
+
+        const minLoopWidth = track.clientWidth + 40;
+        for (let i = 0; i < 24; i++) {
+            const loopHtml = makeItemsHtml(loopItems);
+            inner.innerHTML =
+                `<span class="ticker-loop">${loopHtml}</span>` +
+                `<span class="t-sep ticker-loop-gap" style="margin:0 32px"></span>` +
+                `<span class="ticker-loop">${loopHtml}</span>`;
+
+            const firstLoop = inner.querySelector(".ticker-loop");
+            const gap = inner.querySelector(".ticker-loop-gap");
+            const loopWidth = firstLoop?.scrollWidth || 0;
+            const gapWidth = gap?.scrollWidth || 0;
+            shiftPx = loopWidth + gapWidth;
+
+            if (loopWidth >= minLoopWidth) {
+                break;
+            }
+            loopItems = loopItems.concat(reportItems);
+        }
+
+        inner.style.setProperty("--ticker-shift", `${shiftPx}px`);
+        inner.classList.add("scrolling");
+        const duration = Math.max(18, Math.round(shiftPx / 90));
+        inner.style.animationDuration = `${duration}s`;
     }
 
 

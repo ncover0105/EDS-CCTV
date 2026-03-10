@@ -51,8 +51,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // 스트리밍 서버 동작
     CCTVJanus.initSignaling(cameras);
 
-    // ===== Ticker: specialReportPanel 데이터 연동 =====
-    initTicker();
     setInterval(updateTickerCamStatus, 5000); // 5초마다 카메라 상태 업데이트
 
     document.getElementById("reconnectAllBtn")?.addEventListener("click", () => {
@@ -544,70 +542,6 @@ function selectLayout(itemEl) {
 // ===================== Ticker Bar =====================
 
 /**
- * specialReportPanel의 .sr-wrn-text 항목을 읽어서 ticker에 렌더링
- */
-function initTicker() {
-    // syncTickerTime();
-    renderTickerFromSpecialReport();
-}
-
-/**
- * specialReportPanel → ticker 데이터 동기화
- * specialReportPanel이 업데이트될 때마다 호출하면 실시간 반영
- */
-function renderTickerFromSpecialReport() {
-    const inner = document.getElementById("tickerInner");
-    const tag = document.getElementById("tickerTag");
-    const tagLabel = document.getElementById("tickerTagLabel");
-    if (!inner) return;
-
-    // specialReportPanel에서 텍스트 항목 수집
-    const reportItems = [];
-    document.querySelectorAll("#specialReportLine .sr-wrn-text").forEach(el => {
-        const text = el.textContent?.trim();
-        if (text) reportItems.push({ text, level: getTickerLevel(el) });
-    });
-
-    if (reportItems.length === 0) {
-        // 데이터 없음
-        inner.innerHTML = `<span class="t-item t-empty">수신된 특보 정보가 없습니다.</span>`;
-        inner.classList.remove("scrolling");
-        tag?.classList.add("no-data");
-        if (tagLabel) tagLabel.textContent = "특보";
-        return;
-    }
-
-    // 태그 활성화
-    tag?.classList.remove("no-data");
-    const highCount = reportItems.filter(i => i.level === "hi").length;
-    if (tagLabel) tagLabel.textContent = highCount > 0 ? `긴급 ${highCount}` : "특보";
-
-    // 아이템 HTML 생성 (seamless loop을 위해 2배 복제)
-    const itemsHtml = reportItems.map((item, i) =>
-        `<span class="t-item ${item.level}">${item.text}</span>` +
-        (i < reportItems.length - 1 ? `<span class="t-sep">◆</span>` : "")
-    ).join("");
-
-    inner.innerHTML = itemsHtml + `<span class="t-sep" style="margin:0 32px"></span>` + itemsHtml;
-    inner.classList.add("scrolling");
-
-    // 항목 수에 따라 스크롤 속도 조절
-    const duration = Math.max(20, reportItems.length * 10);
-    inner.style.animationDuration = `${duration}s`;
-}
-
-/**
- * 항목의 심각도에 따라 ticker 클래스 반환
- */
-function getTickerLevel(el) {
-    const parent = el.closest("[class]");
-    const cls = parent?.className || "";
-    if (cls.includes("danger") || cls.includes("red") || cls.includes("emergency")) return "hi";
-    if (cls.includes("warn") || cls.includes("orange") || cls.includes("warning")) return "warn";
-    return "";
-}
-
-/**
  * ticker 오른쪽 카메라 상태 업데이트
  */
 function updateTickerCamStatus() {
@@ -635,9 +569,3 @@ function updateTickerCamStatus() {
 //     el.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 // }
 
-/**
- * specialReportPanel이 외부에서 업데이트될 때 ticker도 갱신
- * 기존 specialReportPanel 업데이트 함수 호출 후 이 함수도 호출하세요.
- * 예: renderTickerFromSpecialReport();
- */
-window.refreshTicker = renderTickerFromSpecialReport;

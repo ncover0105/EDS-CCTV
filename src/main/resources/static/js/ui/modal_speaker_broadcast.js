@@ -22,6 +22,17 @@ function setVal(id, v) {
 
 function show(id) { document.getElementById(id)?.classList.remove("d-none"); }
 function hide(id) { document.getElementById(id)?.classList.add("d-none"); }
+function getPanelPrefixes() { return ["a_bc", "b_bc"]; }
+function getSpeakerTypeToken(type) {
+    return String(type ?? "A").toUpperCase().includes("B") ? "type-b" : "type-a";
+}
+function getSpeakerTypeLabel(type) {
+    return String(type ?? "A").toUpperCase().includes("B") ? "B 타입" : "A 타입";
+}
+function isUseTtsFlag(v) {
+    const normalized = String(v ?? "true").trim().toLowerCase();
+    return normalized === "use" || normalized === "true" || normalized === "1";
+}
 
 // function showTab(btnId) {
 //     const btn = document.getElementById(btnId);
@@ -56,31 +67,48 @@ function syncSelectionUI() {
     const activeCards = getActiveCards();
     const count = activeCards.length;
 
+    const areaEmpty = document.getElementById('bc_area_empty');
+    const areaA = document.getElementById('bc_area_type_a');
+    const areaB = document.getElementById('bc_area_type_b');
+
     // ── 기존 hint / steptext / selectedspeakername 처리 ──
     if (count === 0) {
-        setVal('bcselectedspeakername', '');
-        setText('bchint', '스피커를 선택해주세요.');
-        setText('bcsteptext', '스피커를 선택하세요.');
-    } else if (count === 1) {
+        BroadcastModal.resetPanelForms?.();
+        setVal('bc_selected_speaker_name', '');
+        setText('bc_hint', '스피커를 선택해주세요.');
+        setText('a_bc_step_text', '스피커를 선택하세요.');
+        setText('b_bc_step_text', '스피커를 선택하세요.');
+
+        if (areaEmpty) areaEmpty.classList.remove('d-none');
+        if (areaA) areaA.classList.add('d-none');
+        if (areaB) areaB.classList.add('d-none');
+    } else {
         const oneName = activeCards[0].dataset?.speakerName
             || activeCards[0].querySelector('.speaker-name')?.textContent?.trim();
-        setVal('bcselectedspeakername', oneName);
-        setText('bchint', `${oneName} 선택됨.`);
-        setText('bcsteptext', `${oneName} 선택됨.`);
-    } else {
-        setVal('bcselectedspeakername', count);
-        setText('bchint', `${count}개 스피커 선택됨.`);
-        setText('bcsteptext', `${count}개 스피커 선택됨.`);
-    }
 
-    // ── 전체선택 버튼 텍스트 ──
-    const toggleBtn = document.getElementById('bctoggleall');
-    const total = document.querySelectorAll('#bcspeakerlist .speaker-item').length;
-    if (toggleBtn) {
-        const allSelected = total > 0 && count === total;
-        toggleBtn.querySelector('i').className = allSelected
-            ? 'bi bi-x-square'
-            : 'bi bi-check2-all';
+        if (count === 1) {
+            setVal('bc_selected_speaker_name', oneName);
+            setText('bc_hint', `${getSpeakerTypeLabel(activeCards[0].dataset.type)} · ${oneName} 선택됨.`);
+            setText('a_bc_step_text', `${oneName} 선택됨.`);
+            setText('b_bc_step_text', `${oneName} 선택됨.`);
+        } else {
+            setVal('bc_selected_speaker_name', count);
+            setText('bc_hint', `${getSpeakerTypeLabel(activeCards[0].dataset.type)} · ${count}개 스피커 선택됨.`);
+            setText('a_bc_step_text', `${count}개 스피커 선택됨.`);
+            setText('b_bc_step_text', `${count}개 스피커 선택됨.`);
+        }
+
+        if (areaEmpty) areaEmpty.classList.add('d-none');
+
+        // 타입에 따른 패널 전환 로직 (첫 번째 선택된 스피커 타입 기준)
+        const firstType = activeCards[0].dataset.type;
+        if (firstType && firstType.toUpperCase().includes('B')) {
+            if (areaA) areaA.classList.add('d-none');
+            if (areaB) areaB.classList.remove('d-none');
+        } else {
+            if (areaB) areaB.classList.add('d-none');
+            if (areaA) areaA.classList.remove('d-none');
+        }
     }
 
     // ── 선택 칩 렌더링 ──
@@ -112,17 +140,16 @@ function renderChips(activeCards) {
     activeCards.forEach(card => {
         const name = card.dataset.speakerName || '스피커';
         const key = card.dataset.speakerKey || '';
+        const chipTypeClass = getSpeakerTypeToken(card.dataset.type);
 
         const chip = document.createElement('span');
-        chip.className = 'bc-chip';
+        chip.className = `bc-chip ${chipTypeClass}`;
         chip.innerHTML = `
             ${name}
             <button class="bc-chip-remove" data-key="${key}" aria-label="${name} 선택 해제"
                     style="width:14px;height:14px;display:flex;align-items:center;
                            justify-content:center;border-radius:50%;cursor:pointer;
-                           background:rgba(59,110,246,.2);border:none;
-                           font-size:11px;color:var(--m-primary);line-height:1;
-                           padding:0;">×</button>
+                           border:none;font-size:11px;line-height:1;padding:0;">×</button>
         `;
 
         chip.querySelector('.bc-chip-remove').addEventListener('click', () => {
@@ -188,6 +215,7 @@ const BroadcastApi = {
 * ========================================================== */
 const BroadcastModal = {
     speakers: [],
+    ttsItems: [],
 
     async loadSpeakers() {
         this.speakers = await BroadcastApi.listSpeakers() ?? [];
@@ -209,15 +237,18 @@ const BroadcastModal = {
             const name = safe(spk.speakerName ?? spk.name ?? speakerKey);
             const location = safe(spk.description ?? spk.location ?? '', '');
             const isOffline = spk.status === 'offline' || spk.connectYn === 'N';
+            const type = safe(spk.type, 'A');
+            const typeToken = getSpeakerTypeToken(type);
 
             listEl.insertAdjacentHTML('beforeend', `
-            <div class="speaker-item ${isOffline ? 'offline' : ''}"
+            <div class="speaker-item ${typeToken} ${isOffline ? 'offline' : ''}"
                  role="option"
                  aria-selected="false"
                  aria-disabled="${isOffline}"
                  data-speaker-key="${String(speakerKey)}"
                  data-speaker-id="${String(speakerId)}"
                  data-speaker-name="${String(name)}"
+                 data-type="${type}"
                  tabindex="${isOffline ? -1 : 0}"
                  title="${isOffline ? '오프라인 - 선택 불가' : location}">
                 <div class="speaker-cb" aria-hidden="true">
@@ -232,6 +263,7 @@ const BroadcastModal = {
                 </div>
                 <div class="status-dot"
                      title="${isOffline ? '오프라인' : '온라인'}"></div>
+                <i class="bi bi-chevron-right speaker-arrow" aria-hidden="true"></i>
             </div>
         `);
         });
@@ -244,84 +276,87 @@ const BroadcastModal = {
 
 
     async loadDisasters() {
-        const sel = document.getElementById("bc_disaster");
-        if (!sel) return;
-
         const items = await BroadcastApi.listDisasters();
-        sel.innerHTML = `<option value="" selected>재난을 선택하세요</option>`;
+        const optionsHTML = [`<option value="" selected>재난을 선택하세요</option>`];
 
         items
             .filter(m => (m.useInfo ?? 1) === 1)
             .forEach((m) => {
                 const code = m.dstCode ?? m.code ?? m.id ?? "";
                 const name = m.dstName ?? m.name ?? m.title ?? String(code);
-
-                const opt = document.createElement("option");
-                opt.value = String(code);
-                opt.textContent = `${name} (${code})`;
-                sel.appendChild(opt);
+                optionsHTML.push(`<option value="${String(code)}">${String(name)} (${String(code)})</option>`);
             });
+
+        getPanelPrefixes().forEach(prefix => {
+            const sel = document.getElementById(`${prefix}_disaster`);
+            if (!sel) return;
+            sel.innerHTML = optionsHTML.join("");
+        });
     },
 
     async loadTtsList() {
-        const wrap = document.getElementById("bc_tts_wrap");
-        const textarea = document.getElementById("bc_tts");
-        if (!wrap || !textarea) return;
-
-        let sel = document.getElementById("bc_tts_list");
-        if (!sel) {
-            sel = document.createElement("select");
-            sel.id = "bc_tts_list";
-            sel.className = "form-select-dark mb-2";
-            textarea.insertAdjacentElement("beforebegin", sel);
-        }
-
-        // ✅ 핵심: select가 이미 있어도 change 이벤트를 1번은 무조건 바인딩
-        if (!sel.dataset.bound) {
-            sel.addEventListener("change", () => {
-                const msg = sel.value || "";
-                textarea.value = msg;            // ✅ 여기서 textarea 채움
-
-                // (권장) 선택 = TTS 방송으로 UI도 맞춤
-                const typeEl = document.getElementById("bc_broadcast_type");
-                const disEl = document.getElementById("bc_disaster");
-                if (typeEl) typeEl.value = "1";
-                if (disEl) disEl.value = "";
-
-                this.applyBroadcastTypeUI();
-                this.refreshPreview();
-
-                // UX
-                textarea.focus();
-            });
-            sel.dataset.bound = "1";
-        }
-
         const items = await BroadcastApi.listTts();
+        const activeItems = (items ?? [])
+            .filter(x => x && x.ttsId != null)
+            .filter(x => isUseTtsFlag(x.ttsUseFlag))
+            .sort((a, b) => (Number(b.ttsId) || 0) - (Number(a.ttsId) || 0));
+        this.ttsItems = activeItems;
+        const ttsOptionsHTML = `<option value="">TTS를 선택하세요</option>` +
+            activeItems
+                .map(x => `<option value="${String(x.ttsId)}">${String(x.ttsName ?? `TTS-${x.ttsId ?? ""}`)}</option>`)
+                .join("");
 
-        sel.innerHTML = `<option value="">TTS를 선택하세요</option>`;
-        items
-            .filter(x => (x.ttsUseFlag ?? "Use") === "Use")
-            .forEach(x => {
-                const opt = document.createElement("option");
-                opt.value = String(x.ttsMsg ?? "");
-                opt.textContent = String(x.ttsName ?? `TTS-${x.ttsId ?? ""}`);
-                sel.appendChild(opt);
-            });
+        getPanelPrefixes().forEach(prefix => {
+            const wrap = document.getElementById(`${prefix}_tts_wrap`);
+            const textarea = document.getElementById(`${prefix}_tts`);
+            if (!wrap || !textarea) return;
 
-        sel.disabled = (sel.options.length <= 1);
+            let sel = document.getElementById(`${prefix}_tts_list`);
+            if (!sel) return;
+
+            // ✅ 핵심: select가 이미 있어도 change 이벤트를 1번은 무조건 바인딩
+            if (!sel.dataset.bound) {
+                sel.addEventListener("change", () => {
+                    const selected = (this.ttsItems ?? []).find(item => String(item.ttsId) === String(sel.value));
+                    textarea.value = selected?.ttsMsg ?? "";
+
+                    // (권장) 선택 = TTS 방송으로 UI도 맞춤
+                    const typeEl = document.getElementById(`${prefix}_broadcast_type`);
+                    const disEl = document.getElementById(`${prefix}_disaster`);
+                    if (typeEl) typeEl.value = "1";
+                    if (disEl) disEl.value = "";
+                    this.syncRadioGroup(`${prefix}_type_radio`, "1");
+
+                    this.applyBroadcastTypeUI();
+                    this.refreshPreview();
+
+                    // UX
+                    const counter = document.getElementById(`${prefix}_tts_char_count`);
+                    if (counter) counter.textContent = textarea.value.length;
+                    textarea.focus();
+                });
+                sel.dataset.bound = "1";
+            }
+
+            sel.innerHTML = ttsOptionsHTML;
+            sel.disabled = activeItems.length === 0;
+        });
     },
 
     getPayloadForPreview() {
+        // 타입에 맞춰 올바른 폼 요소를 읽어오도록 수정
+        const activeCards = getActiveCards();
+        const prefix = activeCards.length > 0 && activeCards[0].dataset.type && activeCards[0].dataset.type.toUpperCase().includes('B') ? 'b_bc_' : 'a_bc_';
+
         return {
             speakerIds: getSelectedSpeakerIds(),
-            mode: document.getElementById("bc_mode")?.value ?? "1",
-            alertType: document.getElementById("bc_alert_type")?.value ?? "0",
-            broadcastType: document.getElementById("bc_broadcast_type")?.value ?? "1",
-            priority: document.getElementById("bc_priority")?.value ?? "0",
-            scope: document.getElementById("bc_scope")?.value ?? "3",
-            disasterCode: document.getElementById("bc_disaster")?.value ?? "",
-            tts: document.getElementById("bc_tts")?.value ?? ""
+            mode: document.getElementById(`${prefix}mode`)?.value ?? "1",
+            alertType: document.getElementById(`${prefix}alert_type`)?.value ?? "0",
+            broadcastType: document.getElementById(`${prefix}broadcast_type`)?.value ?? "1",
+            priority: document.getElementById(`${prefix}priority`)?.value ?? "0",
+            scope: document.getElementById(`${prefix}scope`)?.value ?? "3",
+            disasterCode: document.getElementById(`${prefix}disaster`)?.value ?? "",
+            tts: document.getElementById(`${prefix}tts`)?.value ?? ""
         };
     },
 
@@ -335,38 +370,71 @@ const BroadcastModal = {
         bcSelectedSpeakerKeys.clear();
         bcSelectedSpeakerIds.clear();
 
-        setText("bc_hint", "스피커 선택 후 설정 정보를 조회하면 발령 단계로 진행됩니다.");
-        setText("bc_step_text", "스피커를 선택하세요.");
+        setText("bc_hint", "선택 후 같은 타입만 함께 선택됩니다.");
+        setText("a_bc_step_text", "스피커를 선택하세요.");
+        setText("b_bc_step_text", "스피커를 선택하세요.");
         setVal("bc_selected_speaker_name", "");
 
         // active 제거
-        document.querySelectorAll('#bcspeakerlist .speaker-item.selected')
+        document.querySelectorAll('#bc_speaker_list .speaker-item.selected')
             .forEach(el => {
                 el.classList.remove('selected');
                 el.setAttribute('aria-selected', 'false');
             });
 
+        this.resetPanelForms();
+
         this.refreshPreview();
         this.applyBroadcastTypeUI();
     },
 
+    resetPanelForms() {
+        getPanelPrefixes().forEach(prefix => {
+            setVal(`${prefix}_mode`, "1");
+            setVal(`${prefix}_broadcast_type`, "1");
+            setVal(`${prefix}_disaster`, "");
+            this.syncRadioGroup(`${prefix}_mode_radio`, "1");
+            this.syncRadioGroup(`${prefix}_type_radio`, "1");
+            this.clearTtsFields(prefix);
+        });
+
+        this.applyBroadcastTypeUI();
+    },
+
+    syncRadioGroup(name, value) {
+        document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
+            radio.checked = radio.value === String(value);
+        });
+    },
+
+    clearTtsFields(prefix) {
+        setVal(`${prefix}_tts_list`, "");
+        setVal(`${prefix}_tts`, "");
+        const counter = document.getElementById(`${prefix}_tts_char_count`);
+        if (counter) counter.textContent = "0";
+    },
+
     applyBroadcastTypeUI() {
-        const typeEl = document.getElementById("bc_broadcast_type");
-        const disEl = document.getElementById("bc_disaster");
-        const wrap = document.getElementById("bc_tts_wrap");
-        const tts = document.getElementById("bc_tts");
-        const ttsSel = document.getElementById("bc_tts_list");
+        getPanelPrefixes().forEach(prefix => {
+            const typeEl = document.getElementById(`${prefix}_broadcast_type`);
+            const disEl = document.getElementById(`${prefix}_disaster`);
+            const wrap = document.getElementById(`${prefix}_tts_wrap`);
+            const tts = document.getElementById(`${prefix}_tts`);
+            const ttsSel = document.getElementById(`${prefix}_tts_list`);
+            const type = typeEl?.value ?? "1";
 
-        const type = typeEl?.value ?? "1";
-        const disaster = disEl?.value ?? "";
-        const hasDisaster = !!String(disaster).trim();
+            const disaster = disEl?.value ?? "";
+            const hasDisaster = !!String(disaster).trim();
 
-        const canUseTts = (type === "1") && !hasDisaster;
+            const canUseTts = type === "1" && !hasDisaster;
+            const shouldClearTts = !canUseTts && (type === "2" || hasDisaster);
 
-        if (wrap) wrap.classList.toggle("tts-locked", !canUseTts);
+            if (wrap) wrap.classList.toggle("tts-locked", !canUseTts);
 
-        if (tts) tts.disabled = !canUseTts;
-        if (ttsSel) ttsSel.disabled = !canUseTts;
+            if (tts) tts.disabled = !canUseTts;
+            if (ttsSel) ttsSel.disabled = !canUseTts;
+            if (shouldClearTts) this.clearTtsFields(prefix);
+        });
     },
 
     buildServerPayload(deviceId) {
@@ -403,33 +471,7 @@ const BroadcastModal = {
         modalEl.addEventListener("click", async (e) => {
             if (!e.target.closest("#bc_refresh_speaker")) return;
             await this.loadSpeakers();
-            notify("스피커 리스트를 갱신했습니다.", "success");
-        });
-
-        // 전체 선택/해제 토글
-        modalEl.addEventListener('click', e => {
-            if (!e.target.closest('#bc_toggle_all')) return;
-            const cards = [...document.querySelectorAll('#bc_speaker_list .speaker-item:not(.offline)')];
-            if (!cards.length) return;
-            const allSelected = cards.every(c => c.classList.contains('selected'));
-            if (allSelected) {
-                cards.forEach(c => {
-                    c.classList.remove('selected');
-                    c.setAttribute('aria-selected', 'false');
-                });
-                bcSelectedSpeakerKeys.clear();
-                bcSelectedSpeakerIds.clear();
-            } else {
-                cards.forEach(c => {
-                    c.classList.add('selected');
-                    c.setAttribute('aria-selected', 'true');
-                    const k = String(c.dataset.speakerKey ?? '');
-                    const d = String(c.dataset.speakerId ?? '');
-                    if (k) bcSelectedSpeakerKeys.add(k);
-                    if (d) bcSelectedSpeakerIds.add(d);
-                });
-            }
-            syncSelectionUI();
+            notify("스피커 목록을 새로고침했습니다.", "success");
         });
 
         // speaker-card 개별 토글(다중 선택)
@@ -438,9 +480,28 @@ const BroadcastModal = {
             if (!card) return;
             const speakerKey = String(card.dataset.speakerKey ?? '');
             const speakerId = String(card.dataset.speakerId ?? '');
+            const speakerType = String(card.dataset.type ?? 'A').toUpperCase();
             if (!speakerKey) return;
 
             const willSelect = !card.classList.contains('selected');
+
+            // 다른 타입 스피커 선택 방지 로직
+            if (willSelect) {
+                const activeCards = getActiveCards();
+                if (activeCards.length > 0) {
+                    const firstSelectedType = String(activeCards[0].dataset.type ?? 'A').toUpperCase();
+
+                    // 'B' 타입 여부로 비교 (A vs B 등, 타입이 다를 경우)
+                    const isFirstTypeB = firstSelectedType.includes('B');
+                    const isCurrentTypeB = speakerType.includes('B');
+
+                    if (isFirstTypeB !== isCurrentTypeB) {
+                        notify(`[${firstSelectedType}] 타입 스피커가 이미 선택되어 있습니다. 동일 타입의 스피커만 선택할 수 있습니다.`, "warning");
+                        return;
+                    }
+                }
+            }
+
             card.classList.toggle('selected', willSelect);
             card.setAttribute('aria-selected', String(willSelect));
 
@@ -455,20 +516,26 @@ const BroadcastModal = {
         });
 
         modalEl.addEventListener("change", (e) => {
-            const id = e.target?.id;
+            const id = e.target?.id || "";
+            // Check if the id ends with one of the target suffixes
             if (![
-                "bc_mode", "bc_alert_type", "bc_broadcast_type",
-                "bc_priority", "bc_scope", "bc_disaster"
-            ].includes(id)) return;
+                "mode", "alert_type", "broadcast_type",
+                "priority", "scope", "disaster"
+            ].some(suffix => id.endsWith(suffix))) return;
 
-            const typeEl = document.getElementById("bc_broadcast_type");
-            const disEl = document.getElementById("bc_disaster");
+            const prefix = id.startsWith("a_bc_") ? "a_bc_" : (id.startsWith("b_bc_") ? "b_bc_" : "");
+            if (!prefix) return;
+
+            const typeEl = document.getElementById(`${prefix}broadcast_type`);
+            const disEl = document.getElementById(`${prefix}disaster`);
 
             // 1) 재난 선택 시: 저장메시지(2) 강제
-            if (id === "bc_disaster") {
+            if (id.endsWith("disaster")) {
                 const disVal = disEl?.value ?? "";
                 if (String(disVal).trim()) {
                     if (typeEl) typeEl.value = "2"; // 저장메시지
+                    this.syncRadioGroup(`${prefix}type_radio`, "2");
+                    this.clearTtsFields(prefix);
                 }
                 this.applyBroadcastTypeUI();
                 this.refreshPreview();
@@ -476,12 +543,15 @@ const BroadcastModal = {
             }
 
             // 2) 방송종류 변경 시: TTS(1)면 재난 선택 해제 + TTS 표시
-            if (id === "bc_broadcast_type") {
+            if (id.endsWith("broadcast_type")) {
                 const typeVal = typeEl?.value ?? "1";
+                this.syncRadioGroup(`${prefix}type_radio`, typeVal);
 
                 if (typeVal === "1") {
                     // TTS 선택 → 재난 해제
                     if (disEl) disEl.value = "";
+                } else if (typeVal === "2") {
+                    this.clearTtsFields(prefix);
                 }
 
                 this.applyBroadcastTypeUI();
@@ -494,11 +564,11 @@ const BroadcastModal = {
         });
 
         modalEl.addEventListener("input", (e) => {
-            if (e.target?.id === "bc_tts") this.refreshPreview();
+            if (e.target?.id === "a_bc_tts" || e.target?.id === "b_bc_tts") this.refreshPreview();
         });
 
         modalEl.addEventListener("click", async (e) => {
-            const btn = e.target.closest("#bc_send");
+            const btn = e.target.closest("#a_bc_send, #b_bc_send");
             if (!btn) return;
 
             const payloadUI = this.getPayloadForPreview();
@@ -537,125 +607,28 @@ const BroadcastModal = {
             }
         });
 
-        document.getElementById("bc_open_tts_manage")?.addEventListener("click", () => {
-            // 1) 발령 모달 닫기
-            const bcEl = document.getElementById("broadcast_modal"); // ✅ 발령 모달 id로 바꾸세요
-            if (bcEl) bootstrap.Modal.getOrCreateInstance(bcEl).hide();
+        getPanelPrefixes().forEach(prefix => {
+            document.querySelectorAll(`input[name="${prefix}_mode_radio"]`).forEach(radio => {
+                radio.addEventListener("change", () => {
+                    setVal(`${prefix}_mode`, radio.value);
+                    this.refreshPreview();
+                });
+            });
 
-            // 2) TTS 관리 모달 열기
-            const ttsEl = document.getElementById("tts_manage_modal");
-            if (!ttsEl) return;
-
-            const ttsModal = bootstrap.Modal.getOrCreateInstance(ttsEl);
-            ttsModal.show();
-
-            ttsEl.addEventListener("shown.bs.modal", () => {
-                window.TtsManageModal?.loadList?.();
-            }, { once: true });
+            document.querySelectorAll(`input[name="${prefix}_type_radio"]`).forEach(radio => {
+                radio.addEventListener("change", () => {
+                    setVal(`${prefix}_broadcast_type`, radio.value);
+                    document.getElementById(`${prefix}_broadcast_type`)
+                        ?.dispatchEvent(new Event("change", { bubbles: true }));
+                });
+            });
         });
 
     }
 };
 
-// BGM 토글 → 볼륨 슬라이더 표시
-const bcBgmCheck = document.getElementById('bcbgmcheck');
-const bcVolumeRow = document.getElementById('bcvolumerow');
-const bcBgmVolume = document.getElementById('bcbgmvolume');
-const bcVolDisplay = document.getElementById('bcvoldisplay');
-
-if (bcBgmCheck) {
-    bcBgmCheck.addEventListener('change', () => {
-        bcVolumeRow?.classList.toggle('d-none', !bcBgmCheck.checked);
-        // 기존 ON/OFF 버튼 트리거 (JS 호환)
-        document.getElementById(bcBgmCheck.checked ? 'bcbgmon' : 'bcbgmoff')?.click();
-    });
-}
-if (bcBgmVolume) {
-    bcBgmVolume.addEventListener('input', () => {
-        if (bcVolDisplay) bcVolDisplay.textContent = bcBgmVolume.value;
-        const pct = bcBgmVolume.value + '%';
-        bcBgmVolume.style.background =
-            `linear-gradient(90deg, var(--m-primary) ${pct}, var(--m-border) ${pct})`;
-    });
-    // 초기 색상
-    bcBgmVolume.style.background = 'linear-gradient(90deg, var(--m-primary) 50%, #e4e7ef 50%)';
-}
-
-// 방송 모드 라디오 → bcmode select + 액센트 동기화
-document.querySelectorAll('input[name="bc_mode_radio"]').forEach(r => {
-    r.addEventListener('change', () => {
-        const bcModeSelect = document.getElementById('bc_mode');
-        if (bcModeSelect) bcModeSelect.value = r.value;
-        BroadcastModal._onModeChange();
-    });
-});
-
-// 방송 유형 라디오 → bcbroadcasttype select 동기화
-document.querySelectorAll('input[name="bcTypeRadio"]').forEach(r => {
-    r.addEventListener('change', () => {
-        const bcTypeSelect = document.getElementById('bcbroadcasttype');
-        if (bcTypeSelect) {
-            bcTypeSelect.value = r.value;
-            bcTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-    });
-});
-
-// TTS 글자수 카운터
-document.getElementById('bctts')?.addEventListener('input', function () {
-    const counter = document.getElementById('bcTtsCharCount');
-    if (counter) counter.textContent = this.value.length;
-});
-
 
 document.addEventListener("DOMContentLoaded", () => {
     BroadcastModal.init();
-
-    // 모드 변경 시 액센트/배지 UI 갱신
-    BroadcastModal._onModeChange = function () {
-        const isTest = document.getElementById('bc_mode')?.value === '0';
-
-        // 액센트 바
-        document.getElementById('bc_mode_accent')
-            ?.classList.toggle('test', isTest);
-
-        // 배지
-        const badge = document.getElementById('bc_mode_badge');
-        if (badge) badge.className = 'mode-badge' + (isTest ? ' test' : '');
-
-        const badgeText = document.getElementById('bc_mode_badge_text');
-        if (badgeText) badgeText.textContent = isTest ? '시험 방송' : '실제 방송';
-
-        // 모달 루트
-        document.getElementById('speaker_broadcast_modal')
-            ?.classList.toggle('test-mode', isTest);
-
-        // 발령 버튼
-        const sendBtn = document.getElementById('bc_send');
-        if (sendBtn) {
-            sendBtn.classList.toggle('test-mode', isTest);
-        }
-
-        BroadcastModal.refreshPreview?.();
-    };
-
-    // syncSelectionUI 후 새 카운터도 동기화
-    const _origSync = BroadcastModal.syncSelectionUI?.bind(BroadcastModal);
-    if (_origSync) {
-        BroadcastModal.syncSelectionUI = function () {
-            _origSync();
-            const count = document.querySelectorAll('#bc_speaker_list .speaker-item.selected').length;
-            ['bc_selected_count_bar', 'bc_selected_count_footer'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.textContent = count;
-            });
-        };
-    }
-
-    // BGM 슬라이더 초기 색상
-    const slider = document.getElementById('bcbgmvolume');
-    if (slider) {
-        slider.style.background = 'linear-gradient(90deg,var(--m-primary) 50%,var(--m-border) 50%)';
-    }
 });
 

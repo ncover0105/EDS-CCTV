@@ -125,19 +125,20 @@ function showTab(btnId) {
 
 function hideTypeAreas() {
   hide("area_empty");
-  hide("area_type_e");
-  hide("area_type_o");
+  hide("area_type_a");
+  hide("area_type_b");
 }
 
 function showTypeArea(type) {
+  const areaKey = toUiTypeKey(type);
   hideTypeAreas();
-  if (type === "O") {
-    show("area_type_o");
-    const area = document.getElementById("area_type_o");
+  if (areaKey === "b") {
+    show("area_type_b");
+    const area = document.getElementById("area_type_b");
     if (area) area.style.display = "flex";
-  } else if (type === "E") {
-    show("area_type_e");
-    const area = document.getElementById("area_type_e");
+  } else if (areaKey === "a") {
+    show("area_type_a");
+    const area = document.getElementById("area_type_a");
     if (area) area.style.display = "flex";
   } else {
     show("area_empty");
@@ -148,14 +149,19 @@ function showTypeArea(type) {
 
 /**
  * 타입 판별 (DTO 키 기반)
- * - O 타입 특징 키들이 있으면 O로 판단
- * - 아니면 E로 fallback
+ * - B 타입 특징 키들이 있으면 B로 판단
+ * - 아니면 A로 fallback
  */
 function normalizeSpeakerType(type) {
-  if (type === "O" || type === "E") return type;
-  if (type === "A") return "E";
-  if (type === "B") return "O";
-  return "O"; // 기본값 O
+  if (type === "B" || type === "A") return type;
+  if (type === "O") return "B";
+  if (type === "E") return "A";
+  return "B"; // 기본값 B
+}
+
+function toUiTypeKey(type) {
+  const t = normalizeSpeakerType(type);
+  return t.toLowerCase();
 }
 
 function detectSpeakerType(dto, rawFromList) {
@@ -178,7 +184,7 @@ function detectSpeakerType(dto, rawFromList) {
       dto.serverip !== undefined
     );
 
-  return hasAnyBKey ? "O" : "E";
+  return hasAnyBKey ? "B" : "A";
 }
 
 function showGlobalAlert(message, type = "warning") {
@@ -295,11 +301,12 @@ const SpeakerList = {
   createCard(spk) {
     const speakerKey = spk?.speakerKey ?? "";
     const speakerId = spk?.speakerId ?? "";
-    const speakerType = normalizeSpeakerType(spk?.speakerType ?? spk?.type ?? spk?.spkType) ?? "O";
+    const speakerType = normalizeSpeakerType(spk?.speakerType ?? spk?.type ?? spk?.spkType) ?? "B";
+    const uiTypeKey = toUiTypeKey(speakerType);
     const name = safe(spk.speakerName ?? spk.name ?? speakerKey);
     const subId = safe(spk.speakerId);
     return `
-    <div class="sp-item sp-type-${String(speakerType).toLowerCase()}"
+    <div class="sp-item sp-type-${uiTypeKey}"
          data-speaker-key="${String(speakerKey)}"
          data-speaker-id="${String(speakerId)}"
          data-speaker-type="${String(speakerType)}">
@@ -314,11 +321,11 @@ const SpeakerList = {
 };
 
 /* =========================
-  SettingView (O & E 병합)
+  SettingView (B & A 병합)
 ======================== */
 const SettingView = {
-  fillReadOnly(dto, selected, type = "O") {
-    const p = type === "O" ? "b_" : "e_";
+  fillReadOnly(dto, selected, type = "B") {
+    const p = type === "B" ? "b_" : "a_";
     setText(p + "speakerName", selected?.speakerName ?? "-");
     setText(p + "speakerId", pick(dto, "speakerKey", "SpeakerKey") ?? selected?.speakerKey ?? "-");
     setText(p + "serverip", pick(dto, "serverip", "serverIp", "ServerIP", "server_ip"));
@@ -343,7 +350,7 @@ const SettingView = {
     setText(p + "useCh3", useChText(pick(dto, "useCh3", "UseCh3", "use_ch3")));
     setText(p + "useCh4", useChText(pick(dto, "useCh4", "UseCh4", "use_ch4")));
 
-    if (type === "O") {
+    if (type === "B") {
       setText("b_TTARegionCode", pick(dto, "TTARegionCode", "ttaRegionCode", "tta_region_code", "tta"));
       setText("b_DMBFrequency1", pick(dto, "DMBFrequency1", "dmbFrequency1", "dmb_frequency1"));
       setText("b_DMBFrequency2", pick(dto, "DMBFrequency2", "dmbFrequency2", "dmb_frequency2"));
@@ -362,8 +369,8 @@ const SettingView = {
     }
   },
 
-  fillForm(dto, type = "O") {
-    const pi = type === "O" ? "bi_" : "ei_";
+  fillForm(dto, type = "B") {
+    const pi = type === "B" ? "bi_" : "ai_";
     setVal(pi + "serverip", pick(dto, "serverip", "serverIp", "ServerIP", "server_ip"));
     setVal(pi + "PollingCheckTime", pick(dto, "PollingCheckTime", "pollingCheckTime", "polling_check_time"));
     setVal(pi + "useCh1", pick(dto, "useCh1", "UseCh1", "use_ch1") ?? "1");
@@ -371,7 +378,7 @@ const SettingView = {
     setVal(pi + "useCh3", pick(dto, "useCh3", "UseCh3", "use_ch3") ?? "1");
     setVal(pi + "useCh4", pick(dto, "useCh4", "UseCh4", "use_ch4") ?? "1");
 
-    if (type === "O") {
+    if (type === "B") {
       setVal("bi_TTARegionCode", pick(dto, "TTARegionCode", "ttaRegionCode", "tta_region_code", "tta"));
       setVal("bi_DMBFrequency1", pick(dto, "DMBFrequency1", "dmbFrequency1", "dmb_frequency1"));
       setVal("bi_DMBFrequency2", pick(dto, "DMBFrequency2", "dmbFrequency2", "dmb_frequency2"));
@@ -439,7 +446,7 @@ const SpeakerSettingModal = {
   resetState() {
     selectedSpeaker = null;
     document.querySelectorAll(".sp-item.active").forEach((c) => c.classList.remove("active"));
-    showTab("tab-info-o");
+    showTab("tab-info-b");
     showTypeArea(null);
 
     const allIds = [
@@ -453,20 +460,20 @@ const SpeakerSettingModal = {
       "b_BGM_IN_VOL", "b_STO_IN_VOL", "b_TTS_IN_VOL", "b_FM_IN_VOL",
       "b_TTS_Pitch", "b_TTS_Speed",
       "b_PollingCheckTime", "b_RadioFrequency", "b_RadioFrequencyRegion",
-      "e_speakerName", "e_speakerId", "e_serverip",
-      "e_bgm_vol_ch1", "e_bgm_vol_ch2", "e_bgm_vol_ch3", "e_bgm_vol_ch4",
-      "e_alert_vol_ch1", "e_alert_vol_ch2", "e_alert_vol_ch3", "e_alert_vol_ch4",
-      "e_fm_vol_ch1", "e_fm_vol_ch2", "e_fm_vol_ch3", "e_fm_vol_ch4",
-      "e_useCh1", "e_useCh2", "e_useCh3", "e_useCh4"
+      "a_speakerName", "a_speakerId", "a_serverip",
+      "a_bgm_vol_ch1", "a_bgm_vol_ch2", "a_bgm_vol_ch3", "a_bgm_vol_ch4",
+      "a_alert_vol_ch1", "a_alert_vol_ch2", "a_alert_vol_ch3", "a_alert_vol_ch4",
+      "a_fm_vol_ch1", "a_fm_vol_ch2", "a_fm_vol_ch3", "a_fm_vol_ch4",
+      "a_useCh1", "a_useCh2", "a_useCh3", "a_useCh4"
     ];
     clearTextByIds(allIds);
     document.getElementById("speakerSettingFormB")?.reset?.();
-    document.getElementById("speakerSettingFormE")?.reset?.();
+    document.getElementById("speakerSettingFormA")?.reset?.();
   },
 
   resetViewOnlyKeepSelection() {
-    const type = selectedSpeaker?.speakerType ?? "O";
-    showTab(`tab-info-${type.toLowerCase()}`);
+    const type = selectedSpeaker?.speakerType ?? "B";
+    showTab(`tab-info-${toUiTypeKey(type)}`);
 
     const allIds = [
       "b_speakerName", "b_speakerId", "b_serverip",
@@ -479,15 +486,15 @@ const SpeakerSettingModal = {
       "b_BGM_IN_VOL", "b_STO_IN_VOL", "b_TTS_IN_VOL", "b_FM_IN_VOL",
       "b_TTS_Pitch", "b_TTS_Speed",
       "b_PollingCheckTime", "b_RadioFrequency", "b_RadioFrequencyRegion",
-      "e_speakerName", "e_speakerId", "e_serverip",
-      "e_bgm_vol_ch1", "e_bgm_vol_ch2", "e_bgm_vol_ch3", "e_bgm_vol_ch4",
-      "e_alert_vol_ch1", "e_alert_vol_ch2", "e_alert_vol_ch3", "e_alert_vol_ch4",
-      "e_fm_vol_ch1", "e_fm_vol_ch2", "e_fm_vol_ch3", "e_fm_vol_ch4",
-      "e_useCh1", "e_useCh2", "e_useCh3", "e_useCh4"
+      "a_speakerName", "a_speakerId", "a_serverip",
+      "a_bgm_vol_ch1", "a_bgm_vol_ch2", "a_bgm_vol_ch3", "a_bgm_vol_ch4",
+      "a_alert_vol_ch1", "a_alert_vol_ch2", "a_alert_vol_ch3", "a_alert_vol_ch4",
+      "a_fm_vol_ch1", "a_fm_vol_ch2", "a_fm_vol_ch3", "a_fm_vol_ch4",
+      "a_useCh1", "a_useCh2", "a_useCh3", "a_useCh4"
     ];
     clearTextByIds(allIds);
     document.getElementById("speakerSettingFormB")?.reset?.();
-    document.getElementById("speakerSettingFormE")?.reset?.();
+    document.getElementById("speakerSettingFormA")?.reset?.();
   },
 
   bindClickList(modalEl) {
@@ -521,7 +528,7 @@ const SpeakerSettingModal = {
       showTypeArea(selectedSpeaker.speakerType);
 
       // 선택된 기본 정보 즉시 매핑
-      const p = selectedSpeaker.speakerType === "O" ? "b_" : "e_";
+      const p = selectedSpeaker.speakerType === "B" ? "b_" : "a_";
       setText(p + "speakerName", selectedSpeaker.speakerName);
       setText(p + "speakerId", selectedSpeaker.speakerKey);
     });
@@ -563,7 +570,7 @@ const SpeakerSettingModal = {
 
         if (isEmptySetting(dto)) {
           this.resetViewOnlyKeepSelection();
-          const p = selectedSpeaker.speakerType === "O" ? "b_" : "e_";
+          const p = selectedSpeaker.speakerType === "B" ? "b_" : "a_";
           setText(p + "speakerName", selectedSpeaker.speakerName);
           setText(p + "speakerId", selectedSpeaker.speakerKey);
           showGlobalAlert("조회된 설정 정보가 없습니다. (응답 대기 시간 초과)", "warning");
@@ -578,7 +585,8 @@ const SpeakerSettingModal = {
         SettingView.fillReadOnly(dto, selectedSpeaker, type);
         SettingView.fillForm(dto, type);
 
-        const targetTab = this.AUTO_OPEN_CONFIG_TAB ? `tab-config-${type.toLowerCase()}` : `tab-info-${type.toLowerCase()}`;
+        const uiTypeKey = toUiTypeKey(type);
+        const targetTab = this.AUTO_OPEN_CONFIG_TAB ? `tab-config-${uiTypeKey}` : `tab-info-${uiTypeKey}`;
         showTab(targetTab);
 
         if (requestErr) {
@@ -598,3 +606,4 @@ const SpeakerSettingModal = {
 document.addEventListener("DOMContentLoaded", () => {
   SpeakerSettingModal.init();
 });
+

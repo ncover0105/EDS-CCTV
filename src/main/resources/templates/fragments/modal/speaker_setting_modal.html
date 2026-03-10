@@ -61,23 +61,23 @@
                             <div class="sp-no-sel-s">좌측 목록에서 스피커를 선택하면<br>설정 정보를 조회/변경할 수 있고, 다시 클릭하면 선택 해제됩니다</div>
                         </div>
 
-                        <!-- E 타입 (O 기준으로 생성) -->
-                        <div id="area_type_e" class="d-none"
+                        <!-- A 타입 -->
+                        <div id="area_type_a" class="d-none"
                             style="display:flex;flex:1;flex-direction:column;overflow:hidden;min-height:0">
 
                             <!-- 탭 바 -->
                             <div class="sp-tabs" role="tablist">
-                                <button class="sp-tab active" id="tab-info-e" role="tab" aria-selected="true"
+                                <button class="sp-tab active" id="tab-info-a" role="tab" aria-selected="true"
                                     type="button">
                                     <i class="bi bi-eye" style="margin-right:5px"></i>설정 정보
                                 </button>
-                                <button class="sp-tab" id="tab-config-e" role="tab" aria-selected="false" type="button">
+                                <button class="sp-tab" id="tab-config-a" role="tab" aria-selected="false" type="button">
                                     <i class="bi bi-sliders" style="margin-right:5px"></i>설정 변경
                                 </button>
                             </div>
 
-                            <!-- PANE: 설정 정보 (E) -->
-                            <div class="sp-tab-pane active show" id="pane-info-e" role="tabpanel">
+                            <!-- PANE: 설정 정보 (A) -->
+                            <div class="sp-tab-pane active show" id="pane-info-a" role="tabpanel">
                                 <div class="sp-pane-wrap">
                                     <div class="sp-card">
                                         <div class="sp-card-head">
@@ -85,18 +85,18 @@
                                                 <div class="sp-card-icon"
                                                     style="background:var(--blue-a);color:var(--blue)"><i
                                                         class="bi bi-info-circle-fill"></i></div>
-                                                <span class="sp-card-label">기본 정보 (E)</span>
+                                                <span class="sp-card-label">기본 정보 (A)</span>
                                             </div>
                                         </div>
                                         <div class="sp-card-body">
                                             <div class="sp-info-grid">
                                                 <div class="sp-info-item"><span class="sp-info-label">스피커 이름</span><span
-                                                        class="sp-info-value" id="e_speakerName">—</span></div>
+                                                        class="sp-info-value" id="a_speakerName">—</span></div>
                                                 <div class="sp-info-item"><span class="sp-info-label">ID /
-                                                        Key</span><span class="sp-info-value" id="e_speakerId">—</span>
+                                                        Key</span><span class="sp-info-value" id="a_speakerId">—</span>
                                                 </div>
                                                 <div class="sp-info-item"><span class="sp-info-label">통제서버
-                                                        IP</span><span class="sp-info-value" id="e_serverip">—</span>
+                                                        IP</span><span class="sp-info-value" id="a_serverip">—</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -124,42 +124,42 @@
                                                 <tbody>
                                                     <tr>
                                                         <td>BGM</td>
-                                                        <td id="e_bgm_vol_ch1">—</td>
-                                                        <td id="e_bgm_vol_ch2">—</td>
-                                                        <td id="e_bgm_vol_ch3">—</td>
-                                                        <td id="e_bgm_vol_ch4">—</td>
+                                                        <td id="a_bgm_vol_ch1">—</td>
+                                                        <td id="a_bgm_vol_ch2">—</td>
+                                                        <td id="a_bgm_vol_ch3">—</td>
+                                                        <td id="a_bgm_vol_ch4">—</td>
                                                     </tr>
                                                     <tr>
                                                         <td>경보방송</td>
-                                                        <td id="e_alert_vol_ch1">—</td>
-                                                        <td id="e_alert_vol_ch2">—</td>
-                                                        <td id="e_alert_vol_ch3">—</td>
-                                                        <td id="e_alert_vol_ch4">—</td>
+                                                        <td id="a_alert_vol_ch1">—</td>
+                                                        <td id="a_alert_vol_ch2">—</td>
+                                                        <td id="a_alert_vol_ch3">—</td>
+                                                        <td id="a_alert_vol_ch4">—</td>
                                                     </tr>
                                                     <tr>
                                                         <td>FM</td>
-                                                        <td id="e_fm_vol_ch1">—</td>
-                                                        <td id="e_fm_vol_ch2">—</td>
-                                                        <td id="e_fm_vol_ch3">—</td>
-                                                        <td id="e_fm_vol_ch4">—</td>
+                                                        <td id="a_fm_vol_ch1">—</td>
+                                                        <td id="a_fm_vol_ch2">—</td>
+                                                        <td id="a_fm_vol_ch3">—</td>
+                                                        <td id="a_fm_vol_ch4">—</td>
                                                     </tr>
                                                     <tr>
                                                         <td>채널 사용</td>
-                                                        <td id="e_useCh1">—</td>
-                                                        <td id="e_useCh2">—</td>
-                                                        <td id="e_useCh3">—</td>
-                                                        <td id="e_useCh4">—</td>
+                                                        <td id="a_useCh1">—</td>
+                                                        <td id="a_useCh2">—</td>
+                                                        <td id="a_useCh3">—</td>
+                                                        <td id="a_useCh4">—</td>
                                                     </tr>
                                                 </tbody>
                                             </table>
                                         </div>
                                     </div>
                                 </div>
-                            </div><!-- /pane-info-e -->
+                            </div><!-- /pane-info-a -->
 
-                            <!-- PANE: 설정 변경 (E) -->
-                            <div class="sp-tab-pane" id="pane-config-e" role="tabpanel">
-                                <form id="speakerSettingFormE">
+                            <!-- PANE: 설정 변경 (A) -->
+                            <div class="sp-tab-pane" id="pane-config-a" role="tabpanel">
+                                <form id="speakerSettingFormA">
                                     <div class="sp-pane-wrap">
                                         <div class="sp-card">
                                             <div class="sp-card-head">
@@ -170,15 +170,15 @@
                                                         class="sp-card-label">기본 설정</span>
                                                 </div>
                                                 <button type="button" class="sp-sec-send" data-section="basic"
-                                                    data-type="E"><i class="bi bi-send-fill"></i> 전송</button>
+                                                    data-type="A"><i class="bi bi-send-fill"></i> 전송</button>
                                             </div>
                                             <div class="sp-card-body">
                                                 <div class="sp-form-grid cols3">
                                                     <div class="fg-full"><label class="sp-label">통제서버 IP</label><input
-                                                            id="ei_serverip" class="sp-input" type="text"
+                                                            id="ai_serverip" class="sp-input" type="text"
                                                             placeholder="예: 192.168.0.10"></div>
                                                     <div><label class="sp-label">폴링 주기 (10~3600초)</label><input
-                                                            id="ei_PollingCheckTime" class="sp-input" type="number"
+                                                            id="ai_PollingCheckTime" class="sp-input" type="number"
                                                             min="10" max="3600" placeholder="예: 30"></div>
                                                 </div>
                                             </div>
@@ -192,30 +192,30 @@
                                                         class="sp-card-label">채널 사용 설정</span>
                                                 </div>
                                                 <button type="button" class="sp-sec-send" data-section="channel-use"
-                                                    data-type="E"><i class="bi bi-send-fill"></i> 전송</button>
+                                                    data-type="A"><i class="bi bi-send-fill"></i> 전송</button>
                                             </div>
                                             <div class="sp-card-body">
                                                 <div class="ch-use-grid">
                                                     <div class="ch-use-item"><span class="ch-use-label">CH
-                                                            1</span><select id="ei_useCh1" class="sp-select">
+                                                            1</span><select id="ai_useCh1" class="sp-select">
                                                             <option value="1">사용</option>
                                                             <option value="2">미사용</option>
                                                             <option value="3">없음</option>
                                                         </select></div>
                                                     <div class="ch-use-item"><span class="ch-use-label">CH
-                                                            2</span><select id="ei_useCh2" class="sp-select">
+                                                            2</span><select id="ai_useCh2" class="sp-select">
                                                             <option value="1">사용</option>
                                                             <option value="2">미사용</option>
                                                             <option value="3">없음</option>
                                                         </select></div>
                                                     <div class="ch-use-item"><span class="ch-use-label">CH
-                                                            3</span><select id="ei_useCh3" class="sp-select">
+                                                            3</span><select id="ai_useCh3" class="sp-select">
                                                             <option value="1">사용</option>
                                                             <option value="2">미사용</option>
                                                             <option value="3">없음</option>
                                                         </select></div>
                                                     <div class="ch-use-item"><span class="ch-use-label">CH
-                                                            4</span><select id="ei_useCh4" class="sp-select">
+                                                            4</span><select id="ai_useCh4" class="sp-select">
                                                             <option value="1">사용</option>
                                                             <option value="2">미사용</option>
                                                             <option value="3">없음</option>
@@ -225,27 +225,27 @@
                                         </div>
                                     </div>
                                 </form>
-                            </div><!-- /pane-config-e -->
+                            </div><!-- /pane-config-a -->
 
-                        </div><!-- /area_type_e -->
+                        </div><!-- /area_type_a -->
 
-                        <!-- O 타입 -->
-                        <div id="area_type_o" class="d-none"
+                        <!-- B 타입 -->
+                        <div id="area_type_b" class="d-none"
                             style="display:flex;flex:1;flex-direction:column;overflow:hidden;min-height:0">
 
                             <!-- 탭 바 -->
                             <div class="sp-tabs" role="tablist">
-                                <button class="sp-tab active" id="tab-info-o" role="tab" aria-selected="true"
+                                <button class="sp-tab active" id="tab-info-b" role="tab" aria-selected="true"
                                     type="button">
                                     <i class="bi bi-eye" style="margin-right:5px"></i>설정 정보
                                 </button>
-                                <button class="sp-tab" id="tab-config-o" role="tab" aria-selected="false" type="button">
+                                <button class="sp-tab" id="tab-config-b" role="tab" aria-selected="false" type="button">
                                     <i class="bi bi-sliders" style="margin-right:5px"></i>설정 변경
                                 </button>
                             </div>
 
                             <!-- PANE: 설정 정보 -->
-                            <div class="sp-tab-pane active show" id="pane-info-o" role="tabpanel">
+                            <div class="sp-tab-pane active show" id="pane-info-b" role="tabpanel">
                                 <div class="sp-pane-wrap">
                                     <div class="sp-card">
                                         <div class="sp-card-head">
@@ -380,10 +380,10 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div><!-- /pane-info-o -->
+                            </div><!-- /pane-info-b -->
 
                             <!-- PANE: 설정 변경 -->
-                            <div class="sp-tab-pane" id="pane-config-o" role="tabpanel">
+                            <div class="sp-tab-pane" id="pane-config-b" role="tabpanel">
                                 <form id="speakerSettingFormB">
                                     <div class="sp-pane-wrap">
                                         <div class="sp-card">
@@ -716,9 +716,9 @@
                                         </div>
                                     </div>
                                 </form>
-                            </div><!-- /pane-config-o -->
+                            </div><!-- /pane-config-b -->
 
-                        </div><!-- /area_type_o -->
+                        </div><!-- /area_type_b -->
                     </div><!-- /sp-right -->
                 </div><!-- /sp-body -->
 
@@ -738,3 +738,4 @@
         </div>
     </div>
 </div><!-- /th:fragment -->
+

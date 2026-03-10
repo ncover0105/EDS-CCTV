@@ -318,6 +318,16 @@ public class BTypeCommandService {
                 commandCode = "45";
                 argument = "0c";
                 break;
+
+            case "bgmOn": // BGM ON
+                commandCode = "47";
+                argument = "01";
+                break;
+            case "bgmOff": // BGM OFF
+                commandCode = "47";
+                argument = "00";
+                break;
+
             case "insSpeakerSettings": // 스피커 설정값 저장 (발신)
                 commandCode = "46";
                 argument = "00";
