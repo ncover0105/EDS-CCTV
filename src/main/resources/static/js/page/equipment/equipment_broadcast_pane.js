@@ -59,6 +59,11 @@
         return String(isoLike).replace("T", " ").split(".")[0];
     }
 
+    function formatDateToYmd(date = new Date()) {
+        const pad = (n) => String(n).padStart(2, "0");
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+    }
+
     /* -----------------------------
      * 스피커 필드 매핑 (통일)
      * ----------------------------- */
@@ -114,6 +119,13 @@
     let disasterCache = [];
     let broadcastSpeakerCache = [];
     let selectedTargetSpeakerKeys = new Set();
+    let alertLogState = {
+        page: 0,
+        hasNext: true,
+        loading: false,
+        initialized: false,
+        date: formatDateToYmd(new Date())
+    };
 
     window.selectedSpeakers = window.selectedSpeakers || [];
     window.selectedBroadcastType = window.selectedBroadcastType || null;
@@ -153,7 +165,8 @@
     }
 
     function isUseTtsFlag(v) {
-        return String(v ?? "Use").trim().toLowerCase() === "use";
+        const normalized = String(v ?? "true").trim().toLowerCase();
+        return normalized === "use" || normalized === "true" || normalized === "1";
     }
 
     function renderTtsTemplateDropdown() {
@@ -171,9 +184,11 @@
         visible.forEach(t => {
             const opt = document.createElement("option");
             opt.value = String(t.ttsId);
-            opt.textContent = safeName(t.ttsName);
+            opt.textContent = String(t.ttsName ?? `TTS-${t.ttsId ?? ""}`);
             sel.appendChild(opt);
         });
+
+        sel.disabled = visible.length === 0;
     }
 
     function bindTtsTemplateDropdown() {
@@ -186,10 +201,12 @@
         sel.addEventListener("change", () => {
             const id = sel.value;
 
-            // 🔥 직접입력 선택 시 무조건 초기화
+            // 직접입력 선택 시 무조건 초기화
             if (!id) {
                 text.value = "";
                 text.placeholder = "직접 메시지를 입력하세요";
+                setBroadcastExecutionState("idle");
+                syncBroadcastPhaseState();
                 return;
             }
 
@@ -198,9 +215,96 @@
             );
 
             text.value = found?.ttsMsg ?? "";
+            setBroadcastExecutionState("idle");
+            syncBroadcastPhaseState();
         });
 
         sel.dataset.bound = "1";
+    }
+
+    function syncChoiceButtons(selectId) {
+        const selectEl = document.getElementById(selectId);
+        if (!selectEl) return;
+
+        const value = String(selectEl.value ?? "");
+        document.querySelectorAll(`.bc-choice-btn[data-target='${selectId}']`).forEach((btn) => {
+            btn.classList.toggle("is-active", String(btn.dataset.value ?? "") === value);
+        });
+    }
+
+    function bindChoiceButtonGroup(selectId) {
+        const selectEl = document.getElementById(selectId);
+        if (!selectEl || selectEl.dataset.boundChoice === "1") return;
+
+        document.querySelectorAll(`.bc-choice-btn[data-target='${selectId}']`).forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const value = String(btn.dataset.value ?? "");
+                if (selectEl.value === value) return;
+
+                selectEl.value = value;
+                selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+                syncChoiceButtons(selectId);
+            });
+        });
+
+        selectEl.addEventListener("change", () => syncChoiceButtons(selectId));
+        selectEl.dataset.boundChoice = "1";
+        syncChoiceButtons(selectId);
+    }
+
+    function renderDisasterCardList() {
+        const listEl = document.getElementById("bc_disaster_card_list");
+        const emptyEl = document.getElementById("bc_disaster_empty");
+        if (!listEl || !emptyEl) return;
+
+        const list = (Array.isArray(disasterCache) ? disasterCache : [])
+            .filter(d => isUseFlag(d?.dstUseFlag))
+            .sort((a, b) => (a?.dstPriority ?? 9999) - (b?.dstPriority ?? 9999));
+
+        listEl.innerHTML = "";
+
+        if (list.length === 0) {
+            emptyEl.classList.remove("d-none");
+            return;
+        }
+
+        emptyEl.classList.add("d-none");
+        const selectedCode = String(window.selectedBroadcastType ?? "");
+
+        list.forEach((d) => {
+            const code = String(safeValue(d?.dstCode, ""));
+            const title = String(safeValue(d?.dstName, "재난 메시지"));
+            const msg = String(d?.dstStoreMsg ?? "").trim();
+            const priority = String(d?.dstPriority ?? "-");
+
+            listEl.insertAdjacentHTML("beforeend", `
+                <button type="button" class="bc-disaster-card ${selectedCode === code ? "is-selected" : ""}" data-disaster-code="${escapeHtml(code)}">
+                    <div class="bc-disaster-card-title">${escapeHtml(title)}</div>
+                    <div class="bc-disaster-card-meta">우선순위 ${escapeHtml(priority)} · CODE ${escapeHtml(code)}</div>
+                    <div class="bc-disaster-card-text">${escapeHtml(msg || "등록된 안내 문구가 없습니다.")}</div>
+                </button>
+            `);
+        });
+
+    }
+
+    function bindDisasterCardList() {
+        const listEl = document.getElementById("bc_disaster_card_list");
+        const selectEl = document.getElementById("bc_disaster");
+        if (!listEl || !selectEl || listEl.dataset.bound === "1") return;
+
+        listEl.addEventListener("click", (e) => {
+            const card = e.target.closest(".bc-disaster-card");
+            if (!card) return;
+
+            const code = String(card.dataset.disasterCode ?? "");
+            if (!code) return;
+
+            selectEl.value = code;
+            selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+        });
+
+        listEl.dataset.bound = "1";
     }
 
     async function initTtsTemplateDropdown() {
@@ -217,7 +321,10 @@
      * 발령 API (전송)
      * ----------------------------- */
     const ALERT_API_URL = "/api/btype/command/alert";
-    const ALERT_LOG_LATEST_API = "/api/spk/web/alert-logs/latest";
+    const ACTION_API_URL = "/api/btype/command/action";
+    const ALERT_LOG_API_URL = "/api/spk/web/alert-logs";
+    const ALERT_LOG_PAGE_SIZE = 100;
+    let broadcastExecutionState = "idle";
 
     function getSelectedSpeakerCodes() {
         return Array.from(selectedTargetSpeakerKeys);
@@ -235,13 +342,94 @@
         return Array.from(new Set(deviceIds));
     }
 
+    function getSelectedAlertTargets() {
+        const keys = getSelectedSpeakerCodes();
+        const list = Array.isArray(broadcastSpeakerCache) ? broadcastSpeakerCache : [];
+
+        return list
+            .filter(sp => keys.includes(getSpeakerKey(sp)))
+            .map(sp => ({
+                speakerKey: getSpeakerKey(sp),
+                deviceId: String(getSpeakerId(sp) ?? "").trim()
+            }))
+            .filter(target => target.deviceId);
+    }
+
+    function getSelectedSpeakerIds() {
+        return getSelectedDeviceIdsForAlert();
+    }
+
+    function isBroadcastMessageConfigured() {
+        if (isTtsBroadcastMode()) {
+            const msg = String(document.getElementById("customMessageText")?.value ?? "").trim();
+            const ttsTemplateId = String(document.getElementById("bc_tts_list")?.value ?? "").trim();
+            return msg.length > 0 || ttsTemplateId.length > 0;
+        }
+
+        return String(window.selectedBroadcastType ?? "").trim().length > 0;
+    }
+
+    function setBroadcastExecutionState(nextState = "idle") {
+        broadcastExecutionState = nextState;
+        syncBroadcastPhaseState();
+    }
+
+    function getPhase3Presentation(hasSelection, isConfigured) {
+        if (!hasSelection || !isConfigured) {
+            return { icon: "3", stateText: "대기", stateClass: "" };
+        }
+
+        switch (broadcastExecutionState) {
+            case "loading":
+                return { icon: "...", stateText: "전송 중", stateClass: "is-loading" };
+            case "success":
+                return { icon: "✓", stateText: "전송 완료", stateClass: "is-success" };
+            case "error":
+                return { icon: "!", stateText: "전송 실패", stateClass: "is-error" };
+            default:
+                return { icon: "3", stateText: "실행 가능", stateClass: "is-active" };
+        }
+    }
+
+    function syncBroadcastPhaseState() {
+        const phase1 = document.getElementById("bcPhase1");
+        const phase2 = document.getElementById("bcPhase2");
+        const phase3 = document.getElementById("bcPhase3");
+        const phase3Icon = phase3?.querySelector(".bc-phase-icon");
+        const phase3State = document.getElementById("bcPhase3State");
+        const phases = [phase1, phase2, phase3].filter(Boolean);
+        if (phases.length !== 3) return;
+
+        const hasSelection = getSelectedSpeakerCodes().length > 0;
+        const isConfigured = hasSelection && isBroadcastMessageConfigured();
+        const activeStep = !hasSelection ? 1 : (isConfigured ? 3 : 2);
+
+        phases.forEach((phase, idx) => {
+            const stepNo = idx + 1;
+            phase.classList.remove("is-loading", "is-success", "is-error");
+            phase.classList.toggle("is-active", stepNo === activeStep);
+            phase.classList.toggle("is-done", stepNo < activeStep);
+        });
+
+        const phase3Presentation = getPhase3Presentation(hasSelection, isConfigured);
+        if (phase3) {
+            phase3.classList.remove("is-active", "is-loading", "is-success", "is-error");
+            phase3.classList.toggle("is-done", hasSelection && isConfigured);
+            if (phase3Presentation.stateClass) {
+                phase3.classList.add(phase3Presentation.stateClass);
+            }
+        }
+        if (phase3Icon) phase3Icon.textContent = phase3Presentation.icon;
+        if (phase3State) phase3State.textContent = phase3Presentation.stateText;
+    }
+
     function isTtsBroadcastMode() {
         const sel = document.getElementById("bc_broadcast_type");
         // 1=TTS, 2=저장메시지, 3=기타
         return String(sel?.value ?? "") === "1";
     }
 
-    function buildServerAlertPayload({ deviceId, ttsMessage }) {
+    function buildServerAlertPayload({ deviceId, deviceIds, ttsMessage }) {
         const alertMode = document.getElementById("bc_mode")?.value ?? "1";
         const alertKind = document.getElementById("bc_broadcast_type")?.value ?? "2";
         const alertRange = document.getElementById("bc_scope")?.value ?? "3";
@@ -253,7 +441,10 @@
             : String(window.selectedBroadcastType ?? "").trim();
 
         return {
-            deviceId: String(deviceId),
+            deviceId: String(deviceId ?? deviceIds?.[0] ?? ""),
+            deviceIds: Array.isArray(deviceIds)
+                ? deviceIds.map(id => String(id ?? "").trim()).filter(Boolean)
+                : undefined,
             commandCode: "41",
             alertMode: Number(alertMode),
             disasterCode,
@@ -277,6 +468,58 @@
         }
     }
 
+    async function sendSpeakerAction(payload) {
+        const res = await fetch(ACTION_API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            const txt = await res.text().catch(() => "");
+            throw new Error(`HTTP ${res.status} ${txt}`);
+        }
+
+        return await res.json().catch(() => ({}));
+    }
+
+    function setActionButtonBusy(btnId, busy) {
+        const btn = document.getElementById(btnId);
+        if (!btn) return null;
+
+        if (!btn.dataset.label) {
+            btn.dataset.label = btn.innerHTML;
+        }
+
+        btn.disabled = busy;
+        btn.innerHTML = busy
+            ? `<i class="bi bi-arrow-repeat"></i> 처리 중...`
+            : btn.dataset.label;
+
+        return btn;
+    }
+
+    async function runBroadcastBgmAction(action, btnId) {
+        const speakerIds = getSelectedSpeakerIds();
+        if (!speakerIds.length) {
+            uiAlert("BGM 제어 대상을 선택해 주세요.", "warning");
+            return;
+        }
+
+        const label = action === "bgmOn" ? "BGM ON" : "BGM OFF";
+        setActionButtonBusy(btnId, true);
+
+        try {
+            await sendSpeakerAction({ speakerIds, action });
+            uiAlert(`${label} 실행 완료 (${speakerIds.length}대)`, "success");
+        } catch (e) {
+            console.error(e);
+            uiAlert(`${label} 실행 실패`, "danger");
+        } finally {
+            setActionButtonBusy(btnId, false);
+        }
+    }
+
     /* -----------------------------
      * 체크리스트 UI 렌더링 (speaker-card)
      * ----------------------------- */
@@ -294,6 +537,7 @@
             emptyEl.classList.remove("d-none");
             cntEl.textContent = "0";
             if (allEl) allEl.checked = false;
+            syncBroadcastPhaseState();
             return;
         }
 
@@ -348,6 +592,7 @@
             emptyEl.classList.remove("d-none");
             cntEl.textContent = "0";
             if (allEl) allEl.checked = false;
+            syncBroadcastPhaseState();
             return;
         }
 
@@ -358,6 +603,8 @@
             const checkedCount = listEl.querySelectorAll(".targetSpeakerChk:checked").length;
             allEl.checked = (total > 0 && total === checkedCount);
         }
+
+        syncBroadcastPhaseState();
     }
 
     function bindTargetSpeakerUI() {
@@ -408,6 +655,9 @@
                     const checkedCount = listEl.querySelectorAll(".targetSpeakerChk:checked").length;
                     allEl.checked = (total > 0 && total === checkedCount);
                 }
+
+                setBroadcastExecutionState("idle");
+                syncBroadcastPhaseState();
             });
 
             listEl.dataset.bound = "1";
@@ -451,6 +701,8 @@
                 }
 
                 if (cntEl) cntEl.textContent = String(selectedTargetSpeakerKeys.size);
+                setBroadcastExecutionState("idle");
+                syncBroadcastPhaseState();
             });
 
             allEl.dataset.bound = "1";
@@ -459,6 +711,7 @@
 
     function clearTargetSpeakers() {
         selectedTargetSpeakerKeys.clear();
+        setBroadcastExecutionState("idle");
 
         const listEl = document.getElementById("targetSpeakerList");
         if (listEl) {
@@ -473,6 +726,8 @@
 
         const allEl = document.getElementById("targetSpeakerSelectAll");
         if (allEl) allEl.checked = false;
+
+        syncBroadcastPhaseState();
     }
     window.clearTargetSpeakers = clearTargetSpeakers;
 
@@ -504,6 +759,7 @@
             });
         }
 
+        renderDisasterCardList();
         resetSelection();
     }
 
@@ -550,14 +806,13 @@
 
         const showTts = isTtsBroadcastMode();
 
-        if (customArea) customArea.style.display = showTts ? "block" : "none";
-        if (disasterArea) {
-            disasterArea.style.display = showTts ? "none" : "block";
-            const msgArea = document.getElementById("bc_disaster_msg_area");
-            if (showTts && msgArea) msgArea.classList.add("d-none");
-        }
+        if (customArea) customArea.style.display = showTts ? "flex" : "none";
+        if (disasterArea) disasterArea.style.display = showTts ? "none" : "flex";
 
         if (!showTts && customText) customText.value = "";
+        setBroadcastExecutionState("idle");
+        renderDisasterCardList();
+        syncBroadcastPhaseState();
     }
 
     function bindBroadcastTypeSelector() {
@@ -572,12 +827,8 @@
              * 1. 재난 선택 초기화
              * ----------------------------- */
             const disasterSel = document.getElementById("bc_disaster");
-            const disasterMsgArea = document.getElementById("bc_disaster_msg_area");
-            const disasterMsgText = document.getElementById("bc_disaster_msg_text");
 
             if (disasterSel) disasterSel.value = "";
-            if (disasterMsgArea) disasterMsgArea.classList.add("d-none");
-            if (disasterMsgText) disasterMsgText.textContent = "";
 
             window.selectedBroadcastType = null;
 
@@ -592,11 +843,14 @@
              * ----------------------------- */
             const customText = document.getElementById("customMessageText");
             if (customText) customText.value = "";
+            setBroadcastExecutionState("idle");
 
             /* -----------------------------
              * 4. 화면 표시 로직 다시 반영
              * ----------------------------- */
             updateCustomMessageAreaVisibility();
+            renderDisasterCardList();
+            syncBroadcastPhaseState();
         });
 
         sel.dataset.bound = "1";
@@ -608,34 +862,37 @@
         const sel = document.getElementById("bc_disaster");
         if (!sel || sel.dataset.boundDisaster === "1") return;
 
-        const msgArea = document.getElementById("bc_disaster_msg_area");
-
         sel.addEventListener("change", () => {
             const val = sel.value;
-            if (!msgArea) return;
-
-            const msgText = document.getElementById("bc_disaster_msg_text");
 
             if (!val) {
-                msgArea.classList.add("d-none");
-                if (msgText) msgText.textContent = "";
                 window.selectedBroadcastType = null;
+                setBroadcastExecutionState("idle");
+                renderDisasterCardList();
+                syncBroadcastPhaseState();
                 return;
             }
 
             window.selectedBroadcastType = val;
 
-            const found = disasterCache.find(d => String(d.dstCode) === val);
-            if (found && found.dstStoreMsg) {
-                if (msgText) msgText.textContent = found.dstStoreMsg;
-                msgArea.classList.remove("d-none");
-            } else {
-                msgArea.classList.add("d-none");
-                if (msgText) msgText.textContent = "";
-            }
+            setBroadcastExecutionState("idle");
+            renderDisasterCardList();
+            syncBroadcastPhaseState();
         });
 
         sel.dataset.boundDisaster = "1";
+    }
+
+    function bindBroadcastMessageInput() {
+        const textEl = document.getElementById("customMessageText");
+        if (!textEl || textEl.dataset.boundPhase === "1") return;
+
+        textEl.addEventListener("input", () => {
+            setBroadcastExecutionState("idle");
+            syncBroadcastPhaseState();
+        });
+
+        textEl.dataset.boundPhase = "1";
     }
 
     /* -----------------------------
@@ -661,8 +918,8 @@
             return;
         }
 
-        const deviceIds = getSelectedDeviceIdsForAlert();
-        if (!deviceIds.length) {
+        const alertTargets = getSelectedAlertTargets();
+        if (!alertTargets.length) {
             uiAlert("선택된 대상의 deviceId 매핑이 없습니다.", "danger");
             return;
         }
@@ -671,20 +928,22 @@
 
         const doSend = async () => {
             try {
-                for (const id of deviceIds) {
-                    const payload = buildServerAlertPayload({
-                        deviceId: id,
-                        ttsMessage: isTts ? msg : ""
-                    });
+                setBroadcastExecutionState("loading");
+                const payload = buildServerAlertPayload({
+                    deviceId: alertTargets[0]?.deviceId ?? "",
+                    deviceIds: alertTargets.map(target => target.deviceId),
+                    ttsMessage: isTts ? msg : ""
+                });
 
-                    console.log("[BC PANE SEND SERVER PAYLOAD]", payload);
-                    await sendAlertToServer(payload);
-                }
+                console.log("[BC PANE SEND SERVER PAYLOAD]", payload);
+                await sendAlertToServer(payload);
 
-                await loadLatestAlertLogs();
-                uiAlert(`발령 요청 전송 완료 (${deviceIds.length}대)`, "success");
+                await loadAlertLogs({ reset: true, stickToBottom: true });
+                setBroadcastExecutionState("success");
+                uiAlert(`발령 요청 전송 완료 (${alertTargets.length}대)`, "success");
             } catch (e) {
                 console.error(e);
+                setBroadcastExecutionState("error");
                 uiAlert("발령 전송 실패", "danger");
             }
         };
@@ -705,14 +964,26 @@
     window.startBroadcast = startBroadcast;
 
     function stopBroadcast() {
-        uiAlert("현재 화면에서는 파일/오디오 실행 기능이 비활성화되었습니다.", "info");
+        setBroadcastExecutionState("idle");
+        uiAlert("방송 종료 명령은 현재 백엔드 액션이 연결되어 있지 않습니다.", "info");
     }
     window.stopBroadcast = stopBroadcast;
+
+    async function startBroadcastBgm() {
+        await runBroadcastBgmAction("bgmOn", "broadcastBgmOnBtn");
+    }
+    window.startBroadcastBgm = startBroadcastBgm;
+
+    async function stopBroadcastBgm() {
+        await runBroadcastBgmAction("bgmOff", "broadcastBgmOffBtn");
+    }
+    window.stopBroadcastBgm = stopBroadcastBgm;
 
     /* -----------------------------
      * 방송 선택 초기화
      * ----------------------------- */
     function resetSelection() {
+        setBroadcastExecutionState("idle");
         clearTargetSpeakers();
         window.selectedBroadcastType = null;
 
@@ -724,13 +995,7 @@
 
         // DropDown 초기화 + 메시지 영역 숨김
         const disasterSel = document.getElementById("bc_disaster");
-        const disasterMsg = document.getElementById("bc_disaster_msg_area");
-        const disasterText = document.getElementById("bc_disaster_msg_text");
         if (disasterSel) disasterSel.value = "";
-        if (disasterMsg) {
-            disasterMsg.classList.add("d-none");
-            if (disasterText) disasterText.textContent = "";
-        }
 
         updateCustomMessageAreaVisibility();
     }
@@ -748,6 +1013,19 @@
     function clearBroadcastLogPanel() {
         const panel = document.getElementById("broadcastLogPanel");
         if (panel) panel.innerHTML = "";
+        syncBroadcastLogEmptyState();
+    }
+
+    function syncBroadcastLogEmptyState() {
+        const panel = document.getElementById("broadcastLogPanel");
+        const emptyEl = document.getElementById("broadcastLogEmpty");
+        if (!panel || !emptyEl) return;
+
+        emptyEl.classList.toggle("d-none", panel.childElementCount > 0);
+    }
+
+    function getBroadcastLogScrollElement() {
+        return document.getElementById("broadcastLogSection");
     }
 
     function buildAlertLogHtml(row) {
@@ -763,67 +1041,79 @@
                     kind === "3" ? "기타" : kind;
 
         const statusText =
-            status === "SENT" ? "전송 성공" :
-                status === "FAILED" ? "전송 실패" : status || "-";
+            status === "SENT" ? "OK" :
+                status === "FAILED" ? "ERR" : status || "-";
 
-        const tag = (label, value) => `
-      <span class="log-tag">
-        <span class="log-tag-label">${escapeHtml(label)}</span>
-        <span class="log-tag-value">${escapeHtml(String(value))}</span>
-      </span>
-    `;
+        const statusClass =
+            status === "SENT" ? "is-success" :
+                status === "FAILED" ? "is-error" : "is-neutral";
 
-        const statusTag = `
-      <span class="log-tag log-tag-status ${status === "SENT" ? "is-success" : status === "FAILED" ? "is-error" : ""}">
-        <span class="log-tag-label">상태</span>
-        <span class="log-tag-value">${escapeHtml(statusText)}</span>
-      </span>
-    `;
+        const message = `장비 ${deviceId} · ${kindText} · 재난 ${disaster}`;
 
         return `
-      <div class="log-row">
-        ${tag("장비", deviceId)}
-        ${tag("재난", disaster)}
-        ${tag("방송유형", kindText)}
-        ${statusTag}
+      <div class="log-line">
+        <span class="log-status ${statusClass}">${escapeHtml(statusText)}</span>
+        <span class="log-message-main">${escapeHtml(message)}</span>
       </div>
     `;
     }
 
-    function appendBroadcastLogEntry({ timestamp, message, html, level = "" }, opts = { notify: true }) {
+    function appendBroadcastLogEntry({ timestamp, message, html, level = "" }, opts = {}) {
         const panel = document.getElementById("broadcastLogPanel");
         if (!panel) return;
 
         const ts = timestamp || formatLogTimestamp(new Date());
         const lvlClass = level ? ` ${level}` : "";
-
+        const { append = true, stickToBottom = false } = opts;
         const bodyHtml = html ? html : `<div class="log-message">${escapeHtml(message ?? "-")}</div>`;
-
-        panel.insertAdjacentHTML(
-            "beforeend",
-            `
+        const markup = `
       <div class="log-entry${lvlClass}">
         <div class="log-timestamp">${escapeHtml(ts)}</div>
         <div class="log-body">
           ${bodyHtml}
         </div>
       </div>
-      `
-        );
+      `;
 
-        if (!panel.classList.contains("collapsed")) {
-            panel.scrollTop = panel.scrollHeight;
+        panel.insertAdjacentHTML(append ? "beforeend" : "afterbegin", markup);
+        syncBroadcastLogEmptyState();
+
+        const scrollEl = getBroadcastLogScrollElement();
+        if (scrollEl && stickToBottom) {
+            scrollEl.scrollTop = scrollEl.scrollHeight;
         }
     }
 
-    async function loadLatestAlertLogs() {
-        const res = await fetch(ALERT_LOG_LATEST_API, { method: "GET" });
+    function normalizeAlertLogRows(payload) {
+        if (Array.isArray(payload)) {
+            return { rows: payload, hasNext: false };
+        }
+
+        if (!payload || !Array.isArray(payload.content)) {
+            return { rows: [], hasNext: false };
+        }
+
+        return {
+            rows: payload.content,
+            hasNext: Boolean(payload.hasNext)
+        };
+    }
+
+    async function fetchAlertLogPage(page = 0) {
+        const qs = new URLSearchParams({
+            date: alertLogState.date,
+            page: String(page),
+            size: String(ALERT_LOG_PAGE_SIZE)
+        });
+        const res = await fetch(`${ALERT_LOG_API_URL}?${qs.toString()}`, { method: "GET" });
         if (!res.ok) throw new Error(`alert log api failed: ${res.status}`);
 
-        const rows = await res.json();
-        if (!Array.isArray(rows)) return;
+        const payload = await res.json().catch(() => null);
+        return normalizeAlertLogRows(payload);
+    }
 
-        clearBroadcastLogPanel();
+    function renderAlertLogRows(rows, { reset = false, stickToBottom = false } = {}) {
+        if (reset) clearBroadcastLogPanel();
 
         rows.forEach((r) => {
             const status = String(r?.status ?? "").toUpperCase();
@@ -832,9 +1122,53 @@
 
             appendBroadcastLogEntry(
                 { timestamp: ts, level, html: buildAlertLogHtml(r) },
-                { notify: false }
+                { append: true, stickToBottom }
             );
         });
+
+        syncBroadcastLogEmptyState();
+    }
+
+    async function loadAlertLogs({ reset = false, stickToBottom = false } = {}) {
+        if (alertLogState.loading) return;
+
+        if (reset) {
+            alertLogState.page = 0;
+            alertLogState.hasNext = true;
+            alertLogState.date = formatDateToYmd(new Date());
+        }
+
+        if (!alertLogState.hasNext && !reset) return;
+
+        alertLogState.loading = true;
+
+        try {
+            const { rows, hasNext } = await fetchAlertLogPage(alertLogState.page);
+            renderAlertLogRows(rows, { reset, stickToBottom });
+            alertLogState.hasNext = hasNext;
+            alertLogState.page += 1;
+            alertLogState.initialized = true;
+            syncBroadcastLogEmptyState();
+        } finally {
+            alertLogState.loading = false;
+        }
+    }
+
+    function bindBroadcastLogScroll() {
+        const scrollEl = getBroadcastLogScrollElement();
+        if (!scrollEl || scrollEl.dataset.bound === "1") return;
+
+        scrollEl.addEventListener("scroll", () => {
+            if (alertLogState.loading || !alertLogState.hasNext) return;
+
+            const threshold = 120;
+            const remaining = scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight;
+            if (remaining <= threshold) {
+                loadAlertLogs();
+            }
+        });
+
+        scrollEl.dataset.bound = "1";
     }
 
     /* -----------------------------
@@ -858,11 +1192,17 @@
             bindTargetSpeakerUI();
 
             await renderBroadcastTypes();
+            bindChoiceButtonGroup("bc_mode");
+            bindChoiceButtonGroup("bc_broadcast_type");
             bindBroadcastTypeSelector();
             bindDisasterSelector();
+            bindDisasterCardList();
+            bindBroadcastMessageInput();
             await initTtsTemplateDropdown();
+            syncBroadcastPhaseState();
 
-            await loadLatestAlertLogs();
+            bindBroadcastLogScroll();
+            await loadAlertLogs({ reset: true });
 
             // TTS 관리 모달 연결 (존재할 때만)
             const btn = document.getElementById("bc_open_tts_manage");

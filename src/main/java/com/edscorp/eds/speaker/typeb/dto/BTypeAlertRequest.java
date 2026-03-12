@@ -2,6 +2,7 @@ package com.edscorp.eds.speaker.typeb.dto;
 
 import lombok.Getter;
 import lombok.Setter;
+import java.util.List;
 
 @Getter
 @Setter
@@ -9,6 +10,7 @@ public class BTypeAlertRequest {
 
     /** 대상 디바이스 ID */
     private String deviceId;
+    private List<String> deviceIds;
 
     /** 발령 파라미터 */
     private Integer alertMode; // 경보 모드

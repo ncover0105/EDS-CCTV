@@ -365,6 +365,49 @@
     color: var(--m-text-muted);
 }
 
+.speaker-modal .bc-inline-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 24px;
+    padding: 6px 10px;
+    border: 1px solid var(--m-border-light);
+    border-radius: 10px;
+    background: var(--m-surface);
+    color: var(--m-text-secondary);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.speaker-modal .bc-inline-status.is-success {
+    color: #166534;
+    background: rgba(34, 197, 94, .10);
+    border-color: rgba(34, 197, 94, .22);
+}
+
+.speaker-modal .bc-inline-status.is-warning {
+    color: #92400e;
+    background: rgba(245, 158, 11, .10);
+    border-color: rgba(245, 158, 11, .24);
+}
+
+.speaker-modal .bc-inline-status.is-danger {
+    color: #b91c1c;
+    background: rgba(239, 68, 68, .10);
+    border-color: rgba(239, 68, 68, .22);
+}
+
+.speaker-modal .bc-inline-status.is-info {
+    color: #1d4ed8;
+    background: rgba(59, 130, 246, .10);
+    border-color: rgba(59, 130, 246, .22);
+}
+
+.speaker-modal .bc-inline-status-icon {
+    flex-shrink: 0;
+    font-size: 12px;
+}
+
 /* 스피커 카드 */
 /* ── 스피커 아이템 (paste.txt 기준) ── */
 .speaker-modal .speaker-item {
@@ -668,6 +711,19 @@
     box-shadow: 0 0 0 3px rgba(59, 110, 246, .1);
 }
 
+.speaker-modal .m-select:disabled,
+.speaker-modal .m-textarea:disabled {
+    cursor: not-allowed;
+    opacity: .65;
+    background-color: rgba(148, 163, 184, .08);
+}
+
+.speaker-modal .m-select.is-invalid,
+.speaker-modal .m-textarea.is-invalid {
+    border-color: var(--m-danger);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, .10);
+}
+
 /* 텍스트에어리어 */
 .speaker-modal .m-textarea {
     font-family: var(--m-font);
@@ -813,6 +869,46 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+}
+
+.speaker-modal .bc-control-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.speaker-modal .bc-control-section-bgm {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--m-border-light);
+}
+
+.speaker-modal .bc-control-label {
+    color: var(--m-text-primary);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.speaker-modal .bc-action-status {
+    padding: 8px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 1.4;
+    border: 1px solid var(--m-border-light);
+    background: var(--m-bg);
+    color: var(--m-text-secondary);
+}
+
+.speaker-modal .bc-action-status.is-success {
+    color: #166534;
+    background: rgba(34, 197, 94, .10);
+    border-color: rgba(34, 197, 94, .22);
+}
+
+.speaker-modal .bc-action-status.is-danger {
+    color: #b91c1c;
+    background: rgba(239, 68, 68, .10);
+    border-color: rgba(239, 68, 68, .22);
 }
 
 .speaker-modal .action-card .m-card-title {
@@ -1123,14 +1219,28 @@
     opacity: .3;
 }
 
+.speaker-modal .m-card.disaster-locked {
+    opacity: .3;
+}
+
 .speaker-modal .m-card.tts-locked .m-card-title,
 .speaker-modal .m-card.tts-locked .m-field-label,
 .speaker-modal .m-card.tts-locked .char-counter {
     color: var(--m-text-muted);
 }
 
+.speaker-modal .m-card.disaster-locked .m-card-title,
+.speaker-modal .m-card.disaster-locked .m-field-label {
+    color: var(--m-text-muted);
+}
+
 .speaker-modal .m-card.tts-locked .m-select,
 .speaker-modal .m-card.tts-locked .m-textarea {
+    background: rgba(148, 163, 184, .08);
+    cursor: not-allowed;
+}
+
+.speaker-modal .m-card.disaster-locked .m-select {
     background: rgba(148, 163, 184, .08);
     cursor: not-allowed;
 }
@@ -1158,6 +1268,11 @@
 
 .speaker-modal.dark .speaker-type-help {
     color: var(--m-text-secondary);
+}
+
+.speaker-modal.dark .bc-inline-status {
+    background: rgba(255, 255, 255, .04);
+    border-color: rgba(255, 255, 255, .10);
 }
 
 /* Checkbox contrast */

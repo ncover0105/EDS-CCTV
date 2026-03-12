@@ -1,8 +1,10 @@
 package com.edscorp.eds.speaker.typeb.service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -121,10 +123,54 @@ public class BTypeCommandService {
 
     // 스케줄러/내부 호출용
     public void sendAlert(BTypeAlertRequest req, String clientIp, String userId) throws Exception {
+        List<String> targetDeviceIds = resolveAlertDeviceIds(req);
+        if (targetDeviceIds.isEmpty()) {
+            throw new IllegalArgumentException("발령 대상 deviceId가 없습니다.");
+        }
+
+        List<String> failedDeviceIds = new ArrayList<>();
+
+        for (String deviceId : targetDeviceIds) {
+            try {
+                sendSingleAlert(req, deviceId, clientIp, userId);
+            } catch (Exception e) {
+                failedDeviceIds.add(deviceId);
+                log.error("[BTYPE ALERT] deviceId={} 전송 실패", deviceId, e);
+            }
+        }
+
+        if (!failedDeviceIds.isEmpty()) {
+            throw new RuntimeException("일부 장비 발령 실패: " + failedDeviceIds);
+        }
+    }
+
+    private List<String> resolveAlertDeviceIds(BTypeAlertRequest req) {
+        if (req == null) {
+            return List.of();
+        }
+
+        List<String> deviceIds = req.getDeviceIds();
+        if (deviceIds != null && !deviceIds.isEmpty()) {
+            return deviceIds.stream()
+                    .map(id -> id == null ? "" : id.trim())
+                    .filter(id -> !id.isEmpty())
+                    .collect(Collectors.toList());
+        }
+
+        String deviceId = req.getDeviceId();
+        if (deviceId == null || deviceId.isBlank()) {
+            return List.of();
+        }
+
+        return List.of(deviceId.trim());
+    }
+
+    private void sendSingleAlert(BTypeAlertRequest req, String deviceId, String clientIp, String userId)
+            throws Exception {
         final String commandCode = "41";
 
         log.info("[BTYPE ALERT] request received");
-        log.info("[BTYPE ALERT] deviceId        = {}", req.getDeviceId());
+        log.info("[BTYPE ALERT] deviceId        = {}", deviceId);
         log.info("[BTYPE ALERT] alertMode       = {}", req.getAlertMode());
         log.info("[BTYPE ALERT] disasterCode    = {}", req.getDisasterCode());
         log.info("[BTYPE ALERT] alertKind       = {}", req.getAlertKind());
@@ -208,7 +254,7 @@ public class BTypeCommandService {
             alertTTSmessage = "";
 
         SpkWebAlertLogEntity alertLog = SpkWebAlertLogEntity.builder()
-                .deviceId(req.getDeviceId())
+                .deviceId(deviceId)
                 .userId(userId)
                 .commandCode(commandCode)
                 .alertMode(req.getAlertMode())
@@ -224,7 +270,7 @@ public class BTypeCommandService {
 
         try {
             // 실제 전송
-            sendToPlayRadio(req.getDeviceId(), clientIp, commandCode, argumentStr);
+            sendToPlayRadio(deviceId, clientIp, commandCode, argumentStr);
 
             alertLog.setStatus("SENT");
         } catch (Exception e) {

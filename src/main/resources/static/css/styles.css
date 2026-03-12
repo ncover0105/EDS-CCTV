@@ -17189,13 +17189,12 @@ body {
   justify-content: center; */
 }
 
-#broadcastLogSection {
+/* #broadcastLogSection {
   min-height: 220px;
-  /* ✅ 항상 보이는 최소 영역 */
   display: flex;
   flex-direction: column;
   overflow: hidden;
-}
+} */
 
 /* 로그 패널: 실제 스크롤 영역 */
 .broadcast-log {
