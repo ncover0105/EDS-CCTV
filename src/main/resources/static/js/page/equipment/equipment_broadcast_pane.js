@@ -64,6 +64,14 @@
         return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
     }
 
+    function getDisasterPriorityTone(priority) {
+        const p = Number(priority);
+        if (p === 1) return "high";
+        if (p === 2) return "medium";
+        if (p === 3) return "low";
+        return "default";
+    }
+
     /* -----------------------------
      * 스피커 필드 매핑 (통일)
      * ----------------------------- */
@@ -256,6 +264,7 @@
         const listEl = document.getElementById("bc_disaster_card_list");
         const emptyEl = document.getElementById("bc_disaster_empty");
         if (!listEl || !emptyEl) return;
+        const prevScrollTop = listEl.scrollTop;
 
         const list = (Array.isArray(disasterCache) ? disasterCache : [])
             .filter(d => isUseFlag(d?.dstUseFlag))
@@ -276,14 +285,24 @@
             const title = String(safeValue(d?.dstName, "재난 메시지"));
             const msg = String(d?.dstStoreMsg ?? "").trim();
             const priority = String(d?.dstPriority ?? "-");
+            const priorityTone = getDisasterPriorityTone(d?.dstPriority);
 
             listEl.insertAdjacentHTML("beforeend", `
-                <button type="button" class="bc-disaster-card ${selectedCode === code ? "is-selected" : ""}" data-disaster-code="${escapeHtml(code)}">
-                    <div class="bc-disaster-card-title">${escapeHtml(title)}</div>
-                    <div class="bc-disaster-card-meta">우선순위 ${escapeHtml(priority)} · CODE ${escapeHtml(code)}</div>
+                <button type="button" class="bc-disaster-card bc-disaster-card--${escapeHtml(priorityTone)} ${selectedCode === code ? "is-selected" : ""}" data-disaster-code="${escapeHtml(code)}">
+                    <div class="bc-disaster-card-head">
+                        <div class="bc-disaster-card-title">${escapeHtml(title)}</div>
+                        <span class="bc-priority-badge bc-priority-badge--${escapeHtml(priorityTone)}">우선순위 ${escapeHtml(priority)}</span>
+                    </div>
+                    <div class="bc-disaster-card-meta">
+                        <span class="bc-disaster-card-code">CODE ${escapeHtml(code)}</span>
+                    </div>
                     <div class="bc-disaster-card-text">${escapeHtml(msg || "등록된 안내 문구가 없습니다.")}</div>
                 </button>
             `);
+        });
+
+        requestAnimationFrame(() => {
+            listEl.scrollTop = prevScrollTop;
         });
 
     }
@@ -305,6 +324,22 @@
         });
 
         listEl.dataset.bound = "1";
+    }
+
+    function focusSelectedDisasterCard(code) {
+        if (!code) return;
+
+        const safeCode = String(code).replaceAll("\\", "\\\\").replaceAll("\"", "\\\"");
+        const card = document.querySelector(`.bc-disaster-card[data-disaster-code="${safeCode}"]`);
+        if (!card || typeof card.focus !== "function") return;
+
+        requestAnimationFrame(() => {
+            try {
+                card.focus({ preventScroll: true });
+            } catch (_) {
+                card.focus();
+            }
+        });
     }
 
     async function initTtsTemplateDropdown() {
@@ -877,6 +912,7 @@
 
             setBroadcastExecutionState("idle");
             renderDisasterCardList();
+            focusSelectedDisasterCard(val);
             syncBroadcastPhaseState();
         });
 
@@ -1032,6 +1068,8 @@
         const status = String(row?.status ?? "").toUpperCase();
 
         const deviceId = String(row?.deviceId ?? "-");
+        const commandCode = String(row?.commandCode ?? "").trim();
+        const bgmReqType = String(row?.bgmReqType ?? "").trim();
         const disaster = String(row?.disasterCode ?? "-");
         const kind = String(row?.alertKind ?? "-");
 
@@ -1048,7 +1086,9 @@
             status === "SENT" ? "is-success" :
                 status === "FAILED" ? "is-error" : "is-neutral";
 
-        const message = `장비 ${deviceId} · ${kindText} · 재난 ${disaster}`;
+        const message = commandCode === "47"
+            ? `장비 ${deviceId} · ${bgmReqType === "01" ? "BGM ON" : bgmReqType === "00" ? "BGM OFF" : "BGM 제어"}`
+            : `장비 ${deviceId} · ${kindText} · 재난 ${disaster}`;
 
         return `
       <div class="log-line">

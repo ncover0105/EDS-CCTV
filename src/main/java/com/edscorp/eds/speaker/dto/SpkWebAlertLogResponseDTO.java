@@ -15,6 +15,7 @@ public class SpkWebAlertLogResponseDTO {
     private Long id;
     private String deviceId;
     private String commandCode;
+    private String bgmReqType;
 
     private Integer alertMode;
     private String disasterCode;
@@ -35,6 +36,7 @@ public class SpkWebAlertLogResponseDTO {
                 .id(e.getId())
                 .deviceId(e.getDeviceId())
                 .commandCode(e.getCommandCode())
+                .bgmReqType(e.getBgmReqType())
                 .alertMode(e.getAlertMode())
                 .disasterCode(e.getDisasterCode())
                 .alertKind(e.getAlertKind())

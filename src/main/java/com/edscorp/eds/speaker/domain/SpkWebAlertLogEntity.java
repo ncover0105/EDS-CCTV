@@ -39,6 +39,9 @@ public class SpkWebAlertLogEntity {
     @Column(name = "command_code", nullable = false, length = 32)
     private String commandCode;
 
+    @Column(name = "bgm_req_type", length = 2)
+    private String bgmReqType; // 00: OFF 요청, 01: ON 요청 (BGM 명령일 때만 사용)
+
     @Column(name = "alert_mode", nullable = false)
     private Integer alertMode;
 

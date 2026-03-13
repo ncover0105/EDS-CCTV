@@ -286,6 +286,30 @@ public class BTypeCommandService {
         }
     }
 
+    private SpkWebAlertLogEntity buildBgmActionLog(
+            String speakerId,
+            String userId,
+            String clientIp,
+            String commandCode,
+            String bgmReqType) {
+
+        return SpkWebAlertLogEntity.builder()
+                .deviceId(speakerId)
+                .userId((userId == null || userId.isBlank()) ? "system" : userId)
+                .commandCode(commandCode)
+                .bgmReqType(bgmReqType)
+                .alertMode(0)
+                .disasterCode("BGM")
+                .alertKind(0)
+                .alertRange(0)
+                .alertPriority(0)
+                .ttsMessage("")
+                .alertStoCd("000")
+                .alertSirenCd("000")
+                .clientIp((clientIp == null || clientIp.isBlank()) ? "127.0.0.1" : clientIp)
+                .build();
+    }
+
     // =========================
     // 스피커 제어 (JS handleSpeakerAction 포팅)
     // =========================
@@ -298,6 +322,10 @@ public class BTypeCommandService {
 
         String action = req.getAction();
         String extraParam = req.getExtraParam() == null ? "" : req.getExtraParam();
+        String clientIp = (httpReq != null && httpReq.getRemoteAddr() != null)
+                ? httpReq.getRemoteAddr()
+                : "127.0.0.1";
+        String userId = getCurrentUserId();
 
         String commandCode;
         String argument;
@@ -367,11 +395,11 @@ public class BTypeCommandService {
 
             case "bgmOn": // BGM ON
                 commandCode = "47";
-                argument = "01";
+                argument = "0701";
                 break;
             case "bgmOff": // BGM OFF
                 commandCode = "47";
-                argument = "00";
+                argument = "0700";
                 break;
 
             case "insSpeakerSettings": // 스피커 설정값 저장 (발신)
@@ -441,12 +469,36 @@ public class BTypeCommandService {
             default:
                 throw new IllegalArgumentException("지원되지 않는 작업입니다: " + action); // 잘못된 action 처리
         }
-
-        String clientIp = httpReq.getRemoteAddr();
+        boolean isBgmAction = "bgmOn".equals(action) || "bgmOff".equals(action);
+        String bgmReqType = "bgmOn".equals(action) ? "01" : "bgmOff".equals(action) ? "00" : null;
+        List<String> failedSpeakerIds = new ArrayList<>();
 
         // 선택된 각 스피커에 대해 데몬서버로 명령 전송
         for (String speakerId : speakerIds) {
-            sendToPlayRadio(speakerId, clientIp, commandCode, argument);
+            SpkWebAlertLogEntity actionLog = isBgmAction
+                    ? buildBgmActionLog(speakerId, userId, clientIp, commandCode, bgmReqType)
+                    : null;
+
+            try {
+                sendToPlayRadio(speakerId, clientIp, commandCode, argument);
+                if (actionLog != null) {
+                    actionLog.setStatus("SENT");
+                }
+            } catch (Exception e) {
+                failedSpeakerIds.add(speakerId);
+                if (actionLog != null) {
+                    actionLog.setStatus("FAILED");
+                }
+                log.error("[BTYPE ACTION] speakerId={} action={} 전송 실패", speakerId, action, e);
+            } finally {
+                if (actionLog != null) {
+                    spkWebAlertLogQueryService.save(actionLog);
+                }
+            }
+        }
+
+        if (!failedSpeakerIds.isEmpty()) {
+            throw new RuntimeException("일부 장비 제어 실패: " + failedSpeakerIds);
         }
     }
 
