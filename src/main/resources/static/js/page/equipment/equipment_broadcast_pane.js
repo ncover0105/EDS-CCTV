@@ -1105,11 +1105,16 @@
         const ts = timestamp || formatLogTimestamp(new Date());
         const lvlClass = level ? ` ${level}` : "";
         const { append = true, stickToBottom = false } = opts;
-        const bodyHtml = html ? html : `<div class="log-message">${escapeHtml(message ?? "-")}</div>`;
+        const bodyHtml = html
+            ? html
+            : `
+          <span class="log-status is-neutral">INFO</span>
+          <span class="log-message-main">${escapeHtml(message ?? "-")}</span>
+        `;
         const markup = `
       <div class="log-entry${lvlClass}">
-        <div class="log-timestamp">${escapeHtml(ts)}</div>
-        <div class="log-body">
+        <div class="log-line">
+          <span class="log-timestamp">${escapeHtml(ts)}</span>
           ${bodyHtml}
         </div>
       </div>
