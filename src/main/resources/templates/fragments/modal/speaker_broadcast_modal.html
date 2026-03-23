@@ -13,7 +13,7 @@
                         <i class="fa-solid fa-tower-broadcast"></i>
                     </div>
                     <div>
-                        <div class="modal-title">방송 송출</div>
+                        <div class="modal-title">방송</div>
                         <div class="speaker-type-legend speaker-type-legend-header mt-1" aria-label="스피커 타입 안내">
                             <span class="speaker-type-pill type-a">
                                 <span class="speaker-type-dot"></span>
@@ -97,11 +97,12 @@
                             <div class="m-radio-group">
                                 <label class="m-radio-option">
                                     <input type="radio" name="a_bc_mode_radio" value="1" checked>
-                                    <span class="m-radio-label"><span class="me-1">🟢</span> 실제 방송</span>
+                                    <span class="m-radio-label"><i class="bi bi-check-circle-fill me-1"></i> 실제
+                                        방송</span>
                                 </label>
                                 <label class="m-radio-option mode-test">
                                     <input type="radio" name="a_bc_mode_radio" value="0">
-                                    <span class="m-radio-label"><span class="me-1">🧪</span> 시험 방송</span>
+                                    <span class="m-radio-label"><i class="bi bi-pipette-fill me-1"></i> 시험 방송</span>
                                 </label>
                             </div>
                             <!-- JS가 직접 읽는 select (숨김) -->
@@ -117,15 +118,15 @@
                             <div class="m-radio-group">
                                 <label class="m-radio-option">
                                     <input type="radio" name="a_bc_type_radio" value="1" checked>
-                                    <span class="m-radio-label"><span class="me-1">🔊</span> TTS</span>
+                                    <span class="m-radio-label"><i class="bi bi-volume-up-fill me-1"></i>
                                 </label>
                                 <label class="m-radio-option">
                                     <input type="radio" name="a_bc_type_radio" value="2">
-                                    <span class="m-radio-label"><span class="me-1">💾</span> 저장메시지</span>
+                                    <span class="m-radio-label"><i class="bi bi-play-circle-fill me-1"></i> 저장메시지</span>
                                 </label>
                                 <label class="m-radio-option">
                                     <input type="radio" name="a_bc_type_radio" value="3">
-                                    <span class="m-radio-label"><span class="me-1">📡</span> 기타</span>
+                                    <span class="m-radio-label"><i class="bi bi-rss me-1"></i> 기타</span>
                                 </label>
                             </div>
                             <!-- JS가 직접 읽는 select (숨김) -->
@@ -180,11 +181,13 @@
                             <div class="bc-control-section">
                                 <div class="action-card-head">
                                     <div class="bc-control-label">방송 실행</div>
-                                    <button type="button" class="m-btn m-btn-primary m-btn-wide m-btn-hero" id="a_bc_send">
+                                    <button type="button" class="m-btn m-btn-primary m-btn-wide m-btn-hero"
+                                        id="a_bc_send">
                                         <i class="fa-solid fa-play"></i> 방송
                                     </button>
                                 </div>
-                                <div class="bc-action-status d-none" id="a_bc_broadcast_status" role="status" aria-live="polite"></div>
+                                <div class="bc-action-status d-none" id="a_bc_broadcast_status" role="status"
+                                    aria-live="polite"></div>
                             </div>
 
                             <div class="bc-control-section bc-control-section-bgm">
@@ -205,7 +208,8 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div class="bc-action-status d-none" id="a_bc_bgm_status" role="status" aria-live="polite"></div>
+                                <div class="bc-action-status d-none" id="a_bc_bgm_status" role="status"
+                                    aria-live="polite"></div>
                             </div>
                         </div>
 
@@ -239,14 +243,12 @@
                         <div class="m-card">
                             <div class="m-card-title">송출 모드</div>
                             <div class="m-radio-group">
-                                <label class="m-radio-option">
-                                    <input type="radio" name="b_bc_mode_radio" value="1" checked>
-                                    <span class="m-radio-label"><span class="me-1">🟢</span> 실제 방송</span>
-                                </label>
-                                <label class="m-radio-option mode-test">
-                                    <input type="radio" name="b_bc_mode_radio" value="0">
-                                    <span class="m-radio-label"><span class="me-1">🧪</span> 시험 방송</span>
-                                </label>
+                                <label class="m-radio-option"> <input type="radio" name="b_bc_mode_radio" value="1"
+                                        checked> <span class="m-radio-label"><i
+                                            class="bi bi-check-circle-fill me-1"></i> 실제 방송</span> </label>
+                                <label class="m-radio-option mode-test"> <input type="radio" name="b_bc_mode_radio"
+                                        value="0"> <span class="m-radio-label"><i class="bi bi-beaker me-1"></i> 시험
+                                        방송</span> </label>
                             </div>
                             <!-- JS가 직접 읽는 select (숨김) -->
                             <select id="b_bc_mode" class="d-none">
@@ -261,15 +263,15 @@
                             <div class="m-radio-group">
                                 <label class="m-radio-option">
                                     <input type="radio" name="b_bc_type_radio" value="1" checked>
-                                    <span class="m-radio-label"><span class="me-1">🔊</span> TTS</span>
+                                    <span class="m-radio-label"><i class="bi bi-volume-up-fill me-1"></i> TTS</span>
                                 </label>
                                 <label class="m-radio-option">
                                     <input type="radio" name="b_bc_type_radio" value="2">
-                                    <span class="m-radio-label"><span class="me-1">💾</span> 저장메시지</span>
+                                    <span class="m-radio-label"><i class="bi bi-play-circle-fill me-1"></i> 저장메시지</span>
                                 </label>
                                 <label class="m-radio-option">
                                     <input type="radio" name="b_bc_type_radio" value="3">
-                                    <span class="m-radio-label"><span class="me-1">📡</span> 기타</span>
+                                    <span class="m-radio-label"><i class="bi bi-rss me-1"></i> 기타</span>
                                 </label>
                             </div>
                             <!-- JS가 직접 읽는 select (숨김) -->
@@ -310,9 +312,10 @@
                                     </button>
                                 </div>
                                 <textarea id="b_bc_tts" class="m-textarea" rows="5" placeholder="TTS를 선택하거나 직접 입력하세요"
+                                    maxlength="1000"
                                     oninput="document.getElementById('b_bc_tts_char_count').textContent=this.value.length;"></textarea>
                                 <div class="char-counter">
-                                    <span id="b_bc_tts_char_count">0</span> / 240
+                                    <span id="b_bc_tts_char_count">0</span> / 1000
                                 </div>
                                 <div class="m-err" id="b_bc_tts_error"></div>
                             </div>
@@ -324,11 +327,13 @@
                             <div class="bc-control-section">
                                 <div class="action-card-head">
                                     <div class="bc-control-label">방송 실행</div>
-                                    <button type="button" class="m-btn m-btn-primary m-btn-wide m-btn-hero" id="b_bc_send">
+                                    <button type="button" class="m-btn m-btn-primary m-btn-wide m-btn-hero"
+                                        id="b_bc_send">
                                         <i class="fa-solid fa-play"></i> 방송
                                     </button>
                                 </div>
-                                <div class="bc-action-status d-none" id="b_bc_broadcast_status" role="status" aria-live="polite"></div>
+                                <div class="bc-action-status d-none" id="b_bc_broadcast_status" role="status"
+                                    aria-live="polite"></div>
                             </div>
 
                             <div class="bc-control-section bc-control-section-bgm">
@@ -349,7 +354,8 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div class="bc-action-status d-none" id="b_bc_bgm_status" role="status" aria-live="polite"></div>
+                                <div class="bc-action-status d-none" id="b_bc_bgm_status" role="status"
+                                    aria-live="polite"></div>
                             </div>
                         </div>
 

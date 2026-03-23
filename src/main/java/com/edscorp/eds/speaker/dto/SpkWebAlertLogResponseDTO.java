@@ -28,7 +28,7 @@ public class SpkWebAlertLogResponseDTO {
     private String alertStoCd;
     private String alertSirenCd;
 
-    private String status; // SENT, FAILED
+    private Byte status; // 0: 실패, 1: 성공
     private LocalDateTime createdAt;
 
     public static SpkWebAlertLogResponseDTO from(SpkWebAlertLogEntity e) {

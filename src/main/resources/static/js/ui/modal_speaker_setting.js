@@ -310,9 +310,11 @@ const SpeakerList = {
          data-speaker-key="${String(speakerKey)}"
          data-speaker-id="${String(speakerId)}"
          data-speaker-type="${String(speakerType)}">
-      <div class="sp-status"></div>
       <div class="sp-item-info">
-        <div class="sp-item-name">${name}</div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="speaker-type-tag type-${uiTypeKey}">${speakerType}</span>
+            <div class="sp-item-name">${name}</div>
+        </div>
         <div class="sp-item-sub">${subId}</div>
       </div>
       <i class="bi bi-chevron-right sp-item-arrow"></i>

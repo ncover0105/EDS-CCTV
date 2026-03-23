@@ -79,18 +79,41 @@
 
     function modeToText(mode) {
         const n = parseInt(mode, 10);
-        if (n === 1) return 'REAL';
-        if (n === 0) return 'TEST';
+        if (n === 1) return '실제';
+        if (n === 0) return '실험';
         return '-';
     }
 
     function priorityToText(priority) {
         const n = parseInt(priority, 10);
-        if (n === 4) return 'DANGER';
-        if (n === 3) return 'WARNING';
-        if (n === 2) return 'CAUTION';
-        if (n === 1) return 'NONE';
+        if (n === 4) return '위험';
+        if (n === 3) return '경고';
+        if (n === 2) return '주의';
+        if (n === 1) return '보통';
         return '-';
+    }
+
+    // CSS 클래스용 키 반환
+    function priorityToKey(priority) {
+        const n = parseInt(priority, 10);
+        if (n === 4) return 'danger';
+        if (n === 3) return 'warning';
+        if (n === 2) return 'caution';
+        if (n === 1) return 'none';
+        return 'none';
+    }
+
+    function statusToText(status) {
+        if (!status) return '-';
+        const s = String(status).toUpperCase();
+        switch (s) {
+            case 'SENT': return '발송완료';
+            case 'SUCCESS': return '성공';
+            case 'FAILED': return '실패';
+            case 'ERROR': return '실패';
+            case 'PENDING': return '대기중';
+            default: return s;
+        }
     }
 
     function extractRowsFromResponse(data) {
@@ -235,81 +258,79 @@
         const esc = window.SituationCommon?.escapeHtml || ((s) => String(s));
 
         const card = document.createElement("div");
-        card.className = "broadcast-card-modern fade-in";
-        card.dataset.id = item.id;
-
         const modeText = modeToText(item.alertMode);
         const priorityText = priorityToText(item.alertPriority);
         const kindText = kindToText(item.alertKind);
-        const statusText = String(item.status || "-").toUpperCase();
-        const isSuccess = statusText === "SENT" || statusText === "SUCCESS";
+
+        const status = String(item?.status ?? "");
+        const isSuccess = status === "1";
+        const statusText = isSuccess ? "성공" : status === "0" ? "실패" : "-";
+        const statusClass = isSuccess ? "status-ok" : "status-fail";
+
+        card.className = `broadcast-card-modern fade-in ${statusClass}`;
+        card.dataset.id = item.id;
 
         const msg = (item.ttsMessage || "").trim() || "메시지 없음";
         const stoCd = (item.alertStoCd || "-").trim();
         const sirenCd = (item.alertSirenCd || "-").trim();
 
-        const statusClass = isSuccess ? "status-ok" : "status-fail";
-        const priorityClass = priorityText.toLowerCase();
-
-        // 고유 ID (아코디언용)
+        const priorityClass = priorityToKey(item.alertPriority);
         const accId = `bcm_acc_${item.id}`;
 
         card.innerHTML = `
-    <div class="bcm-header" style="margin-bottom: 12px;">
-        <div class="bcm-title-wrap">
-            <div class="bcm-icon ${isSuccess ? 'ok' : 'fail'}">
-                <i class="bi bi-broadcast-pin"></i>
-            </div>
-            <div class="bcm-title-info">
-                <h4 class="bcm-title">${esc(item.disasterCode)} · ${esc(kindText)}</h4>
-                <span class="bcm-time"><i class="bi bi-clock"></i> ${esc(item.time)}</span>
-            </div>
-        </div>
-        <div class="bcm-status-badge ${statusClass}">
-            ${isSuccess ? '<i class="bi bi-check-circle-fill"></i>' : '<i class="bi bi-exclamation-triangle-fill"></i>'}
-            ${esc(statusText)}
-        </div>
-    </div>
-
-    <!-- 컴팩트하게 정리된 기본 정보 영역 -->
-    <div class="bcm-meta-compact">
-        <span class="bcm-compact-val"><i class="bi bi-hdd-network"></i> ${esc(item.deviceId)}</span>
-        <span class="bcm-compact-val priority-${priorityClass}">${esc(priorityText)}</span>
-        <span class="bcm-compact-val">${esc(modeText)}</span>
-        <span class="bcm-compact-val"><i class="bi bi-diagram-3"></i> 범위: ${esc(item.alertRange ?? "-")}</span>
-    </div>
-
-    <!-- 아코디언 영역 (상세) -->
-    <div class="bcm-inline-accordion" id="${accId}_parent">
-        <button class="bcm-inline-acc-btn collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#${accId}_body" aria-expanded="false" aria-controls="${accId}_body">
-            상세 정보 보기 <i class="bi bi-chevron-down"></i>
-        </button>
-        
-        <div id="${accId}_body" class="collapse bcm-inline-acc-body" data-bs-parent="#${accId}_parent">
-            <!-- 부가 정보 그리드 -->
-            <div class="bcm-meta-grid" style="margin-bottom: 12px;">
-                <div class="bcm-meta-item">
-                    <span class="bcm-meta-label">CMD</span>
-                    <span class="bcm-meta-val">${esc(item.commandCode || "-")}</span>
+            <div class="bcm-header">
+                <div class="bcm-title-wrap">
+                    <div class="bcm-icon">
+                        <i class="bi bi-broadcast"></i>
+                    </div>
+                    <div class="bcm-title-info">
+                        <h4 class="bcm-title">${esc(item.disasterCode)} · ${esc(kindText)}</h4>
+                        <span class="bcm-time"><i class="bi bi-calendar3"></i> ${esc(item.time)}</span>
+                    </div>
                 </div>
-                <div class="bcm-meta-item">
-                    <span class="bcm-meta-label">STO 코드</span>
-                    <span class="bcm-meta-val">${esc(stoCd)}</span>
-                </div>
-                <div class="bcm-meta-item">
-                    <span class="bcm-meta-label">사이렌 코드</span>
-                    <span class="bcm-meta-val">${esc(sirenCd)}</span>
+                <div class="bcm-status-badge ${statusClass}">
+                    ${isSuccess ? '<i class="bi bi-check-all"></i>' : '<i class="bi bi-x-circle-fill"></i>'}
+                    ${esc(statusText)}
                 </div>
             </div>
 
-            <!-- 메시지 박스 -->
-            <div class="bcm-message-box" style="margin-top:0; padding-top:12px; border-top: 1px dashed rgba(255, 255, 255, 0.1);">
-                <div class="bcm-msg-label"><i class="bi bi-chat-square-text"></i> TTS 메시지</div>
-                <div class="bcm-msg-content">${esc(msg)}</div>
+            <div class="bcm-body-content">
+                <div class="bcm-meta-compact">
+                    <span class="bcm-compact-val"><i class="bi bi-cpu"></i> ${esc(item.deviceId)}</span>
+                    <span class="bcm-compact-val priority-${priorityClass}"><i class="bi bi-shield-exclamation"></i> ${esc(priorityText)}</span>
+                    <span class="bcm-compact-val"><i class="bi bi-activity"></i> ${esc(modeText)}</span>
+                    <span class="bcm-compact-val"><i class="bi bi-geo"></i> 범위: ${esc(item.alertRange ?? "-")}</span>
+                </div>
+
+                <div class="bcm-inline-accordion" id="${accId}_parent" style="padding: 0 20px 18px 20px;">
+                    <button class="bcm-inline-acc-btn collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#${accId}_body" aria-expanded="false" aria-controls="${accId}_body">
+                        <span>상세 내역 확인</span> <i class="bi bi-chevron-down"></i>
+                    </button>
+                    
+                    <div id="${accId}_body" class="collapse bcm-inline-acc-body" data-bs-parent="#${accId}_parent">
+                        <div class="bcm-meta-grid" style="grid-template-columns: repeat(3, 1fr); margin-top: 10px;">
+                            <div class="bcm-meta-item">
+                                <span class="bcm-meta-label">전송 명령</span>
+                                <span class="bcm-meta-val">${esc(item.commandCode || "-")}</span>
+                            </div>
+                            <div class="bcm-meta-item">
+                                <span class="bcm-meta-label">STO 코드</span>
+                                <span class="bcm-meta-val">${esc(stoCd)}</span>
+                            </div>
+                            <div class="bcm-meta-item">
+                                <span class="bcm-meta-label">사이렌 코드</span>
+                                <span class="bcm-meta-val">${esc(sirenCd)}</span>
+                            </div>
+                        </div>
+
+                        <div class="bcm-message-box" style="margin-bottom: 5px;">
+                            <div class="bcm-msg-label"><i class="bi bi-chat-right-dots"></i> TTS 방송 메시지</div>
+                            <div class="bcm-msg-content">${esc(msg)}</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
-    `;
+        `;
 
         return card;
     }

@@ -2,7 +2,7 @@
     <!--
     speaker_setting_modal.html  |  CSS: modal-common.css  |  JS: modal_speaker_setting.js
 -->
-    <div class="modal fade sp-modal" id="speaker_setting_modal" tabindex="-1" aria-hidden="true"
+    <div class="modal fade speaker-modal" id="speaker_setting_modal" tabindex="-1" aria-hidden="true"
         aria-labelledby="sp-modal-title">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
@@ -14,7 +14,16 @@
                         <div class="sp-hicon"><i class="bi bi-speaker-fill"></i></div>
                         <div>
                             <div class="sp-htitle" id="sp-modal-title">스피커 설정</div>
-                            <div class="sp-hsub">스피커를 선택하여 설정을 조회하거나 변경하세요</div>
+                            <div class="speaker-type-legend speaker-type-legend-header mt-1" aria-label="스피커 타입 안내">
+                                <span class="speaker-type-pill type-a">
+                                    <span class="speaker-type-dot"></span>
+                                    <span class="speaker-type-text">A 타입</span>
+                                </span>
+                                <span class="speaker-type-pill type-b">
+                                    <span class="speaker-type-dot"></span>
+                                    <span class="speaker-type-text">B 타입</span>
+                                </span>
+                            </div>
                         </div>
                     </div>
                     <div class="sp-header-r">
@@ -738,4 +747,3 @@
         </div>
     </div>
 </div><!-- /th:fragment -->
-

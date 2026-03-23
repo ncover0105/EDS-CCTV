@@ -414,7 +414,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 9px 10px;
+    padding: 11px 10px;
     border-radius: var(--m-radius-xs);
     cursor: pointer;
     transition: background var(--m-transition), box-shadow var(--m-transition), color var(--m-transition);
@@ -423,8 +423,53 @@
     border: none;
 }
 
+/* 스피커 타입 태그 (공통) */
+.speaker-type-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 18px;
+    padding: 0 4px;
+    font-size: 10px;
+    font-weight: 800;
+    border-radius: 4px;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    line-height: 1;
+    transition: all 180ms ease;
+}
+
+.speaker-type-tag.type-a {
+    background: rgba(245, 158, 11, .12);
+    color: #b45309;
+    border: 1px solid rgba(245, 158, 11, .25);
+}
+
+.speaker-type-tag.type-b {
+    background: rgba(59, 130, 246, .12);
+    color: #1d4ed8;
+    border: 1px solid rgba(59, 130, 246, .25);
+}
+
+.speaker-modal .speaker-item.type-a {
+    background: linear-gradient(90deg, rgba(245, 158, 11, .04) 0%, transparent 100%);
+}
+
+.speaker-modal .speaker-item.type-b {
+    background: linear-gradient(90deg, rgba(59, 130, 246, .04) 0%, transparent 100%);
+}
+
 .speaker-modal .speaker-item:hover:not(.offline) {
     background: var(--m-surface);
+}
+
+.speaker-modal .speaker-item.type-a:hover:not(.offline) {
+    background: linear-gradient(90deg, rgba(245, 158, 11, .08) 0%, var(--m-surface) 100%);
+}
+
+.speaker-modal .speaker-item.type-b:hover:not(.offline) {
+    background: linear-gradient(90deg, rgba(59, 130, 246, .08) 0%, var(--m-surface) 100%);
 }
 
 .speaker-modal .speaker-item.selected {
@@ -451,10 +496,12 @@
 
 .speaker-modal .speaker-item.type-a.selected::before {
     background: #f59e0b;
+    box-shadow: 0 0 8px rgba(245, 158, 11, .4);
 }
 
 .speaker-modal .speaker-item.type-b.selected::before {
     background: #3b82f6;
+    box-shadow: 0 0 8px rgba(59, 130, 246, .4);
 }
 
 .speaker-modal .speaker-item.offline {
@@ -530,7 +577,7 @@
 
 .speaker-modal .speaker-loc {
     font-size: 11px;
-    color: var(--m-text-muted);
+    color: var(--m-text-muted) !important;
     margin-top: 1px;
     font-family: var(--m-mono, ui-monospace, SFMono-Regular, Consolas, monospace);
     white-space: nowrap;
@@ -701,6 +748,7 @@
     color: var(--m-text-primary);
     background: var(--m-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center;
     -webkit-appearance: none;
+    appearance: none;
     outline: none;
     cursor: pointer;
     transition: border-color var(--m-transition), box-shadow var(--m-transition);
@@ -1604,8 +1652,24 @@
     border-radius: var(--r-s);
     cursor: pointer;
     position: relative;
-    transition: background var(--ease);
+    transition: background var(--ease), box-shadow var(--ease);
     margin-bottom: 2px;
+}
+
+#speaker_setting_modal .sp-item.sp-type-a {
+    background: linear-gradient(90deg, rgba(245, 166, 35, .04) 0%, transparent 100%);
+}
+
+#speaker_setting_modal .sp-item.sp-type-b {
+    background: linear-gradient(90deg, rgba(79, 142, 247, .04) 0%, transparent 100%);
+}
+
+#speaker_setting_modal .sp-item.sp-type-a:hover:not(.offline) {
+    background: linear-gradient(90deg, rgba(245, 166, 35, .08) 0%, var(--bg3) 100%);
+}
+
+#speaker_setting_modal .sp-item.sp-type-b:hover:not(.offline) {
+    background: linear-gradient(90deg, rgba(79, 142, 247, .08) 0%, var(--bg3) 100%);
 }
 
 #speaker_setting_modal .sp-item:hover {
@@ -1617,11 +1681,11 @@
 }
 
 #speaker_setting_modal .sp-item.sp-type-b.active {
-    box-shadow: inset 0 0 0 1px var(--blue-b);
+    box-shadow: inset 0 0 0 1px rgba(79, 142, 247, .45);
 }
 
 #speaker_setting_modal .sp-item.sp-type-a.active {
-    box-shadow: inset 0 0 0 1px var(--amber-a);
+    box-shadow: inset 0 0 0 1px rgba(245, 166, 35, .45);
 }
 
 #speaker_setting_modal .sp-item.active::before {
@@ -1636,10 +1700,12 @@
 
 #speaker_setting_modal .sp-item.sp-type-b.active::before {
     background: var(--blue);
+    box-shadow: 0 0 8px rgba(79, 142, 247, .4);
 }
 
 #speaker_setting_modal .sp-item.sp-type-a.active::before {
     background: var(--amber);
+    box-shadow: 0 0 8px rgba(245, 166, 35, .4);
 }
 
 #speaker_setting_modal .sp-item.offline {
@@ -1667,12 +1733,13 @@
 }
 
 #speaker_setting_modal .sp-item-name {
-    font-size: 13px;
+    font-size: 13.5px;
     font-weight: 600;
     color: var(--tx0);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    line-height: 1.2;
 }
 
 #speaker_setting_modal .sp-item-sub {
@@ -2075,6 +2142,7 @@
     background-position: right 10px center;
     padding-right: 28px;
     -webkit-appearance: none;
+    appearance: none;
     cursor: pointer;
 }
 
@@ -2818,4 +2886,3 @@ body.modal-open .ticker-bar {
         max-height: 36vh;
     }
 }
-

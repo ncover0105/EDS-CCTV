@@ -35,7 +35,7 @@
         layout:fragment="content">
         <div class="page-setting">
             <!-- Topbar -->
-            <header class="set-topbar">
+            <header class="set-topbar d-none">
                 <div class="set-topbar-content">
                     <div class="set-topbar-left">
                         <button type="button" class="set-sidebar-toggle" id="setSidebarToggle" aria-label="메뉴 열기">
@@ -49,19 +49,19 @@
                 </div>
                 <!-- Mobile Tab Nav -->
                 <nav class="set-tab-nav" aria-label="설정 탭">
-                    <button class="set-tab-item" type="button" onclick="location.href='?view=user'"
+                    <button class="set-tab-item" type="button" data-view="user"
                         th:classappend="${view == 'user'} ? 'is-active' : ''"><i class="bi bi-people-fill"></i>
                         사용자</button>
-                    <button class="set-tab-item" type="button" onclick="location.href='?view=ment'"
+                    <button class="set-tab-item" type="button" data-view="ment"
                         th:classappend="${view == 'ment'} ? 'is-active' : ''"><i class="bi bi-chat-left-text-fill"></i>
                         문안</button>
-                    <button class="set-tab-item" type="button" onclick="location.href='?view=sms'"
+                    <button class="set-tab-item" type="button" data-view="sms"
                         th:classappend="${view == 'sms'} ? 'is-active' : ''"><i class="bi bi-envelope-fill"></i>
                         SMS</button>
-                    <button class="set-tab-item" type="button" onclick="location.href='?view=schedule'"
+                    <button class="set-tab-item" type="button" data-view="schedule"
                         th:classappend="${view == 'schedule'} ? 'is-active' : ''"><i
                             class="bi bi-calendar-check-fill"></i> 스케줄</button>
-                    <button class="set-tab-item" type="button" onclick="location.href='?view=set'"
+                    <button class="set-tab-item" type="button" data-view="set"
                         th:classappend="${view == 'set'} ? 'is-active' : ''"><i class="bi bi-gear-fill"></i>
                         시스템</button>
                 </nav>
@@ -69,32 +69,34 @@
 
             <div class="set-layout">
                 <!-- Sidebar -->
-                <aside class="set-sidebar" id="setSidebar" aria-label="설정 메뉴">
+                <aside class="set-sidebar" id="setSidebar" aria-label="설정 메뉴"
+                    th:classappend="${param.sidebar != null and param.sidebar[0] == 'collapsed'} ? ' is-collapsed' : ''">
                     <div class="set-sidebar-content">
                         <nav class="set-nav">
-                            <button class="set-nav-item" type="button" onclick="location.href='?view=user'"
+                            <button class="set-nav-item" type="button" data-view="user"
                                 th:classappend="${view == 'user'} ? 'is-active' : ''">
                                 <i class="bi bi-people-fill"></i><span class="set-nav-label">사용자 관리</span>
                             </button>
-                            <button class="set-nav-item" type="button" onclick="location.href='?view=ment'"
+                            <button class="set-nav-item" type="button" data-view="ment"
                                 th:classappend="${view == 'ment'} ? 'is-active' : ''">
                                 <i class="bi bi-chat-left-text-fill"></i><span class="set-nav-label">문안 관리</span>
                             </button>
-                            <button class="set-nav-item" type="button" onclick="location.href='?view=sms'"
+                            <button class="set-nav-item" type="button" data-view="sms"
                                 th:classappend="${view == 'sms'} ? 'is-active' : ''">
                                 <i class="bi bi-envelope-fill"></i><span class="set-nav-label">SMS 관리</span>
                             </button>
-                            <button class="set-nav-item" type="button" onclick="location.href='?view=schedule'"
+                            <button class="set-nav-item" type="button" data-view="schedule"
                                 th:classappend="${view == 'schedule'} ? 'is-active' : ''">
                                 <i class="bi bi-calendar-check-fill"></i><span class="set-nav-label">스케줄 관리</span>
                             </button>
-                            <button class="set-nav-item" type="button" onclick="location.href='?view=set'"
+                            <button class="set-nav-item" type="button" data-view="set"
                                 th:classappend="${view == 'set'} ? 'is-active' : ''">
                                 <i class="bi bi-gear-fill"></i><span class="set-nav-label">시스템 설정</span>
                             </button>
                         </nav>
                         <div class="set-sidebar-footer">
-                            <div class="set-nav-toggle-hint" id="setSidebarCollapse" role="button" tabindex="0">
+                            <div class="set-nav-toggle-hint" id="setSidebarCollapse" role="button" tabindex="0"
+                                aria-label="사이드바 접기/펼치기">
                                 <i class="bi bi-chevron-left"></i><span class="set-nav-label">접기</span>
                             </div>
                         </div>
@@ -961,29 +963,7 @@
                 </main>
             </div>
             <!-- 모바일 오버레이 -->
-            <!-- <div class="set-overlay" id="setOverlay"></div>
-            <script>
-                document.addEventListener("DOMContentLoaded", () => {
-                    const sidebar = document.getElementById('setSidebar');
-                    const overlay = document.getElementById('setOverlay');
-                    const toggleBtn = document.getElementById('setSidebarToggle');
-                    const collapseBtn = document.getElementById('setSidebarCollapse');
-
-                    function toggleMobile() {
-                        if (sidebar) sidebar.classList.toggle('is-open');
-                        if (overlay) overlay.classList.toggle('is-active');
-                        document.body.classList.toggle('set-no-scroll');
-                    }
-
-                    if (toggleBtn) toggleBtn.addEventListener('click', toggleMobile);
-                    if (overlay) overlay.addEventListener('click', toggleMobile);
-                    if (collapseBtn) {
-                        collapseBtn.addEventListener('click', () => {
-                            if (sidebar) sidebar.classList.toggle('is-collapsed');
-                        });
-                    }
-                });
-            </script> -->
+            <div class="set-overlay" id="setOverlay"></div>
         </div>
     </div>
 </body>

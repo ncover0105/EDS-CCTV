@@ -2,6 +2,74 @@
 (function () {
     'use strict';
 
+    function initSidebarToggle() {
+        const sidebar = document.getElementById('sitSidebar');
+        const overlay = document.getElementById('sitOverlay');
+        const toggleBtn = document.getElementById('sitSidebarToggle');
+        const collapseBtn = document.getElementById('sitSidebarCollapse');
+
+        function openMobile() {
+            if (sidebar) sidebar.classList.add('is-open');
+            if (overlay) overlay.classList.add('is-active');
+            document.body.classList.add('sit-no-scroll');
+        }
+
+        function closeMobile() {
+            if (sidebar) sidebar.classList.remove('is-open');
+            if (overlay) overlay.classList.remove('is-active');
+            document.body.classList.remove('sit-no-scroll');
+        }
+
+        function toggleMobile(e) {
+            if (e) e.preventDefault();
+            if (sidebar && sidebar.classList.contains('is-open')) {
+                closeMobile();
+            } else {
+                openMobile();
+            }
+        }
+
+        if (toggleBtn) toggleBtn.addEventListener('click', toggleMobile);
+        if (overlay) overlay.addEventListener('click', closeMobile);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeMobile();
+        });
+        if (collapseBtn) {
+            const handleCollapse = (e) => {
+                e.preventDefault();
+                if (sidebar) sidebar.classList.toggle('is-collapsed');
+            };
+            collapseBtn.addEventListener('click', handleCollapse);
+            collapseBtn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') handleCollapse(e);
+            });
+        }
+    }
+
+    function initViewNavigation() {
+        const sidebar = document.getElementById('sitSidebar');
+        const buttons = document.querySelectorAll('.sit-nav-item[data-view], .sit-tab-item[data-view]');
+
+        function navigateToView(view) {
+            if (!view) return;
+            const url = new URL(window.location.href);
+            url.searchParams.set('view', view);
+            if (sidebar && sidebar.classList.contains('is-collapsed')) {
+                url.searchParams.set('sidebar', 'collapsed');
+            } else {
+                url.searchParams.delete('sidebar');
+            }
+            window.location.href = url.toString();
+        }
+
+        buttons.forEach((button) => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                navigateToView(button.dataset.view);
+            });
+        });
+    }
+
     function pad2(n) {
         return String(n).padStart(2, '0');
     }
@@ -63,4 +131,9 @@
         safeRenderPagination,
         safeGetEmptyRowsHTML,
     };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initSidebarToggle();
+        initViewNavigation();
+    });
 })();

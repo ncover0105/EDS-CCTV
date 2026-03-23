@@ -67,8 +67,10 @@ public class SpkWebAlertLogEntity {
     @Column(name = "alert_siren_cd", nullable = false, length = 16)
     private String alertSirenCd;
 
-    @Column(name = "status", nullable = false, length = 8)
-    private String status; // SENT, FAILED
+    // @Column(name = "status", nullable = false, length = 8)
+    // private String status;
+    @Column(name = "status", nullable = false)
+    private Byte status; // 0: 실패, 1: 성공
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

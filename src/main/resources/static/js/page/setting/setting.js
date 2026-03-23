@@ -10,6 +10,9 @@
   };
 
   document.addEventListener('DOMContentLoaded', () => {
+    initSidebarToggle();
+    initViewNavigation();
+
     const view = (typeof window.currentView === 'string' && window.currentView)
       ? window.currentView
       : (typeof window.currentView === 'undefined' ? (typeof currentView === 'string' ? currentView : 'none') : 'none');
@@ -59,6 +62,74 @@
 
   // 공용 유틸
   window.SettingUtil = { safeArray, escapeHtml };
+
+  function initSidebarToggle() {
+    const sidebar = document.getElementById('setSidebar');
+    const overlay = document.getElementById('setOverlay');
+    const toggleBtn = document.getElementById('setSidebarToggle');
+    const collapseBtn = document.getElementById('setSidebarCollapse');
+
+    function openMobile() {
+      if (sidebar) sidebar.classList.add('is-open');
+      if (overlay) overlay.classList.add('is-active');
+      document.body.classList.add('set-no-scroll');
+    }
+
+    function closeMobile() {
+      if (sidebar) sidebar.classList.remove('is-open');
+      if (overlay) overlay.classList.remove('is-active');
+      document.body.classList.remove('set-no-scroll');
+    }
+
+    function toggleMobile(e) {
+      if (e) e.preventDefault();
+      if (sidebar && sidebar.classList.contains('is-open')) {
+        closeMobile();
+      } else {
+        openMobile();
+      }
+    }
+
+    if (toggleBtn) toggleBtn.addEventListener('click', toggleMobile);
+    if (overlay) overlay.addEventListener('click', closeMobile);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeMobile();
+    });
+    if (collapseBtn) {
+      const handleCollapse = (e) => {
+        e.preventDefault();
+        if (sidebar) sidebar.classList.toggle('is-collapsed');
+      };
+      collapseBtn.addEventListener('click', handleCollapse);
+      collapseBtn.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') handleCollapse(e);
+      });
+    }
+  }
+
+  function initViewNavigation() {
+    const sidebar = document.getElementById('setSidebar');
+    const buttons = document.querySelectorAll('.set-nav-item[data-view], .set-tab-item[data-view]');
+
+    function navigateToView(view) {
+      if (!view) return;
+      const url = new URL(window.location.href);
+      url.searchParams.set('view', view);
+      if (sidebar && sidebar.classList.contains('is-collapsed')) {
+        url.searchParams.set('sidebar', 'collapsed');
+      } else {
+        url.searchParams.delete('sidebar');
+      }
+      window.location.href = url.toString();
+    }
+
+    buttons.forEach((button) => {
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
+        navigateToView(button.dataset.view);
+      });
+    });
+  }
 
   function safeArray(v) { return Array.isArray(v) ? v : []; }
 

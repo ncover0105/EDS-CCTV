@@ -126,8 +126,13 @@
                                                 <option value="">직접 입력</option>
                                             </select>
                                         </div>
-                                        <textarea class="eq-input" id="customMessageText"
-                                            placeholder="전송할 내용을 입력하세요..."></textarea>
+
+                                        <textarea class="eq-input" id="customMessageText" maxlength="1000"
+                                            placeholder="전송할 내용을 입력하세요."></textarea>
+
+                                        <div class="bc-text-counter">
+                                            <span id="customMessageCount">0</span> / 1000
+                                        </div>
                                     </div>
 
                                     <div class="form-item full-width" id="bc_disaster_area">
@@ -175,44 +180,67 @@
                         </div>
                     </header>
 
-                    <div class="panel-body">
-                        <div class="bc-execution-controls">
-                            <div class="bc-action-cluster bc-action-cluster-secondary" role="group" aria-label="방송 제어">
-                                <button class="bc-control-btn bc-control-btn-primary" id="broadcastStartBtn"
-                                    onclick="startBroadcast()">
-                                    <i class="bi bi-play-circle-fill"></i>
-                                    방송 시작
-                                </button>
-                                <button class="bc-control-btn bc-control-btn-danger" id="broadcastStopBtn"
-                                    onclick="stopBroadcast()">
-                                    <i class="bi bi-stop-circle-fill"></i>
-                                    방송 종료
-                                </button>
-                            </div>
-                            <div class="bc-action-cluster bc-action-cluster-secondary" role="group" aria-label="BGM 제어">
-                                <button class="bc-control-btn bc-control-btn-bgm bc-control-btn-bgm-on"
-                                    id="broadcastBgmOnBtn" onclick="startBroadcastBgm()">
-                                    <i class="bi bi-play-circle-fill"></i>
-                                    BGM On
-                                </button>
-                                <button class="bc-control-btn bc-control-btn-bgm bc-control-btn-bgm-off"
-                                    id="broadcastBgmOffBtn" onclick="stopBroadcastBgm()">
-                                    <i class="bi bi-stop-circle-fill"></i>
-                                    BGM Off
-                                </button>
-                            </div>
-                        </div>
+                    <div class="panel-body bc-execution-panel-body">
+                        <div class="bc-execution-layout">
+                            <aside class="bc-control-side">
+                                <!-- BGM Mini Controls (Top) -->
+                                <div class="bc-control-section">
+                                    <div class="bc-section-label-row">
+                                        <div class="bc-section-label">BGM 제어</div>
+                                        <div class="bc-bgm-status" id="broadcastBgmStatus">
+                                            <span class="status-dot"></span>
+                                            <span class="status-text">OFF</span>
+                                        </div>
+                                    </div>
+                                    <div class="bc-bgm-mini-row">
+                                        <button class="bc-mini-btn bc-bgm-on" id="broadcastBgmOnBtn" onclick="startBroadcastBgm()">
+                                            <i class="bi bi-play-fill"></i> ON
+                                        </button>
+                                        <button class="bc-mini-btn bc-bgm-off" id="broadcastBgmOffBtn" onclick="stopBroadcastBgm()">
+                                            <i class="bi bi-stop-fill"></i> OFF
+                                        </button>
+                                    </div>
+                                </div>
 
-                        <div class="bc-log-area">
-                            <div class="bc-log-title">방송 기록</div>
-                            <div class="bc-log-section" id="broadcastLogSection">
-                                <div class="bc-log-scroll">
+                                <!-- Broadcast Main Controls (Stacked) -->
+                                <div class="bc-control-section">
+                                    <div class="bc-section-label">방송 실행</div>
+                                    <div class="bc-main-btn-stack">
+                                        <button class="bc-exec-btn bc-exec-start" id="broadcastStartBtn" onclick="startBroadcast()">
+                                            <i class="bi bi-play-circle-fill"></i> 방송 시작
+                                        </button>
+                                        <button class="bc-exec-btn bc-exec-stop" id="broadcastStopBtn" onclick="stopBroadcast()">
+                                            <i class="bi bi-stop-circle-fill"></i> 방송 종료
+                                        </button>
+                                    </div>
+                                </div>
+                            </aside>
+
+                            <div class="bc-log-main">
+                                <div class="bc-log-header">
+                                    <div class="bc-log-title">방송 이력 현황</div>
+                                </div>
+                                <div class="bc-log-section" id="broadcastLogSection">
                                     <div id="broadcastLogEmpty" class="bc-empty-state bc-log-empty">
                                         <i class="bi bi-journal-x bc-empty-state-icon"></i>
-                                        <p class="bc-empty-state-text">표시할 방송 로그가 없습니다</p>
-                                        <p class="bc-empty-state-subtext">오늘 생성된 방송 이력이 있으면 이 영역에 표시됩니다.</p>
+                                        <p class="bc-empty-state-text">오늘의 방송 로그가 없습니다</p>
                                     </div>
-                                    <div id="broadcastLogPanel"></div>
+                                    <div class="log-table-container d-none">
+                                        <table class="data-table log-table">
+                                            <thead>
+                                                <tr>
+                                                    <th class="col-time">발령 시간</th>
+                                                    <th class="col-status">상태</th>
+                                                    <th class="col-device">장비 ID</th>
+                                                    <th class="col-kind">방송 구분</th>
+                                                    <th class="col-msg">발령 내용</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="broadcastLogPanel">
+                                                <!-- 로그 행 동적 추가 -->
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -222,8 +250,8 @@
         </div>
     </div>
 </div>
-</section>
+<!-- </section>
 </div>
 </div>
 </div>
-</div>
+</div> -->

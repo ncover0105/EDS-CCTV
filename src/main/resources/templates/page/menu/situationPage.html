@@ -24,7 +24,7 @@
         layout:fragment="content">
         <div class="page-situation">
             <!-- Topbar -->
-            <header class="sit-topbar">
+            <header class="sit-topbar d-none">
                 <div class="sit-topbar-content">
                     <div class="sit-topbar-left">
                         <button type="button" class="sit-sidebar-toggle d-none" id="sitSidebarToggle"
@@ -39,15 +39,15 @@
                 </div>
                 <!-- Mobile Tab Nav (1024px 이하) -->
                 <nav class="sit-tab-nav" aria-label="이력관리 탭">
-                    <button class="sit-tab-item" type="button" onclick="location.href='?view=situation'"
+                    <button class="sit-tab-item" type="button" data-view="situation"
                         th:classappend="${view == 'situation'} ? 'is-active' : ''">
                         <i class="bi bi-exclamation-triangle-fill"></i> 상황 발생
                     </button>
-                    <button class="sit-tab-item" type="button" onclick="location.href='?view=broadcast'"
+                    <button class="sit-tab-item" type="button" data-view="broadcast"
                         th:classappend="${view == 'broadcast'} ? 'is-active' : ''">
                         <i class="bi bi-broadcast"></i> 발령 이력
                     </button>
-                    <button class="sit-tab-item" type="button" onclick="location.href='?view=special'"
+                    <button class="sit-tab-item" type="button" data-view="special"
                         th:classappend="${view == 'special'} ? 'is-active' : ''">
                         <i class="bi bi-cloud-lightning-rain-fill"></i> 특보 이력
                     </button>
@@ -56,20 +56,21 @@
 
             <div class="sit-layout">
                 <!-- Sidebar -->
-                <aside class="sit-sidebar" id="sitSidebar" aria-label="상황실 메뉴">
+                <aside class="sit-sidebar" id="sitSidebar" aria-label="상황실 메뉴"
+                    th:classappend="${param.sidebar != null and param.sidebar[0] == 'collapsed'} ? ' is-collapsed' : ''">
                     <div class="sit-sidebar-content">
                         <nav class="sit-nav">
-                            <button class="sit-nav-item" type="button" onclick="location.href='?view=situation'"
+                            <button class="sit-nav-item" type="button" data-view="situation"
                                 th:classappend="${view == 'situation'} ? 'is-active' : ''">
                                 <i class="bi bi-exclamation-triangle-fill"></i>
                                 <span class="sit-nav-label">상황 발생 이력</span>
                             </button>
-                            <button class="sit-nav-item" type="button" onclick="location.href='?view=broadcast'"
+                            <button class="sit-nav-item" type="button" data-view="broadcast"
                                 th:classappend="${view == 'broadcast'} ? 'is-active' : ''">
                                 <i class="bi bi-broadcast"></i>
                                 <span class="sit-nav-label">발령 이력</span>
                             </button>
-                            <button class="sit-nav-item" type="button" onclick="location.href='?view=special'"
+                            <button class="sit-nav-item" type="button" data-view="special"
                                 th:classappend="${view == 'special'} ? 'is-active' : ''">
                                 <i class="bi bi-cloud-lightning-rain-fill"></i>
                                 <span class="sit-nav-label">특보 이력</span>
@@ -388,28 +389,6 @@
             <div class="sit-overlay" id="sitOverlay"></div>
         </div>
 
-        <script>
-            document.addEventListener("DOMContentLoaded", () => {
-                const sidebar = document.getElementById('sitSidebar');
-                const overlay = document.getElementById('sitOverlay');
-                const toggleBtn = document.getElementById('sitSidebarToggle');
-                const collapseBtn = document.getElementById('sitSidebarCollapse');
-
-                function toggleMobile() {
-                    if (sidebar) sidebar.classList.toggle('is-open');
-                    if (overlay) overlay.classList.toggle('is-active');
-                    document.body.classList.toggle('sit-no-scroll');
-                }
-
-                if (toggleBtn) toggleBtn.addEventListener('click', toggleMobile);
-                if (overlay) overlay.addEventListener('click', toggleMobile);
-                if (collapseBtn) {
-                    collapseBtn.addEventListener('click', () => {
-                        if (sidebar) sidebar.classList.toggle('is-collapsed');
-                    });
-                }
-            });
-        </script>
     </div>
 </body>
 

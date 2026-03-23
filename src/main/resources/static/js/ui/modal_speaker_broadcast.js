@@ -371,11 +371,12 @@ const BroadcastModal = {
                     </svg>
                 </div>
                 <div class="speaker-info">
-                    <div class="speaker-name">${name}</div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="speaker-type-tag ${typeToken}">${type}</span>
+                        <div class="speaker-name">${name}</div>
+                    </div>
                     <div class="speaker-loc">${location || speakerId}</div>
                 </div>
-                <div class="status-dot"
-                     title="${isOffline ? '오프라인' : '온라인'}"></div>
                 <i class="bi bi-chevron-right speaker-arrow" aria-hidden="true"></i>
             </div>
         `);
@@ -483,6 +484,7 @@ const BroadcastModal = {
         const isTTS = broadcastType === "1";
         const disasterCode = normalizeText(payloadUI?.disasterCode);
         const ttsMessage = normalizeText(payloadUI?.tts);
+        console.log('🚨 방송 전 TTS 확인:', { ttsMessage, length: ttsMessage.length });
         const prefix = payloadUI?.speakerIds?.length > 0
             ? (getActiveCards()[0]?.dataset.type?.toUpperCase().includes("B") ? "b_bc" : "a_bc")
             : null;
@@ -601,11 +603,27 @@ const BroadcastModal = {
         });
     },
 
-    buildServerPayload(deviceId, ui = this.getPayloadForPreview()) {
+    buildServerPayload(deviceIds, ui = this.getPayloadForPreview()) {
+
+        const normalizedIds = Array.isArray(deviceIds)
+            ? [...new Set(deviceIds.map(id => String(id ?? "").trim()).filter(Boolean))]
+            : [String(deviceIds ?? "").trim()].filter(Boolean);
 
         // 서버가 요구하는 키로 변환
+        // 기존 단건 전송:
+        // return {
+        //     deviceId: String(deviceId),
+        //     alertMode: String(ui.mode ?? ""),
+        //     alertKind: String(ui.broadcastType ?? ""),
+        //     alertRange: String(ui.scope ?? ""),
+        //     alertPriority: String(ui.priority ?? ""),
+        //     disasterCode: String(ui.disasterCode ?? ""),
+        //     ttsMessage: String(ui.tts ?? "")
+        // };
         return {
-            deviceId: String(deviceId),
+            // 단건 호환 필드도 함께 유지
+            deviceId: normalizedIds[0] ?? "",
+            deviceIds: normalizedIds,
             alertMode: String(ui.mode ?? ""),
             alertKind: String(ui.broadcastType ?? ""),
             alertRange: String(ui.scope ?? ""),
@@ -812,12 +830,17 @@ const BroadcastModal = {
             setActionStatus(activePrefix, "broadcast", "");
             setSendButtonState(btn, true, selectedIds.length);
             try {
-                for (const id of selectedIds) {
-                    const serverPayload = this.buildServerPayload(id, payloadUI);
+                // 기존 단건 순차 전송:
+                // for (const id of selectedIds) {
+                //     const serverPayload = this.buildServerPayload(id, payloadUI);
+                //
+                //     console.log("[BC SEND]", serverPayload);
+                //     await BroadcastApi.send(serverPayload); // 개별 전송 + await
+                // }
+                const serverPayload = this.buildServerPayload(selectedIds, payloadUI);
 
-                    console.log("[BC SEND]", serverPayload);
-                    await BroadcastApi.send(serverPayload); // ✅ 개별 전송 + await
-                }
+                console.log("[BC SEND]", serverPayload);
+                await BroadcastApi.send(serverPayload);
 
                 setActionStatus(activePrefix, "broadcast", `발령 전송 완료 (${selectedIds.length}대)`, "success");
             } catch (err) {

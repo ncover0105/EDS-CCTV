@@ -44,7 +44,6 @@ public class BtypeCommandController {
     public ResponseEntity<Map<String, Object>> action(
             @RequestBody BTypeActionRequest req,
             HttpServletRequest httpReq) {
-        // 기본 유효성(서비스에서도 체크하지만, 컨트롤러에서 1차로 막으면 응답이 깔끔)
         if (req == null || req.getSpeakerIds() == null || req.getSpeakerIds().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of(
                     "ok", false,

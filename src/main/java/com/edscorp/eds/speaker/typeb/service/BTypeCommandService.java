@@ -96,7 +96,7 @@ public class BTypeCommandService {
             HttpStatusCode status = e.getStatusCode();
             String body = e.getResponseBodyAsString();
 
-            log.error("[B-Type ERROR] 데몬 서버 오류 발생!");
+            log.error("[B-Type ERROR] 데몬 서버 오류");
             log.error("[B-Type ERROR] status={} body={}", status, body);
 
             // 필요한 경우 상위 서비스/컨트롤러로 그대로 던지기
@@ -209,7 +209,8 @@ public class BTypeCommandService {
 
             if (disaster.getDstSirenCode() != null && disaster.getDstCode() != null) {
                 String dstSirenCode = disaster.getDstSirenCode();
-                String dstStoCd = disaster.getDstCode();
+                // String dstStoCd = disaster.getDstCode();
+                String dstStoCd = disaster.getDstStoCode();
                 String dstStoMsg = disaster.getDstStoreMsg();
 
                 if ("000".equals(dstStoCd)) {
@@ -272,9 +273,9 @@ public class BTypeCommandService {
             // 실제 전송
             sendToPlayRadio(deviceId, clientIp, commandCode, argumentStr);
 
-            alertLog.setStatus("SENT");
+            alertLog.setStatus((byte) 1);
         } catch (Exception e) {
-            alertLog.setStatus("FAILED");
+            alertLog.setStatus((byte) 0);
             throw e;
         } finally {
             try {
@@ -322,6 +323,8 @@ public class BTypeCommandService {
 
         String action = req.getAction();
         String extraParam = req.getExtraParam() == null ? "" : req.getExtraParam();
+
+        // Local IP
         String clientIp = (httpReq != null && httpReq.getRemoteAddr() != null)
                 ? httpReq.getRemoteAddr()
                 : "127.0.0.1";
@@ -482,12 +485,12 @@ public class BTypeCommandService {
             try {
                 sendToPlayRadio(speakerId, clientIp, commandCode, argument);
                 if (actionLog != null) {
-                    actionLog.setStatus("SENT");
+                    actionLog.setStatus((byte) 1);
                 }
             } catch (Exception e) {
                 failedSpeakerIds.add(speakerId);
                 if (actionLog != null) {
-                    actionLog.setStatus("FAILED");
+                    actionLog.setStatus((byte) 0);
                 }
                 log.error("[BTYPE ACTION] speakerId={} action={} 전송 실패", speakerId, action, e);
             } finally {

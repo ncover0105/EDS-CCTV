@@ -21,7 +21,6 @@ import com.edscorp.eds.speaker.typeb.dto.SpeakerRowDto;
 import com.edscorp.eds.speaker.typeb.dto.SpkAlertDispatchRequest;
 import com.edscorp.eds.speaker.typeb.service.BTypeSpkService;
 import com.edscorp.eds.speaker.typeb.service.SpkConfigService;
-import com.edscorp.eds.speaker.typeb.service.SpkDisasterService;
 import com.edscorp.eds.speaker.typeb.service.SpkSettingService;
 import com.edscorp.eds.speaker.typeb.service.SpkSystemConfigService;
 import com.edscorp.eds.speaker.typeb.service.SpkTestResultService;
@@ -42,7 +41,6 @@ public class BtypeQueryController {
     private final SpkTestResultService spkTestResultService;
 
     // ===================== 상태 조회 =====================
-
     // B 타입 스피커 상태 조회
     @GetMapping("/status/{speakerKey}")
     public ResponseEntity<SpkStatusResponse> getBtypeSpkStauts(
@@ -59,7 +57,6 @@ public class BtypeQueryController {
     }
 
     // ===================== 발령 이력 =====================
-
     // B 타입 발령 이력 조회 - alertKey 기준
     @GetMapping("/dispatch/alert/{alertKey}")
     public ResponseEntity<List<SpkAlertDispatch>> getDispatchHistoryByAlertKey(@PathVariable Integer alertKey) {
@@ -86,7 +83,6 @@ public class BtypeQueryController {
     }
 
     // ===================== 발령 결과 이력 =====================
-
     // B 타입 발령 결과 조회 - 스피커 기준
     @GetMapping("/history/speaker/{speakerKey}")
     public ResponseEntity<List<SpkAlertHistory>> getBySpeakerKey(
@@ -102,7 +98,6 @@ public class BtypeQueryController {
     }
 
     // ===================== 스피커 config 조회 =====================
-
     // 전체 조회
     // GET /api/btype/config
     @GetMapping("/config/list")
@@ -163,7 +158,6 @@ public class BtypeQueryController {
     }
 
     // ===================== 시스템 설정 =====================
-
     // 전체 설정 조회
     @GetMapping("/system/config")
     public ResponseEntity<List<SpkSystemConfigEntity>> getAllSystemConfigs() {
@@ -192,7 +186,6 @@ public class BtypeQueryController {
     }
 
     // ===================== 스피커 시험 결과 조회 =====================
-
     // 스피커별 시험 결과 조회
     @GetMapping("/test-result/{speakerKey}")
     public ResponseEntity<List<SpkTestResultEntity>> getTestResults(
