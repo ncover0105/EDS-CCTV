@@ -2,6 +2,7 @@ package com.edscorp.eds.cctv.service;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ public class CctvStreamService {
 
     private final ConcurrentHashMap<Integer, Object> restartLocks = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, Long> lastRestartAt = new ConcurrentHashMap<>();
+    private final AtomicBoolean restartAllRunning = new AtomicBoolean(false);
     private static final long RESTART_COOLDOWN_MS = 30_000;
 
     // ===================== 유틸 =====================
@@ -215,9 +217,17 @@ public class CctvStreamService {
 
     @Transactional
     public void restartAllStreams(boolean force) {
-        List<CctvEntity> all = cctvRepository.findAll();
-        for (CctvEntity e : all) {
-            restart(e.getLocationCode(), e.getCctvCode(), force);
+        if (!restartAllRunning.compareAndSet(false, true)) {
+            throw new IllegalStateException("전체 CCTV 재시작이 이미 진행 중입니다.");
+        }
+
+        try {
+            List<CctvEntity> all = cctvRepository.findAll();
+            for (CctvEntity e : all) {
+                restart(e.getLocationCode(), e.getCctvCode(), force);
+            }
+        } finally {
+            restartAllRunning.set(false);
         }
     }
 

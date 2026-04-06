@@ -20,6 +20,7 @@ import com.edscorp.eds.weather.dto.WeatherResponseDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
+import jakarta.annotation.PostConstruct;
 
 @Slf4j
 @Service
@@ -46,11 +47,21 @@ public class WeatherDataService {
     private volatile WeatherResponseDTO cachedAWSData;
     private volatile WeatherResponseDTO cachedForecastData;
 
+    private static final String[] FORECAST_BASE_TIMES = {
+            "0200", "0500", "0800", "1100", "1400", "1700", "2000", "2300"
+    };
+
+    @PostConstruct
+    public void init() {
+        refreshAWSData();
+        refreshForecastData();
+    }
+
     /**
      * 스케줄러 - 캐시 갱신
-     * AWS 관측 데이터 (2분마다)
+     * AWS 관측 데이터 (5분마다)
      */
-    @Scheduled(fixedRate = 60_000)
+    @Scheduled(fixedRate = 300_000)
     public void refreshAWSData() {
         String apiUrl = CURRENT_WEATHER_URL +
                 "?authKey=" + APIHUB_KEY +
@@ -65,20 +76,20 @@ public class WeatherDataService {
                 .filter(this::isValidAws)
                 .doOnNext(data -> {
                     cachedAWSData = data;
-                    log.info("AWS 날씨 데이터 캐시 갱신 완료");
+                    // log.info("AWS 날씨 데이터 캐시 갱신 완료");
                 })
                 .doOnError(e -> log.error("AWS 날씨 데이터 갱신 실패", e))
                 .onErrorResume(e -> Mono.empty())
                 .subscribe();
     }
 
-    /** 예보 데이터 (1시간마다) */
-    @Scheduled(fixedRate = 60_000)
+    /** 예보 데이터 (30분마다) */
+    @Scheduled(fixedRate = 1_800_000)
     public void refreshForecastData() {
         fetchForecastDataInternal()
                 .doOnNext(data -> {
                     cachedForecastData = data;
-                    log.info("예보 날씨 데이터 캐시 갱신 완료: {}", data);
+                    // log.info("예보 날씨 데이터 캐시 갱신 완료: {}", data);
                 })
                 .doOnError(e -> log.error("예보 날씨 데이터 갱신 실패", e))
                 .subscribe();
@@ -152,8 +163,9 @@ public class WeatherDataService {
     private Mono<WeatherResponseDTO> fetchForecastDataInternal() {
 
         LocalDateTime now = LocalDateTime.now();
-        String baseDate = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        String baseTime = now.getHour() >= 5 ? "0500" : "2350";
+        String[] forecastBase = resolveForecastBaseDateTime(now);
+        String baseDate = forecastBase[0];
+        String baseTime = forecastBase[1];
 
         String apiUrl = VILLAGE_FCST_URL + "?pageNo=1&numOfRows=1000&dataType=JSON" +
                 "&base_date=" + baseDate + "&base_time=" + baseTime +
@@ -173,20 +185,21 @@ public class WeatherDataService {
                             .getJSONObject("items")
                             .getJSONArray("item");
 
-                    Map<String, String> weatherDataMap = new HashMap<>();
+                    String targetDate = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
                     String targetTime = Util.getRoundedHour();
+
+                    Map<String, String> weatherDataMap = new HashMap<>();
 
                     for (int i = 0; i < jsonArray.length(); i++) {
                         JSONObject item = jsonArray.getJSONObject(i);
+                        String fcstDate = item.getString("fcstDate");
                         String fcstTime = item.getString("fcstTime");
 
-                        if (fcstTime.equals(targetTime)) {
-                            weatherDataMap.put(
-                                    item.getString("category"),
-                                    item.getString("fcstValue"));
+                        if (fcstDate.equals(targetDate) && fcstTime.equals(targetTime)) {
+                            weatherDataMap.put(item.getString("category"), item.getString("fcstValue"));
                         }
                     }
-                    log.info("예보 날씨 데이터 갱신 완료: {}", weatherDataMap);
+                    // log.info("예보 날씨 데이터 갱신 완료: {}", weatherDataMap);
 
                     String sky = weatherDataMap.get("SKY");
                     String pty = weatherDataMap.get("PTY");
@@ -194,10 +207,10 @@ public class WeatherDataService {
                     String sno = weatherDataMap.get("SNO");
                     String tmp = weatherDataMap.get("TMP");
 
-                    log.info("[Forecast] targetTime={} SKY={}, PTY={}", targetTime, sky, pty);
+                    // log.info("[Forecast] targetTime={} SKY={}, PTY={}", targetTime, sky, pty);
 
                     if (sky == null || pty == null) {
-                        log.warn("[Forecast] SKY 또는 PTY 데이터 누락 - map={}", weatherDataMap);
+                        // log.warn("[Forecast] SKY 또는 PTY 데이터 누락 - map={}", weatherDataMap);
                     }
 
                     WeatherCondition weatherCondition = WeatherCondition.fromForecast(sky, pty, pcp, sno, tmp);
@@ -212,6 +225,29 @@ public class WeatherDataService {
                     return dto;
                 })
                 .doOnError(e -> log.error("[Forecast] 처리 실패", e));
+    }
+
+    private String[] resolveForecastBaseDateTime(LocalDateTime now) {
+        LocalDateTime target = now.minusMinutes(10);
+        String currentTime = target.format(DateTimeFormatter.ofPattern("HHmm"));
+        String baseTime = FORECAST_BASE_TIMES[FORECAST_BASE_TIMES.length - 1];
+
+        for (String candidate : FORECAST_BASE_TIMES) {
+            if (candidate.compareTo(currentTime) <= 0) {
+                baseTime = candidate;
+            } else {
+                break;
+            }
+        }
+
+        if ("2300".equals(baseTime) && currentTime.compareTo("0200") < 0) {
+            target = target.minusDays(1);
+        }
+
+        return new String[] {
+                target.format(DateTimeFormatter.ofPattern("yyyyMMdd")),
+                baseTime
+        };
     }
 
     // 풍향 변환

@@ -10,18 +10,27 @@ window.CCTVLayout = (function () {
 
     let fullscreenEventsBound = false;
 
+    const reconnectTimers = {};
+
     /* ============================
      *   공통 LOG 함수
      * ============================ */
+    const DEBUG = false;
+
     function log(action, detail = "") {
-        console.log(`📌 [CCTVLayout] ${action}`, detail);
+        if (!DEBUG) return;
+        console.debug(`[CCTVLayout] ${action}`, detail);
     }
 
     /* ============================
      *   초기화
      * ============================ */
     function init(cameraList) {
-        cameras = cameraList;
+        cameras = Array.isArray(cameraList) ? cameraList.slice().sort((a, b) => {
+            const aId = Number(a?.mountpointId ?? Number.MAX_SAFE_INTEGER);
+            const bId = Number(b?.mountpointId ?? Number.MAX_SAFE_INTEGER);
+            return aId - bId;
+        }) : [];
         // renderGrid(cameras.length > 4 ? 9 : 4);
         renderGrid(4);
 
@@ -130,6 +139,11 @@ window.CCTVLayout = (function () {
         }
 
         container.appendChild(grid);
+
+        // 분할 변경으로 DOM이 재구성된 직후, 기존 video 재생 상태를 다시 반영한다.
+        getVisibleCameras().forEach(cam => {
+            syncVisibilityByMountId(cam.mountpointId);
+        });
     }
 
     function getVisibleCameras() {
@@ -225,57 +239,185 @@ window.CCTVLayout = (function () {
             video.muted = true;
             video.playsInline = true;
 
-            // ✅ 고정 키로 DOM 탐색 가능하게
+            video.setAttribute("autoplay", "");
+            video.setAttribute("muted", "");
+            video.setAttribute("playsinline", "");
+            video.setAttribute("webkit-playsinline", "");
+
+            // 고정 키로 DOM 탐색
             video.dataset.cctvCode = cam.cctvCode || "";
 
             videoCache[cam.mountpointId] = video;
         } else {
-            // ✅ 캐시 HIT에서도 보정
+            // 캐시 HIT에서도 보정
             video.dataset.cctvCode = cam.cctvCode || "";
         }
         return video;
     }
 
-    const CCTV_PLACEHOLDER_HTML = `
-    <div class="cctv-placeholder" 
-        style="
-            width: 100%; height: 100%; background: var(--bs-black);
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: bold;
-        ">
-        <div style="text-align:center;">
-            <i class="bi bi-camera-video-off"></i><br>
-            <small>연결없음</small>
+    function isCameraOnline(cam) {
+        const status = String(cam?.status ?? "").toUpperCase();
+        return status === "1" || status === "01" || status === "Y";
+    }
+
+    function getUiStreamState(cam) {
+        if (!cam) return "offline";
+        if (cam.__streamUiState) return cam.__streamUiState;
+        return isCameraOnline(cam) ? "connecting" : "offline";
+    }
+
+    function getCctvState(cam) {
+        return getUiStreamState(cam);
+    }
+
+    function setPlaceholderState(placeholder, state, cam) {
+        if (!placeholder) return;
+        placeholder.dataset.cctvState = state;
+        placeholder.innerHTML = getCctvPlaceholderInnerHtml(
+            state,
+            cam?.name || cam?.cctvCode || "CAM"
+        );
+    }
+
+    function getCctvPlaceholderInnerHtml(state, camId = "CAM 01") {
+        const iconMap = {
+            "no-signal": `
+            <svg width="46" height="46" viewBox="0 0 48 48" fill="none">
+              <rect x="4" y="8" width="40" height="28" rx="3" stroke="#F5C842" stroke-width="2.5"/>
+              <line x1="16" y1="36" x2="12" y2="44" stroke="#F5C842" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="32" y1="36" x2="36" y2="44" stroke="#F5C842" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="10" y1="44" x2="38" y2="44" stroke="#F5C842" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="8" y1="16" x2="40" y2="16" stroke="#F5C842" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.35"/>
+              <line x1="8" y1="22" x2="40" y2="22" stroke="#F5C842" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.35"/>
+              <line x1="8" y1="28" x2="40" y2="28" stroke="#F5C842" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.35"/>
+            </svg>`,
+            "disconnected": `
+            <svg width="46" height="46" viewBox="0 0 48 48" fill="none">
+              <circle cx="24" cy="20" r="9" stroke="#E05C5C" stroke-width="2.5"/>
+              <circle cx="24" cy="20" r="3.5" fill="#E05C5C" opacity="0.25"/>
+              <line x1="6" y1="36" x2="16" y2="26" stroke="#E05C5C" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="32" y1="26" x2="42" y2="36" stroke="#E05C5C" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="36" y1="7" x2="12" y2="41" stroke="#E05C5C" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+            </svg>`,
+            "offline": `
+            <svg width="46" height="46" viewBox="0 0 48 48" fill="none">
+              <circle cx="24" cy="24" r="16" stroke="#888888" stroke-width="2.5"/>
+              <line x1="24" y1="14" x2="24" y2="26" stroke="#888888" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="24" cy="31" r="2" fill="#888888"/>
+            </svg>`,
+            "connecting": `
+            <svg width="46" height="46" viewBox="0 0 48 48" fill="none">
+              <circle cx="24" cy="24" r="16" stroke="#5BB8F5" stroke-width="2.5" stroke-dasharray="25 75" stroke-linecap="round"/>
+              <circle cx="24" cy="24" r="8" stroke="#5BB8F5" stroke-width="2" opacity="0.25"/>
+            </svg>`
+        };
+
+        const textMap = {
+            "no-signal": {
+                label: "NO SIGNAL",
+                sub: "영상 신호를 수신하지 못하고 있습니다",
+                badge: "SIGNAL LOST"
+            },
+            "disconnected": {
+                label: "CAMERA DISCONNECTED",
+                sub: "카메라 연결이 끊어졌습니다",
+                badge: "SIGNAL LOST"
+            },
+            "offline": {
+                label: "DEVICE OFFLINE",
+                sub: "장치가 오프라인 상태입니다",
+                badge: "OFFLINE"
+            },
+            "connecting": {
+                label: `CONNECTING<span class="cctv-dots"></span>`,
+                sub: "카메라에 연결 중입니다",
+                badge: "CONNECTING"
+            }
+        };
+
+        const t = textMap[state] || textMap["offline"];
+
+        return `
+        <div class="cctv-scanline"></div>
+        <div class="cctv-rec">REC ●</div>
+
+        <div class="cctv-body">
+            <div class="cctv-icon">${iconMap[state] || iconMap["offline"]}</div>
+
+            <div class="cctv-text-block">
+                <p class="cctv-place-label">${t.label}</p>
+                <p class="cctv-place-sub">${t.sub}</p>
+            </div>
+
+            <div class="cctv-status-badge">
+                <div class="cctv-status-dot"></div>
+                <span class="cctv-status-text">${t.badge}</span>
+            </div>
         </div>
-    </div>
     `;
+    }
 
     function createPlaceholder(cam) {
-        log("createPlaceholder()", `placeholder-${cam.mountpointId}`);
+        const state = getCctvState(cam);
 
         const placeholder = document.createElement("div");
         placeholder.id = `placeholder-${cam.mountpointId}`;
-        placeholder.className = "cctv-placeholder";
-
+        placeholder.className = "cctv-wrap cctv-placeholder";
         placeholder.dataset.cctvCode = cam.cctvCode || "";
-
-        placeholder.style.cssText = `
-            width: 100%; height: 100%; background: var(--bs-black);
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: bold;
-        `;
-        placeholder.innerHTML = `
-            <div style="text-align:center;">
-                <i class="bi bi-camera-video-off"></i><br>
-                <small>연결없음</small>
-            </div>
-        `;
+        setPlaceholderState(placeholder, state, cam);
 
         return placeholder;
     }
+
     function emptySlotHtml() {
-        return CCTV_PLACEHOLDER_HTML;
+        return `
+        <div class="cctv-wrap cctv-placeholder" data-cctv-state="offline">
+            ${getCctvPlaceholderInnerHtml("offline", "EMPTY")}
+        </div>
+    `;
     }
+
+    // const CCTV_PLACEHOLDER_HTML = `
+    // <div class="cctv-placeholder" 
+    //     style="
+    //         width: 100%; height: 100%; background: var(--bs-black);
+    //         display: flex; align-items: center; justify-content: center;
+    //         color: white; font-weight: bold;
+    //     ">
+    //     <div style="text-align:center;">
+    //         <i class="bi bi-camera-video-off"></i><br>
+    //         <small>연결없음</small>
+    //     </div>
+    // </div>
+    // `;
+
+    // function createPlaceholder(cam) {
+    //     log("createPlaceholder()", `placeholder-${cam.mountpointId}`);
+
+    //     const placeholder = document.createElement("div");
+    //     placeholder.id = `placeholder-${cam.mountpointId}`;
+    //     placeholder.className = "cctv-placeholder";
+
+    //     placeholder.dataset.cctvCode = cam.cctvCode || "";
+
+    //     placeholder.style.cssText = `
+    //         width: 100%; height: 100%; background: var(--bs-black);
+    //         display: flex; align-items: center; justify-content: center;
+    //         color: white; font-weight: bold;
+    //     `;
+    //     placeholder.innerHTML = `
+    //         <div style="text-align:center;">
+    //             <i class="bi bi-camera-video-off"></i><br>
+    //             <small>연결없음</small>
+    //         </div>
+    //     `;
+
+    //     return placeholder;
+    // }
+
+    // function emptySlotHtml() {
+    //     return CCTV_PLACEHOLDER_HTML;
+    // }
 
     function createOverlay() {
         const div = document.createElement("div");
@@ -316,7 +458,7 @@ window.CCTVLayout = (function () {
             e.stopPropagation();
 
             if (!video.classList.contains("d-none")) {
-                // ✅ 기존 방식: 스트리밍 중인 video를 그대로 확대 (끊김 없음)
+                // 기존 방식: 스트리밍 중인 video를 그대로 확대 (끊김 없음)
                 showFullscreen(video);
             } else {
                 showConfirmModal("확인 요청", `${cam.name} 카메라에 연결된 영상이 없습니다.`);
@@ -354,8 +496,9 @@ window.CCTVLayout = (function () {
         const label = document.createElement("div");
         label.className = "cctv-label";
 
-        const statusText = cam.status === "1" ? "정상" : "오프라인";
-        const statusClass = cam.status === "1" ? "online" : "offline";
+        const online = isCameraOnline(cam);
+        const statusText = online ? "정상" : "오프라인";
+        const statusClass = online ? "online" : "offline";
 
         label.innerHTML = `
             <span class="cctv-name">${cam.name}</span>
@@ -373,12 +516,6 @@ window.CCTVLayout = (function () {
 
         if (currentLayout === 1) {
             renderGrid(1);
-
-            // 전환된 카메라 스트림 연결 안정화
-            const cam = cameras[focusedCamIndex];
-            if (window.CCTVJanus?.reconnectOne) {
-                window.CCTVJanus.reconnectOne(cameras, cam.mountpointId).catch(console.error);
-            }
         }
     }
 
@@ -486,7 +623,7 @@ window.CCTVLayout = (function () {
      *   상태 카운트
      * ============================ */
     function updateStatusCounts() {
-        const online = cameras.filter(c => c.status === "1").length;
+        const online = cameras.filter(c => isCameraOnline(c)).length;
         const offline = cameras.length - online;
 
         log("updateStatusCounts()", `online=${online}, offline=${offline}`);
@@ -504,10 +641,17 @@ window.CCTVLayout = (function () {
         const placeholder = document.getElementById(`placeholder-${mountId}`);
         if (!video || !placeholder) return;
 
-        const hasPlayed = video.dataset.hasPlayed === "1";
+        const stream = video.srcObject;
+        const hasLiveTrack = !!(stream
+            && typeof stream.getTracks === "function"
+            && stream.getTracks().some(track => track.readyState === "live"));
+        const hasPlayed = video.dataset.hasPlayed === "1" || hasLiveTrack;
+
         if (hasPlayed) {
+            video.dataset.hasPlayed = "1";
             video.classList.remove("d-none");
             placeholder.classList.add("d-none");
+            video.play().catch(() => { });
         } else {
             video.classList.add("d-none");
             placeholder.classList.remove("d-none");
@@ -516,11 +660,20 @@ window.CCTVLayout = (function () {
 
     function showPlaceholder(cam, opts = {}) {
         log("showPlaceholder()", cam?.name);
+        cam.__streamDisplayPending = false;
 
         const video = document.getElementById(`video-${cam.mountpointId}`);
         const placeholder = document.getElementById(`placeholder-${cam.mountpointId}`);
 
         if (video) {
+            if (video._watchdog) {
+                clearInterval(video._watchdog);
+                video._watchdog = null;
+            }
+            if (video._stallTimer) {
+                clearTimeout(video._stallTimer);
+                video._stallTimer = null;
+            }
             video.classList.add("d-none");
             // 다음 재연결 시 영상 스트리밍 전까지 placeholder 표시를 위한 초기화
             video.dataset.hasPlayed = "0";
@@ -530,7 +683,10 @@ window.CCTVLayout = (function () {
             }
         }
 
-        if (placeholder) placeholder.classList.remove("d-none");
+        if (placeholder) {
+            setPlaceholderState(placeholder, getCctvState(cam), cam);
+            placeholder.classList.remove("d-none");
+        }
 
         if (opts.report !== false) {
             reportStatusCam(cam, 0);
@@ -538,6 +694,12 @@ window.CCTVLayout = (function () {
     }
 
     function prepareReconnect(cam) {
+        cam.__janusConnecting = true;
+        cam.__streamUiState = "connecting";
+        const placeholder = document.getElementById(`placeholder-${cam.mountpointId}`);
+        if (placeholder) {
+            setPlaceholderState(placeholder, "connecting", cam);
+        }
         showPlaceholder(cam, { clearSrcObject: true, report: false });
     }
 
@@ -585,7 +747,7 @@ window.CCTVLayout = (function () {
         const chosenMp = (highMp && highUrl) ? highMp : defMp;
         const chosenUrl = (highMp && highUrl) ? highUrl : defUrl;
 
-        // 최종 검증: 둘 중 하나라도 없으면 스트리밍 요청 막기
+        // 둘 중 하나라도 없으면 스트리밍 요청 막기
         if (!chosenMp || !chosenUrl) {
             console.warn("[switchCamToHighAndReconnect] blocked (no mp/url)", {
                 name: cam?.name, chosenMp, chosenUrl
@@ -599,7 +761,7 @@ window.CCTVLayout = (function () {
         cam.__streamBlocked = false;
         cam.__streamUsed = (highMp && highUrl) ? "high" : "default";
 
-        // ✅ 해당 카메라만 재연결 (전체 reconnectAll 말고)
+        // 해당 카메라만 재연결 (전체 reconnectAll 말고)
         await CCTVJanus.reconnectOne(cameras, cam.mountpointId);
     }
 
@@ -608,6 +770,7 @@ window.CCTVLayout = (function () {
      * ============================ */
     function attachStreamToVideo(cam, stream) {
         log("attachStreamToVideo()", cam.name);
+        const traceStartedAt = cam?.__streamTraceStartedAt || Date.now();
 
         const videoEl =
             document.querySelector(`video[data-cctv-code="${cam.cctvCode}"]`) ||
@@ -618,7 +781,7 @@ window.CCTVLayout = (function () {
             document.getElementById(`placeholder-${cam.mountpointId}`); // fallback
 
         if (!videoEl) {
-            console.error("❌ Video element 없음:", {
+            console.error("Video element 없음:", {
                 expectedCctvCode: cam.cctvCode,
                 mountpointId: cam.mountpointId,
             });
@@ -634,33 +797,61 @@ window.CCTVLayout = (function () {
         }
 
         videoEl.srcObject = stream;
+        videoEl._traceStartedAt = traceStartedAt;
+        videoEl._traceKey = String(cam.mountpointId);
+        console.log(`[stream][${cam.mountpointId}] video srcObject 할당 tracks=${stream.getTracks().length} +${Date.now() - traceStartedAt}ms`);
 
 
         if (!videoEl.dataset.statusBound) {
             videoEl.dataset.statusBound = "1";
 
+            videoEl.addEventListener("loadedmetadata", () => {
+                const elapsed = Date.now() - (videoEl._traceStartedAt || Date.now());
+                console.log(`[stream][${videoEl._traceKey}] loadedmetadata readyState=${videoEl.readyState} +${elapsed}ms`);
+            });
+
+            videoEl.addEventListener("canplay", () => {
+                const elapsed = Date.now() - (videoEl._traceStartedAt || Date.now());
+                console.log(`[stream][${videoEl._traceKey}] canplay readyState=${videoEl.readyState} +${elapsed}ms`);
+            });
+
             videoEl.addEventListener("playing", () => {
-                log("▶️ video playing (confirmed)", cam.name);
+                log("video playing (confirmed)", cam.name);
+                const elapsed = Date.now() - (videoEl._traceStartedAt || Date.now());
+                console.log(`[stream][${videoEl._traceKey}] playing currentTime=${videoEl.currentTime} +${elapsed}ms`);
+                cam.__janusConnecting = false;
+                cam.__streamDisplayPending = false;
+                cam.__streamDisplayedAt = Date.now();
+                cam.__streamUiState = "connected";
 
                 // play 성공 때만 placeholder 제거
                 videoEl.dataset.hasPlayed = "1";
                 videoEl.classList.remove("d-none");
                 placeholder?.classList.add("d-none");
 
+                startWatchdog(cam, videoEl);
                 reportStatusCam(cam, 1);
             });
 
             const failSoft = () => {
-                // waiting/stalled는 정상 재생 중에도 잠깐 발생 가능
-                // 아직 한 번도 재생되지 않은 상태일 때만 placeholder 유지
                 if (videoEl.dataset.hasPlayed !== "1") {
-                    log("video not playable (pre-play)", cam.name);
+                    cam.__streamUiState = isCameraOnline(cam) ? "connecting" : "offline";
                     showPlaceholder(cam, { report: false });
+                    return;
+                }
+                // 재생 이력이 있는데 stalled되면 3초 후 재연결
+                if (!videoEl._stallTimer) {
+                    videoEl._stallTimer = setTimeout(() => {
+                        videoEl._stallTimer = null;
+                        console.warn(`[stalled] ${cam.name} → 자동 재연결`);
+                        scheduleReconnect(cam, String(cam.mountpointId), 5000);
+                    }, 3000);
                 }
             };
 
             const failHard = () => {
                 log("video not playable (ended/error)", cam.name);
+                cam.__streamUiState = isCameraOnline(cam) ? "disconnected" : "offline";
                 showPlaceholder(cam);
             };
 
@@ -674,6 +865,8 @@ window.CCTVLayout = (function () {
         videoEl.play()
             .then(() => {
                 log("영상 재생 성공", cam.name);
+                const elapsed = Date.now() - (videoEl._traceStartedAt || Date.now());
+                console.log(`[stream][${videoEl._traceKey}] play() resolved +${elapsed}ms`);
             }).catch(err => {
                 console.warn("자동 재생 실패:", err);
             });
@@ -682,9 +875,62 @@ window.CCTVLayout = (function () {
             .forEach(track => {
                 track.onended = () => {
                     log("track.onended", cam.name);
+                    cam.__streamUiState = isCameraOnline(cam) ? "disconnected" : "offline";
                     showPlaceholder(cam);
                 };
             });
+    }
+
+    function startWatchdog(cam, videoEl) {
+        let lastTime = -1;
+        let frozenCount = 0;
+
+        const timer = setInterval(() => {
+            // 영상이 재생 중이 아니면 watchdog 불필요
+            if (videoEl.dataset.hasPlayed !== "1") return;
+            if (videoEl.paused || videoEl.ended) return;
+
+            const current = videoEl.currentTime;
+            if (current === lastTime) {
+                frozenCount++;
+                if (frozenCount >= 3) { // 9초 연속 동결
+                    console.warn(`[Watchdog] ${cam.name} 영상 동결 감지 → 재연결`);
+                    clearInterval(timer);
+                    videoEl._watchdog = null;
+                    scheduleReconnect(cam, String(cam.mountpointId), 8000);
+                }
+            } else {
+                frozenCount = 0;
+            }
+            lastTime = current;
+        }, 3000);
+
+        // 기존 watchdog이 있으면 정리
+        if (videoEl._watchdog) clearInterval(videoEl._watchdog);
+        videoEl._watchdog = timer;
+    }
+
+    function scheduleReconnect(cam, key, delayMs = 3000) {
+        if (reconnectTimers[key]) return; // 이미 예약됨
+
+        const startedAt = cam?.__janusConnectStartedAt || 0;
+        const connectAge = Date.now() - startedAt;
+        const graceLeft = cam?.__janusConnecting ? Math.max(0, 15000 - connectAge) : 0;
+        const effectiveDelay = Math.max(delayMs, graceLeft + 1000);
+
+        console.log(`[scheduleReconnect] key=${key}, ${effectiveDelay}ms 후 재연결 예약`);
+        reconnectTimers[key] = setTimeout(async () => {
+            delete reconnectTimers[key];
+            if (!window.CCTVJanus?.reconnectOne) {
+                console.warn("[scheduleReconnect] CCTVJanus.reconnectOne 없음, 무시");
+                return;
+            }
+            try {
+                await window.CCTVJanus.reconnectOne(cameras, cam.mountpointId);
+            } catch (e) {
+                console.error("[scheduleReconnect] 실패:", key, e);
+            }
+        }, effectiveDelay);
     }
 
     /**
@@ -692,16 +938,40 @@ window.CCTVLayout = (function () {
      * 페이지 이탈 시 호출
      */
     function destroy() {
-        console.log("[CCTVLayout] destroy() 시작");
+
+        // 타이머 정리
+        for (const k in reconnectTimers) {
+            clearTimeout(reconnectTimers[k]);
+            delete reconnectTimers[k];
+        }
 
         // 모든 video 트랙 정지
         for (const mountId in videoCache) {
             const video = videoCache[mountId];
             try {
+                if (video._watchdog) {
+                    clearInterval(video._watchdog);
+                    video._watchdog = null;
+                }
+                if (video._stallTimer) {
+                    clearTimeout(video._stallTimer);
+                    video._stallTimer = null;
+                }
                 video.srcObject?.getTracks().forEach(t => t.stop());
                 video.srcObject = null;
             } catch (e) { }
         }
+
+        document.querySelectorAll("video[data-cctv-code]").forEach(video => {
+            if (video._watchdog) {
+                clearInterval(video._watchdog);
+                video._watchdog = null;
+            }
+            if (video._stallTimer) {
+                clearTimeout(video._stallTimer);
+                video._stallTimer = null;
+            }
+        });
 
         videoCache = {};
         cameras = [];
@@ -712,7 +982,7 @@ window.CCTVLayout = (function () {
             closeFullscreen();
         }
 
-        console.log("[CCTVLayout] destroy() 완료");
+        log("cctv destroy");
     }
 
     return {
@@ -726,7 +996,8 @@ window.CCTVLayout = (function () {
         openFullscreen,
         attachStreamToFullscreen,
         showFullscreenPlaceholder,
-        destroy,
+        scheduleReconnect,
+        destroy
     };
 
 })();

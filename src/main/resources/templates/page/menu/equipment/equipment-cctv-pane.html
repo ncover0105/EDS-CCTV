@@ -1,6 +1,37 @@
-﻿<div th:fragment="cctvPane" style="display:flex; flex-direction:column; flex:1; min-height:0;">
+<div th:fragment="cctvPane" style="display:flex; flex-direction:column; flex:1; min-height:0;">
+    <!-- <style>
+        #equipment-cctv-pane .cctv-pane {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 auto;
+            min-height: 0;
+        }
 
-    <div class="cctv-pane">
+        #equipment-cctv-pane .cctv-surface {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 auto;
+            min-height: 0;
+        }
+
+        #equipment-cctv-pane .cctv-table-wrap {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        #equipment-cctv-pane .cctv-table-wrap .table-responsive {
+            height: 100%;
+            min-height: 0;
+            overflow: auto;
+        }
+
+        #equipment-cctv-pane .panel-footer {
+            flex: 0 0 auto;
+        }
+    </style> -->
+
+    <div class="cctv-pane d-flex flex-column" style="flex: 1; min-height: 0;">
 
         <!-- Top Bar -->
         <header class="cctv-topbar">
@@ -33,24 +64,19 @@
 
         <!-- Status Summary Bar -->
         <div class="cctv-status-bar">
-            <div class="cctv-stat">
+            <div class="cctv-stat is-active" data-filter="all" role="button" tabindex="0">
                 <span class="cctv-stat-num" id="cctvStatTotal">0</span>
                 <span>전체</span>
             </div>
-            <div class="cctv-stat">
+            <div class="cctv-stat" data-filter="ok" role="button" tabindex="0">
                 <span class="status-dot ok"></span>
                 <span class="cctv-stat-num ok" id="cctvStatOk">0</span>
                 <span>정상</span>
             </div>
-            <div class="cctv-stat">
+            <div class="cctv-stat" data-filter="bad" role="button" tabindex="0">
                 <span class="status-dot bad"></span>
                 <span class="cctv-stat-num danger" id="cctvStatBad">0</span>
                 <span>신호없음</span>
-            </div>
-            <div class="cctv-stat">
-                <span class="status-dot unknown"></span>
-                <span class="cctv-stat-num" id="cctvStatUnk" style="color: var(--text-muted);">0</span>
-                <span>알수없음</span>
             </div>
         </div>
 
@@ -63,39 +89,36 @@
             <button type="button" class="chip" data-filter="bad">
                 <span class="status-dot bad"></span> 신호없음
             </button>
-            <button type="button" class="chip" data-filter="unk">
-                <span class="status-dot unknown"></span> 알수없음
-            </button>
         </div>
 
         <!-- Content Surface -->
-        <section class="cctv-surface">
+        <section class="cctv-surface d-flex flex-column" style="flex: 1; min-height: 0;">
 
             <!-- Table Wrap — scrollable -->
-            <div class="cctv-table-wrap">
-                <div class="table-responsive">
-                    <table class="table-modern" id="cctvTable">
+            <div class="cctv-table-wrap overflow-hidden" style="flex: 1; min-height: 0;">
+                <div class="table-responsive h-100 overflow-auto custom-scrollbar">
+                    <table class="table-modern w-100" id="cctvTable" style="height:auto;">
                         <colgroup>
-                            <col style="width: 12%;"> <!-- 상태 -->
-                            <col style="width: 22%;"> <!-- 이름 -->
-                            <col style="width: 14%;"> <!-- Location -->
-                            <col style="width: 12%;"> <!-- Code -->
-                            <col style="width: 28%;"> <!-- RTSP -->
-                            <col style="width: 8%;"> <!-- 좌표 -->
-                            <col style="width: 4%;"> <!-- 액션 -->
+                            <col style="width: 8%;"> <!-- 상태 -->
+                            <col style="width: 18%;"> <!-- 이름 -->
+                            <col style="width: 13%;"> <!-- Location -->
+                            <col style="width: 10%;"> <!-- Code -->
+                            <col style="width: 30%;"> <!-- RTSP -->
+                            <col style="width: 11%;"> <!-- 좌표 -->
+                            <col style="width: 10%;"> <!-- 액션 -->
                         </colgroup>
-                        <thead>
+                        <thead style="position: sticky; top: 0; z-index: 1;">
                             <tr>
-                                <th>상태</th>
-                                <th>이름</th>
-                                <th>Location</th>
-                                <th>Code</th>
-                                <th>RTSP</th>
-                                <th class="col-geo">좌표</th>
+                                <th class="col-actions">상태</th>
+                                <th class="col-actions">이름</th>
+                                <th class="col-actions">Location</th>
+                                <th class="col-actions">Code</th>
+                                <th class="col-actions">RTSP</th>
+                                <th class="col-actions">좌표</th>
                                 <th class="col-actions">액션</th>
                             </tr>
                         </thead>
-                        <tbody id="cctvTbody"></tbody>
+                        <tbody id="cctvTbody" style="height:auto;"></tbody>
                     </table>
                 </div>
 
@@ -110,9 +133,11 @@
                 </div>
             </div>
 
+            <!-- Pagination 주석 처리
             <footer class="panel-footer">
                 <ul class="pagination pagination-modern mb-0" id="cctvPagination"></ul>
             </footer>
+            -->
         </section>
 
         <!-- ======================================================

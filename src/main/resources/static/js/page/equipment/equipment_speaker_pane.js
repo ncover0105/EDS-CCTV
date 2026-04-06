@@ -23,7 +23,7 @@
     const SPEAKER_ACTION_API = "/api/btype/command/action";
 
     // 페이지네이션(기본값) - 실제 rows는 wrap 높이로 동적 계산
-    const SPEAKER_ITEMS_PER_PAGE = 10;
+    const SPEAKER_ITEMS_PER_PAGE = 1000; // 스크롤 동작을 위해 한 화면 조회수 확대
     const API_BASE = window.location.origin;
 
     // ===== State =====
@@ -33,6 +33,9 @@
         itemsPerPage: SPEAKER_ITEMS_PER_PAGE,
         viewList: []
     };
+
+    let currentFilter = "all";
+    let currentSearch = "";
 
     let isInitialized = false;
     let resizeDebounceTimer = null;
@@ -92,6 +95,16 @@
         }
     }
 
+    function extractApiErrorMessage(rawText, fallback) {
+        const text = String(rawText ?? "").trim();
+        if (!text) return fallback;
+        try {
+            const parsed = JSON.parse(text);
+            if (parsed?.message) return parsed.message;
+        } catch (_) { }
+        return text;
+    }
+
     // ===== Pagination helpers =====
     function getTotalPages(totalItems, perPage) {
         const t = Math.max(0, Number(totalItems) || 0);
@@ -134,16 +147,16 @@
         return await res.json();
     }
 
-    async function postSpeakerAction({ speakerIds, action, extraParam = "" }) {
+    async function postSpeakerAction({ speakerIds, action, extraParam = "", password = "" }) {
         const res = await fetch(SPEAKER_ACTION_API, {
             method: "POST",
             headers: { "Content-Type": "application/json", "Accept": "application/json" },
-            body: JSON.stringify({ speakerIds, action, extraParam })
+            body: JSON.stringify({ speakerIds, action, extraParam, password })
         });
 
         if (!res.ok) {
             const t = await res.text().catch(() => "");
-            throw new Error(`action failed: ${res.status} ${t}`);
+            throw new Error(extractApiErrorMessage(t, `action failed: ${res.status}`));
         }
 
         return await res.json().catch(() => ({}));
@@ -155,30 +168,64 @@
     }
 
     function applySpeakerSearch(query) {
-        const q = normalizeText(query);
-        if (!q) {
-            setViewList(speakerListState, { resetPage: true });
-            renderSpeakerTable(1);
-            return;
+        currentSearch = normalizeText(query);
+        applyFilter();
+    }
+
+    function applyFilter() {
+        const q = currentSearch;
+        const f = currentFilter;
+
+        let filtered = speakerListState || [];
+
+        // 1. 상태 필터
+        if (f !== "all") {
+            filtered = filtered.filter(x => {
+                if (f === "ok") return x.connectStatus === 0;
+                if (f === "bad" || f === "warn") return x.connectStatus === 1; // 1을 오류/점검중으로 임시 매핑
+                if (f === "unknown") return x.connectStatus === null || x.connectStatus === undefined;
+                return true;
+            });
         }
 
-        const filtered = (speakerListState || []).filter(x => {
-            const speakerId = normalizeText(x?.speakerId);
-            const speakerName = normalizeText(x?.speakerName);
-            const locationName = normalizeText(x?.locationName);
-            const cdmaNumber = normalizeText(x?.cdmaNumber);
-            const speakerKey = normalizeText(x?.speakerKey);
-            return (
-                speakerId.includes(q) ||
-                speakerName.includes(q) ||
-                locationName.includes(q) ||
-                cdmaNumber.includes(q) ||
-                speakerKey.includes(q)
-            );
-        });
+        // 2. 검색 필터
+        if (q) {
+            filtered = filtered.filter(x => {
+                const speakerId = normalizeText(x?.speakerId);
+                const speakerName = normalizeText(x?.speakerName);
+                const locationName = normalizeText(x?.locationName);
+                const cdmaNumber = normalizeText(x?.cdmaNumber);
+                const speakerKey = normalizeText(x?.speakerKey);
+                return (
+                    speakerId.includes(q) ||
+                    speakerName.includes(q) ||
+                    locationName.includes(q) ||
+                    cdmaNumber.includes(q) ||
+                    speakerKey.includes(q)
+                );
+            });
+        }
 
         setViewList(filtered, { resetPage: true });
         renderSpeakerTable(1);
+    }
+
+    function updateStats() {
+        const total = speakerListState.length;
+        const ok = speakerListState.filter(x => x.connectStatus === 0).length;
+        const bad = speakerListState.filter(x => x.connectStatus === 1).length;
+        const unk = speakerListState.filter(x => x.connectStatus === null || x.connectStatus === undefined).length;
+
+        // Status bar
+        const setText = (id, v) => { const el = s$("#" + id); if (el) el.innerText = v; };
+        setText("speakerStatTotal", total);
+        setText("speakerStatOk", ok);
+        setText("speakerStatUnk", unk);
+
+        // Subtitle count
+        const cntText = s$("#speakerCountValue");
+        if (cntText) cntText.innerText = total;
+
     }
 
     function bindSpeakerSearchUI() {
@@ -195,15 +242,47 @@
         }
     }
 
+    function bindSpeakerFilterUI() {
+        const filterWrap = s$(".speaker-filters");
+        if (filterWrap && !filterWrap.dataset.bound) {
+            filterWrap.addEventListener("click", (e) => {
+                const btn = e.target.closest(".chip[data-filter]");
+                if (!btn || !filterWrap.contains(btn)) return;
+
+                const filter = btn.dataset.filter || "all";
+                window.filterSpeakers(filter, btn);
+            });
+            filterWrap.dataset.bound = "1";
+        }
+    }
+
+    function syncSpeakerFilterUI() {
+        ss$(".speaker-filters .chip").forEach(chip => {
+            chip.classList.toggle("is-active", (chip.dataset.filter || "all") === currentFilter);
+        });
+    }
+
+    function resetSpeakerFilterState() {
+        currentFilter = "all";
+        currentSearch = "";
+
+        const input = s$("#speakerSearchInput");
+        if (input) input.value = "";
+
+        syncSpeakerFilterUI();
+    }
+
     function bindCrudButtons() {
-        const addBtn = s$("#speakerAddBtn");
+        const addBtns = ss$("#speakerAddBtn");
         const updateBtn = s$("#speakerUpdateBtn");
         const deleteBtn = s$("#speakerDeleteBtn");
 
-        if (addBtn && !addBtn.dataset.bound) {
-            addBtn.addEventListener("click", speakerAdd);
-            addBtn.dataset.bound = "1";
-        }
+        addBtns.forEach((btn) => {
+            if (!btn.dataset.bound) {
+                btn.addEventListener("click", speakerAdd);
+                btn.dataset.bound = "1";
+            }
+        });
         if (updateBtn && !updateBtn.dataset.bound) {
             updateBtn.addEventListener("click", speakerUpdate);
             updateBtn.dataset.bound = "1";
@@ -295,9 +374,10 @@
             등록된 스피커가 없습니다.
           </td>
         </tr>`;
-            const cnt0 = s$("#speakerCount");
+            const cnt0 = s$("#speakerCountValue");
             if (cnt0) cnt0.innerText = "0";
 
+            /* 페이지네이션 동작 주석 처리
             if (window.App?.utils?.renderPagination) {
                 window.App.utils.renderPagination({
                     containerId: "speakerPagination",
@@ -311,6 +391,7 @@
                     }
                 });
             }
+            */
             return;
         }
 
@@ -322,6 +403,7 @@
             name="selectedIds"
             value="${safe(item.speakerKey, "")}"
             data-key="${safe(item.speakerKey, "")}"
+            data-id="${safe(item.speakerId, "")}"
             data-name="${safe(item.speakerName, "")}"
             data-adr="${safe(item.speakerAdr, "-")}">
         </td>
@@ -379,9 +461,10 @@
         //     }
         // }
 
-        const cnt = s$("#speakerCount");
+        const cnt = s$("#speakerCountValue");
         if (cnt) cnt.innerText = String(totalItems);
 
+        /* 페이지네이션 동작 주석 처리
         if (window.App?.utils?.renderPagination) {
             window.App.utils.renderPagination({
                 containerId: "speakerPagination",
@@ -395,6 +478,7 @@
                 }
             });
         }
+        */
     }
 
     // ===== Refresh =====
@@ -406,15 +490,13 @@
         }
 
         await fetchSpeakerList();
+        updateStats();
 
         const searchInput = s$("#speakerSearchInput");
         const q = searchInput ? searchInput.value : "";
-        if (q && q.trim().length) {
-            applySpeakerSearch(q);
-        } else {
-            setViewList(speakerListState, { resetPage: !preserveSelection });
-            renderSpeakerTable(speakerPageState.currentPage);
-        }
+        currentSearch = normalizeText(q);
+
+        applyFilter();
 
         if (selectedKey) {
             const cb = s$(`input[name="selectedIds"][value="${CSS.escape(String(selectedKey))}"]`);
@@ -436,16 +518,26 @@
     // ===== Actions =====
     async function requestStatus(selectedCheckbox) {
         const speakerKey = selectedCheckbox.dataset.key || selectedCheckbox.value;
+        const speakerId = selectedCheckbox.dataset.id;
         const speakerName = selectedCheckbox.dataset.name;
         const speakerAdr = selectedCheckbox.dataset.adr;
 
-        try {
-            await postSpeakerAction({ speakerIds: [speakerKey], action: "status" });
+        const password = prompt("비밀번호를 입력하세요.");
+        if (password === null) return; // 취소 시 중단
 
+        let actionSuccess = true;
+        try {
+            await postSpeakerAction({ speakerIds: [speakerId], action: "status", password });
+        } catch (e) {
+            console.error(e);
+            actionSuccess = false;
+        }
+
+        try {
             const data = await fetchSpeakerStatus(speakerKey);
             if (!data) {
                 resetDetail();
-                alertMsg("해당 스피커 상태 정보 없음.", "info");
+                alertMsg(actionSuccess ? "해당 스피커 최근 상태 정보 없음." : "요청 실패 및 상태 정보 없음.", actionSuccess ? "info" : "danger");
                 return;
             }
 
@@ -493,33 +585,45 @@
                 }
             }
 
-            alertMsg("스피커 상태 조회가 완료되었습니다.", "success");
+            if (actionSuccess) {
+                alertMsg("스피커 상태 조회가 완료되었습니다.", "success");
+            } else {
+                alertMsg("상태 요청(발신)에는 실패했으나 최근 정보를 표시합니다.", "warning");
+            }
         } catch (e) {
             console.error(e);
             resetDetail();
-            alertMsg("스피커 상태 조회 실패", "danger");
+            alertMsg("스피커 최근 상태 조회 실패", "danger");
         }
     }
 
     async function setTime(selectedCheckbox) {
-        const speakerKey = selectedCheckbox.dataset.key || selectedCheckbox.value;
+        const speakerId = selectedCheckbox.dataset.id;
+
+        const password = prompt("비밀번호를 입력하세요.");
+        if (password === null) return; // 취소 시 중단
+
         try {
-            await postSpeakerAction({ speakerIds: [speakerKey], action: "time" });
+            await postSpeakerAction({ speakerIds: [speakerId], action: "time", password });
             alertMsg("시간 동기화(발신) 요청을 전송했습니다.", "success");
         } catch (e) {
             console.error(e);
-            alertMsg("시간 동기화 요청 실패", "danger");
+            alertMsg(e?.message || "시간 동기화 요청 실패", "danger");
         }
     }
 
     async function resetRequest(selectedCheckbox) {
-        const speakerKey = selectedCheckbox.dataset.key || selectedCheckbox.value;
+        const speakerId = selectedCheckbox.dataset.id;
+
+        const password = prompt("비밀번호를 입력하세요.");
+        if (password === null) return; // 취소 시 중단
+
         try {
-            await postSpeakerAction({ speakerIds: [speakerKey], action: "reset" });
+            await postSpeakerAction({ speakerIds: [speakerId], action: "reset", password });
             alertMsg("리셋(발신) 요청을 전송했습니다.", "success");
         } catch (e) {
             console.error(e);
-            alertMsg("리셋(발신) 요청 실패", "danger");
+            alertMsg(e?.message || "리셋(발신) 요청 실패", "danger");
         }
     }
 
@@ -724,6 +828,8 @@
         // 최초 1회만 UI 바인딩
         if (!isInitialized) initOnce();
 
+        resetSpeakerFilterState();
+
         // 활성화될 때마다 데이터 새로 로딩(원하면 preserveSelection true로 바꿔도 됨)
         try {
             await refreshSpeakerListAndRender({ preserveSelection: false });
@@ -734,11 +840,26 @@
         }
     }
 
+    function onPaneDeactivated() {
+        resetSpeakerFilterState();
+    }
+
+    function handleEquipmentNavReset(e) {
+        const navBtn = e.target.closest(".eq-nav-item, .eq-tab-item");
+        if (!navBtn) return;
+
+        const targetId = navBtn.dataset.target || "";
+        if (targetId !== PANE_ID) {
+            onPaneDeactivated();
+        }
+    }
+
     function initOnce() {
         if (isInitialized) return;
 
         // 검색 바인딩
         bindSpeakerSearchUI();
+        bindSpeakerFilterUI();
         bindCrudButtons();
 
         // 리사이즈 시 리렌더 (활성 pane일 때만)
@@ -763,6 +884,12 @@
     window.setTime = setTime;
     window.resetRequest = resetRequest;
 
+    window.filterSpeakers = (filter, btn) => {
+        currentFilter = filter || "all";
+        syncSpeakerFilterUI();
+        applyFilter();
+    };
+
     // (디버그/필요시 사용)
     window.__SpeakerPane = {
         onPaneActivated,
@@ -774,6 +901,11 @@
     // ===== is-active 감지 (Pane 전환 구조 대응) =====
     const rootEl = paneRoot();
     if (!rootEl) return;
+
+    rootEl.addEventListener("equipment:pane-deactivated", () => {
+        onPaneDeactivated();
+    });
+    document.addEventListener("click", handleEquipmentNavReset);
 
     const observer = new MutationObserver((mutations) => {
         for (const m of mutations) {

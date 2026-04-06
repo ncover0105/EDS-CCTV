@@ -14,11 +14,63 @@ const maxZoom = 18;
 
 const statusColorMap = {
     "01": "#2ee46b",       // 정상
-    "online": "#2ee46b",  
+    "online": "#2ee46b",
     "00": "#ff595e",       // 오프라인
     "offline": "#ff595e",
     "unknown": "#6c757d"
 };
+
+const ICONS = {
+    cctv: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+    <rect x="2" y="7" width="15" height="10" rx="2" fill="white"/>
+    <polygon points="17,9 22,6 22,18 17,15" fill="white"/>
+    <circle cx="9" cy="12" r="2.5" fill="#378ADD"/>
+  </svg>`,
+    speaker: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+    <polygon points="3,8 3,16 7,16 13,20 13,4 7,8" fill="white"/>
+    <path d="M16 8.5c1.5 1 2.5 2.5 2.5 3.5s-1 2.5-2.5 3.5"
+      stroke="white" stroke-width="2" stroke-linecap="round" fill="none"/>
+  </svg>`
+};
+
+const COLORS = {
+    cctv: "#378ADD",
+    speaker: "#639922",
+    offline: "#A32D2D"
+};
+
+const markerStyleCache = new Map();
+
+function getMarkerColor(type, status) {
+    return status === "offline" ? COLORS.offline : (COLORS[type] || COLORS.cctv);
+}
+
+function createMarkerSvg(type, status) {
+    const color = getMarkerColor(type, status);
+    const innerIcon = ICONS[type] || ICONS.cctv;
+
+    return `
+    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38" fill="none">
+        <rect x="0" y="0" width="30" height="30" rx="10" fill="${color}"/>
+        <g transform="translate(6 6)">
+            ${innerIcon}
+        </g>
+        <circle cx="15" cy="35" r="2.4" fill="${color}" fill-opacity="0.5"/>
+    </svg>`;
+}
+
+function createMarkerIcon(type, status, scale) {
+    const svg = createMarkerSvg(type, status);
+    const src = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+
+    return new ol.style.Icon({
+        src,
+        scale,
+        anchor: [0.5, 1],
+        anchorXUnits: "fraction",
+        anchorYUnits: "fraction"
+    });
+}
 
 /* ============================================================
     1) API에서 CCTV + SPEAKER 데이터 불러오기
@@ -29,7 +81,7 @@ async function loadMapData() {
 
         const [cctvRes, speakerRes] = await Promise.all([
             fetch('/api/cctv/list'),
-            fetch('/api/spk/list')
+            fetch('/api/btype/query/config/speakers')
         ]);
 
         console.log("📥 CCTV 응답 상태:", cctvRes.status);
@@ -52,12 +104,12 @@ async function loadMapData() {
         cctvList.forEach((c, idx) => {
             const lat = c.latitude;
             const lng = c.longitude;
-        
+
             if (!isValidCoordinate(lat, lng)) {
                 console.warn(`❌ CCTV ${c.name || c.cctvCode} 좌표 오류 또는 한국 밖 → 제외`);
                 return;
             }
-        
+
             gpsData.push({
                 name: c.name || c.cctvCode,
                 lat: Number(lat),
@@ -70,20 +122,20 @@ async function loadMapData() {
         /* ============================================================
             SPEAKER → gpsData
         ============================================================ */
-        speakerList.forEach((s, idx) => {
-            const lat = s.lat || s.latitude;
-            const lng = s.lng || s.longitude;
-        
+        speakerList.forEach((s) => {
+            const lat = s.speakerLatitude;
+            const lng = s.speakerLongitude;
+
             if (!isValidCoordinate(lat, lng)) {
-                console.warn(`❌ SPEAKER ${s.speakerName || s.speakerCode} 좌표 오류 또는 한국 밖 → 제외`);
+                console.warn(`❌ SPEAKER ${s.speakerName || s.speakerId || s.speakerKey} 좌표 오류 또는 한국 밖 → 제외`);
                 return;
             }
-        
+
             gpsData.push({
-                name: s.speakerName || s.speakerCode,
+                name: s.speakerName || s.speakerId || s.speakerKey,
                 lat: Number(lat),
                 lng: Number(lng),
-                status: s.connStat === "01" ? "online" : "offline",
+                status: s.connectStatus === 0 ? "online" : "offline",
                 type: "speaker"
             });
         });
@@ -182,6 +234,8 @@ function initVWorldMap() {
         })
     });
 
+    ensureMapPopup();
+
     addMarkers();
     setTimeout(fitMap, 300);
 }
@@ -218,12 +272,12 @@ function addMarkers() {
         //             text: data.status === "online" ? "정상" : "오프라인",
         //             offsetY: 14,
         //             font: "600 13px sans-serif",
-                
+
         //             // 색상: 맵 위에서 가장 잘 보이는 조합
         //             fill: new ol.style.Fill({
         //                 color: data.status === "online" ? "#31f47b" : "#ff6b6b"
         //             }),
-                
+
         //             // 테두리를 반투명 검정으로 → 배경처럼 작용
         //             stroke: new ol.style.Stroke({
         //                 color: "#000",  // ← 여기 변화가 가장 큼
@@ -232,13 +286,13 @@ function addMarkers() {
         //         })
         //     })
         // );
-        
+
         return feature;
     });
 
     mapLayer = new ol.layer.Vector({
         source: new ol.source.Vector({ features }),
-        style: markerStyleFunction 
+        style: markerStyleFunction
     });
 
     vworldMap.addLayer(mapLayer);
@@ -261,40 +315,187 @@ function markerStyleFunction(feature, resolution) {
     // 현재 줌 레벨 구하기
     const zoom = vworldMap.getView().getZoom();
 
-    // 줌 레벨에 따라 아이콘 크기를 변경
-    // zoom 13 ~ 18 기준으로 scale 변화
-    const baseScale = 0.03;     // 기존 아이콘 크기
-    const scale = baseScale * (zoom / 15); 
-    // → zoom 15일 때 = 1x
-    // → zoom 18일 때 = 1.2x (조금 커짐)
-    // → zoom 13일 때 = 0.86x (조금 작아짐)
+    const scale = 0.74 + ((zoom - 13) * 0.064);
 
-    // 텍스트 크기도 함께 확대
-    const fontSize = 11 + (zoom - 13) * 0.7;   // 13px ~ 15px 범위로 자연 증가
+    const cacheKey = `${data.type}:${data.status}:${zoom}`;
+    if (markerStyleCache.has(cacheKey)) {
+        return markerStyleCache.get(cacheKey);
+    }
 
-    let iconImg = data.type === "cctv"
-        ? "/images/cctv-red.png"
-        : "/images/speaker-blue.png";
-
-    return new ol.style.Style({
-        image: new ol.style.Icon({
-            src: iconImg,
-            scale: scale,
-            anchor: [0.5, 1]
-        }),
-        text: new ol.style.Text({
-            text: data.status === "online" ? "정상" : "오프라인",
-            offsetY: 14,
-            font: `600 ${fontSize}px sans-serif`,
-            fill: new ol.style.Fill({
-                color: data.status === "online" ? "#31f47b" : "#ff6b6b"
-            }),
-            stroke: new ol.style.Stroke({
-                color: "rgba(0,0,0,0.55)",
-                width: 3
-            })
-        })
+    const style = new ol.style.Style({
+        image: createMarkerIcon(data.type, data.status, scale)
     });
+
+    markerStyleCache.set(cacheKey, style);
+    return style;
+}
+
+function ensureMapPopup() {
+    const mapEl = document.getElementById("map");
+    if (!mapEl) return;
+
+    let popupEl = document.getElementById("mapDevicePopup");
+    if (!popupEl) {
+        popupEl = document.createElement("div");
+        popupEl.id = "mapDevicePopup";
+        popupEl.className = "map-device-popup";
+        popupEl.innerHTML = `
+            <button type="button" class="map-device-popup-close" aria-label="팝업 닫기">&times;</button>
+            <div class="map-device-popup-header">
+                <div class="map-device-popup-label">장치 정보</div>
+                <div class="map-device-popup-name" id="mapDevicePopupName">-</div>
+            </div>
+            <div class="map-device-popup-body">
+                <div class="map-device-popup-row">
+                    <span class="map-device-popup-key">종류</span>
+                    <span class="map-device-popup-type" id="mapDevicePopupType">-</span>
+                </div>
+                <div class="map-device-popup-row">
+                    <span class="map-device-popup-key">상태</span>
+                    <span class="map-device-popup-status" id="mapDevicePopupStatus">-</span>
+                </div>
+            </div>
+        `;
+        popupEl.style.position = "absolute";
+        popupEl.style.left = "0";
+        popupEl.style.top = "0";
+        popupEl.style.minWidth = "240px";
+        popupEl.style.maxWidth = "300px";
+        popupEl.style.padding = "0";
+        popupEl.style.borderRadius = "18px";
+        popupEl.style.background = "rgba(10, 14, 22, 0.96)";
+        popupEl.style.border = "1px solid rgba(255,255,255,0.14)";
+        popupEl.style.boxShadow = "0 20px 44px rgba(0,0,0,0.42)";
+        popupEl.style.backdropFilter = "blur(14px)";
+        popupEl.style.color = "#eef4ff";
+        popupEl.style.pointerEvents = "auto";
+        popupEl.style.display = "none";
+        popupEl.style.zIndex = "30";
+        popupEl.style.transform = "translate(-50%, calc(-100% - 22px))";
+
+        mapEl.appendChild(popupEl);
+
+        const styleEl = document.createElement("style");
+        styleEl.id = "mapDevicePopupStyle";
+        styleEl.textContent = `
+            .map-device-popup::after {
+                content: "";
+                position: absolute;
+                left: 50%;
+                bottom: -8px;
+                width: 16px;
+                height: 16px;
+                background: rgba(10, 14, 22, 0.96);
+                border-right: 1px solid rgba(255,255,255,0.14);
+                border-bottom: 1px solid rgba(255,255,255,0.14);
+                transform: translateX(-50%) rotate(45deg);
+            }
+            .map-device-popup-close {
+                position: absolute;
+                top: 12px;
+                right: 12px;
+                border: 0;
+                background: transparent;
+                color: rgba(238,244,255,0.72);
+                font-size: 18px;
+                line-height: 1;
+                cursor: pointer;
+                z-index: 1;
+            }
+            .map-device-popup-header {
+                padding: 16px 18px 14px;
+                border-bottom: 1px solid rgba(255,255,255,0.08);
+                background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+                border-radius: 18px 18px 0 0;
+            }
+            .map-device-popup-label {
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: rgba(238,244,255,0.52);
+                margin-bottom: 6px;
+            }
+            .map-device-popup-name {
+                font-size: 16px;
+                font-weight: 700;
+                line-height: 1.35;
+                padding-right: 22px;
+            }
+            .map-device-popup-body {
+                padding: 14px 18px 16px;
+            }
+            .map-device-popup-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+            }
+            .map-device-popup-row + .map-device-popup-row {
+                margin-top: 10px;
+            }
+            .map-device-popup-key {
+                font-size: 12px;
+                font-weight: 600;
+                color: rgba(238,244,255,0.58);
+            }
+            .map-device-popup-type,
+            .map-device-popup-status {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 28px;
+                padding: 0 10px;
+                border-radius: 999px;
+                font-size: 12px;
+                font-weight: 700;
+            }
+            .map-device-popup-type {
+                background: rgba(255,255,255,0.08);
+                color: rgba(238,244,255,0.92);
+            }
+            .map-device-popup-status.is-online {
+                background: rgba(46, 228, 107, 0.14);
+                color: #67ef97;
+            }
+            .map-device-popup-status.is-offline {
+                background: rgba(220, 77, 77, 0.16);
+                color: #ff8c8c;
+            }
+        `;
+        if (!document.getElementById(styleEl.id)) {
+            document.head.appendChild(styleEl);
+        }
+
+        popupEl.querySelector(".map-device-popup-close")?.addEventListener("click", hideMapPopup);
+    }
+}
+
+function showMapPopup(data, coordinate) {
+    const popupEl = document.getElementById("mapDevicePopup");
+    if (!popupEl) return;
+
+    const typeText = data.type === "speaker" ? "스피커" : "CCTV";
+    const statusText = data.status === "online" ? "정상" : "오프라인";
+    const statusEl = popupEl.querySelector("#mapDevicePopupStatus");
+    const pixel = vworldMap.getPixelFromCoordinate(coordinate);
+
+    popupEl.querySelector("#mapDevicePopupName").textContent = data.name || "-";
+    popupEl.querySelector("#mapDevicePopupType").textContent = typeText;
+    statusEl.textContent = statusText;
+    statusEl.classList.remove("is-online", "is-offline");
+    statusEl.classList.add(data.status === "online" ? "is-online" : "is-offline");
+
+    popupEl.style.left = `${pixel[0]}px`;
+    popupEl.style.top = `${pixel[1]}px`;
+    popupEl.style.display = "block";
+}
+
+function hideMapPopup() {
+    const popupEl = document.getElementById("mapDevicePopup");
+    if (popupEl) {
+        popupEl.style.display = "none";
+    }
 }
 
 
@@ -370,9 +571,15 @@ function adjustTooltipPosition(tooltip, x, y, containerWidth, containerHeight) {
     6) 클릭 → Offcanvas
 ============================================================ */
 function handleSingleClick(evt) {
-    vworldMap.forEachFeatureAtPixel(evt.pixel, feature => {
-        new bootstrap.Modal(document.getElementById('speakerModal')).show();
-    });
+    const feature = vworldMap.forEachFeatureAtPixel(evt.pixel, f => f);
+    if (!feature) {
+        hideMapPopup();
+        return;
+    }
+
+    const data = feature.get("gpsData");
+    const coordinate = feature.getGeometry().getCoordinates();
+    showMapPopup(data, coordinate);
 }
 
 /* ============================================================
@@ -410,6 +617,7 @@ function clearMarkers() {
         vworldMap.removeLayer(mapLayer);
         mapLayer = null;
     }
+    hideMapPopup();
 }
 
 function updateStatusSummary() {
@@ -419,7 +627,6 @@ function updateStatusSummary() {
     document.getElementById("onlineCount").textContent = online;
     document.getElementById("offlineCount").textContent = offline;
     // document.getElementById("warningCount").textContent = 0;
-    document.getElementById("maintenanceCount").textContent = 0;
 }
 
 window.showMapView = function () {

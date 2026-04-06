@@ -36,12 +36,12 @@ public class SpkBroadcastScheduleController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody ScheduleSaveRequest req) {
+    public ResponseEntity<?> update(@PathVariable("id") Long id, @RequestBody ScheduleSaveRequest req) {
         return ResponseEntity.ok(scheduleService.updateSchedule(id, req));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
+    public ResponseEntity<?> delete(@PathVariable("id") Long id) {
         scheduleService.deleteSchedule(id);
         return ResponseEntity.ok().build();
     }

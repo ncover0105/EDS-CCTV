@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 public class MainController {
 
     private final CameraCache cameraCache;
-    // private final JanusManager janusManager;
     private final SystemSettingService systemSettingService;
 
     @GetMapping("/main")
@@ -37,6 +36,13 @@ public class MainController {
         // model.addAttribute("speakerList", speakerService.getSpeakerList());
 
         return "page/homePage";
+    }
+
+    @GetMapping("/brand")
+    public String showBrandHubPage(Model model) {
+        model.addAttribute("title", "안전재난프로그램");
+        model.addAttribute("currentPage", "brand");
+        return "page/brandHubPage";
     }
 
     @GetMapping("/api/settings")

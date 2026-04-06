@@ -40,8 +40,8 @@ public class SpecialReportService {
     private String APIHUB_KEY;
 
     // @Value("${api.hub.sido}")
-    // private String sido = "영덕군";
-    private String sido = "대구광역시";
+    private String sido = "영덕군";
+    // private String sido = "대구광역시";
 
     private static final String SPECIAL_REPORT_URL = "https://apihub.kma.go.kr/api/typ01/url/wrn_now_data_new.php";
 

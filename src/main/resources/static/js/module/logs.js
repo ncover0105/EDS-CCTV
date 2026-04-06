@@ -49,9 +49,14 @@ window.Logs = (function () {
     function render() {
         if (!logContainer) return;
 
+        const logBody = logContainer.parentElement;
+
         logContainer.innerHTML = "";
 
         if (logs.length === 0) {
+            if (logBody) {
+                logBody.classList.add("is-empty");
+            }
             logContainer.classList.add("d-none");
             emptyMessage.classList.remove("d-none");
             updateLogCount(0);
@@ -59,6 +64,9 @@ window.Logs = (function () {
             return;
         }
 
+        if (logBody) {
+            logBody.classList.remove("is-empty");
+        }
         emptyMessage.classList.add("d-none");
         logContainer.classList.remove("d-none");
 
@@ -90,16 +98,8 @@ window.Logs = (function () {
             // };
 
             item.onclick = () => {
-                const modalEl = document.getElementById("broadcast_modal");
-                if (!modalEl) return;
-
-                // 모달 열기
-                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                modal.show();
-
-                // boundaryNum 전달 (옵션)
-                if (window.BroadcastModal?.setBoundary) {
-                    window.BroadcastModal.setBoundary(log.boundaryNum);
+                if (typeof window.openBroadcastModal === "function") {
+                    window.openBroadcastModal(log.cameraName, log.boundaryNum);
                 }
             };
 

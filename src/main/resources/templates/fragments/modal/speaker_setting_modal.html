@@ -1,12 +1,14 @@
 <div th:fragment="speaker_setting_modal">
     <!--
     speaker_setting_modal.html  |  CSS: modal-common.css  |  JS: modal_speaker_setting.js
--->
+    -->
     <div class="modal fade speaker-modal" id="speaker_setting_modal" tabindex="-1" aria-hidden="true"
         aria-labelledby="sp-modal-title">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="sp-accent"></div>
+
+                <!-- 반응형 보정 스타일 (modal.css로 이동됨) -->
 
                 <!-- HEADER -->
                 <header class="sp-header">
@@ -14,16 +16,6 @@
                         <div class="sp-hicon"><i class="bi bi-speaker-fill"></i></div>
                         <div>
                             <div class="sp-htitle" id="sp-modal-title">스피커 설정</div>
-                            <div class="speaker-type-legend speaker-type-legend-header mt-1" aria-label="스피커 타입 안내">
-                                <span class="speaker-type-pill type-a">
-                                    <span class="speaker-type-dot"></span>
-                                    <span class="speaker-type-text">A 타입</span>
-                                </span>
-                                <span class="speaker-type-pill type-b">
-                                    <span class="speaker-type-dot"></span>
-                                    <span class="speaker-type-text">B 타입</span>
-                                </span>
-                            </div>
                         </div>
                     </div>
                     <div class="sp-header-r">
@@ -64,11 +56,11 @@
                     <!-- RIGHT -->
                     <div class="sp-right">
                         <!-- 미선택 -->
-                        <div id="area_empty" class="sp-no-sel">
+                        <!-- <div id="area_empty" class="sp-no-sel">
                             <div class="sp-no-sel-icon"><i class="bi bi-arrow-left-circle"></i></div>
                             <div class="sp-no-sel-t">스피커를 선택하세요</div>
                             <div class="sp-no-sel-s">좌측 목록에서 스피커를 선택하면<br>설정 정보를 조회/변경할 수 있고, 다시 클릭하면 선택 해제됩니다</div>
-                        </div>
+                        </div> -->
 
                         <!-- A 타입 -->
                         <div id="area_type_a" class="d-none"
@@ -88,158 +80,19 @@
                             <!-- PANE: 설정 정보 (A) -->
                             <div class="sp-tab-pane active show" id="pane-info-a" role="tabpanel">
                                 <div class="sp-pane-wrap">
-                                    <div class="sp-card">
-                                        <div class="sp-card-head">
-                                            <div class="sp-card-title-row">
-                                                <div class="sp-card-icon"
-                                                    style="background:var(--blue-a);color:var(--blue)"><i
-                                                        class="bi bi-info-circle-fill"></i></div>
-                                                <span class="sp-card-label">기본 정보 (A)</span>
-                                            </div>
-                                        </div>
-                                        <div class="sp-card-body">
-                                            <div class="sp-info-grid">
-                                                <div class="sp-info-item"><span class="sp-info-label">스피커 이름</span><span
-                                                        class="sp-info-value" id="a_speakerName">—</span></div>
-                                                <div class="sp-info-item"><span class="sp-info-label">ID /
-                                                        Key</span><span class="sp-info-value" id="a_speakerId">—</span>
-                                                </div>
-                                                <div class="sp-info-item"><span class="sp-info-label">통제서버
-                                                        IP</span><span class="sp-info-value" id="a_serverip">—</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="sp-card">
-                                        <div class="sp-card-head">
-                                            <div class="sp-card-title-row">
-                                                <div class="sp-card-icon"
-                                                    style="background:var(--teal-a);color:var(--teal)"><i
-                                                        class="bi bi-bar-chart-fill"></i></div>
-                                                <span class="sp-card-label">채널별 출력 볼륨</span>
-                                            </div>
-                                        </div>
-                                        <div class="sp-card-body">
-                                            <table class="sp-vol-table">
-                                                <thead>
-                                                    <tr>
-                                                        <th>구분</th>
-                                                        <th>CH1</th>
-                                                        <th>CH2</th>
-                                                        <th>CH3</th>
-                                                        <th>CH4</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr>
-                                                        <td>BGM</td>
-                                                        <td id="a_bgm_vol_ch1">—</td>
-                                                        <td id="a_bgm_vol_ch2">—</td>
-                                                        <td id="a_bgm_vol_ch3">—</td>
-                                                        <td id="a_bgm_vol_ch4">—</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>경보방송</td>
-                                                        <td id="a_alert_vol_ch1">—</td>
-                                                        <td id="a_alert_vol_ch2">—</td>
-                                                        <td id="a_alert_vol_ch3">—</td>
-                                                        <td id="a_alert_vol_ch4">—</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>FM</td>
-                                                        <td id="a_fm_vol_ch1">—</td>
-                                                        <td id="a_fm_vol_ch2">—</td>
-                                                        <td id="a_fm_vol_ch3">—</td>
-                                                        <td id="a_fm_vol_ch4">—</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>채널 사용</td>
-                                                        <td id="a_useCh1">—</td>
-                                                        <td id="a_useCh2">—</td>
-                                                        <td id="a_useCh3">—</td>
-                                                        <td id="a_useCh4">—</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
                                 </div>
                             </div><!-- /pane-info-a -->
 
                             <!-- PANE: 설정 변경 (A) -->
                             <div class="sp-tab-pane" id="pane-config-a" role="tabpanel">
                                 <form id="speakerSettingFormA">
-                                    <div class="sp-pane-wrap">
-                                        <div class="sp-card">
-                                            <div class="sp-card-head">
-                                                <div class="sp-card-title-row">
-                                                    <div class="sp-card-icon"
-                                                        style="background:var(--blue-a);color:var(--blue)"><i
-                                                            class="bi bi-hdd-network-fill"></i></div><span
-                                                        class="sp-card-label">기본 설정</span>
-                                                </div>
-                                                <button type="button" class="sp-sec-send" data-section="basic"
-                                                    data-type="A"><i class="bi bi-send-fill"></i> 전송</button>
-                                            </div>
-                                            <div class="sp-card-body">
-                                                <div class="sp-form-grid cols3">
-                                                    <div class="fg-full"><label class="sp-label">통제서버 IP</label><input
-                                                            id="ai_serverip" class="sp-input" type="text"
-                                                            placeholder="예: 192.168.0.10"></div>
-                                                    <div><label class="sp-label">폴링 주기 (10~3600초)</label><input
-                                                            id="ai_PollingCheckTime" class="sp-input" type="number"
-                                                            min="10" max="3600" placeholder="예: 30"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="sp-card">
-                                            <div class="sp-card-head">
-                                                <div class="sp-card-title-row">
-                                                    <div class="sp-card-icon"
-                                                        style="background:var(--amber-a);color:var(--amber)"><i
-                                                            class="bi bi-toggles"></i></div><span
-                                                        class="sp-card-label">채널 사용 설정</span>
-                                                </div>
-                                                <button type="button" class="sp-sec-send" data-section="channel-use"
-                                                    data-type="A"><i class="bi bi-send-fill"></i> 전송</button>
-                                            </div>
-                                            <div class="sp-card-body">
-                                                <div class="ch-use-grid">
-                                                    <div class="ch-use-item"><span class="ch-use-label">CH
-                                                            1</span><select id="ai_useCh1" class="sp-select">
-                                                            <option value="1">사용</option>
-                                                            <option value="2">미사용</option>
-                                                            <option value="3">없음</option>
-                                                        </select></div>
-                                                    <div class="ch-use-item"><span class="ch-use-label">CH
-                                                            2</span><select id="ai_useCh2" class="sp-select">
-                                                            <option value="1">사용</option>
-                                                            <option value="2">미사용</option>
-                                                            <option value="3">없음</option>
-                                                        </select></div>
-                                                    <div class="ch-use-item"><span class="ch-use-label">CH
-                                                            3</span><select id="ai_useCh3" class="sp-select">
-                                                            <option value="1">사용</option>
-                                                            <option value="2">미사용</option>
-                                                            <option value="3">없음</option>
-                                                        </select></div>
-                                                    <div class="ch-use-item"><span class="ch-use-label">CH
-                                                            4</span><select id="ai_useCh4" class="sp-select">
-                                                            <option value="1">사용</option>
-                                                            <option value="2">미사용</option>
-                                                            <option value="3">없음</option>
-                                                        </select></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </form>
                             </div><!-- /pane-config-a -->
 
                         </div><!-- /area_type_a -->
 
                         <!-- B 타입 -->
-                        <div id="area_type_b" class="d-none"
+                        <div id="area_type_b"
                             style="display:flex;flex:1;flex-direction:column;overflow:hidden;min-height:0">
 
                             <!-- 탭 바 -->
@@ -269,8 +122,8 @@
                                             <div class="sp-info-grid">
                                                 <div class="sp-info-item"><span class="sp-info-label">스피커 이름</span><span
                                                         class="sp-info-value" id="b_speakerName">—</span></div>
-                                                <div class="sp-info-item"><span class="sp-info-label">ID /
-                                                        Key</span><span class="sp-info-value" id="b_speakerId">—</span>
+                                                <div class="sp-info-item"><span class="sp-info-label">ID</span><span
+                                                        class="sp-info-value" id="b_speakerId">—</span>
                                                 </div>
                                                 <div class="sp-info-item"><span class="sp-info-label">통제서버
                                                         IP</span><span class="sp-info-value" id="b_serverip">—</span>
@@ -287,7 +140,7 @@
                                                 <span class="sp-card-label">채널별 출력 볼륨</span>
                                             </div>
                                         </div>
-                                        <div class="sp-card-body">
+                                        <div class="sp-card-body p-0">
                                             <table class="sp-vol-table">
                                                 <thead>
                                                     <tr>
@@ -314,13 +167,6 @@
                                                         <td id="b_alert_vol_ch4">—</td>
                                                     </tr>
                                                     <tr>
-                                                        <td>FM</td>
-                                                        <td id="b_fm_vol_ch1">—</td>
-                                                        <td id="b_fm_vol_ch2">—</td>
-                                                        <td id="b_fm_vol_ch3">—</td>
-                                                        <td id="b_fm_vol_ch4">—</td>
-                                                    </tr>
-                                                    <tr>
                                                         <td>채널 사용</td>
                                                         <td id="b_useCh1">—</td>
                                                         <td id="b_useCh2">—</td>
@@ -342,13 +188,16 @@
                                         </div>
                                         <div class="sp-card-body">
                                             <div class="sp-info-grid">
-                                                <div class="sp-info-item"><span class="sp-info-label">TTA 지역코드</span>
+                                                <div class="sp-info-item d-none"><span class="sp-info-label">TTA
+                                                        지역코드</span>
                                                     <span class="sp-info-value" id="b_TTARegionCode">—</span>
                                                 </div>
-                                                <div class="sp-info-item"><span class="sp-info-label">DMB 주파수 1</span>
+                                                <div class="sp-info-item d-none"><span class="sp-info-label">DMB 주파수
+                                                        1</span>
                                                     <span class="sp-info-value" id="b_DMBFrequency1">—</span>
                                                 </div>
-                                                <div class="sp-info-item"><span class="sp-info-label">DMB 주파수 2</span>
+                                                <div class="sp-info-item d-none"><span class="sp-info-label">DMB 주파수
+                                                        2</span>
                                                     <span class="sp-info-value" id="b_DMBFrequency2">—</span>
                                                 </div>
                                                 <div class="sp-info-item"><span class="sp-info-label">BGM 폴더 번호</span>
@@ -368,9 +217,6 @@
                                                 <div class="sp-info-item"><span class="sp-info-label">TTS 입력 볼륨</span>
                                                     <span class="sp-info-value" id="b_TTS_IN_VOL">—</span>
                                                 </div>
-                                                <div class="sp-info-item"><span class="sp-info-label">FM 입력 볼륨</span>
-                                                    <span class="sp-info-value" id="b_FM_IN_VOL">—</span>
-                                                </div>
                                                 <div class="sp-info-item"><span class="sp-info-label">TTS Pitch</span>
                                                     <span class="sp-info-value" id="b_TTS_Pitch">—</span>
                                                 </div>
@@ -379,12 +225,6 @@
                                                 </div>
                                                 <div class="sp-info-item"><span class="sp-info-label">폴링 주기</span> <span
                                                         class="sp-info-value" id="b_PollingCheckTime">—</span></div>
-                                                <div class="sp-info-item"><span class="sp-info-label">라디오 주파수</span>
-                                                    <span class="sp-info-value" id="b_RadioFrequency">—</span>
-                                                </div>
-                                                <div class="sp-info-item"><span class="sp-info-label">라디오 지역</span>
-                                                    <span class="sp-info-value" id="b_RadioFrequencyRegion">—</span>
-                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -395,329 +235,389 @@
                             <div class="sp-tab-pane" id="pane-config-b" role="tabpanel">
                                 <form id="speakerSettingFormB">
                                     <div class="sp-pane-wrap">
+                                        <!-- 기본 및 시스템 설정 (통합 카드) -->
                                         <div class="sp-card">
                                             <div class="sp-card-head">
                                                 <div class="sp-card-title-row">
                                                     <div class="sp-card-icon"
-                                                        style="background:var(--blue-a);color:var(--blue)"><i
-                                                            class="bi bi-hdd-network-fill"></i></div><span
-                                                        class="sp-card-label">기본 설정</span>
-                                                </div>
-                                                <button type="button" class="sp-sec-send" data-section="basic"><i
-                                                        class="bi bi-send-fill"></i> 전송</button>
-                                            </div>
-                                            <div class="sp-card-body">
-                                                <div class="sp-form-grid cols3">
-                                                    <div class="fg-full"><label class="sp-label">통제서버 IP</label><input
-                                                            id="bi_serverip" class="sp-input" type="text"
-                                                            placeholder="예: 192.168.0.10"></div>
-                                                    <div><label class="sp-label">TTA 지역코드</label><input
-                                                            id="bi_TTARegionCode" class="sp-input" type="text"
-                                                            maxlength="10"></div>
-                                                    <div><label class="sp-label">폴링 주기 (10~3600초)</label><input
-                                                            id="bi_PollingCheckTime" class="sp-input" type="number"
-                                                            min="10" max="3600" placeholder="예: 30"></div>
-                                                    <div><label class="sp-label">DMB 주파수 1</label><input
-                                                            id="bi_DMBFrequency1" class="sp-input" type="text"
-                                                            maxlength="7"></div>
-                                                    <div><label class="sp-label">DMB 주파수 2</label><input
-                                                            id="bi_DMBFrequency2" class="sp-input" type="text"
-                                                            maxlength="7"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="sp-card">
-                                            <div class="sp-card-head">
-                                                <div class="sp-card-title-row">
-                                                    <div class="sp-card-icon"
-                                                        style="background:var(--teal-a);color:var(--teal)"><i
-                                                            class="bi bi-music-note-beamed"></i></div><span
-                                                        class="sp-card-label">BGM · 음원 설정</span>
-                                                </div>
-                                                <button type="button" class="sp-sec-send" data-section="bgm"><i
-                                                        class="bi bi-send-fill"></i> 전송</button>
-                                            </div>
-                                            <div class="sp-card-body">
-                                                <div class="sp-form-grid cols3">
-                                                    <div><label class="sp-label">BGM 폴더 번호 (0~2)</label><input
-                                                            id="bi_BGMFolderNo" class="sp-input" type="number" min="0"
-                                                            max="2"></div>
-                                                    <div><label class="sp-label">BGM 상태</label><select id="bi_BGMStatus"
-                                                            class="sp-select">
-                                                            <option value="0">재생</option>
-                                                            <option value="1">정지</option>
-                                                        </select></div>
-                                                    <div><label class="sp-label">음원 모드</label><select id="bi_MusicMode"
-                                                            class="sp-select">
-                                                            <option value="0">BGM</option>
-                                                            <option value="1">FM</option>
-                                                        </select></div>
-                                                    <div><label class="sp-label">Radio 주파수 (0~8)</label><input
-                                                            id="bi_RadioFrequency" class="sp-input" type="number"
-                                                            min="0" max="8"></div>
-                                                    <div><label class="sp-label">Radio 지역 (0~5)</label><input
-                                                            id="bi_RadioFrequencyRegion" class="sp-input" type="number"
-                                                            min="0" max="5"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="sp-card">
-                                            <div class="sp-card-head">
-                                                <div class="sp-card-title-row">
-                                                    <div class="sp-card-icon"
-                                                        style="background:var(--amber-a);color:var(--amber)"><i
-                                                            class="bi bi-toggles"></i></div><span
-                                                        class="sp-card-label">채널 사용 설정</span>
-                                                </div>
-                                                <button type="button" class="sp-sec-send" data-section="channel-use"><i
-                                                        class="bi bi-send-fill"></i> 전송</button>
-                                            </div>
-                                            <div class="sp-card-body">
-                                                <div class="ch-use-grid">
-                                                    <div class="ch-use-item"><span class="ch-use-label">CH
-                                                            1</span><select id="bi_useCh1" class="sp-select">
-                                                            <option value="1">사용</option>
-                                                            <option value="2">미사용</option>
-                                                            <option value="3">없음</option>
-                                                        </select></div>
-                                                    <div class="ch-use-item"><span class="ch-use-label">CH
-                                                            2</span><select id="bi_useCh2" class="sp-select">
-                                                            <option value="1">사용</option>
-                                                            <option value="2">미사용</option>
-                                                            <option value="3">없음</option>
-                                                        </select></div>
-                                                    <div class="ch-use-item"><span class="ch-use-label">CH
-                                                            3</span><select id="bi_useCh3" class="sp-select">
-                                                            <option value="1">사용</option>
-                                                            <option value="2">미사용</option>
-                                                            <option value="3">없음</option>
-                                                        </select></div>
-                                                    <div class="ch-use-item"><span class="ch-use-label">CH
-                                                            4</span><select id="bi_useCh4" class="sp-select">
-                                                            <option value="1">사용</option>
-                                                            <option value="2">미사용</option>
-                                                            <option value="3">없음</option>
-                                                        </select></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="sp-card">
-                                            <div class="sp-card-head">
-                                                <div class="sp-card-title-row">
-                                                    <div class="sp-card-icon"
-                                                        style="background:var(--purple-a);color:var(--purple)"><i
-                                                            class="bi bi-volume-up-fill"></i></div><span
-                                                        class="sp-card-label">입력 볼륨</span>
-                                                </div>
-                                                <button type="button" class="sp-sec-send" data-section="in-vol"><i
-                                                        class="bi bi-send-fill"></i> 전송</button>
-                                            </div>
-                                            <div class="sp-card-body">
-                                                <div class="sp-ch-vol-grid">
-                                                    <div>
-                                                        <div class="sp-range-row"><span class="sp-range-tag">BGM</span>
-                                                            <input id="bi_BGM_IN_VOL" class="sp-range" type="range"
-                                                                min="0" max="100" value="0"
-                                                                data-sync-value="bi_BGM_IN_VOL_val"><span
-                                                                id="bi_BGM_IN_VOL_val" class="sp-range-badge">0</span>
-                                                        </div>
+                                                        style="background:var(--blue-a);color:var(--blue)">
+                                                        <i class="bi bi-hdd-network-fill"></i>
                                                     </div>
-                                                    <div>
-                                                        <div class="sp-range-row"><span class="sp-range-tag">STO</span>
-                                                            <input id="bi_STO_IN_VOL" class="sp-range" type="range"
-                                                                min="0" max="100" value="0"
-                                                                data-sync-value="bi_STO_IN_VOL_val"><span
-                                                                id="bi_STO_IN_VOL_val" class="sp-range-badge">0</span>
+                                                    <span class="sp-card-label">기본 및 시스템 설정</span>
+                                                </div>
+                                            </div>
+                                            <div class="sp-card-body">
+                                                <div class="sp-form-grid mb-4">
+                                                    <div class="vol-input-item">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <label class="sp-label mb-0">통제서버 IP</label>
+                                                            <button type="button"
+                                                                class="sp-sec-send btn btn-primary btn-sm"
+                                                                id="save_bi_serverip" data-target="bi_serverip"
+                                                                style="height:24px; line-height:1; font-size:0.7rem; padding: 0 8px;">저장</button>
                                                         </div>
+                                                        <input id="bi_serverip" class="sp-input w-100" type="text"
+                                                            placeholder="예: 192.168.0.10">
                                                     </div>
-                                                    <div>
-                                                        <div class="sp-range-row"><span class="sp-range-tag">TTS</span>
-                                                            <input id="bi_TTS_IN_VOL" class="sp-range" type="range"
-                                                                min="0" max="100" value="0"
-                                                                data-sync-value="bi_TTS_IN_VOL_val"><span
-                                                                id="bi_TTS_IN_VOL_val" class="sp-range-badge">0</span>
+                                                    <div class="vol-input-item">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <label class="sp-label mb-0">스피커 ID</label>
+                                                            <button type="button"
+                                                                class="sp-sec-send btn btn-primary btn-sm"
+                                                                id="save_bi_speakerid" data-target="bi_speakerid"
+                                                                style="height:24px; line-height:1; font-size:0.7rem; padding: 0 8px;">저장</button>
                                                         </div>
+                                                        <input id="bi_speakerid" class="sp-input w-100" type="text"
+                                                            placeholder="예: SPK-001">
                                                     </div>
-                                                    <div>
-                                                        <div class="sp-range-row"><span class="sp-range-tag">FM</span>
-                                                            <input id="bi_FM_IN_VOL" class="sp-range" type="range"
-                                                                min="0" max="100" value="0"
-                                                                data-sync-value="bi_FM_IN_VOL_val"> <span
-                                                                id="bi_FM_IN_VOL_val" class="sp-range-badge">0</span>
+                                                    <div class="vol-input-item">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <label class="sp-label mb-0">폴링 주기 (초)</label>
+                                                            <button type="button"
+                                                                class="sp-sec-send btn btn-primary btn-sm"
+                                                                id="save_bi_PollingCheckTime"
+                                                                data-target="bi_PollingCheckTime">저장</button>
                                                         </div>
+                                                        <input id="bi_PollingCheckTime" class="sp-input w-100"
+                                                            type="number" min="10" max="3600" step="100"
+                                                            placeholder="예: 30">
+                                                    </div>
+                                                    <div class="vol-input-item">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <label class="sp-label mb-0">BGM 폴더 설정</label>
+                                                            <button type="button"
+                                                                class="sp-sec-send btn btn-primary btn-sm"
+                                                                id="save_bi_BGMFolderNo"
+                                                                data-target="bi_BGMFolderNo">저장</button>
+                                                        </div>
+                                                        <select id="bi_BGMFolderNo" class="sp-select w-100">
+                                                            <option value="None">선택</option>
+                                                            <option value="0">가요</option>
+                                                            <option value="1">영화</option>
+                                                            <option value="2">클래식 1</option>
+                                                            <option value="3">클래식 2</option>
+                                                            <option value="4">클래식 3</option>
+                                                            <option value="5">클래식 4</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="vol-input-item">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <label class="sp-label mb-0">BGM 상태</label>
+                                                            <button type="button"
+                                                                class="sp-sec-send btn btn-primary btn-sm"
+                                                                id="save_bi_BGMStatus"
+                                                                data-target="bi_BGMStatus">저장</button>
+                                                        </div>
+                                                        <select id="bi_BGMStatus" class="sp-select w-100">
+                                                            <option value="0">ON</option>
+                                                            <option value="1">OFF</option>
+                                                        </select>
+                                                    </div>
+
+                                                    <!-- TTA/DMB 항목 (d-none 유지) -->
+                                                    <div class="vol-input-item d-none">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <label class="sp-label mb-0">TTA 지역코드</label>
+                                                            <button type="button"
+                                                                class="sp-sec-send btn btn-primary btn-sm"
+                                                                id="save_bi_TTARegionCode"
+                                                                data-target="bi_TTARegionCode">저장</button>
+                                                        </div>
+                                                        <input id="bi_TTARegionCode" class="sp-input w-100" type="text"
+                                                            maxlength="10">
+                                                    </div>
+                                                    <div class="vol-input-item d-none">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <label class="sp-label mb-0">DMB 주파수 1</label>
+                                                            <button type="button"
+                                                                class="sp-sec-send btn btn-primary btn-sm"
+                                                                id="save_bi_DMBFrequency1"
+                                                                data-target="bi_DMBFrequency1">저장</button>
+                                                        </div>
+                                                        <input id="bi_DMBFrequency1" class="sp-input w-100" type="text"
+                                                            maxlength="7">
+                                                    </div>
+                                                    <div class="vol-input-item d-none">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <label class="sp-label mb-0">DMB 주파수 2</label>
+                                                            <button type="button"
+                                                                class="sp-sec-send btn btn-primary btn-sm"
+                                                                id="save_bi_DMBFrequency2"
+                                                                data-target="bi_DMBFrequency2">저장</button>
+                                                        </div>
+                                                        <input id="bi_DMBFrequency2" class="sp-input w-100" type="text"
+                                                            maxlength="7">
+                                                    </div>
+                                                </div>
+
+                                                <div class="vol-input-item mt-4">
+                                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                                        <label class="sp-label mb-0">채널 사용 여부</label>
+                                                        <button type="button" class="sp-sec-send btn btn-primary btn-sm"
+                                                            id="save_bi_ChannelUse"
+                                                            data-section="channel-use">저장</button>
+                                                    </div>
+                                                    <div class="ch-use-grid">
+                                                        <div class="ch-use-item"><span class="ch-use-label">CH
+                                                                1</span><select id="bi_useCh1" class="sp-select">
+                                                                <option value="1">사용</option>
+                                                                <option value="2">미사용</option>
+                                                                <option value="3">없음</option>
+                                                            </select></div>
+                                                        <div class="ch-use-item"><span class="ch-use-label">CH
+                                                                2</span><select id="bi_useCh2" class="sp-select">
+                                                                <option value="1">사용</option>
+                                                                <option value="2">미사용</option>
+                                                                <option value="3">없음</option>
+                                                            </select></div>
+                                                        <div class="ch-use-item"><span class="ch-use-label">CH
+                                                                3</span><select id="bi_useCh3" class="sp-select">
+                                                                <option value="1">사용</option>
+                                                                <option value="2">미사용</option>
+                                                                <option value="3">없음</option>
+                                                            </select></div>
+                                                        <div class="ch-use-item"><span class="ch-use-label">CH
+                                                                4</span><select id="bi_useCh4" class="sp-select">
+                                                                <option value="1">사용</option>
+                                                                <option value="2">미사용</option>
+                                                                <option value="3">없음</option>
+                                                            </select></div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <!-- 출력 볼륨 설정 (BGM / 발령) -->
                                         <div class="sp-card">
                                             <div class="sp-card-head">
                                                 <div class="sp-card-title-row">
                                                     <div class="sp-card-icon"
-                                                        style="background:var(--teal-a);color:var(--teal)"><i
-                                                            class="bi bi-chat-left-text-fill"></i></div><span
-                                                        class="sp-card-label">TTS 설정</span>
-                                                </div>
-                                                <button type="button" class="sp-sec-send" data-section="tts"><i
-                                                        class="bi bi-send-fill"></i> 전송</button>
-                                            </div>
-                                            <div class="sp-card-body">
-                                                <div class="sp-ch-vol-grid">
-                                                    <div>
-                                                        <div class="sp-range-row"><span
-                                                                class="sp-range-tag">PITCH</span><input
-                                                                id="bi_TTS_Pitch" class="sp-range" type="range" min="0"
-                                                                max="100" value="0"
-                                                                data-sync-value="bi_TTS_Pitch_val"><span
-                                                                id="bi_TTS_Pitch_val" class="sp-range-badge">0</span>
-                                                        </div>
+                                                        style="background:var(--amber-a);color:var(--amber)">
+                                                        <i class="bi bi-bar-chart-steps"></i>
                                                     </div>
-                                                    <div>
-                                                        <div class="sp-range-row"><span class="sp-range-tag">SPD</span>
-                                                            <input id="bi_TTS_Speed" class="sp-range" type="range"
-                                                                min="0" max="100" value="0"
-                                                                data-sync-value="bi_TTS_Speed_val"><span
-                                                                id="bi_TTS_Speed_val" class="sp-range-badge">0</span>
-                                                        </div>
-                                                    </div>
+                                                    <span class="sp-card-label">출력 볼륨 설정 (CH 1~4)</span>
                                                 </div>
-                                            </div>
-                                        </div>
-                                        <div class="sp-card">
-                                            <div class="sp-card-head">
-                                                <div class="sp-card-title-row">
-                                                    <div class="sp-card-icon"
-                                                        style="background:var(--amber-a);color:var(--amber)"><i
-                                                            class="bi bi-bar-chart-steps"></i></div><span
-                                                        class="sp-card-label">채널별 출력 볼륨</span>
-                                                </div>
-                                                <button type="button" class="sp-sec-send" data-section="out-vol"><i
-                                                        class="bi bi-send-fill"></i> 전송</button>
                                             </div>
                                             <div class="sp-card-body"
-                                                style="display:flex;flex-direction:column;gap:16px">
-                                                <div>
-                                                    <div class="sp-ch-sub-label" style="color:var(--teal)"><i
-                                                            class="bi bi-music-note-beamed"></i> BGM</div>
+                                                style="display:flex; flex-direction:column; gap:24px">
+                                                <!-- BGM 볼륨 섹션 -->
+                                                <div class="vol-section">
+                                                    <div class="sp-ch-sub-label d-flex justify-content-between align-items-center mb-3"
+                                                        style="font-weight:700;">
+                                                        <span>BGM 볼륨 (CH1-4)</span>
+                                                        <button type="button"
+                                                            class="sp-sec-send btn btn-primary btn-sm px-3"
+                                                            id="bgm_vol_Btn" data-section="bgm-out-vol"
+                                                            style="height:28px; line-height:1;">저장</button>
+                                                    </div>
                                                     <div class="sp-ch-vol-grid">
-                                                        <div>
-                                                            <div class="sp-range-row"><span
-                                                                    class="sp-range-tag">CH1</span><input
-                                                                    id="bi_bgm_vol_ch1" class="sp-range" type="range"
-                                                                    min="0" max="100" value="0"
-                                                                    data-sync-value="bi_bgm_vol_ch1_val"><span
-                                                                    id="bi_bgm_vol_ch1_val"
-                                                                    class="sp-range-badge">0</span></div>
+                                                        <div class="vol-input-item">
+                                                            <label class="sp-label mb-0">CH1</label>
+                                                            <div class="sp-range-row">
+                                                                <input id="bi_bgm_vol_ch1" class="sp-range w-100"
+                                                                    type="range" min="0" max="100" value="0"
+                                                                    data-sync-value="bi_bgm_vol_ch1_val">
+                                                                <span id="bi_bgm_vol_ch1_val" class="range-val-text"
+                                                                    style="border-color:var(--teal)">0</span>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <div class="sp-range-row"><span
-                                                                    class="sp-range-tag">CH2</span><input
-                                                                    id="bi_bgm_vol_ch2" class="sp-range" type="range"
-                                                                    min="0" max="100" value="0"
-                                                                    data-sync-value="bi_bgm_vol_ch2_val"><span
-                                                                    id="bi_bgm_vol_ch2_val"
-                                                                    class="sp-range-badge">0</span></div>
+                                                        <div class="vol-input-item">
+                                                            <label class="sp-label mb-0">CH2</label>
+                                                            <div class="sp-range-row">
+                                                                <input id="bi_bgm_vol_ch2" class="sp-range w-100"
+                                                                    type="range" min="0" max="100" value="0"
+                                                                    data-sync-value="bi_bgm_vol_ch2_val">
+                                                                <span id="bi_bgm_vol_ch2_val" class="range-val-text"
+                                                                    style="border-color:var(--teal)">0</span>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <div class="sp-range-row"><span
-                                                                    class="sp-range-tag">CH3</span><input
-                                                                    id="bi_bgm_vol_ch3" class="sp-range" type="range"
-                                                                    min="0" max="100" value="0"
-                                                                    data-sync-value="bi_bgm_vol_ch3_val"><span
-                                                                    id="bi_bgm_vol_ch3_val"
-                                                                    class="sp-range-badge">0</span></div>
+                                                        <div class="vol-input-item">
+                                                            <label class="sp-label mb-0">CH3</label>
+                                                            <div class="sp-range-row">
+                                                                <input id="bi_bgm_vol_ch3" class="sp-range w-100"
+                                                                    type="range" min="0" max="100" value="0"
+                                                                    data-sync-value="bi_bgm_vol_ch3_val">
+                                                                <span id="bi_bgm_vol_ch3_val" class="range-val-text"
+                                                                    style="border-color:var(--teal)">0</span>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <div class="sp-range-row"><span
-                                                                    class="sp-range-tag">CH4</span><input
-                                                                    id="bi_bgm_vol_ch4" class="sp-range" type="range"
-                                                                    min="0" max="100" value="0"
-                                                                    data-sync-value="bi_bgm_vol_ch4_val"><span
-                                                                    id="bi_bgm_vol_ch4_val"
-                                                                    class="sp-range-badge">0</span></div>
+                                                        <div class="vol-input-item">
+                                                            <label class="sp-label mb-0">CH4</label>
+                                                            <div class="sp-range-row">
+                                                                <input id="bi_bgm_vol_ch4" class="sp-range w-100"
+                                                                    type="range" min="0" max="100" value="0"
+                                                                    data-sync-value="bi_bgm_vol_ch4_val">
+                                                                <span id="bi_bgm_vol_ch4_val" class="range-val-text"
+                                                                    style="border-color:var(--teal)">0</span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div>
-                                                    <div class="sp-ch-sub-label" style="color:var(--red)"><i
-                                                            class="bi bi-bell-fill"></i> 경보방송</div>
+                                                <!-- 발령 볼륨 섹션 -->
+                                                <div class="vol-section">
+                                                    <div class="sp-ch-sub-label d-flex justify-content-between align-items-center mb-3"
+                                                        style="font-weight:700;">
+                                                        <span>발령 볼륨 (CH 1-4)</span>
+                                                        <button type="button"
+                                                            class="sp-sec-send btn btn-primary btn-sm px-3"
+                                                            id="alert_vol_Btn" data-section="alert-out-vol"
+                                                            style="height:28px; line-height:1;">저장</button>
+                                                    </div>
                                                     <div class="sp-ch-vol-grid">
-                                                        <div>
-                                                            <div class="sp-range-row"><span
-                                                                    class="sp-range-tag">CH1</span><input
-                                                                    id="bi_alert_vol_ch1" class="sp-range" type="range"
-                                                                    min="0" max="100" value="0"
-                                                                    data-sync-value="bi_alert_vol_ch1_val"><span
-                                                                    id="bi_alert_vol_ch1_val"
-                                                                    class="sp-range-badge">0</span></div>
+                                                        <div class="vol-input-item">
+                                                            <label class="sp-label mb-0">CH1</label>
+                                                            <div class="sp-range-row">
+                                                                <input id="bi_alert_vol_ch1" class="sp-range w-100"
+                                                                    type="range" min="0" max="100" value="0"
+                                                                    data-sync-value="bi_alert_vol_ch1_val">
+                                                                <span id="bi_alert_vol_ch1_val" class="range-val-text"
+                                                                    style="border-color:var(--red)">0</span>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <div class="sp-range-row"><span
-                                                                    class="sp-range-tag">CH2</span><input
-                                                                    id="bi_alert_vol_ch2" class="sp-range" type="range"
-                                                                    min="0" max="100" value="0"
-                                                                    data-sync-value="bi_alert_vol_ch2_val"><span
-                                                                    id="bi_alert_vol_ch2_val"
-                                                                    class="sp-range-badge">0</span></div>
+                                                        <div class="vol-input-item">
+                                                            <label class="sp-label mb-0">CH2</label>
+                                                            <div class="sp-range-row">
+                                                                <input id="bi_alert_vol_ch2" class="sp-range w-100"
+                                                                    type="range" min="0" max="100" value="0"
+                                                                    data-sync-value="bi_alert_vol_ch2_val">
+                                                                <span id="bi_alert_vol_ch2_val" class="range-val-text"
+                                                                    style="border-color:var(--red)">0</span>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <div class="sp-range-row"><span
-                                                                    class="sp-range-tag">CH3</span><input
-                                                                    id="bi_alert_vol_ch3" class="sp-range" type="range"
-                                                                    min="0" max="100" value="0"
-                                                                    data-sync-value="bi_alert_vol_ch3_val"><span
-                                                                    id="bi_alert_vol_ch3_val"
-                                                                    class="sp-range-badge">0</span></div>
+                                                        <div class="vol-input-item">
+                                                            <label class="sp-label mb-0">CH3</label>
+                                                            <div class="sp-range-row">
+                                                                <input id="bi_alert_vol_ch3" class="sp-range w-100"
+                                                                    type="range" min="0" max="100" value="0"
+                                                                    data-sync-value="bi_alert_vol_ch3_val">
+                                                                <span id="bi_alert_vol_ch3_val" class="range-val-text"
+                                                                    style="border-color:var(--red)">0</span>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <div class="sp-range-row"><span
-                                                                    class="sp-range-tag">CH4</span><input
-                                                                    id="bi_alert_vol_ch4" class="sp-range" type="range"
-                                                                    min="0" max="100" value="0"
-                                                                    data-sync-value="bi_alert_vol_ch4_val"><span
-                                                                    id="bi_alert_vol_ch4_val"
-                                                                    class="sp-range-badge">0</span></div>
+                                                        <div class="vol-input-item">
+                                                            <label class="sp-label mb-0">CH4</label>
+                                                            <div class="sp-range-row">
+                                                                <input id="bi_alert_vol_ch4" class="sp-range w-100"
+                                                                    type="range" min="0" max="100" value="0"
+                                                                    data-sync-value="bi_alert_vol_ch4_val">
+                                                                <span id="bi_alert_vol_ch4_val" class="range-val-text"
+                                                                    style="border-color:var(--red)">0</span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div>
-                                                    <div class="sp-ch-sub-label" style="color:var(--purple)"><i
-                                                            class="bi bi-broadcast-pin"></i> FM</div>
-                                                    <div class="sp-ch-vol-grid">
-                                                        <div>
-                                                            <div class="sp-range-row"><span
-                                                                    class="sp-range-tag">CH1</span><input
-                                                                    id="bi_fm_vol_ch1" class="sp-range" type="range"
-                                                                    min="0" max="100" value="0"
-                                                                    data-sync-value="bi_fm_vol_ch1_val"><span
-                                                                    id="bi_fm_vol_ch1_val"
-                                                                    class="sp-range-badge">0</span></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 오디오 입력 및 음원 설정 -->
+                                        <div class="sp-card">
+                                            <div class="sp-card-head">
+                                                <div class="sp-card-title-row">
+                                                    <div class="sp-card-icon"
+                                                        style="background:var(--purple-a);color:var(--purple)">
+                                                        <i class="bi bi-volume-up-fill"></i>
+                                                    </div>
+                                                    <span class="sp-card-label">오디오 볼륨 설정</span>
+                                                </div>
+                                            </div>
+                                            <div class="sp-card-body">
+                                                <div class="sp-form-grid cols1">
+                                                    <!-- 입력 볼륨 슬라이더들 -->
+                                                    <div class="vol-input-item">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <label class="sp-label mb-0">저장 메시지 볼륨</label>
+                                                            <button type="button"
+                                                                class="sp-sec-send btn btn-primary btn-sm"
+                                                                id="save_bi_STO_IN_VOL" data-target="bi_STO_IN_VOL"
+                                                                style="height:24px; line-height:1; font-size:0.7rem; padding: 0 8px;">저장</button>
                                                         </div>
-                                                        <div>
-                                                            <div class="sp-range-row"><span
-                                                                    class="sp-range-tag">CH2</span><input
-                                                                    id="bi_fm_vol_ch2" class="sp-range" type="range"
-                                                                    min="0" max="100" value="0"
-                                                                    data-sync-value="bi_fm_vol_ch2_val"><span
-                                                                    id="bi_fm_vol_ch2_val"
-                                                                    class="sp-range-badge">0</span></div>
+                                                        <div class="sp-range-row">
+                                                            <input id="bi_STO_IN_VOL" class="sp-range w-100"
+                                                                type="range" min="0" max="100" value="0"
+                                                                data-sync-value="bi_STO_IN_VOL_val">
+                                                            <span id="bi_STO_IN_VOL_val" class="range-val-text"
+                                                                style="border-color:var(--purple)">0</span>
                                                         </div>
-                                                        <div>
-                                                            <div class="sp-range-row"><span
-                                                                    class="sp-range-tag">CH3</span><input
-                                                                    id="bi_fm_vol_ch3" class="sp-range" type="range"
-                                                                    min="0" max="100" value="0"
-                                                                    data-sync-value="bi_fm_vol_ch3_val"><span
-                                                                    id="bi_fm_vol_ch3_val"
-                                                                    class="sp-range-badge">0</span></div>
+                                                    </div>
+                                                    <div class="vol-input-item">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <label class="sp-label mb-0">TTS 볼륨</label>
+                                                            <button type="button"
+                                                                class="sp-sec-send btn btn-primary btn-sm"
+                                                                id="save_bi_TTS_IN_VOL" data-target="bi_TTS_IN_VOL"
+                                                                style="height:24px; line-height:1; font-size:0.7rem; padding: 0 8px;">저장</button>
                                                         </div>
-                                                        <div>
-                                                            <div class="sp-range-row"><span
-                                                                    class="sp-range-tag">CH4</span><input
-                                                                    id="bi_fm_vol_ch4" class="sp-range" type="range"
-                                                                    min="0" max="100" value="0"
-                                                                    data-sync-value="bi_fm_vol_ch4_val"><span
-                                                                    id="bi_fm_vol_ch4_val"
-                                                                    class="sp-range-badge">0</span></div>
+                                                        <div class="sp-range-row">
+                                                            <input id="bi_TTS_IN_VOL" class="sp-range w-100"
+                                                                type="range" min="0" max="100" value="0"
+                                                                data-sync-value="bi_TTS_IN_VOL_val">
+                                                            <span id="bi_TTS_IN_VOL_val" class="range-val-text"
+                                                                style="border-color:var(--purple)">0</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="vol-input-item">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <label class="sp-label mb-0">BGM 볼륨</label>
+                                                            <button type="button"
+                                                                class="sp-sec-send btn btn-primary btn-sm"
+                                                                id="save_bi_BGM_IN_VOL" data-target="bi_BGM_IN_VOL"
+                                                                style="height:24px; line-height:1; font-size:0.7rem; padding: 0 8px;">저장</button>
+                                                        </div>
+                                                        <div class="sp-range-row">
+                                                            <input id="bi_BGM_IN_VOL" class="sp-range w-100"
+                                                                type="range" min="0" max="100" value="0"
+                                                                data-sync-value="bi_BGM_IN_VOL_val">
+                                                            <span id="bi_BGM_IN_VOL_val" class="range-val-text"
+                                                                style="border-color:var(--purple)">0</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- TTS 및 시스템 상세 설정 -->
+                                        <div class="sp-card">
+                                            <div class="sp-card-head">
+                                                <div class="sp-card-title-row">
+                                                    <div class="sp-card-icon"
+                                                        style="background:var(--teal-a);color:var(--teal)">
+                                                        <i class="bi bi-chat-left-text-fill"></i>
+                                                    </div>
+                                                    <span class="sp-card-label">TTS</span>
+                                                </div>
+                                            </div>
+                                            <div class="sp-card-body">
+                                                <div class="sp-form-grid cols2">
+                                                    <div class="vol-input-item">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <label class="sp-label mb-0">TTS 피치</label>
+                                                            <button type="button"
+                                                                class="sp-sec-send btn btn-primary btn-sm"
+                                                                id="save_bi_TTS_Pitch" data-target="bi_TTS_Pitch"
+                                                                style="height:26px; line-height:1; font-size:0.7rem; padding: 0 8px;">저장</button>
+                                                        </div>
+                                                        <div class="sp-range-row">
+                                                            <input id="bi_TTS_Pitch" class="sp-range w-100" type="range"
+                                                                min="0" max="100" value="50"
+                                                                data-sync-value="bi_TTS_Pitch_val">
+                                                            <span id="bi_TTS_Pitch_val" class="range-val-text"
+                                                                style="border-color:var(--teal)">50</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="vol-input-item">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <label class="sp-label mb-0">TTS 속도</label>
+                                                            <button type="button"
+                                                                class="sp-sec-send btn btn-primary btn-sm"
+                                                                id="save_bi_TTS_Speed" data-target="bi_TTS_Speed"
+                                                                style="height:26px; line-height:1; font-size:0.7rem; padding: 0 8px;">저장</button>
+                                                        </div>
+                                                        <div class="sp-range-row">
+                                                            <input id="bi_TTS_Speed" class="sp-range w-100" type="range"
+                                                                min="0" max="100" value="50"
+                                                                data-sync-value="bi_TTS_Speed_val">
+                                                            <span id="bi_TTS_Speed_val" class="range-val-text"
+                                                                style="border-color:var(--teal)">50</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -733,12 +633,12 @@
 
                 <!-- FOOTER -->
                 <footer class="sp-footer">
-                    <div class="sp-footer-info">
+                    <div class="sp-footer-info d-none">
                         <i class="bi bi-info-circle-fill"></i> 설정 전송 후 스피커가 재부팅될 수 있습니다
                     </div>
                     <div class="sp-footer-btns">
                         <button type="button" class="sp-btn sp-btn-ghost" data-bs-dismiss="modal">닫기</button>
-                        <button type="button" class="sp-btn sp-btn-primary" id="speakerSettingSend">
+                        <button type="button" class="sp-btn sp-btn-primary d-none" id="speakerSettingSend">
                             <i class="bi bi-send-fill"></i> 전체 전송
                         </button>
                     </div>

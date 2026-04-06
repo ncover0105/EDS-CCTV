@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -60,9 +61,13 @@ public class CctvController {
 
     // ===================== 스트림 관리 =====================
     @PostMapping("/stream/restart-all")
-    public ResponseEntity<Void> restartAll() {
-        cctvStreamService.restartAllStreamsAsync(true);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> restartAll() {
+        try {
+            cctvStreamService.restartAllStreams(true);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }
     }
 
     @PostMapping("/stream/{locationCode}/{cctvCode}/restart")

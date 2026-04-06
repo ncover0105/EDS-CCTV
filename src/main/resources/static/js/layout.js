@@ -19,12 +19,12 @@ window.App = {
         socket = new WebSocket("ws://localhost:8080/ws/chat");
 
         socket.onopen = () => {
-            console.log("✅ WebSocket 연결됨");
+            // console.log("WebSocket 연결");
             App.ws.sendMessage({ type: "ping" });
         };
 
         socket.onmessage = (event) => {
-            console.log("📨 서버 응답:", event.data);
+            // console.log("서버 응답:", event.data);
             let msg = {};
             try {
                 msg = JSON.parse(event.data);
@@ -37,12 +37,12 @@ window.App = {
         };
 
         socket.onclose = () => {
-            console.log("⚠️ WebSocket 연결 종료, 3초 후 재연결");
+            // console.log("WebSocket 연결 종료, 3초 후 재연결");
             // setTimeout(connect, 3000);
         };
 
         socket.onerror = (err) => {
-            console.error("❌ WebSocket 오류:", err);
+            // console.error("WebSocket 오류:", err);
         };
     }
 
@@ -50,7 +50,7 @@ window.App = {
         if (socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify(obj));
         } else {
-            console.warn("⚠️ WebSocket 아직 연결되지 않음");
+            // console.warn("WebSocket 아직 연결되지 않음");
         }
     }
 

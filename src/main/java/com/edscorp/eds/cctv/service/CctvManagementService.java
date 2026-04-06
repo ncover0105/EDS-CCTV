@@ -59,6 +59,7 @@ public class CctvManagementService {
             camera.put("latitude", entity.getLatitude());
             camera.put("longitude", entity.getLongitude());
             camera.put("status", entity.getStatusCam());
+            camera.put("statusProc", entity.getStatusProc());
 
             // 기본/low/high 필드는 항상 내려준다(null 포함)
             camera.put("rtspUrl", hasText(entity.getRtspUrl())

@@ -16,7 +16,7 @@ public class AppConfig {
     @Value("${app.rest.connect-timeout-ms:3000}")
     private int connectTimeoutMs;
 
-    @Value("${app.rest.read-timeout-ms:5000}")
+    @Value("${app.rest.read-timeout-ms:15000}")
     private int readTimeoutMs;
 
     @Bean

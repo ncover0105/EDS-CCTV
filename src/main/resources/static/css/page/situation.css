@@ -898,7 +898,7 @@ select.sit-input {
    ============================================ */
 .table-modern {
     width: 100%;
-    height: 100%;
+    /* height: 100%; 화면 높이에 따라 td가 늘어나는 현상(스크롤 불가) 방지 */
     border-collapse: separate;
     border-spacing: 0;
     font-size: 13px;
@@ -1083,7 +1083,7 @@ select.sit-input {
     flex-direction: column;
     flex: 1;
     min-height: 0;
-    overflow: hidden;
+    overflow: auto;
 }
 
 .sit-hist-topbar {

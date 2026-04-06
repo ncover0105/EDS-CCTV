@@ -31,7 +31,7 @@ public class AirQualityService {
 
     @PostConstruct
     public void initAirQualityOnStartup() {
-        log.info("🚀 서버 시작 → 대기질 최초 1회 갱신 실행");
+        log.info("대기질 갱신");
         refreshAirQuality();
     }
 
@@ -39,8 +39,8 @@ public class AirQualityService {
     public void refreshAirQuality() {
         sidoName = "경북";
 
-        log.info("🔧 Air API 호출 준비 - serviceKey={}, sidoName={}",
-                serviceKey, sidoName);
+        // log.info("Air API 호출 준비 - serviceKey={}, sidoName={}",
+        // serviceKey, sidoName);
 
         String url = "http://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty"
                 + "?serviceKey=" + serviceKey

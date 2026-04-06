@@ -1,5 +1,6 @@
-﻿(() => {
-    const PAGE_SIZE = 10;
+(() => {
+    const PANE_ID = "equipment-cctv-pane";
+    const PAGE_SIZE = 1000; // 페이지네이션 없이 스크롤 용으로 확대
 
     let fullList = [];        // API에서 가져온 원본 전체 목록
     let filteredList = [];    // 검색/필터가 적용된 현재 목록
@@ -14,6 +15,7 @@
 
     function init() {
         bindEvents();
+        syncFilterUi();
         loadCctvList();
     }
 
@@ -34,11 +36,19 @@
         // 필터 칩
         document.querySelectorAll(".cctv-filters .chip").forEach(chip => {
             chip.addEventListener("click", () => {
-                document.querySelectorAll(".cctv-filters .chip").forEach(c => c.classList.remove("is-active"));
-                chip.classList.add("is-active");
-                currentFilter = chip.dataset.filter;
-                currentPage = 1;
-                applyFilter();
+                setCurrentFilter(chip.dataset.filter);
+            });
+        });
+
+        // 상태 요약 바
+        document.querySelectorAll(".cctv-status-bar .cctv-stat").forEach(stat => {
+            stat.addEventListener("click", () => {
+                setCurrentFilter(stat.dataset.filter);
+            });
+            stat.addEventListener("keydown", (e) => {
+                if (e.key !== "Enter" && e.key !== " ") return;
+                e.preventDefault();
+                setCurrentFilter(stat.dataset.filter);
             });
         });
 
@@ -98,6 +108,16 @@
         document.getElementById("cctvEditModal")?.addEventListener("hidden.bs.modal", () => {
             document.getElementById("editCctvForm")?.reset();
         });
+
+        document.addEventListener("click", handleEquipmentNavReset);
+
+        const pane = document.getElementById(PANE_ID);
+        pane?.addEventListener("equipment:pane-activated", () => {
+            onPaneActivated();
+        });
+        pane?.addEventListener("equipment:pane-deactivated", () => {
+            onPaneDeactivated();
+        });
     }
 
     /* -----------------------------
@@ -123,24 +143,22 @@
 
     function updateStats() {
         const total = fullList.length;
-        const ok = fullList.filter(c => c.statusCam === "1").length;
-        const bad = fullList.filter(c => c.statusCam === "0").length;
-        const unk = total - ok - bad;
+        const ok = fullList.filter(c => getStatusFilterKey(c) === "ok").length;
+        const bad = fullList.filter(c => getStatusFilterKey(c) === "bad").length;
 
         setText("cctvStatTotal", total);
         setText("cctvStatOk", ok);
         setText("cctvStatBad", bad);
-        setText("cctvStatUnk", unk);
         setText("cctvCountText", `등록된 CCTV 총 ${total}건`);
     }
 
     function applyFilter() {
         filteredList = fullList.filter(item => {
             // 1. 상태 필터
+            const itemFilterKey = getStatusFilterKey(item);
             let statusMatch = true;
-            if (currentFilter === "ok") statusMatch = item.statusCam === "1";
-            else if (currentFilter === "bad") statusMatch = item.statusCam === "0";
-            else if (currentFilter === "unk") statusMatch = !item.statusCam || (item.statusCam !== "1" && item.statusCam !== "0");
+            if (currentFilter === "ok") statusMatch = itemFilterKey === "ok";
+            else if (currentFilter === "bad") statusMatch = itemFilterKey === "bad";
 
             if (!statusMatch) return false;
 
@@ -193,6 +211,7 @@
 
         tbody.innerHTML = pageItems.map(item => rowHtml(item)).join("");
 
+        /* 페이지네이션 동작 주석 처리
         if (window.App?.utils?.renderPagination) {
             window.App.utils.renderPagination({
                 containerId: "cctvPagination",
@@ -205,6 +224,7 @@
                 }
             });
         }
+        */
 
         // 체크올 상태 동기화
         const checkAll = document.getElementById("cctv-check-all");
@@ -219,20 +239,16 @@
         const url = item.rtspUrl || "-";
         const lat = (item.latitude ?? "-");
         const lng = (item.longitude ?? "-");
-        const status = item.statusCam;
+        const status = getStatusValue(item);
 
-        let statusHtml = "";
+        let statusbadge = "";
         if (status === "1") {
-            statusHtml = `<span class="badge ok-bg text-success border border-success border-opacity-25 py-1 px-2 d-inline-flex align-items-center gap-1">
+            statusbadge = `<span class="badge ok-bg text-success border border-success border-opacity-25 py-1 px-2 d-inline-flex align-items-center gap-1">
       <span class="status-dot ok"></span> 정상
     </span>`;
-        } else if (status === "0") {
-            statusHtml = `<span class="badge danger-bg text-danger border border-danger border-opacity-25 py-1 px-2 d-inline-flex align-items-center gap-1">
-      <span class="status-dot bad"></span> 신호없음
-    </span>`;
         } else {
-            statusHtml = `<span class="badge bg-black-20 text-muted border border-white-10 py-1 px-2 d-inline-flex align-items-center gap-1">
-      <span class="status-dot unknown"></span> 알수없음
+            statusbadge = `<span class="badge danger-bg text-danger border border-danger border-opacity-25 py-1 px-2 d-inline-flex align-items-center gap-1">
+      <span class="status-dot bad"></span> 신호없음
     </span>`;
         }
 
@@ -256,20 +272,20 @@
         data-video-port="${item.videoPort || ""}"
         data-ws-port="${item.wsPort || ""}">
 
-      <td>${statusHtml}</td>
-      <td class="text-primary fw-600">${safeName}</td>
-      <td class="text-secondary">${safeLoc}</td>
-      <td class="text-secondary font-mono small">${safeCode}</td>
+      <td class="text-center align-middle">${statusbadge}</td>
+      <td class="text-primary fw-600 text-center align-middle">${safeName}</td>
+      <td class="text-secondary text-center align-middle">${safeLoc}</td>
+      <td class="text-secondary font-mono small text-center align-middle">${safeCode}</td>
 
-      <!-- ✅ RTSP -->
-      <td class="text-muted small text-truncate" style="max-width: 320px;" title="${safeUrl}">
+      <!-- RTSP -->
+      <td class="text-muted small text-truncate text-center align-middle" title="${safeUrl}">
         ${safeUrl}
       </td>
 
-      <!-- ✅ 좌표 -->
-      <td class="text-muted small">${escapeHtml(String(coordText))}</td>
+      <!-- 좌표 -->
+      <td class="text-muted small text-center align-middle">${escapeHtml(String(coordText))}</td>
 
-      <td class="text-center">
+      <td class="text-center align-middle">
         <div class="d-flex justify-content-center gap-1">
           <button class="icon-btn row-edit-btn" type="button" title="정보 수정" aria-label="정보 수정">
             <i class="bi bi-pencil-square"></i>
@@ -281,6 +297,55 @@
       </td>
     </tr>
   `;
+    }
+
+    function setCurrentFilter(filter) {
+        currentFilter = filter || "all";
+        currentPage = 1;
+        syncFilterUi();
+        applyFilter();
+    }
+
+    function syncFilterUi() {
+        document.querySelectorAll(".cctv-filters .chip").forEach(chip => {
+            chip.classList.toggle("is-active", chip.dataset.filter === currentFilter);
+        });
+
+        document.querySelectorAll(".cctv-status-bar .cctv-stat").forEach(stat => {
+            const isActive = stat.dataset.filter === currentFilter;
+            stat.classList.toggle("is-active", isActive);
+            stat.setAttribute("aria-pressed", isActive ? "true" : "false");
+        });
+    }
+
+    function resetCctvFilterState() {
+        currentFilter = "all";
+        currentSearch = "";
+        currentPage = 1;
+
+        const searchInput = document.getElementById("cctvSearch");
+        if (searchInput) searchInput.value = "";
+
+        syncFilterUi();
+    }
+
+    function onPaneDeactivated() {
+        resetCctvFilterState();
+    }
+
+    function onPaneActivated() {
+        resetCctvFilterState();
+        applyFilter();
+    }
+
+    function handleEquipmentNavReset(e) {
+        const navBtn = e.target.closest(".eq-nav-item, .eq-tab-item");
+        if (!navBtn) return;
+
+        const targetId = navBtn.dataset.target || "";
+        if (targetId !== PANE_ID) {
+            onPaneDeactivated();
+        }
     }
 
 
@@ -457,6 +522,16 @@
     function getVal(id) { return document.getElementById(id)?.value.trim() ?? ""; }
     function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = v ?? ""; }
     function setText(id, t) { const el = document.getElementById(id); if (el) el.textContent = t; }
+
+    function getStatusValue(item) {
+        return String(item?.statusProc ?? item?.statusCam ?? "").trim();
+    }
+
+    function getStatusFilterKey(item) {
+        const status = getStatusValue(item);
+        if (status === "1") return "ok";
+        return "bad";
+    }
 
     function escapeHtml(str) {
         if (!str) return "";

@@ -20,4 +20,6 @@ public class BTypeAlertRequest {
     private Integer alertPriority; // 우선순위
     private String ttsMessage; // TTS 메시지
 
+    /** 제어 명령 전송 시 필요한 비밀번호 (PlayRadio 연동용) */
+    private String password;
 }

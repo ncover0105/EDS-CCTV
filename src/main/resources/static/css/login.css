@@ -31,32 +31,22 @@ body {
     position: relative;
 }
 
-.background {
+/* .background {
     position: fixed;
     width: 100%;
     height: 100%;
     background: linear-gradient(45deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
-    /* overflow: hidden; */
-}
-
-/* Enhanced animated background */
-body::before {
-    content: '';
+} */
+.background {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: 
-        radial-gradient(circle at 20% 80%, rgba(40, 40, 60, 0.5) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(80, 80, 100, 0.4) 0%, transparent 50%),
-        linear-gradient(135deg, #0a0a0a 0%, #141414 25%, #1f1f28 50%, #141414 75%, #0a0a0a 100%);
-    background-size: 300% 300%;
-    animation: gradientShift 25s ease infinite;
+    inset: 0;
     z-index: -2;
+    background:
+        linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)),
+        url("/images/login-bg.png") center center / cover no-repeat;
 }
 
-        /* .grid-container {
+/* .grid-container {
             position: absolute;
             width: 100%;
             height: 100%;
@@ -158,58 +148,6 @@ body::before {
             100% { background-position: 0% 50%; }
         } */
 
-/* Floating particles with improved animation */
-.particles {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    pointer-events: none;
-}
-
-.particle {
-    position: absolute;
-    border-radius: 50%;
-    opacity: 0;
-    animation: float 25s infinite linear;
-}
-
-.particle:nth-child(odd) {
-    background: var(--accent-blue);
-    width: 5px;
-    height: 5px;
-    animation-delay: calc(var(--i) * -2s);
-}
-
-.particle:nth-child(even) {
-    /* background: rgba(168, 85, 247, 0.6); */
-    background: rgba(213, 209, 216, 0.637);
-    width: 4px;
-    height: 4px;
-    animation-delay: calc(var(--i) * -3s);
-}
-
-@keyframes float {
-    0% {
-        transform: translateY(100vh) translateX(0) rotate(0deg) scale(0);
-        opacity: 0;
-    }
-    10% {
-        opacity: 0.6;
-        transform: translateY(90vh) translateX(10px) rotate(45deg) scale(1);
-    }
-    90% {
-        opacity: 0.6;
-        transform: translateY(10vh) translateX(-10px) rotate(315deg) scale(1);
-    }
-    100% {
-        transform: translateY(-10vh) translateX(0) rotate(360deg) scale(0);
-        opacity: 0;
-    }
-}
-
 /* .container {
     display: flex;
     align-items: center;
@@ -238,10 +176,10 @@ body::before {
     padding: 48px 40px;
     width: 100%;
     max-width: 420px;
-    box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.8),
-    0 0 1px rgba(79, 172, 254, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.8),
+        0 0 1px rgba(79, 172, 254, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
     /* box-shadow: 
         0 25px 50px -12px var(--shadow),
         0 0 0 1px rgba(255, 255, 255, 0.05),
@@ -254,7 +192,7 @@ body::before {
 
 .login-card:hover {
     transform: translateY(-2px);
-    box-shadow: 
+    box-shadow:
         0 35px 60px -12px var(--shadow),
         0 0 0 1px rgba(255, 255, 255, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.15);
@@ -265,6 +203,7 @@ body::before {
         opacity: 0;
         transform: translateY(60px) scale(0.95);
     }
+
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
@@ -389,13 +328,13 @@ body::before {
 .form-input:focus {
     border-color: var(--accent-blue);
     background: rgba(26, 26, 26, 0.9);
-    box-shadow: 
+    box-shadow:
         0 0 0 3px var(--glow-blue),
         0 8px 25px -8px rgba(59, 130, 246, 0.2);
     transform: translateY(-1px);
 }
 
-.form-input:focus + .input-icon {
+.form-input:focus+.input-icon {
     color: var(--accent-blue);
     transform: scale(1.1);
 }
@@ -438,7 +377,7 @@ input.form-input:-webkit-autofill {
 .login-btn:hover {
     background: linear-gradient(135deg, var(--accent-blue-hover) 0%, #1e40af 100%);
     transform: translateY(-2px);
-    box-shadow: 
+    box-shadow:
         0 12px 25px -8px var(--glow-blue),
         0 0 0 1px rgba(255, 255, 255, 0.1);
 }
@@ -507,9 +446,19 @@ input.form-input:-webkit-autofill {
 }
 
 @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-5px);
+    }
+
+    75% {
+        transform: translateX(5px);
+    }
 }
 
 .alert {
@@ -547,13 +496,14 @@ input.form-input:-webkit-autofill {
 }
 
 @keyframes fadeInUp {
-    from { 
-        opacity: 0; 
-        transform: translateY(20px); 
+    from {
+        opacity: 0;
+        transform: translateY(20px);
     }
-    to { 
-        opacity: 1; 
-        transform: translateY(0); 
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
 
@@ -580,8 +530,13 @@ input.form-input:-webkit-autofill {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* Responsive improvements */
@@ -592,7 +547,7 @@ input.form-input:-webkit-autofill {
         border-radius: 16px;
         max-width: 100%;
     }
-    
+
     .system-title {
         font-size: 28px;
         margin-bottom: 8px;
@@ -617,7 +572,7 @@ input.form-input:-webkit-autofill {
     .container {
         padding: 12px;
     }
-    
+
     .login-card {
         padding: 28px 20px;
     }
@@ -634,6 +589,7 @@ input.form-input:-webkit-autofill {
     .system-title {
         font-size: 32px;
     }
+
     .subtitle {
         font-size: 16px;
     }
@@ -642,6 +598,7 @@ input.form-input:-webkit-autofill {
 .system-title {
     font-size: clamp(24px, 5vw, 32px);
 }
+
 .subtitle {
     font-size: clamp(12px, 3vw, 16px);
 }

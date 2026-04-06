@@ -1,0 +1,502 @@
+    #cctv-container {
+        min-height: auto;
+        height: 100%;
+    }
+
+    /* Grid layouts remain the same */
+    .cctv-grid {
+        display: grid;
+        /* gap: 15px; */
+        place-items: center;
+        height: 100%;
+        padding: 0;
+    }
+
+    .cctv-placeholder {
+        background-color: black;
+    }
+
+    .cctv-feed {
+        background: var(--secondary-bg);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        position: relative;
+
+        aspect-ratio: 14.5/7.5;
+
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .cctv-feed:hover {
+        transform: scale(1.005);
+        box-shadow: 0 8px 32px var(--shadow-heavy);
+        border-color: var(--accent-primary);
+        z-index: 1000;
+    }
+
+    /* 
+    .cctv-feed.active {
+        outline: 2px solid rgba(255, 193, 7, 0.9);
+        outline-offset: -2px;
+    } */
+
+    .cctv-feed video,
+    .cctv-feed canvas {
+        width: 100% !important;
+        height: 100% !important;
+        /* object-fit: cover !important; */
+        object-fit: fill !important;
+        /* 영역 꽉 채우기 */
+        background: #000;
+        display: block;
+    }
+
+    @media (min-width: 2550px) {
+        .cctv-feed {
+            aspect-ratio: 15.5 / 7.5;
+            max-height: calc(100vh - 40px);
+        }
+    }
+
+    @media (max-width: 576px) {
+        .cctv-feed {
+            min-height: 200px;
+        }
+    }
+
+    .cctv-label {
+        position: absolute;
+        bottom: 0.4rem;
+        left: 0.4rem;
+
+        background: rgba(0, 0, 0, 0.22);
+        padding: 0.35rem 0.5rem;
+        border-radius: 5px;
+
+        font-size: 0.68rem;
+        color: rgba(255, 255, 255, 0.75);
+
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+
+        box-shadow: none;
+    }
+
+    /* CCTV Overlay - Dark Theme */
+    .cctv-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(to bottom,
+                rgba(10, 14, 26, 0.6) 0%,
+                transparent 30%,
+                transparent 70%,
+                rgba(10, 14, 26, 0.6) 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+        z-index: 2000;
+    }
+
+    .cctv-feed:hover .cctv-overlay {
+        opacity: 1;
+    }
+
+    .cctv-controls {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        display: flex;
+        gap: 8px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+        z-index: 3000;
+    }
+
+    .cctv-feed:hover .cctv-controls {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .cctv-control-btn {
+        background: rgba(30, 35, 41, 0.85);
+        /* 약간 불투명도 ↑ */
+        border: 1px solid var(--border-color);
+        border-radius: 30%;
+        width: 36px;
+        /* 살짝 키움 (터치 편안) */
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent-primary);
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        /* 부드러운 easing */
+        backdrop-filter: blur(12px);
+        /* 블러 약간 강화 */
+        font-size: 14px;
+        font-weight: 500;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        /* 미세 그림자 추가 */
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cctv-control-btn:hover {
+        background: rgba(79, 195, 247, 0.25);
+        /* 호버 배경 약간 진하게 */
+        border-color: var(--accent-primary);
+        transform: scale(1.12) translateY(-1px);
+        /* lift 효과 추가 */
+        box-shadow: 0 4px 16px rgba(79, 195, 247, 0.3);
+        /* glow 그림자 */
+    }
+
+    .cctv-cam-select {
+        height: 32px;
+        min-width: 120px;
+        max-width: 180px;
+
+        padding: 0 2rem 0 0.75rem;
+        border-radius: 8px;
+
+        background-color: rgba(255, 255, 255, 0.05);
+        color: #e8eaed;
+
+        border: 1px solid rgba(255, 255, 255, 0.12);
+
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.01em;
+        line-height: 32px;
+
+        outline: none;
+        cursor: pointer;
+
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23aab0b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.6rem center;
+        background-size: 10px;
+
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+        transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .cctv-cam-select:hover {
+        border-color: rgba(255, 255, 255, 0.28);
+        background-color: rgba(255, 255, 255, 0.09);
+    }
+
+    .cctv-cam-select:focus {
+        border-color: rgba(79, 195, 247, 0.7);
+        background-color: rgba(79, 195, 247, 0.06);
+        box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.15);
+    }
+
+    .cctv-cam-select:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    .cctv-cam-select option {
+        background: #1e1e1e;
+        color: #e8eaed;
+    }
+
+    @media (max-width: 576px) {
+        .cctv-control-btn {
+            width: 28px;
+            height: 28px;
+            font-size: 12px;
+        }
+    }
+
+    .cctv-wrap {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        aspect-ratio: 16 / 9;
+        background: #0a0a0a;
+        border-radius: 4px;
+        overflow: hidden;
+        font-family: 'Courier New', Courier, monospace;
+    }
+
+    /* 스캔라인 */
+    .cctv-wrap::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(to bottom,
+                transparent 0px,
+                transparent 3px,
+                rgba(0, 0, 0, 0.08) 3px,
+                rgba(0, 0, 0, 0.08) 4px);
+        pointer-events: none;
+        z-index: 2;
+    }
+
+    /* 이동 스캔라인 */
+    .cctv-scanline {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.04);
+        animation: cctv-scan 3.5s linear infinite;
+        z-index: 3;
+        pointer-events: none;
+    }
+
+    /* 중앙 콘텐츠 */
+    .cctv-body {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        z-index: 4;
+        animation: cctv-fadein 0.4s ease;
+    }
+
+    .cctv-icon {
+        opacity: 0.92;
+    }
+
+    .cctv-place-label {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        margin: 0 0 5px;
+        text-align: center;
+    }
+
+    .cctv-place-sub {
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.3);
+        margin: 0;
+        letter-spacing: 0.03em;
+        text-align: center;
+    }
+
+    .cctv-text-block {
+        padding: 0 20px;
+    }
+
+    .cctv-status-badge {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 10px;
+        border-radius: 2px;
+    }
+
+    .cctv-status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .cctv-status-text {
+        font-size: 9px;
+        letter-spacing: 0.1em;
+    }
+
+    /* 좌상단 REC */
+    .cctv-rec {
+        position: absolute;
+        top: 9px;
+        left: 10px;
+        font-size: 9px;
+        letter-spacing: 0.08em;
+        color: rgba(255, 255, 255, 0.18);
+        z-index: 5;
+    }
+
+    /* 하단 정보 바 */
+    .cctv-footer {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 6px 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.75), transparent);
+        font-size: 9px;
+        letter-spacing: 0.07em;
+        color: rgba(255, 255, 255, 0.3);
+        z-index: 5;
+    }
+
+    .cctv-footer .cctv-timestamp {
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* ── 상태별 색상 ── */
+
+    /* no-signal */
+    [data-cctv-state="no-signal"] .cctv-label {
+        color: #F5C842;
+    }
+
+    [data-cctv-state="no-signal"] .cctv-status-badge {
+        border: 1px solid rgba(245, 200, 66, .18);
+    }
+
+    [data-cctv-state="no-signal"] .cctv-status-dot {
+        background: #F5C842;
+        animation: cctv-pulse 1.4s ease-in-out infinite;
+    }
+
+    [data-cctv-state="no-signal"] .cctv-status-text {
+        color: rgba(245, 200, 66, .65);
+    }
+
+    /* disconnected */
+    [data-cctv-state="disconnected"] .cctv-label {
+        color: #E05C5C;
+        animation: cctv-pulse 1.4s ease-in-out infinite;
+    }
+
+    [data-cctv-state="disconnected"] .cctv-status-badge {
+        border: 1px solid rgba(224, 92, 92, .18);
+    }
+
+    [data-cctv-state="disconnected"] .cctv-status-dot {
+        background: #E05C5C;
+        animation: cctv-pulse 1.4s ease-in-out infinite;
+    }
+
+    [data-cctv-state="disconnected"] .cctv-status-text {
+        color: rgba(224, 92, 92, .65);
+    }
+
+    /* offline */
+    [data-cctv-state="offline"] .cctv-label {
+        color: #888888;
+    }
+
+    [data-cctv-state="offline"] .cctv-status-badge {
+        border: 1px solid rgba(136, 136, 136, .18);
+    }
+
+    [data-cctv-state="offline"] .cctv-status-dot {
+        background: #888888;
+        opacity: 0.35;
+    }
+
+    [data-cctv-state="offline"] .cctv-status-text {
+        color: rgba(136, 136, 136, .55);
+    }
+
+    /* connecting */
+    [data-cctv-state="connecting"] .cctv-label {
+        color: #5BB8F5;
+    }
+
+    [data-cctv-state="connecting"] .cctv-status-badge {
+        border: 1px solid rgba(91, 184, 245, .18);
+    }
+
+    [data-cctv-state="connecting"] .cctv-status-dot {
+        background: #5BB8F5;
+        animation: cctv-pulse 1.4s ease-in-out infinite;
+    }
+
+    [data-cctv-state="connecting"] .cctv-status-text {
+        color: rgba(91, 184, 245, .65);
+    }
+
+    [data-cctv-state="connecting"] .cctv-icon svg {
+        animation: cctv-spin 1s linear infinite;
+    }
+
+    /* ── 키프레임 ── */
+    @keyframes cctv-scan {
+        0% {
+            top: -4px;
+        }
+
+        100% {
+            top: 100%;
+        }
+    }
+
+    @keyframes cctv-pulse {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.25;
+        }
+    }
+
+    @keyframes cctv-spin {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @keyframes cctv-fadein {
+        from {
+            opacity: 0;
+            transform: translateY(6px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes cctv-dots {
+
+        0%,
+        20% {
+            content: '';
+        }
+
+        40% {
+            content: '.';
+        }
+
+        60% {
+            content: '..';
+        }
+
+        80%,
+        100% {
+            content: '...';
+        }
+    }
+
+    [data-cctv-state="connecting"] .cctv-dots::after {
+        content: '';
+        animation: cctv-dots 1.5s steps(1) infinite;
+    }

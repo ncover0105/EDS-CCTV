@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
     <!-- <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=66sw7wk0ye&callback=initMap"></script> -->
     <link rel="stylesheet" href="css/weather.css">
+    <link rel="stylesheet" href="css/cctv-placeholder.css">
     <!-- OpenLayers 라이브러리 (필수) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@7.4.0/ol.css" />
     <script src="https://cdn.jsdelivr.net/npm/ol@7.4.0/dist/ol.js"></script>
@@ -42,8 +43,8 @@
     <script src="/js/module/weather.js?v=1"></script>
     <script src="/js/module/cctv_layout.js?v=1"></script>
     <script src="/js/module/cctv_janus.js?v=1"></script>
-    <script src="/js/module/mqtt.js?v=1"></script>
     <script src="/js/module/logs.js?v=1"></script>
+    <script src="/js/module/mqtt.js?v=1"></script>
     <script src="/js/ui/modal_speaker_setting.js?v=1"></script>
     <script src="/js/ui/modal_speaker_broadcast.js?v=1"></script>
     <script src="/js/ui/modal_tts_manage.js?v=1"></script>
@@ -106,9 +107,6 @@
                     <span class="d-none d-md-inline">CCTV 전체 재시작</span>
                 </button>
             </div>
-            <div class="current-time">
-                <span id="currentDate"></span>
-            </div>
         </div>
 
         <div class="content-wrapper p-2">
@@ -138,10 +136,6 @@
                             <span class="count-label">오프라인</span>
                             <span class="count-number camera-offline" id="offlineCount">0</span>
                         </div>
-                        <div class="status-count">
-                            <span class="count-label">점검중</span>
-                            <span class="count-number camera-maintenance" id="maintenanceCount">0</span>
-                        </div>
                     </div>
                     <div id="map">
                         <div id="mapTooltip" class="map-tooltip"></div>
@@ -166,10 +160,14 @@
                     </div>
                     <div class="sb-log-body">
                         <div id="logContainer"></div>
-                        <div id="emptyLogMessage"
-                            class="d-none d-flex flex-column align-items-center justify-content-center text-center flex-grow-1">
-                            <i class="bi bi-exclamation-circle mb-2 fs-5" style="color:rgba(255,255,255,.2);"></i>
-                            <p class="mb-0" style="font-size:11px;color:rgba(255,255,255,.25);">출입 기록이 없습니다.</p>
+                        <div id="emptyLogMessage" class="d-none sb-log-empty-state">
+                            <div class="sb-log-empty-icon" aria-hidden="true">
+                                <i class="bi bi-door-closed"></i>
+                            </div>
+                            <div class="sb-log-empty-copy">
+                                <strong>아직 수신된 출입기록이 없습니다</strong>
+                                <p class="mb-0">새로운 출입 이벤트가 발생하면 이 영역에 시간순으로 표시됩니다.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -210,37 +208,6 @@
                     <!-- 하늘 배너 -->
                     <div class="sb-wx-banner wx-clear" id="sbWxBanner">
                         <div class="sb-wx-fx" aria-hidden="true" id="sbWxFx"></div>
-                        <!-- <div class="sb-wx-cloud" style="width:70px;height:22px;top:12px;left:60px;"></div>
-                        <div class="sb-wx-cloud"
-                            style="width:50px;height:16px;top:20px;left:90px;background:rgba(200,220,255,.06);"></div>
-                        <div class="sb-wx-cloud" style="width:60px;height:18px;top:26px;left:170px;"></div>
-                        <div
-                            style="position:absolute;bottom:0;left:0;right:0;height:18px;background:linear-gradient(transparent,rgba(8,14,20,.95));">
-                        </div>
-                        <div class="sb-wx-rain" id="sbWxRain">
-                            <div class="sb-wx-rain-line" style="top:-12px;left:25px; height:18px;animation-delay:0s;">
-                            </div>
-                            <div class="sb-wx-rain-line" style="top:-12px;left:70px; height:16px;animation-delay:.18s;">
-                            </div>
-                            <div class="sb-wx-rain-line" style="top:-12px;left:120px;height:20px;animation-delay:.35s;">
-                            </div>
-                            <div class="sb-wx-rain-line" style="top:-12px;left:175px;height:17px;animation-delay:.08s;">
-                            </div>
-                            <div class="sb-wx-rain-line" style="top:-12px;left:220px;height:19px;animation-delay:.25s;">
-                            </div>
-                            <div class="sb-wx-rain-line" style="top:-12px;left:270px;height:16px;animation-delay:.42s;">
-                            </div>
-                            <div class="sb-wx-rain-line" style="top:-12px;left:320px;height:18px;animation-delay:.15s;">
-                            </div>
-                        </div>
-                        <div class="sb-wx-snow" id="sbWxSnow" style="display:none;">
-                            <div class="sb-wx-snow-flake" style="top:-10px;left:30px; animation-delay:0s;"></div>
-                            <div class="sb-wx-snow-flake" style="top:-10px;left:80px; animation-delay:.3s;"></div>
-                            <div class="sb-wx-snow-flake" style="top:-10px;left:140px;animation-delay:.6s;"></div>
-                            <div class="sb-wx-snow-flake" style="top:-10px;left:200px;animation-delay:.15s;"></div>
-                            <div class="sb-wx-snow-flake" style="top:-10px;left:260px;animation-delay:.45s;"></div>
-                            <div class="sb-wx-snow-flake" style="top:-10px;left:310px;animation-delay:.2s;"></div>
-                        </div> -->
                         <!-- 콘텐츠 -->
                         <div class="sb-wx-banner-content">
                             <img id="weather_icon" alt="날씨" class="sb-wx-icon" />
@@ -346,31 +313,37 @@
 
         <!-- ==================== 하단 Ticker Bar ==================== -->
         <div class="ticker-bar" id="tickerBar">
-
-            <!-- 왼쪽: 특보 태그 -->
-            <div class="ticker-tag" id="tickerTag">
-                <div class="ticker-tag-dot"></div>
-                <span id="tickerTagLabel">특보</span>
-            </div>
-
-            <!-- 중앙: 스크롤 텍스트 -->
-            <div class="ticker-track">
-                <div class="ticker-inner" id="tickerInner">
-                    <!-- specialReportPanel 데이터가 JS로 채워짐 -->
-                    <span class="t-item t-empty">수신된 특보 정보가 없습니다.</span>
+            <div class="ticker-legend-panel">
+                <div class="ticker-panel-title">
+                    <i class="bi bi-camera-video-fill"></i>
+                    <span>CCTV 구역</span>
+                </div>
+                <div class="ticker-legend-list">
+                    <div class="ticker-legend-item">
+                        <span class="ticker-zone-badge is-zone-1">1번 구역</span>
+                    </div>
+                    <div class="ticker-legend-item">
+                        <span class="ticker-zone-badge is-zone-2">2번 구역</span>
+                    </div>
+                    <div class="ticker-legend-item">
+                        <span class="ticker-zone-badge is-zone-3">3번 구역</span>
+                    </div>
+                    <div class="ticker-legend-item">
+                        <span class="ticker-zone-badge is-zone-4">4번 구역</span>
+                    </div>
                 </div>
             </div>
-
-            <!-- 오른쪽: 시스템 상태 칩 -->
-            <div class="ticker-sys">
-                <div class="ts-chip">
-                    CAM <b id="tickerOnline">0</b>/<b id="tickerTotal">0</b>
+            <div class="ticker-alert-panel">
+                <div class="ticker-tag" id="tickerTag">
+                    <div class="ticker-tag-dot"></div>
+                    <span id="tickerTagLabel">특보</span>
                 </div>
-                <!-- <div class="ts-chip">
-                    <span id="tickerTime">--:--:--</span>
-                </div> -->
+                <div class="ticker-track">
+                    <div class="ticker-inner" id="tickerInner">
+                        <span class="t-item t-empty">수신된 특보 정보가 없습니다.</span>
+                    </div>
+                </div>
             </div>
-
         </div>
 
         <!-- 전체화면 뷰 -->

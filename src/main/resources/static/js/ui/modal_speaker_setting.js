@@ -1,7 +1,22 @@
 let selectedSpeaker = null;
+const SPEAKER_TYPE = "B";
+const DEBUG = false;
+const SETTING_REFRESH_WAIT_MS = 15000;
+const INFO_BUTTON_DEFAULT_HTML = '<i class="bi bi-arrow-down-circle"></i> 데이터 요청';
+
+function logDebug(...args) {
+  if (!DEBUG) return;
+  console.debug(...args);
+}
+
+function logWarn(...args) {
+  if (!DEBUG) return;
+  console.warn(...args);
+}
 
 const SPEAKER_ACTION_MAP = {
   bi_serverip: "ins_ServerIP",
+  bi_speakerid: "ins_speakerid",
   bi_TTARegionCode: "insSpeakerSettings",
   bi_PollingCheckTime: "ins_PollingCheckTime",
 
@@ -16,6 +31,94 @@ const SPEAKER_ACTION_MAP = {
   bi_TTS_Pitch: "ins_TTS_Pitch",
   bi_TTS_Speed: "ins_TTS_Speed"
 };
+
+const SPEAKER_FIELD_DEFS = [
+  { readId: "b_serverip", formId: "bi_serverip", keys: ["serverip", "serverIp", "ServerIP", "server_ip"] },
+  { formId: "bi_speakerid", keys: ["speakerId", "speaker_id", "id"] },
+  { readId: "b_bgm_vol_ch1", formId: "bi_bgm_vol_ch1", keys: ["bgmVolCh1", "BgmVolCh1", "bgm_vol_ch1"] },
+  { readId: "b_bgm_vol_ch2", formId: "bi_bgm_vol_ch2", keys: ["bgmVolCh2", "BgmVolCh2", "bgm_vol_ch2"] },
+  { readId: "b_bgm_vol_ch3", formId: "bi_bgm_vol_ch3", keys: ["bgmVolCh3", "BgmVolCh3", "bgm_vol_ch3"] },
+  { readId: "b_bgm_vol_ch4", formId: "bi_bgm_vol_ch4", keys: ["bgmVolCh4", "BgmVolCh4", "bgm_vol_ch4"] },
+  { readId: "b_alert_vol_ch1", formId: "bi_alert_vol_ch1", keys: ["alertVolCh1", "AlertVolCh1", "alert_vol_ch1"] },
+  { readId: "b_alert_vol_ch2", formId: "bi_alert_vol_ch2", keys: ["alertVolCh2", "AlertVolCh2", "alert_vol_ch2"] },
+  { readId: "b_alert_vol_ch3", formId: "bi_alert_vol_ch3", keys: ["alertVolCh3", "AlertVolCh3", "alert_vol_ch3"] },
+  { readId: "b_alert_vol_ch4", formId: "bi_alert_vol_ch4", keys: ["alertVolCh4", "AlertVolCh4", "alert_vol_ch4"] },
+  { readId: "b_fm_vol_ch1", formId: "bi_fm_vol_ch1", keys: ["fmVolCh1", "FmVolCh1", "fm_vol_ch1"] },
+  { readId: "b_fm_vol_ch2", formId: "bi_fm_vol_ch2", keys: ["fmVolCh2", "FmVolCh2", "fm_vol_ch2"] },
+  { readId: "b_fm_vol_ch3", formId: "bi_fm_vol_ch3", keys: ["fmVolCh3", "FmVolCh3", "fm_vol_ch3"] },
+  { readId: "b_fm_vol_ch4", formId: "bi_fm_vol_ch4", keys: ["fmVolCh4", "FmVolCh4", "fm_vol_ch4"] },
+  {
+    readId: "b_useCh1",
+    formId: "bi_useCh1",
+    keys: ["useCh1", "UseCh1", "use_ch1"],
+    readFormatter: useChText,
+    formDefault: "1"
+  },
+  {
+    readId: "b_useCh2",
+    formId: "bi_useCh2",
+    keys: ["useCh2", "UseCh2", "use_ch2"],
+    readFormatter: useChText,
+    formDefault: "1"
+  },
+  {
+    readId: "b_useCh3",
+    formId: "bi_useCh3",
+    keys: ["useCh3", "UseCh3", "use_ch3"],
+    readFormatter: useChText,
+    formDefault: "1"
+  },
+  {
+    readId: "b_useCh4",
+    formId: "bi_useCh4",
+    keys: ["useCh4", "UseCh4", "use_ch4"],
+    readFormatter: useChText,
+    formDefault: "1"
+  },
+  { readId: "b_TTARegionCode", formId: "bi_TTARegionCode", keys: ["TTARegionCode", "ttaRegionCode", "tta_region_code", "tta"] },
+  { readId: "b_DMBFrequency1", formId: "bi_DMBFrequency1", keys: ["DMBFrequency1", "dmbFrequency1", "dmb_frequency1"] },
+  { readId: "b_DMBFrequency2", formId: "bi_DMBFrequency2", keys: ["DMBFrequency2", "dmbFrequency2", "dmb_frequency2"] },
+  { readId: "b_BGMFolderNo", formId: "bi_BGMFolderNo", keys: ["BGMFolderNo", "bgmFolderNo", "bgm_folder_no"] },
+  { readId: "b_BGMStatus", formId: "bi_BGMStatus", keys: ["BGMStatus", "bgmStatus", "bgm_status"], readFormatter: bgmStatusText },
+  { readId: "b_MusicMode", formId: "bi_MusicMode", keys: ["MusicMode", "musicMode", "music_mode"], readFormatter: musicModeText },
+  { readId: "b_BGM_IN_VOL", formId: "bi_BGM_IN_VOL", keys: ["BGM_IN_VOL", "bgmInVol", "bgm_in_vol"] },
+  { readId: "b_STO_IN_VOL", formId: "bi_STO_IN_VOL", keys: ["STO_IN_VOL", "stoInVol", "sto_in_vol"] },
+  { readId: "b_TTS_IN_VOL", formId: "bi_TTS_IN_VOL", keys: ["TTS_IN_VOL", "ttsInVol", "tts_in_vol"] },
+  { readId: "b_FM_IN_VOL", formId: "bi_FM_IN_VOL", keys: ["FM_IN_VOL", "fmInVol", "fm_in_vol"] },
+  { readId: "b_TTS_Pitch", formId: "bi_TTS_Pitch", keys: ["TTS_Pitch", "ttsPitch", "tts_pitch"] },
+  { readId: "b_TTS_Speed", formId: "bi_TTS_Speed", keys: ["TTS_Speed", "ttsSpeed", "tts_speed"] },
+  { readId: "b_PollingCheckTime", formId: "bi_PollingCheckTime", keys: ["PollingCheckTime", "pollingCheckTime", "polling_check_time"] },
+  { readId: "b_RadioFrequency", formId: "bi_RadioFrequency", keys: ["RadioFrequency", "radioFrequency", "radio_frequency"] },
+  { readId: "b_RadioFrequencyRegion", formId: "bi_RadioFrequencyRegion", keys: ["RadioFrequencyRegion", "radioFrequencyRegion", "radio_frequency_region"] }
+];
+
+const SPEAKER_READONLY_CLEAR_IDS = ["b_speakerName", "b_speakerId", ...SPEAKER_FIELD_DEFS.map(({ readId }) => readId)];
+const EMPTY_SETTING_KEYS = [...new Set([
+  "speakerKey",
+  "SpeakerKey",
+  ...SPEAKER_FIELD_DEFS.flatMap(({ keys }) => keys)
+])];
+
+function convertIpToReversedHex(ip) {
+  if (!ip || !/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(ip)) return "";
+  return ip
+    .split(".")
+    .map((v) => parseInt(v, 10).toString(16).padStart(2, "0"))
+    .reverse()
+    .join("")
+    .toUpperCase();
+}
+
+function convertToReversedHex(value, byteLength) {
+  // 숫자를 16진수로 변환한 후, 원하는 바이트 길이에 맞게 앞에 0을 채운다.
+  let hexValue = parseInt(value).toString(16).padStart(byteLength * 2, '0'); // 2자리씩 채움 (예: 960 -> 0960, 2400 -> 0960 -> 096000)
+  // 두 자리씩 나누어 리버스
+  let reversedHex = '';
+  for (let i = 0; i < hexValue.length; i += 2) {
+    reversedHex = hexValue.substr(i, 2) + reversedHex; // 두 자리씩 리버스
+  }
+  return reversedHex; // 리버스된 16진수 반환
+}
 
 function safe(v, fb = "-") {
   return v !== undefined && v !== null && v !== "" ? v : fb;
@@ -46,6 +149,18 @@ function useChText(v) {
   return "-";
 }
 
+function bgmStatusText(v) {
+  if (v === 0 || v === "0") return "ON";
+  if (v === 1 || v === "1") return "OFF";
+  return "-";
+}
+
+function musicModeText(v) {
+  if (v === 0 || v === "0") return "BGM";
+  if (v === 1 || v === "1") return "FM";
+  return "-";
+}
+
 function hide(id) {
   document.getElementById(id)?.classList.add("d-none");
 }
@@ -59,6 +174,7 @@ function clearTextByIds(ids) {
 }
 
 function syncRangeBadges(root = document) {
+  if (!root) return;
   root.querySelectorAll('input[type="range"][data-sync-value]').forEach((range) => {
     const badgeId = range.getAttribute("data-sync-value");
     const badge = document.getElementById(badgeId);
@@ -70,7 +186,10 @@ function syncRangeBadges(root = document) {
         range.style.setProperty("--p", pct + "%");
       }
     };
-    range.addEventListener("input", apply);
+    if (range.dataset.rangeBound !== "1") {
+      range.addEventListener("input", apply);
+      range.dataset.rangeBound = "1";
+    }
     apply();
   });
 }
@@ -125,66 +244,21 @@ function showTab(btnId) {
 
 function hideTypeAreas() {
   hide("area_empty");
-  hide("area_type_a");
   hide("area_type_b");
 }
 
 function showTypeArea(type) {
-  const areaKey = toUiTypeKey(type);
-  hideTypeAreas();
-  if (areaKey === "b") {
-    show("area_type_b");
-    const area = document.getElementById("area_type_b");
-    if (area) area.style.display = "flex";
-  } else if (areaKey === "a") {
-    show("area_type_a");
-    const area = document.getElementById("area_type_a");
-    if (area) area.style.display = "flex";
-  } else {
+  // hideTypeAreas();
+  if (!type) {
     show("area_empty");
     const area = document.getElementById("area_empty");
     if (area) area.style.display = "flex";
+    return;
   }
-}
 
-/**
- * 타입 판별 (DTO 키 기반)
- * - B 타입 특징 키들이 있으면 B로 판단
- * - 아니면 A로 fallback
- */
-function normalizeSpeakerType(type) {
-  if (type === "B" || type === "A") return type;
-  if (type === "O") return "B";
-  if (type === "E") return "A";
-  return "B"; // 기본값 B
-}
-
-function toUiTypeKey(type) {
-  const t = normalizeSpeakerType(type);
-  return t.toLowerCase();
-}
-
-function detectSpeakerType(dto, rawFromList) {
-  const listTypeRaw = rawFromList?.speakerType ?? rawFromList?.type ?? rawFromList?.spkType;
-  const listType = normalizeSpeakerType(listTypeRaw);
-  if (listType) return listType;
-
-  // DTO 특징점으로 판별
-  const hasAnyBKey =
-    dto &&
-    (
-      dto.bgmInVol !== undefined ||
-      dto.stoInVol !== undefined ||
-      dto.fmInVol !== undefined ||
-      dto.bgmVolCh1 !== undefined ||
-      dto.alertVolCh1 !== undefined ||
-      dto.radioFrequency !== undefined ||
-      dto.radioFrequencyRegion !== undefined ||
-      dto.pollingCheckTime !== undefined ||
-      dto.serverip !== undefined
-    );
-
-  return hasAnyBKey ? "B" : "A";
+  show("area_type_b");
+  const area = document.getElementById("area_type_b");
+  if (area) area.style.display = "flex";
 }
 
 function showGlobalAlert(message, type = "warning") {
@@ -200,27 +274,33 @@ function showGlobalAlert(message, type = "warning") {
 function isEmptySetting(dto) {
   if (!dto) return true;
   if (typeof dto === "object" && !Array.isArray(dto) && Object.keys(dto).length === 0) return true;
-
-  const mustHaveAny = [
-    "speakerKey", "serverip",
-    "bgmInVol", "stoInVol", "fmInVol",
-    "bgmVolCh1", "alertVolCh1", "fmVolCh1",
-    "pollingCheckTime", "radioFrequency"
-  ];
-  return !mustHaveAny.some((k) => dto[k] !== undefined && dto[k] !== null);
+  return !EMPTY_SETTING_KEYS.some((k) => dto[k] !== undefined && dto[k] !== null && dto[k] !== "");
 }
 
 /* =========================
   API
 ========================= */
-async function postBTypeAction({ speakerIds, action, extraParam = "" }) {
+async function postBTypeAction({ speakerIds, action, extraParam = "", password = "" }) {
   const res = await fetch("/api/btype/command/action", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ speakerIds, action, extraParam })
+    body: JSON.stringify({ speakerIds, action, extraParam, password })
   });
+
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    let msg = "명령 전송 실패";
+    try {
+      const json = JSON.parse(txt);
+      msg = json.message || msg;
+    } catch (_) {
+      msg = txt || msg;
+    }
+    throw new Error(msg);
+  }
+
   const data = await res.json().catch(() => null);
-  if (!res.ok || !data?.ok) {
+  if (!data || !data.ok) {
     throw new Error(data?.message || "명령 전송 실패");
   }
   return data;
@@ -260,9 +340,36 @@ const SpeakerApi = {
   }
 };
 
-function getSelectedSpeakerId() {
-  const el = document.querySelector(".sp-item.active");
-  return el ? el.dataset.speakerId : null;
+function applyFieldBindings(dto, mode) {
+  SPEAKER_FIELD_DEFS.forEach((field) => {
+    const value = pick(dto, ...field.keys);
+    if (mode === "read" && field.readId) {
+      const rendered = field.readFormatter ? field.readFormatter(value) : value;
+      setText(field.readId, rendered);
+      return;
+    }
+    if (mode === "form" && field.formId) {
+      setVal(field.formId, value ?? field.formDefault);
+    }
+  });
+}
+
+function clearSpeakerReadOnlyFields() {
+  clearTextByIds(SPEAKER_READONLY_CLEAR_IDS);
+}
+
+function resetSpeakerForm() {
+  const formB = document.getElementById("speakerSettingFormB");
+  if (!formB) return;
+  formB.reset();
+  syncRangeBadges(formB.closest(".modal-content") || document);
+}
+
+function populateSelectedSpeakerBasicInfo(speaker = selectedSpeaker) {
+  const p = "b_";
+  setText(p + "speakerName", speaker?.speakerName ?? "-");
+  setText(p + "speakerId", speaker?.speakerId ?? "-");
+  setVal("bi_speakerid", speaker?.speakerId ?? "");
 }
 
 /* =========================
@@ -274,7 +381,7 @@ const SpeakerList = {
     const list = await SpeakerApi.list();
     this.speakers = (Array.isArray(list) ? list : []).map((spk) => ({
       ...spk,
-      speakerType: normalizeSpeakerType(spk?.speakerType ?? spk?.type ?? spk?.spkType)
+      speakerType: SPEAKER_TYPE
     }));
     this.render();
     this.updateCount();
@@ -301,8 +408,8 @@ const SpeakerList = {
   createCard(spk) {
     const speakerKey = spk?.speakerKey ?? "";
     const speakerId = spk?.speakerId ?? "";
-    const speakerType = normalizeSpeakerType(spk?.speakerType ?? spk?.type ?? spk?.spkType) ?? "B";
-    const uiTypeKey = toUiTypeKey(speakerType);
+    const speakerType = SPEAKER_TYPE;
+    const uiTypeKey = speakerType.toLowerCase();
     const name = safe(spk.speakerName ?? spk.name ?? speakerKey);
     const subId = safe(spk.speakerId);
     return `
@@ -312,7 +419,7 @@ const SpeakerList = {
          data-speaker-type="${String(speakerType)}">
       <div class="sp-item-info">
         <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="speaker-type-tag type-${uiTypeKey}">${speakerType}</span>
+            <!-- <span class="speaker-type-tag type-${uiTypeKey}">${speakerType}</span> -->
             <div class="sp-item-name">${name}</div>
         </div>
         <div class="sp-item-sub">${subId}</div>
@@ -323,90 +430,20 @@ const SpeakerList = {
 };
 
 /* =========================
-  SettingView (B & A 병합)
+  SettingView
 ======================== */
 const SettingView = {
-  fillReadOnly(dto, selected, type = "B") {
-    const p = type === "B" ? "b_" : "a_";
-    setText(p + "speakerName", selected?.speakerName ?? "-");
-    setText(p + "speakerId", pick(dto, "speakerKey", "SpeakerKey") ?? selected?.speakerKey ?? "-");
-    setText(p + "serverip", pick(dto, "serverip", "serverIp", "ServerIP", "server_ip"));
-
-    setText(p + "bgm_vol_ch1", pick(dto, "bgmVolCh1", "BgmVolCh1", "bgm_vol_ch1"));
-    setText(p + "bgm_vol_ch2", pick(dto, "bgmVolCh2", "BgmVolCh2", "bgm_vol_ch2"));
-    setText(p + "bgm_vol_ch3", pick(dto, "bgmVolCh3", "BgmVolCh3", "bgm_vol_ch3"));
-    setText(p + "bgm_vol_ch4", pick(dto, "bgmVolCh4", "BgmVolCh4", "bgm_vol_ch4"));
-
-    setText(p + "alert_vol_ch1", pick(dto, "alertVolCh1", "AlertVolCh1", "alert_vol_ch1"));
-    setText(p + "alert_vol_ch2", pick(dto, "alertVolCh2", "AlertVolCh2", "alert_vol_ch2"));
-    setText(p + "alert_vol_ch3", pick(dto, "alertVolCh3", "AlertVolCh3", "alert_vol_ch3"));
-    setText(p + "alert_vol_ch4", pick(dto, "alertVolCh4", "AlertVolCh4", "alert_vol_ch4"));
-
-    setText(p + "fm_vol_ch1", pick(dto, "fmVolCh1", "FmVolCh1", "fm_vol_ch1"));
-    setText(p + "fm_vol_ch2", pick(dto, "fmVolCh2", "FmVolCh2", "fm_vol_ch2"));
-    setText(p + "fm_vol_ch3", pick(dto, "fmVolCh3", "FmVolCh3", "fm_vol_ch3"));
-    setText(p + "fm_vol_ch4", pick(dto, "fmVolCh4", "FmVolCh4", "fm_vol_ch4"));
-
-    setText(p + "useCh1", useChText(pick(dto, "useCh1", "UseCh1", "use_ch1")));
-    setText(p + "useCh2", useChText(pick(dto, "useCh2", "UseCh2", "use_ch2")));
-    setText(p + "useCh3", useChText(pick(dto, "useCh3", "UseCh3", "use_ch3")));
-    setText(p + "useCh4", useChText(pick(dto, "useCh4", "UseCh4", "use_ch4")));
-
-    if (type === "B") {
-      setText("b_TTARegionCode", pick(dto, "TTARegionCode", "ttaRegionCode", "tta_region_code", "tta"));
-      setText("b_DMBFrequency1", pick(dto, "DMBFrequency1", "dmbFrequency1", "dmb_frequency1"));
-      setText("b_DMBFrequency2", pick(dto, "DMBFrequency2", "dmbFrequency2", "dmb_frequency2"));
-      setText("b_BGMFolderNo", pick(dto, "BGMFolderNo", "bgmFolderNo", "bgm_folder_no"));
-      setText("b_BGMStatus", pick(dto, "BGMStatus", "bgmStatus", "bgm_status"));
-      setText("b_MusicMode", pick(dto, "MusicMode", "musicMode", "music_mode"));
-      setText("b_BGM_IN_VOL", pick(dto, "BGM_IN_VOL", "bgmInVol", "bgm_in_vol"));
-      setText("b_STO_IN_VOL", pick(dto, "STO_IN_VOL", "stoInVol", "sto_in_vol"));
-      setText("b_TTS_IN_VOL", pick(dto, "TTS_IN_VOL", "ttsInVol", "tts_in_vol"));
-      setText("b_FM_IN_VOL", pick(dto, "FM_IN_VOL", "fmInVol", "fm_in_vol"));
-      setText("b_TTS_Pitch", pick(dto, "TTS_Pitch", "ttsPitch", "tts_pitch"));
-      setText("b_TTS_Speed", pick(dto, "TTS_Speed", "ttsSpeed", "tts_speed"));
-      setText("b_PollingCheckTime", pick(dto, "PollingCheckTime", "pollingCheckTime", "polling_check_time"));
-      setText("b_RadioFrequency", pick(dto, "RadioFrequency", "radioFrequency", "radio_frequency"));
-      setText("b_RadioFrequencyRegion", pick(dto, "RadioFrequencyRegion", "radioFrequencyRegion", "radio_frequency_region"));
-    }
+  fillReadOnly(dto, selected) {
+    setText("b_speakerName", selected?.speakerName ?? "-");
+    setText("b_speakerId", pick(dto, "speakerId", "speaker_id", "id") ?? selected?.speakerId ?? "-");
+    applyFieldBindings(dto, "read");
   },
 
-  fillForm(dto, type = "B") {
-    const pi = type === "B" ? "bi_" : "ai_";
-    setVal(pi + "serverip", pick(dto, "serverip", "serverIp", "ServerIP", "server_ip"));
-    setVal(pi + "PollingCheckTime", pick(dto, "PollingCheckTime", "pollingCheckTime", "polling_check_time"));
-    setVal(pi + "useCh1", pick(dto, "useCh1", "UseCh1", "use_ch1") ?? "1");
-    setVal(pi + "useCh2", pick(dto, "useCh2", "UseCh2", "use_ch2") ?? "1");
-    setVal(pi + "useCh3", pick(dto, "useCh3", "UseCh3", "use_ch3") ?? "1");
-    setVal(pi + "useCh4", pick(dto, "useCh4", "UseCh4", "use_ch4") ?? "1");
-
-    if (type === "B") {
-      setVal("bi_TTARegionCode", pick(dto, "TTARegionCode", "ttaRegionCode", "tta_region_code", "tta"));
-      setVal("bi_DMBFrequency1", pick(dto, "DMBFrequency1", "dmbFrequency1", "dmb_frequency1"));
-      setVal("bi_DMBFrequency2", pick(dto, "DMBFrequency2", "dmbFrequency2", "dmb_frequency2"));
-      setVal("bi_BGMFolderNo", pick(dto, "BGMFolderNo", "bgmFolderNo", "bgm_folder_no"));
-      setVal("bi_BGMStatus", pick(dto, "BGMStatus", "bgmStatus", "bgm_status"));
-      setVal("bi_MusicMode", pick(dto, "MusicMode", "musicMode", "music_mode"));
-      setVal("bi_RadioFrequency", pick(dto, "RadioFrequency", "radioFrequency", "radio_frequency"));
-      setVal("bi_RadioFrequencyRegion", pick(dto, "RadioFrequencyRegion", "radioFrequencyRegion", "radio_frequency_region"));
-      setVal("bi_BGM_IN_VOL", pick(dto, "BGM_IN_VOL", "bgmInVol", "bgm_in_vol"));
-      setVal("bi_STO_IN_VOL", pick(dto, "STO_IN_VOL", "stoInVol", "sto_in_vol"));
-      setVal("bi_TTS_IN_VOL", pick(dto, "TTS_IN_VOL", "ttsInVol", "tts_in_vol"));
-      setVal("bi_FM_IN_VOL", pick(dto, "FM_IN_VOL", "fmInVol", "fm_in_vol"));
-      setVal("bi_TTS_Pitch", pick(dto, "TTS_Pitch", "ttsPitch", "tts_pitch"));
-      setVal("bi_TTS_Speed", pick(dto, "TTS_Speed", "ttsSpeed", "tts_speed"));
-      setVal("bi_bgm_vol_ch1", pick(dto, "bgmVolCh1", "bgm_vol_ch1"));
-      setVal("bi_bgm_vol_ch2", pick(dto, "bgmVolCh2", "bgm_vol_ch2"));
-      setVal("bi_bgm_vol_ch3", pick(dto, "bgmVolCh3", "bgm_vol_ch3"));
-      setVal("bi_bgm_vol_ch4", pick(dto, "bgmVolCh4", "bgm_vol_ch4"));
-      setVal("bi_alert_vol_ch1", pick(dto, "alertVolCh1", "alert_vol_ch1"));
-      setVal("bi_alert_vol_ch2", pick(dto, "alertVolCh2", "alert_vol_ch2"));
-      setVal("bi_alert_vol_ch3", pick(dto, "alertVolCh3", "alert_vol_ch3"));
-      setVal("bi_alert_vol_ch4", pick(dto, "alertVolCh4", "alert_vol_ch4"));
-      setVal("bi_fm_vol_ch1", pick(dto, "fmVolCh1", "fm_vol_ch1"));
-      setVal("bi_fm_vol_ch2", pick(dto, "fmVolCh2", "fm_vol_ch2"));
-      setVal("bi_fm_vol_ch3", pick(dto, "fmVolCh3", "fm_vol_ch3"));
-      setVal("bi_fm_vol_ch4", pick(dto, "fmVolCh4", "fm_vol_ch4"));
+  fillForm(dto) {
+    applyFieldBindings(dto, "form");
+    // DTO에 ID 정보가 없는 경우 선택된 스피커 정보를 활용하여 입력 필드 유지
+    if (!pick(dto, "speakerId", "speaker_id", "id")) {
+      setVal("bi_speakerid", selectedSpeaker?.speakerId ?? "");
     }
     syncRangeBadges(document.getElementById("speaker_setting_modal"));
   },
@@ -417,6 +454,7 @@ const SettingView = {
 ========================= */
 const SpeakerSettingModal = {
   AUTO_OPEN_CONFIG_TAB: true,
+  requestSeq: 0,
 
   init() {
     const modalEl = document.getElementById("speaker_setting_modal");
@@ -442,61 +480,68 @@ const SpeakerSettingModal = {
 
     this.bindClickList(modalEl);
     this.bindInfoRequest(modalEl);
+    this.bindConfigActions(modalEl);
 
   },
 
   resetState() {
+    this.clearScheduledRefresh();
     selectedSpeaker = null;
+    this.requestSeq += 1;
     document.querySelectorAll(".sp-item.active").forEach((c) => c.classList.remove("active"));
     showTab("tab-info-b");
     showTypeArea(null);
-
-    const allIds = [
-      "b_speakerName", "b_speakerId", "b_serverip",
-      "b_bgm_vol_ch1", "b_bgm_vol_ch2", "b_bgm_vol_ch3", "b_bgm_vol_ch4",
-      "b_alert_vol_ch1", "b_alert_vol_ch2", "b_alert_vol_ch3", "b_alert_vol_ch4",
-      "b_fm_vol_ch1", "b_fm_vol_ch2", "b_fm_vol_ch3", "b_fm_vol_ch4",
-      "b_useCh1", "b_useCh2", "b_useCh3", "b_useCh4",
-      "b_TTARegionCode", "b_DMBFrequency1", "b_DMBFrequency2",
-      "b_BGMFolderNo", "b_BGMStatus", "b_MusicMode",
-      "b_BGM_IN_VOL", "b_STO_IN_VOL", "b_TTS_IN_VOL", "b_FM_IN_VOL",
-      "b_TTS_Pitch", "b_TTS_Speed",
-      "b_PollingCheckTime", "b_RadioFrequency", "b_RadioFrequencyRegion",
-      "a_speakerName", "a_speakerId", "a_serverip",
-      "a_bgm_vol_ch1", "a_bgm_vol_ch2", "a_bgm_vol_ch3", "a_bgm_vol_ch4",
-      "a_alert_vol_ch1", "a_alert_vol_ch2", "a_alert_vol_ch3", "a_alert_vol_ch4",
-      "a_fm_vol_ch1", "a_fm_vol_ch2", "a_fm_vol_ch3", "a_fm_vol_ch4",
-      "a_useCh1", "a_useCh2", "a_useCh3", "a_useCh4"
-    ];
-    clearTextByIds(allIds);
-    document.getElementById("speakerSettingFormB")?.reset?.();
-    document.getElementById("speakerSettingFormA")?.reset?.();
+    clearSpeakerReadOnlyFields();
+    resetSpeakerForm();
   },
 
   resetViewOnlyKeepSelection() {
-    const type = selectedSpeaker?.speakerType ?? "B";
-    showTab(`tab-info-${toUiTypeKey(type)}`);
+    this.clearScheduledRefresh();
+    this.requestSeq += 1;
+    showTab("tab-info-b");
+    clearSpeakerReadOnlyFields();
+    resetSpeakerForm();
+  },
 
-    const allIds = [
-      "b_speakerName", "b_speakerId", "b_serverip",
-      "b_bgm_vol_ch1", "b_bgm_vol_ch2", "b_bgm_vol_ch3", "b_bgm_vol_ch4",
-      "b_alert_vol_ch1", "b_alert_vol_ch2", "b_alert_vol_ch3", "b_alert_vol_ch4",
-      "b_fm_vol_ch1", "b_fm_vol_ch2", "b_fm_vol_ch3", "b_fm_vol_ch4",
-      "b_useCh1", "b_useCh2", "b_useCh3", "b_useCh4",
-      "b_TTARegionCode", "b_DMBFrequency1", "b_DMBFrequency2",
-      "b_BGMFolderNo", "b_BGMStatus", "b_MusicMode",
-      "b_BGM_IN_VOL", "b_STO_IN_VOL", "b_TTS_IN_VOL", "b_FM_IN_VOL",
-      "b_TTS_Pitch", "b_TTS_Speed",
-      "b_PollingCheckTime", "b_RadioFrequency", "b_RadioFrequencyRegion",
-      "a_speakerName", "a_speakerId", "a_serverip",
-      "a_bgm_vol_ch1", "a_bgm_vol_ch2", "a_bgm_vol_ch3", "a_bgm_vol_ch4",
-      "a_alert_vol_ch1", "a_alert_vol_ch2", "a_alert_vol_ch3", "a_alert_vol_ch4",
-      "a_fm_vol_ch1", "a_fm_vol_ch2", "a_fm_vol_ch3", "a_fm_vol_ch4",
-      "a_useCh1", "a_useCh2", "a_useCh3", "a_useCh4"
-    ];
-    clearTextByIds(allIds);
-    document.getElementById("speakerSettingFormB")?.reset?.();
-    document.getElementById("speakerSettingFormA")?.reset?.();
+  clearScheduledRefresh() {
+    this.setInfoButtonIdle();
+  },
+
+  getInfoButton() {
+    return document.getElementById("speakerSettingInfo");
+  },
+
+  setInfoButtonIdle() {
+    const btn = this.getInfoButton();
+    if (!btn) return;
+    btn.innerHTML = INFO_BUTTON_DEFAULT_HTML;
+    btn.disabled = false;
+    delete btn.dataset.loading;
+  },
+
+  setInfoButtonLoading() {
+    const btn = this.getInfoButton();
+    if (!btn) return;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> 데이터 갱신 중...';
+    btn.disabled = true;
+    btn.dataset.loading = "1";
+  },
+
+  setInfoButtonRefreshing() {
+    const btn = this.getInfoButton();
+    if (!btn) return;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> 전체 데이터 갱신 중...';
+    btn.disabled = true;
+    btn.dataset.loading = "1";
+  },
+
+  createRequestToken() {
+    this.requestSeq += 1;
+    return this.requestSeq;
+  },
+
+  isRequestStale(requestToken, speakerKey) {
+    return requestToken !== this.requestSeq || selectedSpeaker?.speakerKey !== speakerKey;
   },
 
   bindClickList(modalEl) {
@@ -523,17 +568,45 @@ const SpeakerSettingModal = {
         speakerKey: raw.speakerKey,
         speakerName: raw.speakerName ?? raw.name ?? `KEY:${speakerKey}`,
         speakerId: raw.speakerId ?? raw.id,
-        speakerType: normalizeSpeakerType(raw.speakerType ?? raw.type ?? raw.spkType),
+        speakerType: SPEAKER_TYPE,
       };
 
       this.resetViewOnlyKeepSelection();
       showTypeArea(selectedSpeaker.speakerType);
 
       // 선택된 기본 정보 즉시 매핑
-      const p = selectedSpeaker.speakerType === "B" ? "b_" : "a_";
-      setText(p + "speakerName", selectedSpeaker.speakerName);
-      setText(p + "speakerId", selectedSpeaker.speakerKey);
+      populateSelectedSpeakerBasicInfo(selectedSpeaker);
+
+      // DB의 최신 설정 정보 자동 조회하여 표시
+      this.loadSpeakerSetting(selectedSpeaker.speakerKey);
     });
+  },
+
+  async loadSpeakerSetting(speakerKey) {
+    if (!speakerKey) return;
+    const requestToken = this.createRequestToken();
+    try {
+      const dto = await SpeakerApi.getSetting(speakerKey);
+      if (this.isRequestStale(requestToken, speakerKey)) return;
+      if (dto && !isEmptySetting(dto)) {
+        const type = SPEAKER_TYPE;
+        showTypeArea(type);
+        SettingView.fillReadOnly(dto, selectedSpeaker);
+        SettingView.fillForm(dto);
+      } else {
+        // 정보가 없거나 빈 결과일 경우 초기화 상태 유지
+        this.resetViewOnlyKeepSelection();
+        // 기본 정보만 다시 채워줌
+        populateSelectedSpeakerBasicInfo();
+      }
+      this.setInfoButtonIdle();
+    } catch (err) {
+      if (this.isRequestStale(requestToken, speakerKey)) return;
+      logWarn("Auto load setting failed:", err);
+      this.resetViewOnlyKeepSelection();
+      populateSelectedSpeakerBasicInfo();
+      this.setInfoButtonIdle();
+    }
   },
 
   bindInfoRequest(modalEl) {
@@ -546,66 +619,238 @@ const SpeakerSettingModal = {
         return;
       }
 
+      const speakerKey = selectedSpeaker.speakerKey;
+      const requestToken = this.createRequestToken();
       const deviceId = selectedSpeaker.speakerId;
       if (btn.dataset.loading === "1") return;
-      btn.dataset.loading = "1";
-      btn.disabled = true;
+      this.setInfoButtonLoading();
+
+      const password = prompt("스피커 설정 데이터를 요청하려면 비밀번호를 입력하세요.");
+      if (password === null) {
+        this.setInfoButtonIdle();
+        return; // 취소
+      }
 
       try {
         let requestErr = null;
         if (deviceId) {
           try {
-            await postBTypeAction({
+            const response = await postBTypeAction({
               speakerIds: [String(deviceId)],
               action: "getSpeakerSettings",
-              extraParam: ""
+              extraParam: "",
+              password: password
             });
+            logDebug("[B-Type] 전송 성공 응답:", response.responses);
           } catch (err) {
             requestErr = err;
           }
         }
 
-        const dto = await pollSpeakerSetting(selectedSpeaker.speakerKey, {
-          retries: 8,
+        if (!requestErr) {
+          this.setInfoButtonRefreshing();
+        }
+
+        const dto = await pollSpeakerSetting(speakerKey, {
+          retries: Math.ceil(SETTING_REFRESH_WAIT_MS / 700),
           intervalMs: 700
         });
+        if (this.isRequestStale(requestToken, speakerKey)) return;
 
         if (isEmptySetting(dto)) {
           this.resetViewOnlyKeepSelection();
-          const p = selectedSpeaker.speakerType === "B" ? "b_" : "a_";
-          setText(p + "speakerName", selectedSpeaker.speakerName);
-          setText(p + "speakerId", selectedSpeaker.speakerKey);
-          showGlobalAlert("조회된 설정 정보가 없습니다. (응답 대기 시간 초과)", "warning");
+          populateSelectedSpeakerBasicInfo();
+          showGlobalAlert(requestErr?.message || "조회된 설정 정보가 없습니다. (응답 대기 시간 초과)", "warning");
           return;
         }
 
-        const raw = SpeakerList.speakers.find(s => String(s?.speakerKey) === String(selectedSpeaker.speakerKey));
-        const type = detectSpeakerType(dto, raw);
+        const type = SPEAKER_TYPE;
         selectedSpeaker.speakerType = type; // 최신 타입으로 업데이트
 
         showTypeArea(type);
-        SettingView.fillReadOnly(dto, selectedSpeaker, type);
-        SettingView.fillForm(dto, type);
+        SettingView.fillReadOnly(dto, selectedSpeaker);
+        SettingView.fillForm(dto);
 
-        const uiTypeKey = toUiTypeKey(type);
-        const targetTab = this.AUTO_OPEN_CONFIG_TAB ? `tab-config-${uiTypeKey}` : `tab-info-${uiTypeKey}`;
+        const targetTab = this.AUTO_OPEN_CONFIG_TAB ? "tab-config-b" : "tab-info-b";
         showTab(targetTab);
-
         if (requestErr) {
-          showGlobalAlert(`데이터 요청은 실패, 이전 데이터를 불러옵니다.`, "warning");
+          showGlobalAlert(`데이터 요청은 실패했지만 DB 설정값을 표시합니다. (${requestErr.message})`, "warning");
         }
       } catch (err) {
+        if (this.isRequestStale(requestToken, speakerKey)) return;
         this.resetViewOnlyKeepSelection();
         showGlobalAlert(`정보 요청 중 오류: ${err.message}`, "danger");
       } finally {
-        btn.dataset.loading = "0";
-        btn.disabled = false;
+        this.setInfoButtonIdle();
       }
     });
   },
+
+  bindConfigActions(modalEl) {
+    modalEl.addEventListener("click", async (e) => {
+      const btn = e.target.closest(".sp-sec-send");
+      if (!btn || btn.id === "speakerSettingInfo") return;
+
+      if (!selectedSpeaker?.speakerKey) {
+        showGlobalAlert("스피커를 먼저 선택해주세요.", "warning");
+        return;
+      }
+
+      const targetId = btn.dataset.target;
+      const section = btn.dataset.section;
+      const btnId = btn.id;
+
+      let action = "";
+      let extraParam = "";
+
+      // 1. 역할별 분기 처리 (로그 생성 및 설정값 준비)
+      if (btnId === "save_bi_serverip") {
+        logDebug("[Config] 통제서버 IP 저장");
+        action = SPEAKER_ACTION_MAP[targetId];
+        const val = document.getElementById(targetId)?.value;
+        extraParam = convertIpToReversedHex(val);
+        logDebug(` -> IP: ${val} (Converted: ${extraParam})`);
+      }
+      else if (btnId === "save_bi_speakerid") {
+        logDebug("[Config] 스피커 ID 저장");
+        action = "ins_speakerid"; // ID 설정 전용 액션 호출
+        const val = document.getElementById(targetId)?.value;
+        extraParam = convertIpToReversedHex(val);
+
+        logDebug(` -> ID: ${val} (Converted: ${extraParam})`);
+      }
+      else if (btnId === "save_bi_PollingCheckTime") {
+        logDebug("[Config] 폴링 주기 저장");
+        action = SPEAKER_ACTION_MAP[targetId];
+        const val = document.getElementById(targetId)?.value;
+        // 2바이트 리버스 헥사 변환 (예: 30초 -> 001E -> 1E00)
+        const byteLength = 2;
+        extraParam = convertToReversedHex(val, byteLength);
+        logDebug(` -> Polling: ${val} (Converted: ${extraParam})`);
+      }
+      else if (btnId === "save_bi_BGMFolderNo") {
+        logDebug("[Config] BGM 폴더 설정 저장");
+        action = SPEAKER_ACTION_MAP[targetId];
+        const val = document.getElementById(targetId)?.value;
+
+        if (val === "None") {
+          showGlobalAlert("폴더를 선택해주세요.", "warning");
+          return;
+        }
+
+        // 1바이트 리버스 헥사 변환
+        extraParam = convertToReversedHex(val, 1);
+        logDebug(` -> BGM Folder: ${val} (Converted: ${extraParam})`);
+      }
+      else if (btnId === "save_bi_BGMStatus") {
+        logDebug("[Config] BGM 상태 설정 저장");
+        action = SPEAKER_ACTION_MAP[targetId];
+        const val = document.getElementById(targetId)?.value;
+        // 1바이트 리버스 헥사 변환
+        extraParam = convertToReversedHex(val, 1);
+        logDebug(` -> BGM Status: ${val} (Converted: ${extraParam})`);
+      }
+      else if (section === "channel-use") {
+        logDebug("[Config] 채널 사용 여부");
+        action = "ins_channels";
+
+        const ch1 = document.getElementById("bi_useCh1")?.value || "3";
+        const ch2 = document.getElementById("bi_useCh2")?.value || "3";
+        const ch3 = document.getElementById("bi_useCh3")?.value || "3";
+        const ch4 = document.getElementById("bi_useCh4")?.value || "3";
+
+        // 각 채널값을 1바이트 헥사로 변환하여 8자리 문자열 생성 (예: 01010101)
+        extraParam = [ch1, ch2, ch3, ch4]
+          .map(v => convertToReversedHex(v, 1))
+          .join("");
+
+        logDebug(` -> Channel Use Combine: ${ch1}, ${ch2}, ${ch3}, ${ch4} (ExtraParam: ${extraParam})`);
+      }
+      else if (section === "bgm-out-vol") {
+        logDebug("[Config] BGM 출력 볼륨");
+        action = "insBgmVolume";
+
+        const v1 = document.getElementById("bi_bgm_vol_ch1")?.value || 0;
+        const v2 = document.getElementById("bi_bgm_vol_ch2")?.value || 0;
+        const v3 = document.getElementById("bi_bgm_vol_ch3")?.value || 0;
+        const v4 = document.getElementById("bi_bgm_vol_ch4")?.value || 0;
+
+        // 각 채널 볼륨값을 1바이트 헥사로 변환하여 8자리로 결합 (예: 32323232 -> 50,50,50,50)
+        extraParam = [v1, v2, v3, v4]
+          .map(v => convertToReversedHex(v, 1))
+          .join("");
+
+        logDebug(` -> BGM Output Vol Combine: ${v1}, ${v2}, ${v3}, ${v4} (ExtraParam: ${extraParam})`);
+      }
+      else if (section === "alert-out-vol") {
+        logDebug("[Config] 발령 출력 볼륨");
+        action = "insAlertVolume";
+
+        const v1 = document.getElementById("bi_alert_vol_ch1")?.value || 0;
+        const v2 = document.getElementById("bi_alert_vol_ch2")?.value || 0;
+        const v3 = document.getElementById("bi_alert_vol_ch3")?.value || 0;
+        const v4 = document.getElementById("bi_alert_vol_ch4")?.value || 0;
+
+        // 각 채널 볼륨값을 1바이트 헥사로 변환하여 8자리로 결합 (예: 32323232)
+        extraParam = [v1, v2, v3, v4]
+          .map(v => convertToReversedHex(v, 1))
+          .join("");
+
+        logDebug(` -> Alert Output Vol Combine: ${v1}, ${v2}, ${v3}, ${v4} (ExtraParam: ${extraParam})`);
+      }
+      else if (btnId === "save_bi_BGM_IN_VOL" || btnId === "save_bi_STO_IN_VOL" || btnId === "save_bi_TTS_IN_VOL") {
+        logDebug(`[Config] 입력 볼륨(IN_VOL) 저장: ${btnId}`);
+        action = SPEAKER_ACTION_MAP[targetId];
+        const val = document.getElementById(targetId)?.value || 0;
+
+        // 입력 볼륨은 1바이트 리버스 헥사 변환 (예: 100 -> 64)
+        extraParam = convertToReversedHex(val, 1);
+        logDebug(` -> Input Vol: ${val} (ExtraParam: ${extraParam})`);
+      }
+      else if (targetId && (targetId.includes("Pitch") || targetId.includes("Speed"))) {
+        logDebug(`[Config] TTS 상세 저장: ${targetId}`);
+        action = SPEAKER_ACTION_MAP[targetId];
+        const val = document.getElementById(targetId)?.value || 0;
+
+        // 피치/속도도 1바이트 리버스 헥사 변환
+        extraParam = convertToReversedHex(val, 1);
+        logDebug(` -> TTS Val: ${val} (ExtraParam: ${extraParam})`);
+      }
+      else if (targetId) {
+        logDebug(`[Config] 기타 설정 저장: ${targetId}`);
+        action = SPEAKER_ACTION_MAP[targetId];
+        extraParam = document.getElementById(targetId)?.value;
+        logDebug(` -> Value: ${extraParam}`);
+      }
+
+      if (!action) {
+        logWarn("No mapped action for this button:", btn);
+        return;
+      }
+
+      const password = prompt("설정을 변경하려면 비밀번호를 입력하세요.");
+      if (password === null) return;
+
+      const deviceId = selectedSpeaker.speakerId;
+
+      try {
+        btn.disabled = true;
+        await postBTypeAction({
+          speakerIds: [String(deviceId)],
+          action: action,
+          extraParam: String(extraParam),
+          password: password
+        });
+        showGlobalAlert("설정 변경 명령을 전송했습니다.", "success");
+      } catch (err) {
+        showGlobalAlert(`저장 실패: ${err.message}`, "danger");
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
 };
 
 document.addEventListener("DOMContentLoaded", () => {
   SpeakerSettingModal.init();
 });
-

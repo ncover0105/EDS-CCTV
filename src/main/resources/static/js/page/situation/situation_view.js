@@ -3,7 +3,7 @@
 (function () {
   'use strict';
 
-  const pageSize = 15;
+  const pageSize = 1000; // 페이지네이션 제거로 인해 한 번에 많이 가져오도록 수정
   let currentPage = 1;
   let totalCount = 0;
 
@@ -163,6 +163,8 @@
   }
 
   function renderPagination() {
+    // 페이지네이션 부분 임시 주석 처리
+    /*
     window.SituationCommon.safeRenderPagination(
       'situationPagination',
       currentPage,
@@ -173,6 +175,7 @@
         loadPage().catch(console.error);
       }
     );
+    */
   }
 
   async function loadPage() {

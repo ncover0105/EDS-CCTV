@@ -167,7 +167,7 @@ let globalAlertTimeouts = {
     dNoneTimeout: null
 };
 
-export function showGlobalAlert(message, type = 'info', duration = 2000) {
+export function showGlobalAlert(message, type = 'info', duration = 5000) {
     const alertEl = document.getElementById("globalAlert");
     const alertText = document.getElementById("globalAlertText");
     const alertIcon = document.getElementById("globalAlertIcon");
@@ -416,11 +416,26 @@ const __clockIntervals = new Map();
 export function startClock(target, intervalMs = 1000) {
     const el = typeof target === "string" ? document.getElementById(target) : target;
     if (!el) return;
+    const pad = (n) => String(n).padStart(2, "0");
 
     stopClock(el);
 
     const render = () => {
-        el.textContent = formatKoreanDateTime(new Date());
+        const now = new Date();
+
+        if (el.id === "currentDate") {
+            const y = now.getFullYear();
+            const m = pad(now.getMonth() + 1);
+            const d = pad(now.getDate());
+            const hh = pad(now.getHours());
+            const mm = pad(now.getMinutes());
+            const ss = pad(now.getSeconds());
+
+            el.innerHTML = `<span class="clock-date">${y}년 ${m}월 ${d}일</span><span class="clock-time">${hh} : ${mm} : ${ss}</span>`;
+            return;
+        }
+
+        el.textContent = formatKoreanDateTime(now);
     };
 
     render();
@@ -440,4 +455,15 @@ export function stopClock(target) {
         clearInterval(id);
         __clockIntervals.delete(el);
     }
+}
+
+export function convertToReversedHex(value, byteLength) {
+    // 숫자를 16진수로 변환한 후, 원하는 바이트 길이에 맞게 앞에 0을 채운다.
+    let hexValue = parseInt(value).toString(16).padStart(byteLength * 2, '0'); // 2자리씩 채움 (예: 960 -> 0960, 2400 -> 0960 -> 096000)
+    // 두 자리씩 나누어 리버스
+    let reversedHex = '';
+    for (let i = 0; i < hexValue.length; i += 2) {
+        reversedHex = hexValue.substr(i, 2) + reversedHex; // 두 자리씩 리버스
+    }
+    return reversedHex; // 리버스된 16진수 반환
 }

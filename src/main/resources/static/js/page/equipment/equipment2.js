@@ -40,10 +40,31 @@
 
         // 1) pane show/hide
         const panes = qsa(SELECTORS.pane);
+        const currentPane = panes.find((p) => p.classList.contains("is-active")) || null;
+
         panes.forEach((p) => p.classList.remove("is-active"));
 
+        if (currentPane && currentPane.id !== targetId) {
+            currentPane.dispatchEvent(new CustomEvent("equipment:pane-deactivated", {
+                bubbles: true,
+                detail: {
+                    paneId: currentPane.id,
+                    nextPaneId: targetId
+                }
+            }));
+        }
+
         const pane = document.getElementById(targetId);
-        if (pane) pane.classList.add("is-active");
+        if (pane) {
+            pane.classList.add("is-active");
+            pane.dispatchEvent(new CustomEvent("equipment:pane-activated", {
+                bubbles: true,
+                detail: {
+                    paneId: targetId,
+                    prevPaneId: currentPane?.id || null
+                }
+            }));
+        }
 
         // 2) nav active sync (sidebar + tabs)
         setAriaSelected(qsa(SELECTORS.sidebarBtn), targetId);

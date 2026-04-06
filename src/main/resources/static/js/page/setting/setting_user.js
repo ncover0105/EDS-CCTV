@@ -1,24 +1,15 @@
 /**
  * setting_user.js
- * - 사용자 목록 테이블 페이지네이션(기본 10개)
- * - 행 선택/수정/삭제/등록
+ * - 사용자 카드 선택/수정/삭제/등록
  */
 
 (() => {
   const API_BASE = "/api/users";
   const IS_MANAGER = !!window.IS_MANAGER;
-  const PAGESIZE = 10;
-
-  let userRows = [];
-  let currentPage = 1;
 
   document.addEventListener("DOMContentLoaded", () => {
-    const tbody = document.getElementById("userList");
-    if (tbody) {
-      userRows = collectInitialRows(tbody);
-      renderUserTable();
-      bindRowToggle(tbody);
-    }
+    const list = document.getElementById("userList");
+    if (list) bindCardToggle(list);
 
     bindButtons();
     bindSave();
@@ -27,100 +18,23 @@
     if (roleSelect && !IS_MANAGER) roleSelect.disabled = true;
   });
 
-  function collectInitialRows(tbody) {
-    const rows = [];
-    tbody.querySelectorAll("tr[data-user-id]").forEach((tr) => {
-      const tds = tr.querySelectorAll("td");
-      const checkbox = tr.querySelector('input[name="selectedUserIds"]');
-      const id = checkbox?.value || tr.dataset.userId || "";
-      if (!id || tds.length < 6) return;
-
-      const roleText = (tds[5]?.textContent || "").trim();
-      const role = roleText.includes("관리자") ? "MANAGER" : "USER";
-
-      rows.push({
-        id,
-        name: (tds[3]?.textContent || "").trim() || "-",
-        phnNo: (tds[4]?.textContent || "").trim() || "-",
-        role,
-      });
-    });
-    return rows;
-  }
-
-  function renderUserTable() {
-    const tbody = document.getElementById('userList');
-    if (!tbody) return;
-
-    const totalPages = Math.max(1, Math.ceil(userRows.length / PAGESIZE));
-    if (currentPage > totalPages) currentPage = totalPages;
-
-    const start = (currentPage - 1) * PAGESIZE;
-    const pageRows = userRows.slice(start, start + PAGESIZE);
-
-    if (pageRows.length === 0) {
-      tbody.innerHTML = `
-            <tr class="text-center">
-                <td colspan="6" style="height:60vh;">
-                    <div class="d-flex align-items-center justify-content-center h-100">
-                        <span class="text-muted"><i class="bi bi-inbox me-2"></i>등록된 사용자가 없습니다.</span>
-                    </div>
-                </td>
-            </tr>`;
-
-      window.App.utils.renderPagination({
-        containerId: 'userPagination',
-        currentPage: currentPage,
-        totalItems: userRows.length,
-        itemsPerPage: PAGESIZE,
-        onPageChange: (p) => { currentPage = p; renderUserTable(); },
-      });
-      return;
-    }
-
-    tbody.innerHTML = pageRows.map((user, idx) => {
-      const no = start + idx + 1;
-      const roleBadge = user.role === 'MANAGER'
-        ? `<span class="status-badge status-danger"><i class="bi bi-shield-check"></i>관리자</span>`
-        : `<span class="status-badge status-info"><i class="bi bi-person"></i>사용자</span>`;
-      return `
-            <tr data-user-id="${escapeHtml(user.id)}">
-                <td><input type="checkbox" name="selectedUserIds" value="${escapeHtml(user.id)}"></td>
-                <td>${no}</td>
-                <td>${escapeHtml(user.id)}</td>
-                <td>${escapeHtml(user.name) || '-'}</td>
-                <td>${escapeHtml(user.phnNo) || '-'}</td>
-                <td>${roleBadge}</td>
-            </tr>`;
-    }).join('');
-
-    window.App.utils.renderPagination({
-      containerId: 'userPagination',
-      currentPage: currentPage,
-      totalItems: userRows.length,
-      itemsPerPage: PAGESIZE,
-      onPageChange: (p) => { currentPage = p; renderUserTable(); },
-    });
-  }
-
-  function bindRowToggle(tbody) {
+  function bindCardToggle(list) {
     const selector = 'input[type="checkbox"][name="selectedUserIds"]';
 
     function clearOthers(keepCb) {
-      tbody.querySelectorAll(selector).forEach((cb) => {
+      list.querySelectorAll(selector).forEach((cb) => {
         if (cb !== keepCb) {
           cb.checked = false;
-          const tr = cb.closest("tr");
-          if (tr) tr.classList.remove("table-active");
+          cb.closest(".user-manage-card")?.classList.remove("is-selected");
         }
       });
     }
 
-    tbody.addEventListener("click", (e) => {
-      const tr = e.target.closest("tr");
-      if (!tr) return;
+    list.addEventListener("click", (e) => {
+      const card = e.target.closest(".user-manage-card");
+      if (!card) return;
 
-      const cb = tr.querySelector(selector);
+      const cb = card.querySelector(selector);
       if (!cb) return;
 
       if (e.target === cb) return;
@@ -128,18 +42,18 @@
       const willCheck = !cb.checked;
       if (willCheck) clearOthers(cb);
       cb.checked = willCheck;
-      tr.classList.toggle("table-active", cb.checked);
+      card.classList.toggle("is-selected", cb.checked);
     });
 
-    tbody.addEventListener("change", (e) => {
+    list.addEventListener("change", (e) => {
       if (!e.target.matches(selector)) return;
 
       const cb = e.target;
-      const tr = cb.closest("tr");
-      if (!tr) return;
+      const card = cb.closest(".user-manage-card");
+      if (!card) return;
 
       if (cb.checked) clearOthers(cb);
-      tr.classList.toggle("table-active", cb.checked);
+      card.classList.toggle("is-selected", cb.checked);
     });
   }
 
@@ -319,15 +233,6 @@
     return Array.from(document.querySelectorAll('input[name="selectedUserIds"]:checked')).map(
       (cb) => cb.value
     );
-  }
-
-  function escapeHtml(str) {
-    return String(str ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
   }
 
   async function fetchJson(url, options = {}) {

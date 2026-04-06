@@ -18,17 +18,7 @@
         const apiKey = document.getElementById('mapApiKey');
         if (apiKey && apiKey.type !== 'password') apiKey.type = 'password';
 
-        // 저장 버튼: onclick="saveSetting()"도 유지되지만, 안전하게 한번 더 바인딩
-        const saveBtn = document.getElementById('btn-setting-save');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', (e) => {
-                // 버튼이 form submit 안붙어 있으면 OK. 혹시 submit이면 막아줌.
-                e.preventDefault?.();
-                saveSetting();
-            });
-        } else {
-            console.warn('[setting_set] save button not found (btn-setting-save)');
-        }
+        // 저장 버튼은 HTML onclick="saveSetting()" 사용
 
         bindRadioGroupsOnce();
         loadSetting();

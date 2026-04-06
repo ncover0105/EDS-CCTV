@@ -27,18 +27,19 @@ window.Weather = (function () {
         2) 초기화
     =========================================================================== */
     function init() {
-        loadAllWeather();
+        loadAwsAndImages();
+        loadForecast();
         loadAirQuality();
 
-        setInterval(loadAllWeather, 300000);
+        setInterval(loadAwsAndImages, 300000);
+        setInterval(loadForecast, 1800000);
         setInterval(loadAirQuality, 900000);
         toggleMapImage();
     }
 
-    async function loadAllWeather() {
+    async function loadAwsAndImages() {
         await Promise.all([
             loadAWS(),
-            loadForecast(),
             loadSatellite(),
             loadRadar()
         ]);
@@ -90,7 +91,7 @@ window.Weather = (function () {
     function updateForecast(data) {
         safeText("#rainfall", data?.rainfall, "%");
         safeText("#weather", data?.weather);
-        safeText("#weather_loc", "대구광역시");
+        safeText("#weather_loc", "영덕군");
 
         safeIcon(
             "#weather_icon",
@@ -106,8 +107,6 @@ window.Weather = (function () {
     function updateSkyBanner(condition) {
         const banner = document.getElementById('sbWxBanner');
         const fxEl = document.getElementById('sbWxFx');
-
-        console.log("[SkyBanner] raw condition:", condition);
 
         if (!banner || !fxEl) {
             console.warn("[SkyBanner] banner 또는 fxEl 없음");
@@ -403,6 +402,7 @@ window.Weather = (function () {
         const spinner = document.getElementById(
             elementId === "radarImg" ? "loadingSpinnerRadar" : "loadingSpinnerSatellite"
         );
+        if (!img || !spinner) return;
 
         const newUrl = url + "?ts=" + Date.now();
         const currentUrl = img.getAttribute("src");
@@ -410,35 +410,22 @@ window.Weather = (function () {
         // 1) 파일 이름이 같은 경우 → 변경할 필요 없음
         //    (query string 제외하고 비교)
         if (currentUrl && currentUrl.split("?")[0] === url) {
-            // console.log(`[${elementId}] 동일 이미지 → 갱신하지 않음`);
+            syncMapContentState();
             return;
         }
 
-        // img.classList.add("d-none");
         spinner.classList.remove("d-none");
 
         const currentImg = new Image();
 
         currentImg.onload = () => {
-            // 2) 로드 성공한 경우에만 교체
             img.src = newUrl;
-            img.classList.remove("d-none");
-            spinner.classList.add("d-none");
-
-            // 토글 모드 유지
-            // toggleMapImage();
+            syncMapContentState();
         };
 
         currentImg.onerror = () => {
             console.warn(`이미지 로드 실패: ${newUrl}`);
-
-            // 3) 실패하면 기존 이미지 유지
-            // img.src = currentUrl;
-            // img.classList.remove("d-none");
-            img.classList.add("d-none");
-            spinner.classList.remove("d-none"); // ✅ 실패 시에도 계속 표시    
-            // toggle 유지
-            // toggleMapImage();
+            syncMapContentState();
         };
 
         // 실제 이미지 로드 시도
@@ -466,6 +453,7 @@ window.Weather = (function () {
 
         const radarContent = document.getElementById("radar-map");
         const satelliteContent = document.getElementById("satellite-map");
+        if (!radarContent || !satelliteContent) return;
 
         if (isRadar) {
             radarContent.classList.remove("d-none");
@@ -473,6 +461,28 @@ window.Weather = (function () {
         } else {
             satelliteContent.classList.remove("d-none");
             radarContent.classList.add("d-none");
+        }
+
+        syncMapContentState();
+    }
+
+    function syncMapContentState() {
+        syncSingleMapState("radarImg", "loadingSpinnerRadar");
+        syncSingleMapState("satelliteImg", "loadingSpinnerSatellite");
+    }
+
+    function syncSingleMapState(imageId, spinnerId) {
+        const img = document.getElementById(imageId);
+        const spinner = document.getElementById(spinnerId);
+        if (!img || !spinner) return;
+
+        const hasImage = !!img.getAttribute("src");
+        if (hasImage) {
+            img.classList.remove("d-none");
+            spinner.classList.add("d-none");
+        } else {
+            img.classList.add("d-none");
+            spinner.classList.remove("d-none");
         }
     }
 

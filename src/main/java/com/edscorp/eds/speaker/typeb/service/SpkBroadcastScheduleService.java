@@ -151,6 +151,12 @@ public class SpkBroadcastScheduleService {
     }
 
     public void deleteSchedule(Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("schedule id is required");
+        }
+        if (!scheduleRepo.existsById(id)) {
+            throw new IllegalArgumentException("schedule not found: " + id);
+        }
         scheduleRepo.deleteById(id);
     }
 

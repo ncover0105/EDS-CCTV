@@ -42,7 +42,7 @@ public class SpkDisasterController {
      * 단일 조회
      */
     @GetMapping("/{dstCode}")
-    public ResponseEntity<SpkDisaster> getOne(@PathVariable String dstCode) {
+    public ResponseEntity<SpkDisaster> getOne(@PathVariable("dstCode") String dstCode) {
         SpkDisaster found = spkDisasterService.getDisaster(dstCode);
         if (found == null)
             return ResponseEntity.notFound().build();
@@ -79,7 +79,7 @@ public class SpkDisasterController {
      * 수정 (모달 저장)
      */
     @PutMapping("/{dstCode}")
-    public ResponseEntity<SpkDisaster> update(@PathVariable String dstCode,
+    public ResponseEntity<SpkDisaster> update(@PathVariable("dstCode") String dstCode,
             @RequestBody SpkDisasterUpsertReq req) {
         SpkDisaster updated = spkDisasterService.update(dstCode, req);
         return ResponseEntity.ok(updated);

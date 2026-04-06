@@ -112,7 +112,7 @@ public class MqttConfig {
         return message -> {
             String topic = message.getHeaders().get(MqttHeaders.RECEIVED_TOPIC).toString();
             String payload = message.getPayload().toString();
-            System.out.println("MqttConfig Received message: " + payload + " from topic: " + topic);
+            System.out.println("MqttConfig Received message: " + " from topic: " + topic);
             // eventPublisher.publishEvent(new MqttMessageEvent(topic, payload)); // 메시지를
             // 클라이언트로 전달
             // JPA

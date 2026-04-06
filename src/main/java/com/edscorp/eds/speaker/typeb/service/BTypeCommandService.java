@@ -6,6 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
@@ -22,11 +27,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-import org.springframework.http.*;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -40,11 +40,10 @@ public class BTypeCommandService {
     private final RestTemplate restTemplate;
     private final SpkDisasterRepository spkDisasterRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    // 데몬 서버 playradio 주소 (application.properties 에서 설정 가능)
     // private static final String PLAYRADIO_URL =
-    // "http://192.168.0.42:3000/playradio";
-    private static final String PLAYRADIO_URL = "http://192.168.0.42:3000/playradio";
+    // "http://localhost:3000/playradio";
+    @Value("${playradio.url:http://127.0.0.1:3000/playradio}")
+    private String playRadioUrl;
 
     private final SpkWebAlertLogQueryService spkWebAlertLogQueryService;
 
@@ -66,18 +65,22 @@ public class BTypeCommandService {
     /**
      * 데몬 서버로 실제 명령 전송
      */
-    private void sendToPlayRadio(String deviceId, String clientIp,
-            String commandCode, String argument) {
+    private String sendToPlayRadio(String deviceId, String clientIp,
+            String commandCode, String argument, String password) {
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("id", deviceId);
         payload.put("ip", clientIp);
         payload.put("commandCode", commandCode);
         payload.put("argument", argument);
-        payload.put("password", "1234");
 
-        log.info("[B-Type SEND] id={}, ip={}, commandCode={}, argument={}",
-                deviceId, clientIp, commandCode, argument);
+        // 비밀번호가 제공된 경우에만 페이로드에 포함
+        if (password != null && !password.isBlank()) {
+            payload.put("password", password);
+        }
+
+        log.info("[B-Type SEND] id={}, ip={}, commandCode={}, argument={}, password={}",
+                deviceId, clientIp, commandCode, argument, password);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -85,20 +88,14 @@ public class BTypeCommandService {
 
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(
-                    PLAYRADIO_URL, entity, String.class);
+                    playRadioUrl, entity, String.class);
 
             log.info("[B-Type RESP] status={}, body={}",
                     response.getStatusCode(), response.getBody());
 
+            return response.getBody(); // 데몬 응답 바디 반환
+
         } catch (HttpClientErrorException | HttpServerErrorException e) {
-
-            // 데몬 서버의 상태 코드 + 응답 바디(JSON) 그대로 확인 가능
-            HttpStatusCode status = e.getStatusCode();
-            String body = e.getResponseBodyAsString();
-
-            log.error("[B-Type ERROR] 데몬 서버 오류");
-            log.error("[B-Type ERROR] status={} body={}", status, body);
-
             // 필요한 경우 상위 서비스/컨트롤러로 그대로 던지기
             throw e;
 
@@ -270,8 +267,12 @@ public class BTypeCommandService {
                 .build();
 
         try {
-            // 실제 전송
-            sendToPlayRadio(deviceId, clientIp, commandCode, argumentStr);
+            // 실제 전송 (비밀번호가 없으면 기본값 1234 적용)
+            String password = req.getPassword();
+            if (password == null || password.isBlank()) {
+                password = "1234";
+            }
+            sendToPlayRadio(deviceId, clientIp, commandCode, argumentStr, password);
 
             alertLog.setStatus((byte) 1);
         } catch (Exception e) {
@@ -314,7 +315,7 @@ public class BTypeCommandService {
     // =========================
     // 스피커 제어 (JS handleSpeakerAction 포팅)
     // =========================
-    public void handleSpeakerAction(BTypeActionRequest req, HttpServletRequest httpReq) {
+    public List<String> handleSpeakerAction(BTypeActionRequest req, HttpServletRequest httpReq) {
 
         List<String> speakerIds = req.getSpeakerIds();
         if (speakerIds == null || speakerIds.isEmpty()) {
@@ -324,6 +325,7 @@ public class BTypeCommandService {
         String action = req.getAction();
         String extraParam = req.getExtraParam() == null ? "" : req.getExtraParam();
 
+        log.info("[handleSpeakerAction] action={}, extraParam={}", action, extraParam);
         // Local IP
         String clientIp = (httpReq != null && httpReq.getRemoteAddr() != null)
                 ? httpReq.getRemoteAddr()
@@ -476,14 +478,26 @@ public class BTypeCommandService {
         String bgmReqType = "bgmOn".equals(action) ? "01" : "bgmOff".equals(action) ? "00" : null;
         List<String> failedSpeakerIds = new ArrayList<>();
 
+        List<String> responses = new ArrayList<>();
+
         // 선택된 각 스피커에 대해 데몬서버로 명령 전송
         for (String speakerId : speakerIds) {
             SpkWebAlertLogEntity actionLog = isBgmAction
                     ? buildBgmActionLog(speakerId, userId, clientIp, commandCode, bgmReqType)
                     : null;
 
+            String password = req.getPassword();
+            // 특정 액션(BGM On/Off, 상태조회)일 때 비밀번호가 비어있으면 1234 기본값 적용
+            if ("status".equals(action) || isBgmAction) {
+                if (password == null || password.isBlank()) {
+                    password = "1234";
+                }
+            }
+
             try {
-                sendToPlayRadio(speakerId, clientIp, commandCode, argument);
+                String resp = sendToPlayRadio(speakerId, clientIp, commandCode, argument, password);
+                responses.add(resp);
+
                 if (actionLog != null) {
                     actionLog.setStatus((byte) 1);
                 }
@@ -501,8 +515,11 @@ public class BTypeCommandService {
         }
 
         if (!failedSpeakerIds.isEmpty()) {
-            throw new RuntimeException("일부 장비 제어 실패: " + failedSpeakerIds);
+            // 일부 실패하더라도 응답 목록은 반환하도록 함 (필요 시 예외 처리)
+            throw new RuntimeException("장비 제어 실패: " + failedSpeakerIds);
         }
+
+        return responses;
     }
 
 }

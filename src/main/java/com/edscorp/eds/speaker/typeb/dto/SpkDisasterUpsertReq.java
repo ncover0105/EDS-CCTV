@@ -8,6 +8,9 @@ import lombok.Setter;
 public class SpkDisasterUpsertReq {
     private String dstCode;
     private String dstName;
+    private Integer dstPriority;
+    private String dstSirenCode;
+    private String dstStoCode;
     private String dstStoreMsg;
     private String dstUseFlag; // "Use" / "Unuse"
 }

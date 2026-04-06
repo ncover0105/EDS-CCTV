@@ -25,8 +25,8 @@ public class SpkDisasterService {
 
         String code = req.getDstCode();
 
-        if (code == null || !code.matches("\\d{3}")) {
-            throw new IllegalArgumentException("dstCode는 3자리 숫자여야 합니다. 예: 001");
+        if (code == null || code.isBlank() || code.length() > 5) {
+            throw new IllegalArgumentException("dstCode는 1자 이상 5자 이하로 입력해야 합니다.");
         }
 
         if (disasterRepository.existsById(code)) {
@@ -36,6 +36,9 @@ public class SpkDisasterService {
         SpkDisaster entity = new SpkDisaster();
         entity.setDstCode(code);
         entity.setDstName(req.getDstName());
+        entity.setDstPriority(req.getDstPriority());
+        entity.setDstSirenCode(req.getDstSirenCode());
+        entity.setDstStoCode(req.getDstStoCode());
         entity.setDstStoreMsg(req.getDstStoreMsg());
         entity.setDstUseFlag(req.getDstUseFlag());
 
@@ -47,7 +50,34 @@ public class SpkDisasterService {
         SpkDisaster entity = disasterRepository.findById(dstCode)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 dstCode: " + dstCode));
 
+        String nextCode = req.getDstCode();
+        if (nextCode == null || nextCode.isBlank() || nextCode.length() > 5) {
+            throw new IllegalArgumentException("dstCode는 1자 이상 5자 이하로 입력해야 합니다.");
+        }
+
+        if (!dstCode.equals(nextCode)) {
+            if (disasterRepository.existsById(nextCode)) {
+                throw new IllegalArgumentException("이미 존재하는 dstCode 입니다: " + nextCode);
+            }
+
+            SpkDisaster replacement = new SpkDisaster();
+            replacement.setDstCode(nextCode);
+            replacement.setDstName(req.getDstName());
+            replacement.setDstPriority(req.getDstPriority());
+            replacement.setDstSirenCode(req.getDstSirenCode());
+            replacement.setDstStoCode(req.getDstStoCode());
+            replacement.setDstStoreMsg(req.getDstStoreMsg());
+            replacement.setDstUseFlag(req.getDstUseFlag());
+
+            disasterRepository.save(replacement);
+            disasterRepository.delete(entity);
+            return replacement;
+        }
+
         entity.setDstName(req.getDstName());
+        entity.setDstPriority(req.getDstPriority());
+        entity.setDstSirenCode(req.getDstSirenCode());
+        entity.setDstStoCode(req.getDstStoCode());
         entity.setDstStoreMsg(req.getDstStoreMsg());
         entity.setDstUseFlag(req.getDstUseFlag());
 

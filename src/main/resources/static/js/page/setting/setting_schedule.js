@@ -439,8 +439,8 @@
     return `
     <div class="mt-2">
       <div class="d-flex align-items-center gap-1 mb-2" style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);">
-        <i class="bi bi-speaker-fill" style="color:#38bdf8;font-size:12px;"></i>
-        <span style="color:#7dd3fc;">${list.length}개 스피커</span>
+        <i class="bi bi-speaker-fill" style="color:var(--text-muted);font-size:12px;"></i>
+        <span style="color:var(--text-secondary);">${list.length}개 스피커</span>
       </div>
       <div class="d-flex flex-wrap gap-2">
         ${list.map(sp => {
@@ -453,7 +453,7 @@
             <span class="sc3-chip sc3-chip--speaker" style="gap:6px;padding:4px 11px;">
               <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--text-muted);letter-spacing:.03em;">${escapeHtml(String(sid))}</span>
               <span style="color:var(--text-secondary);font-size:12px;font-weight:500;">${escapeHtml(String(name))}</span>
-              ${loc ? `<span style="color:var(--text-muted);font-size:11px;">${escapeHtml(loc)}</span>` : ''}
+              ${loc ? `<span style="color:var(--text-disabled);font-size:11px;">${escapeHtml(loc)}</span>` : ''}
             </span>`;
     }).join('')}
       </div>

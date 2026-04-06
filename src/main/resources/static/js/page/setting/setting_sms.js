@@ -4,7 +4,7 @@
 
 (function () {
   const $ = (id) => document.getElementById(id);
-  const PAGESIZE = 10;
+  const PAGESIZE = 1000; // 스크롤용 확대
 
   let modalMode = "insert";
   let smsUsers = [];
@@ -109,6 +109,7 @@
                 </td>
             </tr>`;
 
+      /*
       window.App.utils.renderPagination({
         containerId: 'smsPagination',
         currentPage: currentPage,
@@ -116,6 +117,7 @@
         itemsPerPage: PAGESIZE,
         onPageChange: (p) => { currentPage = p; renderSmsTable(); },
       });
+      */
       return;
     }
 
@@ -133,6 +135,7 @@
             </tr>`;
     }).join('');
 
+    /*
     window.App.utils.renderPagination({
       containerId: 'smsPagination',
       currentPage: currentPage,
@@ -140,6 +143,7 @@
       itemsPerPage: PAGESIZE,
       onPageChange: (p) => { currentPage = p; renderSmsTable(); },
     });
+    */
   }
 
   function syncChildTogglesByEnabled() {

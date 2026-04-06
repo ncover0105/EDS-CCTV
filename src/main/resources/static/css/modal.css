@@ -1265,10 +1265,12 @@
 
 .speaker-modal .m-card.tts-locked {
     opacity: .3;
+    display: none;
 }
 
 .speaker-modal .m-card.disaster-locked {
     opacity: .3;
+    display: none;
 }
 
 .speaker-modal .m-card.tts-locked .m-card-title,
@@ -2091,6 +2093,11 @@
     gap: 12px;
 }
 
+#speaker_setting_modal .sp-form-grid.cols1 {
+    grid-template-columns: repeat(1, 1fr);
+    gap: 12px;
+}
+
 #speaker_setting_modal .sp-form-grid.cols3 {
     grid-template-columns: repeat(3, 1fr);
 }
@@ -2268,6 +2275,7 @@
     flex-shrink: 0;
     gap: 12px;
     background: var(--bg1);
+    justify-content: flex-end;
 }
 
 #speaker_setting_modal .sp-footer-info {
@@ -2285,6 +2293,7 @@
 #speaker_setting_modal .sp-footer-btns {
     display: flex;
     gap: 8px;
+
 }
 
 #speaker_setting_modal .sp-btn {
@@ -2338,7 +2347,7 @@
     }
 
     #speaker_setting_modal .sp-left {
-        max-height: 220px;
+        max-height: 300px;
         border-right: none;
         border-bottom: 1px solid var(--bds);
     }
@@ -2459,6 +2468,26 @@ body.modal-open .ticker-bar {
 .common-modal .cm-body {
     padding: 16px 18px;
     background: var(--cm-bg);
+}
+
+.common-modal .form-control,
+.common-modal .form-select,
+.common-modal textarea.form-control {
+    background: var(--cm-surface);
+    border: 1px solid var(--cm-border);
+    color: var(--cm-text);
+}
+
+.common-modal .form-control::placeholder,
+.common-modal textarea.form-control::placeholder {
+    color: var(--cm-text-muted);
+}
+
+.common-modal .form-control:focus,
+.common-modal .form-select:focus,
+.common-modal textarea.form-control:focus {
+    border-color: var(--cm-border-strong);
+    box-shadow: 0 0 0 0.15rem rgba(79, 142, 247, 0.2);
 }
 
 .common-modal .cm-footer {
@@ -2885,4 +2914,95 @@ body.modal-open .ticker-bar {
         min-height: 120px;
         max-height: 36vh;
     }
+}
+
+/* =========================================================
+   Speaker Setting Modal overrides
+========================================================= */
+@media (max-width: 992px) {
+
+    #speaker_setting_modal .sp-form-grid.cols3,
+    #speaker_setting_modal .sp-form-grid.cols2,
+    #speaker_setting_modal .sp-ch-vol-grid,
+    #speaker_setting_modal .ch-use-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    #speaker_setting_modal .sp-pane-wrap {
+        padding: 10px !important;
+    }
+}
+
+#speaker_setting_modal .vol-input-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#speaker_setting_modal .sp-range-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+#speaker_setting_modal .sp-range.w-100 {
+    flex: 1;
+}
+
+#speaker_setting_modal .range-val-text {
+    background: none;
+    border-bottom: 2px solid var(--accent, var(--teal));
+    color: var(--tx0);
+    min-width: 40px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 0 2px;
+}
+
+/* 텍스트 크기 및 간격 최적화 */
+#speaker_setting_modal .sp-label {
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    color: var(--tx1);
+    margin-bottom: 8px !important;
+}
+
+#speaker_setting_modal .sp-input,
+#speaker_setting_modal .sp-select {
+    font-size: 0.9rem !important;
+    padding: 10px 14px !important;
+    height: 42px !important;
+    border-radius: 8px !important;
+}
+
+#speaker_setting_modal .sp-card-label {
+    font-size: 0.95rem !important;
+}
+
+#speaker_setting_modal .sp-pane-wrap {
+    gap: 24px !important;
+    padding: 24px !important;
+}
+
+#speaker_setting_modal .sp-card-body {
+    padding: 20px;
+}
+
+#speaker_setting_modal .sp-form-grid {
+    gap: 20px 24px !important;
+}
+
+/* 저장 버튼 크기 및 텍스트 수정 */
+#speaker_setting_modal .sp-sec-send.btn-sm {
+    height: 30px !important;
+    font-size: 0.8rem !important;
+    padding: 0 16px !important;
+    font-weight: 700 !important;
+    border-radius: 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: normal !important;
 }

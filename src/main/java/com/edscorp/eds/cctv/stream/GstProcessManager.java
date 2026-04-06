@@ -20,6 +20,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class GstProcessManager {
 
+    public record StartResult(boolean started, String reason) {
+    }
+
     @Value("${gstreamer.api-base-url}")
     private String gstApiBaseUrl;
 
@@ -36,6 +39,10 @@ public class GstProcessManager {
     private final Map<String, Boolean> running = new ConcurrentHashMap<>();
 
     public boolean startEnsure(String key, String rtspUrl, int port, String type) {
+        return startEnsureDetailed(key, rtspUrl, port, type).started();
+    }
+
+    public StartResult startEnsureDetailed(String key, String rtspUrl, int port, String type) {
         try {
             if (isAlive(key)) {
                 stopAndWait(key, 8_000);
@@ -49,10 +56,14 @@ public class GstProcessManager {
      * restart용: 호출자가 stop을 책임진다. (중복 STOP 방지)
      */
     public boolean startNoStop(String key, String rtspUrl, int port, String type) {
+        return startNoStopDetailed(key, rtspUrl, port, type).started();
+    }
+
+    public StartResult startNoStopDetailed(String key, String rtspUrl, int port, String type) {
         return doStart(key, rtspUrl, port, type, 12_000);
     }
 
-    private boolean doStart(String key, String rtspUrl, int port, String type, long waitAliveMs) {
+    private StartResult doStart(String key, String rtspUrl, int port, String type, long waitAliveMs) {
         Map<String, Object> body = Map.of(
                 "id", key,
                 "url", rtspUrl,
@@ -74,12 +85,12 @@ public class GstProcessManager {
 
             boolean alive = waitUntilAlive(key, waitAliveMs);
             log.info("[{}] gstreamer started (alive={}): {}", key, alive, resp);
-            // return true;
             if (!alive) {
                 // start 호출은 성공했지만 status가 alive로 안 올라오면 "실패"로 취급
                 running.remove(key);
+                return new StartResult(false, "start accepted but pipeline not alive within timeout");
             }
-            return alive;
+            return new StartResult(true, null);
         } catch (WebClientResponseException e) {
             if (e.getStatusCode().value() == 409) {
                 String errBody = e.getResponseBodyAsString();
@@ -94,7 +105,7 @@ public class GstProcessManager {
                 if (aliveNow) {
                     running.put(key, true);
                     log.info("[{}] treat 409 as success (confirmed alive by /status)", key);
-                    return true;
+                    return new StartResult(true, null);
                 }
 
                 // 2) 아니면 stop 후 1회 재시도
@@ -112,16 +123,16 @@ public class GstProcessManager {
                     running.put(key, true);
                     boolean alive2 = waitUntilAlive(key, waitAliveMs);
                     log.info("[{}] gstreamer started after retry (alive={}): {}", key, alive2, resp2);
-                    // return true;
                     if (!alive2) {
                         running.remove(key);
+                        return new StartResult(false, "start retry accepted but pipeline not alive within timeout");
                     }
-                    return alive2;
+                    return new StartResult(true, null);
 
                 } catch (Exception e2) {
                     running.remove(key);
                     log.error("[{}] retry start failed after 409", key, e2);
-                    return false;
+                    return new StartResult(false, "start retry failed after 409: " + e2.getMessage());
                 }
             }
 
@@ -131,11 +142,12 @@ public class GstProcessManager {
                     e.getStatusCode().value(), // ✅ 대체 방식
                     e.getResponseBodyAsString(),
                     e);
-            return false;
+            return new StartResult(false,
+                    "gstreamer start failed. status=" + e.getStatusCode().value() + ", body=" + e.getResponseBodyAsString());
         } catch (Exception e) {
             running.remove(key);
             log.error("[{}] gstreamer start failed", key, e);
-            return false;
+            return new StartResult(false, "gstreamer start failed: " + e.getMessage());
         }
     }
 

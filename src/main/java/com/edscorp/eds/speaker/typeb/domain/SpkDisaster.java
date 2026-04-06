@@ -20,7 +20,7 @@ import lombok.Setter;
 public class SpkDisaster {
 
     @Id
-    @Column(name = "dst_cd", length = 3)
+    @Column(name = "dst_cd", length = 5)
     private String dstCode; // 재난 코드 (PK)
 
     @Column(name = "dst_name", length = 255)

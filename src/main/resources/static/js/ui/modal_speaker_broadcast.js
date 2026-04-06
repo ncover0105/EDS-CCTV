@@ -22,7 +22,7 @@ function setVal(id, v) {
 
 function show(id) { document.getElementById(id)?.classList.remove("d-none"); }
 function hide(id) { document.getElementById(id)?.classList.add("d-none"); }
-function getPanelPrefixes() { return ["a_bc", "b_bc"]; }
+function getPanelPrefixes() { return ["b_bc"]; }
 function getSpeakerTypeToken(type) {
     return String(type ?? "A").toUpperCase().includes("B") ? "type-b" : "type-a";
 }
@@ -146,6 +146,22 @@ function normalizeText(value) {
     return String(value ?? "").trim();
 }
 
+function extractApiErrorMessage(rawText, fallback = "요청 처리 중 오류가 발생했습니다.") {
+    const text = String(rawText ?? "").trim();
+    if (!text) return fallback;
+    try {
+        const parsed = JSON.parse(text);
+        if (parsed?.message) return parsed.message;
+    } catch (_) { }
+    return text;
+}
+
+function promptSpeakerPassword(message = "비밀번호를 입력하세요.") {
+    const password = window.prompt(message);
+    if (password === null) return null;
+    return password;
+}
+
 /* ---------- Selection State (multi) ---------- */
 const bcSelectedSpeakerKeys = new Set();  // data-speaker-key
 const bcSelectedSpeakerIds = new Set();    // data-device-id
@@ -165,48 +181,28 @@ function syncSelectionUI() {
     const activeCards = getActiveCards();
     const count = activeCards.length;
 
-    const areaEmpty = document.getElementById('bc_area_empty');
-    const areaA = document.getElementById('bc_area_type_a');
     const areaB = document.getElementById('bc_area_type_b');
 
-    // ── 기존 hint / steptext / selectedspeakername 처리 ──
+    // ── steptext / selectedspeakername 처리 ──
     if (count === 0) {
         BroadcastModal.resetPanelForms?.();
         setVal('bc_selected_speaker_name', '');
-        setText('bc_hint', '스피커를 선택해주세요.');
-        setText('a_bc_step_text', '스피커를 선택하세요.');
         setText('b_bc_step_text', '스피커를 선택하세요.');
 
-        if (areaEmpty) areaEmpty.classList.remove('d-none');
-        if (areaA) areaA.classList.add('d-none');
-        if (areaB) areaB.classList.add('d-none');
+        if (areaB) areaB.classList.remove('d-none');
     } else {
         const oneName = activeCards[0].dataset?.speakerName
             || activeCards[0].querySelector('.speaker-name')?.textContent?.trim();
 
         if (count === 1) {
             setVal('bc_selected_speaker_name', oneName);
-            setText('bc_hint', `${getSpeakerTypeLabel(activeCards[0].dataset.type)} · ${oneName} 선택됨.`);
-            setText('a_bc_step_text', `${oneName} 선택됨.`);
             setText('b_bc_step_text', `${oneName} 선택됨.`);
         } else {
             setVal('bc_selected_speaker_name', count);
-            setText('bc_hint', `${getSpeakerTypeLabel(activeCards[0].dataset.type)} · ${count}개 스피커 선택됨.`);
-            setText('a_bc_step_text', `${count}개 스피커 선택됨.`);
             setText('b_bc_step_text', `${count}개 스피커 선택됨.`);
         }
 
-        if (areaEmpty) areaEmpty.classList.add('d-none');
-
-        // 타입에 따른 패널 전환 로직 (첫 번째 선택된 스피커 타입 기준)
-        const firstType = activeCards[0].dataset.type;
-        if (firstType && firstType.toUpperCase().includes('B')) {
-            if (areaA) areaA.classList.add('d-none');
-            if (areaB) areaB.classList.remove('d-none');
-        } else {
-            if (areaB) areaB.classList.add('d-none');
-            if (areaA) areaA.classList.remove('d-none');
-        }
+        if (areaB) areaB.classList.remove('d-none');
     }
 
     // ── 선택 칩 렌더링 ──
@@ -242,7 +238,7 @@ function renderChips(activeCards) {
         const chipTypeClass = getSpeakerTypeToken(card.dataset.type);
 
         const chip = document.createElement('span');
-        chip.className = `bc-chip ${chipTypeClass}`;
+        chip.className = `bc-chip`;
         chip.innerHTML = `
             ${name}
             <button class="bc-chip-remove" data-key="${key}" aria-label="${name} 선택 해제"
@@ -303,7 +299,7 @@ const BroadcastApi = {
 
         if (!res.ok) {
             const txt = await res.text().catch(() => "");
-            throw new Error(`HTTP ${res.status} ${txt}`);
+            throw new Error(extractApiErrorMessage(txt, `HTTP ${res.status}`));
         }
         return await res.json().catch(() => ({}));
     },
@@ -317,7 +313,7 @@ const BroadcastApi = {
 
         if (!res.ok) {
             const txt = await res.text().catch(() => "");
-            throw new Error(`HTTP ${res.status} ${txt}`);
+            throw new Error(extractApiErrorMessage(txt, `HTTP ${res.status}`));
         }
         return await res.json().catch(() => ({}));
     }
@@ -354,7 +350,7 @@ const BroadcastModal = {
             const typeToken = getSpeakerTypeToken(type);
 
             listEl.insertAdjacentHTML('beforeend', `
-            <div class="speaker-item ${typeToken} ${isOffline ? 'offline' : ''}"
+            <div class="speaker-item ${isOffline ? 'offline' : ''}"
                  role="option"
                  aria-selected="false"
                  aria-disabled="${isOffline}"
@@ -372,7 +368,6 @@ const BroadcastModal = {
                 </div>
                 <div class="speaker-info">
                     <div class="d-flex align-items-center gap-2">
-                        <span class="speaker-type-tag ${typeToken}">${type}</span>
                         <div class="speaker-name">${name}</div>
                     </div>
                     <div class="speaker-loc">${location || speakerId}</div>
@@ -459,10 +454,7 @@ const BroadcastModal = {
     },
 
     getPayloadForPreview() {
-        // 타입에 맞춰 올바른 폼 요소를 읽어오도록 수정
-        const activeCards = getActiveCards();
-        const prefix = activeCards.length > 0 && activeCards[0].dataset.type && activeCards[0].dataset.type.toUpperCase().includes('B') ? 'b_bc_' : 'a_bc_';
-
+        const prefix = "b_bc_";
         return {
             speakerIds: getSelectedSpeakerIds(),
             mode: document.getElementById(`${prefix}mode`)?.value ?? "1",
@@ -485,12 +477,10 @@ const BroadcastModal = {
         const disasterCode = normalizeText(payloadUI?.disasterCode);
         const ttsMessage = normalizeText(payloadUI?.tts);
         console.log('🚨 방송 전 TTS 확인:', { ttsMessage, length: ttsMessage.length });
-        const prefix = payloadUI?.speakerIds?.length > 0
-            ? (getActiveCards()[0]?.dataset.type?.toUpperCase().includes("B") ? "b_bc" : "a_bc")
-            : null;
+        const prefix = selectedIds.length > 0 ? "b_bc" : null;
 
         if (selectedIds.length === 0) {
-            showHintMessage("스피커를 먼저 선택해주세요.");
+            App.utils.showGlobalAlert("스피커를 먼저 선택해주세요.", "warning");
             return { ok: false };
         }
 
@@ -527,8 +517,6 @@ const BroadcastModal = {
         clearValidationErrors();
         clearAllStatuses();
 
-        setText("bc_hint", "선택 후 같은 타입만 함께 선택됩니다.");
-        setText("a_bc_step_text", "스피커를 선택하세요.");
         setText("b_bc_step_text", "스피커를 선택하세요.");
         setVal("bc_selected_speaker_name", "");
 
@@ -634,8 +622,7 @@ const BroadcastModal = {
     },
 
     getActivePanelPrefix() {
-        const activeCards = getActiveCards();
-        return activeCards[0]?.dataset.type?.toUpperCase().includes("B") ? "b_bc" : "a_bc";
+        return "b_bc";
     },
 
     validateSelection() {
@@ -660,15 +647,22 @@ const BroadcastModal = {
         setActionStatus(activePrefix, "bgm", "");
         setSendButtonState(btn, true, selectedIds.length);
 
+        const password = promptSpeakerPassword("비밀번호를 입력하세요.");
+        if (password === null) {
+            setSendButtonState(btn, false);
+            return;
+        }
+
         try {
             await BroadcastApi.action({
                 speakerIds: selectedIds,
-                action
+                action,
+                password
             });
             setActionStatus(activePrefix, "bgm", `${actionLabel} 실행 완료 (${selectedIds.length}대)`, "success");
         } catch (err) {
             console.error(err);
-            setActionStatus(activePrefix, "bgm", `${actionLabel} 실행 실패`, "danger");
+            setActionStatus(activePrefix, "bgm", err?.message || `${actionLabel} 실행 실패`, "danger");
         } finally {
             setSendButtonState(btn, false);
         }
@@ -718,21 +712,8 @@ const BroadcastModal = {
 
             const willSelect = !card.classList.contains('selected');
 
-            // 다른 타입 스피커 선택 방지 로직
             if (willSelect) {
-                const activeCards = getActiveCards();
-                if (activeCards.length > 0) {
-                    const firstSelectedType = String(activeCards[0].dataset.type ?? 'A').toUpperCase();
-
-                    // 'B' 타입 여부로 비교 (A vs B 등, 타입이 다를 경우)
-                    const isFirstTypeB = firstSelectedType.includes('B');
-                    const isCurrentTypeB = speakerType.includes('B');
-
-                    if (isFirstTypeB !== isCurrentTypeB) {
-                        showHintMessage(`[${firstSelectedType}] 타입 스피커가 이미 선택되어 있습니다. 동일 타입의 스피커만 선택할 수 있습니다.`);
-                        return;
-                    }
-                }
+                // 타입 제한 없음 - 모든 타입 함께 선택 가능
             }
 
             card.classList.toggle('selected', willSelect);
@@ -750,7 +731,7 @@ const BroadcastModal = {
 
         modalEl.addEventListener("change", (e) => {
             const id = e.target?.id || "";
-            if (id === "a_bc_disaster" || id === "b_bc_disaster") {
+            if (id === "b_bc_disaster") {
                 setFieldError(id, "");
                 clearAllStatuses();
             }
@@ -760,7 +741,7 @@ const BroadcastModal = {
                 "priority", "scope", "disaster"
             ].some(suffix => id.endsWith(suffix))) return;
 
-            const prefix = id.startsWith("a_bc_") ? "a_bc" : (id.startsWith("b_bc_") ? "b_bc" : "");
+            const prefix = id.startsWith("b_bc_") ? "b_bc" : "";
             if (!prefix) return;
 
             const typeEl = document.getElementById(`${prefix}_broadcast_type`);
@@ -807,7 +788,7 @@ const BroadcastModal = {
         });
 
         modalEl.addEventListener("input", (e) => {
-            if (e.target?.id === "a_bc_tts" || e.target?.id === "b_bc_tts") {
+            if (e.target?.id === "b_bc_tts") {
                 setFieldError(e.target.id, "");
                 clearAllStatuses();
                 this.refreshPreview();
@@ -815,44 +796,86 @@ const BroadcastModal = {
         });
 
         modalEl.addEventListener("click", async (e) => {
-            const btn = e.target.closest("#a_bc_send, #b_bc_send");
+            const btn = e.target.closest("#b_bc_send");
             if (!btn) return;
 
+            // 1. 스피커 선택 여부 먼저 확인
+            const selectedCards = getActiveCards();
+            if (selectedCards.length === 0) {
+                if (window.iziToast) {
+                    window.iziToast.warning({
+                        message: '스피커를 먼저 선택해주세요.',
+                        position: 'topRight',
+                        timeout: 3000,
+                        progressBar: true
+                    });
+                } else {
+                    App.utils.showGlobalAlert("스피커를 먼저 선택해주세요.", "warning");
+                }
+                return;
+            }
+
+            // 2. 선택된 스피커 이름/개수 확인
+            const selectedNames = selectedCards
+                .map(card =>
+                    card.dataset.speakerName ||
+                    card.querySelector(".speaker-name")?.textContent?.trim() ||
+                    "스피커"
+                )
+                .filter(Boolean);
+
+            // const confirmMessage = selectedNames.length === 1
+            //     ? `[${selectedNames[0]}] 스피커로 발령을 전송할까요?`
+            //     : `선택한 ${selectedNames.length}개 스피커로 발령을 전송할까요?`;
+
+            // if (!window.confirm(confirmMessage)) {
+            //     return;
+            // }
+
+            // 3. 기존 검증 로직 유지
             const validation = this.validateBeforeSend(this.getPayloadForPreview());
             if (!validation.ok) {
                 return;
             }
 
             const { payloadUI, selectedIds } = validation;
-            const activePrefix = btn.id.startsWith("b_bc_") ? "b_bc" : "a_bc";
+            const activePrefix = "b_bc";
 
             clearAllStatuses();
-            setActionStatus(activePrefix, "broadcast", "");
+            // setActionStatus(activePrefix, "broadcast", "");
             setSendButtonState(btn, true, selectedIds.length);
+
+            const password = promptSpeakerPassword("비밀번호를 입력하세요.");
+            if (password === null) {
+                setSendButtonState(btn, false);
+                return;
+            }
+
             try {
-                // 기존 단건 순차 전송:
-                // for (const id of selectedIds) {
-                //     const serverPayload = this.buildServerPayload(id, payloadUI);
-                //
-                //     console.log("[BC SEND]", serverPayload);
-                //     await BroadcastApi.send(serverPayload); // 개별 전송 + await
-                // }
                 const serverPayload = this.buildServerPayload(selectedIds, payloadUI);
+                serverPayload.password = password;
 
                 console.log("[BC SEND]", serverPayload);
                 await BroadcastApi.send(serverPayload);
+                App.utils.showGlobalAlert("발령 전송 완료", "success");
 
-                setActionStatus(activePrefix, "broadcast", `발령 전송 완료 (${selectedIds.length}대)`, "success");
+                // setActionStatus(
+                //     activePrefix,
+                //     "broadcast",
+                //     `발령 전송 완료 (${selectedIds.length}대)`,
+                //     "success"
+                // );
             } catch (err) {
                 console.error(err);
-                setActionStatus(activePrefix, "broadcast", "발령 전송 실패", "danger");
+                App.utils.showGlobalAlert(err?.message || "발령 전송 실패", "danger");
+                // setActionStatus(activePrefix, "broadcast", "발령 전송 실패", "danger");
             } finally {
                 setSendButtonState(btn, false);
             }
         });
 
         modalEl.addEventListener("click", async (e) => {
-            const btn = e.target.closest("#a_bc_bgm_on, #b_bc_bgm_on, #a_bc_bgm_off, #b_bc_bgm_off");
+            const btn = e.target.closest("#b_bc_bgm_on, #b_bc_bgm_off");
             if (!btn) return;
 
             const action = btn.id.endsWith("bgm_on") ? "bgmOn" : "bgmOff";

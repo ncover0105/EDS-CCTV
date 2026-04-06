@@ -22,6 +22,16 @@
         window.alert(message);
     }
 
+    function extractApiErrorMessage(rawText, fallback) {
+        const text = String(rawText ?? "").trim();
+        if (!text) return fallback;
+        try {
+            const parsed = JSON.parse(text);
+            if (parsed?.message) return parsed.message;
+        } catch (_) { }
+        return text;
+    }
+
     /* -----------------------------
      * 공통 유틸 (원본 유지)
      * ----------------------------- */
@@ -56,7 +66,12 @@
 
     function formatIsoToYmdHms(isoLike) {
         if (!isoLike) return "";
-        return String(isoLike).replace("T", " ").split(".")[0];
+        const raw = String(isoLike).trim();
+        const parsed = new Date(raw);
+        if (!Number.isNaN(parsed.getTime())) {
+            return formatLogTimestamp(parsed);
+        }
+        return raw.replace("T", " ").split(".")[0];
     }
 
     function formatDateToYmd(date = new Date()) {
@@ -303,7 +318,6 @@
         list.forEach((d) => {
             const code = String(safeValue(d?.dstCode, ""));
             const title = String(safeValue(d?.dstName, "재난 메시지"));
-            const msg = String(d?.dstStoreMsg ?? "").trim();
             const priority = String(d?.dstPriority ?? "-");
             const priorityTone = getDisasterPriorityTone(d?.dstPriority);
 
@@ -312,12 +326,8 @@
                     <div class="bc-disaster-card-head">
                         <div class="bc-disaster-card-title-wrap">
                             <div class="bc-disaster-card-title">${escapeHtml(title)}</div>
-                            <span class="bc-disaster-card-code"># ${escapeHtml(code)}</span>
                         </div>
                         <span class="bc-priority-badge bc-priority-badge--${escapeHtml(priorityTone)}">우선순위 ${escapeHtml(priority)}</span>
-                    </div>
-                    <div class="bc-disaster-card-body">
-                        <div class="bc-disaster-card-text">${escapeHtml(msg || "등록된 안내 문구가 없습니다.")}</div>
                     </div>
                 </button>
             `);
@@ -327,6 +337,29 @@
             listEl.scrollTop = prevScrollTop;
         });
 
+        syncSelectedDisasterMessagePreview();
+
+    }
+
+    function syncSelectedDisasterMessagePreview() {
+        const msgArea = document.getElementById("bc_disaster_msg_area");
+        const msgText = document.getElementById("bc_disaster_msg_text");
+        if (!msgArea || !msgText) return;
+
+        const selectedCode = String(window.selectedBroadcastType ?? "").trim();
+        if (!selectedCode) {
+            msgArea.classList.add("d-none");
+            msgArea.hidden = true;
+            msgText.textContent = "";
+            return;
+        }
+
+        const selected = (disasterCache || []).find((d) => String(safeValue(d?.dstCode, "")) === selectedCode);
+        const selectedMsg = String(selected?.dstStoreMsg ?? "").trim();
+
+        msgText.textContent = selectedMsg || "등록된 안내 문구가 없습니다.";
+        msgArea.classList.remove("d-none");
+        msgArea.hidden = false;
     }
 
     function bindDisasterCardList() {
@@ -486,7 +519,7 @@
         return String(sel?.value ?? "") === "1";
     }
 
-    function buildServerAlertPayload({ deviceId, deviceIds, ttsMessage }) {
+    function buildServerAlertPayload({ deviceId, deviceIds, ttsMessage, password = "" }) {
         const alertMode = document.getElementById("bc_mode")?.value ?? "1";
         const alertKind = document.getElementById("bc_broadcast_type")?.value ?? "2";
         const alertRange = document.getElementById("bc_scope")?.value ?? "3";
@@ -508,7 +541,8 @@
             alertKind: Number(alertKind),
             alertRange: Number(alertRange),
             alertPriority: Number(alertPriority),
-            ttsMessage: String(ttsMessage ?? "")
+            ttsMessage: String(ttsMessage ?? ""),
+            password
         };
     }
 
@@ -521,7 +555,7 @@
 
         if (!res.ok) {
             const txt = await res.text().catch(() => "");
-            throw new Error(`HTTP ${res.status} ${txt}`);
+            throw new Error(extractApiErrorMessage(txt, `HTTP ${res.status}`));
         }
     }
 
@@ -534,7 +568,7 @@
 
         if (!res.ok) {
             const txt = await res.text().catch(() => "");
-            throw new Error(`HTTP ${res.status} ${txt}`);
+            throw new Error(extractApiErrorMessage(txt, `HTTP ${res.status}`));
         }
 
         return await res.json().catch(() => ({}));
@@ -579,17 +613,39 @@
             return;
         }
 
+        const password = prompt("비밀번호를 입력하세요.");
+        if (password === null) return; // 취소
+
         const isOn = (action === "bgmOn");
         const label = isOn ? "BGM ON" : "BGM OFF";
         setActionButtonBusy(btnId, true);
 
         try {
-            await sendSpeakerAction({ speakerIds, action });
+            await sendSpeakerAction({ speakerIds, action, password });
             uiAlert(`${label} 실행 완료 (${speakerIds.length}대)`, "success");
             updateBgmStatusUI(isOn);
+            appendBroadcastLogEntry({
+                html: buildAlertLogHtml({
+                    status: "1",
+                    createdAt: new Date(),
+                    deviceId: speakerIds[0] ?? "-",
+                    commandCode: "47",
+                    bgmReqType: isOn ? "01" : "00",
+                })
+            }, { stickToBottom: true });
+            await loadAlertLogs({ reset: true, stickToBottom: true });
         } catch (e) {
             console.error(e);
-            uiAlert(`${label} 실행 실패`, "danger");
+            uiAlert(e?.message || `${label} 실행 실패`, "danger");
+            appendBroadcastLogEntry({
+                html: buildAlertLogHtml({
+                    status: "0",
+                    createdAt: new Date(),
+                    deviceId: speakerIds[0] ?? "-",
+                    commandCode: "47",
+                    bgmReqType: isOn ? "01" : "00",
+                })
+            }, { stickToBottom: true });
         } finally {
             setActionButtonBusy(btnId, false);
         }
@@ -639,22 +695,19 @@
             listEl.insertAdjacentHTML(
                 "beforeend",
                 `
-        <div class="speaker-card sp-type-${uiTypeKey} ${checked ? "selected" : ""} ${isOffline ? "offline" : ""}"
-          data-speaker-key="${escapeHtml(speakerKey)}"
-          data-speaker-type="${escapeHtml(type)}">
+        <div class="speaker-card ${checked ? "selected" : ""} ${isOffline ? "offline" : ""}"
+          data-speaker-key="${escapeHtml(speakerKey)}">
           <div class="d-flex justify-content-between align-items-center">
             <div class="w-100 d-flex align-items-center gap-3">
               <div class="form-check mb-0">
-                <input class="form-check-input targetSpeakerChk"
+                  <input class="form-check-input targetSpeakerChk"
                   type="checkbox"
                   data-speaker-key="${escapeHtml(speakerKey)}"
-                  data-speaker-type="${escapeHtml(type)}"
                   ${checked ? "checked" : ""}>
               </div>
               
               <div class="speaker-info-main flex-grow-1">
                 <div class="d-flex align-items-center gap-2 mb-1">
-                  <span class="speaker-type-tag type-${uiTypeKey}">${type}</span>
                   <div class="speaker-name fw-bold">${escapeHtml(name)}</div>
                 </div>
                 <div class="speaker-sub-id">${escapeHtml(spkId)}</div>
@@ -723,20 +776,6 @@
                 const card = chk.closest(".speaker-card");
 
                 if (chk.checked) {
-                    // 동일 타입 선택 제한 체크
-                    const currentKeys = Array.from(selectedTargetSpeakerKeys);
-                    if (currentKeys.length > 0) {
-                        const firstKey = currentKeys[0];
-                        const firstSpk = (broadcastSpeakerCache || []).find(s => getSpeakerKey(s) === firstKey);
-                        const currentType = normalizeSpeakerType(firstSpk?.speakerType ?? firstSpk?.type ?? firstSpk?.spkType ?? "B");
-
-                        if (currentType !== type) {
-                            uiAlert(`동일한 타입의 스피커만 함께 선택할 수 있습니다.<br>(현재 선택된 타입: ${currentType})`, "warning");
-                            chk.checked = false;
-                            return;
-                        }
-                    }
-
                     selectedTargetSpeakerKeys.add(key);
                     card?.classList.add("selected");
                 } else {
@@ -782,25 +821,14 @@
                 const chks = Array.from(listEl.querySelectorAll(".targetSpeakerChk"));
 
                 if (allEl.checked) {
-                    const firstChk = chks[0];
-                    const firstType = normalizeSpeakerType(firstChk?.dataset.speakerType || "B");
-
-                    // 전체 선택 시에도 타입 혼용 방지 (현재 보이는 목록 중 첫 번째 장치 타입으로 통일)
-                    const sameTypeChks = chks.filter(c => normalizeSpeakerType(c.dataset.speakerType || "B") === firstType);
-
                     selectedTargetSpeakerKeys = new Set(
-                        sameTypeChks.map(c => String(c.dataset.speakerKey || "")).filter(Boolean)
+                        chks.map(c => String(c.dataset.speakerKey || "")).filter(Boolean)
                     );
 
                     chks.forEach(c => {
-                        const isSame = normalizeSpeakerType(c.dataset.speakerType || "B") === firstType;
-                        c.checked = isSame;
-                        c.closest(".speaker-card")?.classList.toggle("selected", isSame);
+                        c.checked = true;
+                        c.closest(".speaker-card")?.classList.add("selected");
                     });
-
-                    if (sameTypeChks.length < chks.length) {
-                        uiAlert(`혼합된 타입 중 <span class="fw-bold">${firstType} 타입</span> 장치들만 선택되었습니다.`, "info");
-                    }
                 } else {
                     selectedTargetSpeakerKeys.clear();
                     chks.forEach(c => {
@@ -914,17 +942,32 @@
         const customText = document.getElementById("customMessageText");
         const disasterArea = document.getElementById("bc_disaster_area");
 
+        // 1=TTS, 2=저장메시지, 3=기타
         const showTts = isTtsBroadcastMode();
 
-        if (customArea) customArea.style.display = showTts ? "flex" : "none";
-        if (disasterArea) disasterArea.style.display = showTts ? "none" : "flex";
+        // [Fix] d-none 클래스를 toggle하여 CSS 우선순위 충돌 방지
+        if (customArea) {
+            customArea.classList.toggle("d-none", !showTts);
+            customArea.style.display = showTts ? "flex" : "none";
+        }
+        if (disasterArea) {
+            disasterArea.classList.toggle("d-none", showTts);
+            disasterArea.style.display = showTts ? "none" : "flex";
+        }
 
         if (!showTts && customText) {
             customText.value = "";
             updateCustomMessageCounter();
         }
+
+        // 상태 초기화 및 재검색
+        if (!showTts) {
+            renderDisasterCardList();
+        } else {
+            syncSelectedDisasterMessagePreview();
+        }
+
         setBroadcastExecutionState("idle");
-        renderDisasterCardList();
         syncBroadcastPhaseState();
     }
 
@@ -984,6 +1027,7 @@
                 window.selectedBroadcastType = null;
                 setBroadcastExecutionState("idle");
                 renderDisasterCardList();
+                syncSelectedDisasterMessagePreview();
                 syncBroadcastPhaseState();
                 return;
             }
@@ -992,6 +1036,7 @@
 
             setBroadcastExecutionState("idle");
             renderDisasterCardList();
+            syncSelectedDisasterMessagePreview();
             focusSelectedDisasterCard(val);
             syncBroadcastPhaseState();
         });
@@ -1056,24 +1101,51 @@
         const offlineList = getOfflineSpeakers();
 
         const doSend = async () => {
+            const password = prompt("비밀번호를 입력하세요.");
+            if (password === null) return;
+
+            let payload = null;
             try {
                 setBroadcastExecutionState("loading");
-                const payload = buildServerAlertPayload({
+                payload = buildServerAlertPayload({
                     deviceId: alertTargets[0]?.deviceId ?? "",
                     deviceIds: alertTargets.map(target => target.deviceId),
-                    ttsMessage: isTts ? msg : ""
+                    ttsMessage: isTts ? msg : "",
+                    password
                 });
 
                 console.log("[BC PANE SEND SERVER PAYLOAD]", payload);
                 await sendAlertToServer(payload);
 
+                appendBroadcastLogEntry({
+                    html: buildAlertLogHtml({
+                        status: "1",
+                        createdAt: new Date(),
+                        deviceId: payload.deviceId ?? "-",
+                        commandCode: payload.commandCode ?? "41",
+                        disasterCode: payload.disasterCode,
+                        alertKind: payload.alertKind,
+                        ttsMessage: payload.ttsMessage,
+                    })
+                }, { stickToBottom: true });
                 await loadAlertLogs({ reset: true, stickToBottom: true });
                 setBroadcastExecutionState("success");
                 uiAlert(`발령 요청 전송 완료 (${alertTargets.length}대)`, "success");
             } catch (e) {
                 console.error(e);
                 setBroadcastExecutionState("error");
-                uiAlert("발령 전송 실패", "danger");
+                uiAlert(e?.message || "발령 전송 실패", "danger");
+                appendBroadcastLogEntry({
+                    html: buildAlertLogHtml({
+                        status: "0",
+                        createdAt: new Date(),
+                        deviceId: payload?.deviceId ?? "-",
+                        commandCode: payload?.commandCode ?? "41",
+                        disasterCode: payload?.disasterCode ?? String(window.selectedBroadcastType ?? "").trim(),
+                        alertKind: payload?.alertKind ?? Number(document.getElementById("bc_broadcast_type")?.value ?? 2),
+                        ttsMessage: payload?.ttsMessage ?? msg,
+                    })
+                }, { stickToBottom: true });
             }
         };
 
@@ -1093,6 +1165,14 @@
     window.startBroadcast = startBroadcast;
 
     function stopBroadcast() {
+        const speakerKeys = getSelectedSpeakerCodes();
+        if (!speakerKeys || speakerKeys.length === 0) {
+            uiAlert("발령 대상을 선택해 주세요.", "warning");
+            return;
+        }
+        const password = prompt("비밀번호를 입력하세요.");
+        if (password === null) return;
+
         setBroadcastExecutionState("idle");
         uiAlert("방송 종료 명령은 현재 백엔드 액션이 연결되어 있지 않습니다.", "info");
     }
@@ -1149,22 +1229,16 @@
     function syncBroadcastLogEmptyState() {
         const panel = document.getElementById("broadcastLogPanel");
         const emptyEl = document.getElementById("broadcastLogEmpty");
-        const tableContainer = document.querySelector(".log-table-container");
 
         if (!panel || !emptyEl) return;
-        const hasRows = panel.childElementCount > 0;
+        const hasRows = (panel.childElementCount > 0);
 
         emptyEl.classList.toggle("d-none", hasRows);
-
-        if (tableContainer) {
-            tableContainer.classList.toggle("d-none", !hasRows);
-        }
-
-        // emptyEl.classList.toggle("d-none", panel.childElementCount > 0);
+        panel.classList.toggle("d-none", !hasRows);
     }
 
     function getBroadcastLogScrollElement() {
-        return document.querySelector(".log-table-container");
+        return document.getElementById("broadcastLogSection");
     }
 
     function buildAlertLogHtml(row) {
@@ -1188,7 +1262,9 @@
             "0": { text: "실패", className: "status-err" }
         };
 
-        const kindText = kindMap[kind] ?? kind;
+        const kindText = commandCode === "47"
+            ? "BGM 제어"
+            : (kindMap[kind] ?? kind);
         const { text: statusText, className: statusClass } =
             statusMap[status] ?? { text: status || "-", className: "status-none" };
 
@@ -1197,13 +1273,19 @@
             : (kind === "1" && row?.ttsMessage ? row.ttsMessage : `재난: ${disaster}`);
 
         return `
-            <tr>
-                <td class="col-time">${escapeHtml(ts)}</td>
-                <td class="col-status"><span class="bc-log-badge ${statusClass}">${escapeHtml(statusText)}</span></td>
-                <td class="col-device">${escapeHtml(deviceId)}</td>
-                <td class="col-kind">${escapeHtml(kindText)}</td>
-                <td class="col-msg">${escapeHtml(content)}</td>
-            </tr>
+            <div class="bc-log-card">
+                <div class="bc-log-card-header">
+                    <span class="bc-log-time">${escapeHtml(ts)}</span>
+                    <span class="bc-log-badge ${statusClass}">${escapeHtml(statusText)}</span>
+                </div>
+                <div class="bc-log-card-body">
+                    <div class="bc-log-main-info">
+                        <span class="bc-log-kind">${escapeHtml(kindText)}</span>
+                        <span class="bc-log-device">ID: ${escapeHtml(deviceId)}</span>
+                    </div>
+                    <div class="bc-log-content">${escapeHtml(content)}</div>
+                </div>
+            </div>
         `;
     }
 
@@ -1212,17 +1294,17 @@
         if (!panel) return;
 
         const ts = timestamp || formatLogTimestamp(new Date());
-        const { append = true, stickToBottom = false } = opts;
+        const { append = false, stickToBottom = false } = opts;
 
         let markup = "";
         if (html) {
             markup = html;
         } else {
             markup = `
-                <tr class="log-info-row">
-                    <td class="col-time">${escapeHtml(ts)}</td>
-                    <td colspan="4" class="text-center text-muted small">${escapeHtml(message ?? "-")}</td>
-                </tr>
+                <div class="bc-log-card log-info-msg">
+                    <span class="bc-log-time">${escapeHtml(ts)}</span>
+                    <span class="text-muted small">${escapeHtml(message ?? "-")}</span>
+                </div>
             `;
         }
 
@@ -1231,7 +1313,7 @@
 
         const scrollEl = getBroadcastLogScrollElement();
         if (scrollEl && stickToBottom) {
-            scrollEl.scrollTop = scrollEl.scrollHeight;
+            scrollEl.scrollTop = append ? scrollEl.scrollHeight : 0;
         }
     }
 

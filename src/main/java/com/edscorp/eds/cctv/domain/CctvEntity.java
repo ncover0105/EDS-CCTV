@@ -41,7 +41,7 @@ public class CctvEntity {
     @Column(name = "videoPort")
     private Integer videoPort;
 
-    // ✅ Low / High를 Embedded VO로 관리
+    // Low / High를 Embedded VO로 관리
     @Embedded
     @AttributeOverrides({
             @AttributeOverride(name = "rtspUrl", column = @Column(name = "lowRtspUrl")),
