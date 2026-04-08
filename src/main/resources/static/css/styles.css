@@ -14905,93 +14905,103 @@ body {
   /* visibility: visible; */
 }
 
+#map .ol-zoom {
+  top: auto;
+  left: auto;
+  right: 15px;
+  bottom: 15px;
+}
+
+#map .ol-zoom button {
+  margin: 0;
+}
+
+#map .ol-zoom .ol-zoom-in {
+  border-radius: 10px 10px 0 0;
+}
+
+#map .ol-zoom .ol-zoom-out {
+  border-radius: 0 0 10px 10px;
+}
+
+.map-device-topbar {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  max-width: calc(100% - 120px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 1000;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(16, 24, 32, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.map-device-total {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  padding: 0 4px;
+}
+
+.map-device-total-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 10px currentColor;
+}
+
+.map-device-total.is-cctv .map-device-total-dot {
+  color: #378ADD;
+  background: #378ADD;
+}
+
+.map-device-total.is-speaker .map-device-total-dot {
+  color: #639922;
+  background: #639922;
+}
+
+.map-device-total-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(245, 251, 255, 0.82);
+  letter-spacing: 0.02em;
+}
+
+.map-device-total-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  color: #f5fbff;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 800;
+}
+
 .camera-status-summary {
   position: absolute;
   left: 15px;
   bottom: 15px;
-  background: rgba(30, 40, 50, 0.85);
-  padding: 20px;
-  border-radius: 8px;
-  border: 1px solid rgba(0, 212, 255, 0.2);
-  box-shadow: 0 0 10px rgba(0, 212, 255, 0.1);
+  background:
+    linear-gradient(180deg, rgba(20, 28, 36, 0.9), rgba(13, 18, 25, 0.92));
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.24);
   z-index: 1000;
-  backdrop-filter: blur(15px);
-  min-width: 220px;
-  border: 1px solid var(--border-color);
-}
-
-@media (max-width: 768px) {
-  .camera-status-summary {
-    display: none;
-  }
-}
-
-.summary-title {
-  font-weight: 600;
-  margin-bottom: 15px;
-  color: var(--text-primary);
-  font-size: 14px;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.status-count {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  font-size: 13px;
-  transition: all 0.3s ease;
-}
-
-.status-count:last-child {
-  margin-bottom: 0;
-}
-
-.status-count:hover {
-  transform: translateX(5px);
-}
-
-.count-label {
-  color: var(--text-secondary);
-}
-
-.count-number {
-  font-weight: 600;
-  padding: 4px 12px;
-  border-radius: 15px;
-  color: white;
-  font-size: 11px;
-  min-width: 25px;
-  text-align: center;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
-}
-
-.camera-online {
-  background: linear-gradient(135deg, var(--apple-green), #00a085);
-  box-shadow: 0 0 25px rgba(6, 255, 165, 0.4);
-}
-
-.camera-online::before {
-  background: radial-gradient(circle, rgba(6, 255, 165, 0.3) 0%, transparent 70%);
-}
-
-.camera-online:hover::before {
-  opacity: 1;
-}
-
-.camera-offline {
-  background: linear-gradient(135deg, var(--apple-red), #d63031) !important;
-  box-shadow: 0 0 25px rgba(255, 7, 58, 0.4);
-}
-
-.camera-offline::before {
-  background: radial-gradient(circle, rgba(255, 7, 58, 0.3) 0%, transparent 70%);
-}
-
-.camera-offline:hover::before {
-  opacity: 1;
+  backdrop-filter: blur(16px);
+  min-width: 244px;
+  max-width: 278px;
+  width: min(278px, calc(100vw - 30px));
 }
 
 .camera-warning {
@@ -15020,6 +15030,216 @@ body {
   opacity: 1;
 }
 
+.device-status-lists {
+  margin-top: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.device-status-toggle {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #eef7ff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.device-status-toggle:hover {
+  background: rgba(79, 195, 247, 0.08);
+  border-color: rgba(79, 195, 247, 0.24);
+}
+
+.device-status-toggle-text {
+  pointer-events: none;
+}
+
+.device-status-toggle i {
+  font-size: 11px;
+  transition: transform 0.2s ease;
+}
+
+.camera-status-summary.is-collapsed .device-status-lists {
+  display: none;
+}
+
+.camera-status-summary.is-collapsed .device-status-toggle {
+  margin-bottom: 0;
+}
+
+.camera-status-summary.is-collapsed .device-status-toggle i {
+  transform: rotate(-180deg);
+}
+
+.device-status-group {
+  display: grid;
+  gap: 7px;
+}
+
+.device-status-group-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(233, 243, 255, 0.56);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  padding: 0 2px;
+}
+
+.device-status-list {
+  display: grid;
+  gap: 6px;
+  max-height: 144px;
+  overflow-y: auto;
+  padding-right: 3px;
+}
+
+.device-status-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.device-status-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+}
+
+.device-status-empty {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.device-status-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.device-status-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(79, 195, 247, 0.28);
+  background:
+    linear-gradient(180deg, rgba(79, 195, 247, 0.08), rgba(255, 255, 255, 0.03));
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.16);
+}
+
+.device-status-item:focus-visible {
+  outline: 2px solid rgba(0, 212, 255, 0.56);
+  outline-offset: 2px;
+}
+
+.device-status-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #eef7ff;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.device-status-item[data-device-type="cctv"] .device-status-avatar {
+  background: linear-gradient(135deg, rgba(55, 138, 221, 0.26), rgba(55, 138, 221, 0.1));
+}
+
+.device-status-item[data-device-type="speaker"] .device-status-avatar {
+  background: linear-gradient(135deg, rgba(99, 153, 34, 0.26), rgba(99, 153, 34, 0.1));
+}
+
+.device-status-main {
+  min-width: 0;
+}
+
+.device-status-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #f7fbff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.device-status-meta {
+  margin-top: 2px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.46);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.device-status-side {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.device-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 0;
+}
+
+.device-status-badge::before {
+  display: none;
+}
+
+.device-status-badge.is-online {
+  background: #67ef97;
+  box-shadow: 0 0 10px rgba(103, 239, 151, 0.45);
+}
+
+.device-status-badge.is-offline {
+  background: #ff8c8c;
+  box-shadow: 0 0 10px rgba(255, 140, 140, 0.36);
+}
+
+.device-status-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 10px;
+}
+
 .map-controls {
   position: absolute;
   top: 15px;
@@ -15033,18 +15253,102 @@ body {
   background: rgba(30, 35, 41, 0.9);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 8px 12px;
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   color: var(--accent-primary);
   cursor: pointer;
   transition: all 0.2s ease;
   backdrop-filter: blur(10px);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
 }
 
 .map-control-btn:hover {
   background: rgba(79, 195, 247, 0.2);
   border-color: var(--accent-primary);
+}
+
+@media (max-width: 1200px) {
+  .map-device-topbar {
+    max-width: calc(100% - 84px);
+  }
+
+  .camera-status-summary {
+    min-width: 220px;
+    max-width: 240px;
+  }
+}
+
+@media (max-width: 960px) {
+  .map-device-topbar {
+    max-width: calc(100% - 84px);
+    gap: 6px;
+    padding: 7px 8px;
+  }
+
+  .map-device-total {
+    gap: 6px;
+    min-height: 26px;
+    padding: 0 2px;
+  }
+
+  .map-device-total-label,
+  .map-device-total-value {
+    font-size: 11px;
+  }
+
+  .camera-status-summary {
+    left: 12px;
+    bottom: 12px;
+    width: min(228px, calc(100vw - 24px));
+    min-width: 0;
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .device-status-group-title {
+    font-size: 9px;
+  }
+
+  .device-status-toggle {
+    padding: 7px 8px;
+    font-size: 10px;
+  }
+
+  .device-status-item {
+    min-height: 44px;
+    padding: 7px 8px;
+    gap: 8px;
+  }
+
+  .device-status-avatar {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+  }
+
+  .device-status-name {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 768px) {
+  #map .ol-zoom {
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .map-device-topbar {
+    display: none;
+  }
+
+  .camera-status-summary {
+    display: none;
+  }
 }
 
 .btn-apple {

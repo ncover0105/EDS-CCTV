@@ -6,6 +6,10 @@ let vworldMap = null;
 let mapMarkers = [];
 let mapLayer = null;
 let gpsData = [];   // ← DB에서 받아온 데이터로 채움
+let activePopupCoordinate = null;
+let statusListBound = false;
+let statusToggleBound = false;
+let isStatusListCollapsed = false;
 
 let initialCenter = null;
 let initialZoom = 18;
@@ -51,11 +55,17 @@ function createMarkerSvg(type, status) {
 
     return `
     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38" fill="none">
-        <rect x="0" y="0" width="30" height="30" rx="10" fill="${color}"/>
+        <defs>
+            <filter id="markerShadow" x="-45%" y="-35%" width="190%" height="210%">
+                <feDropShadow dx="0" dy="3" stdDeviation="3.2" flood-color="#000000" flood-opacity="0.18"/>
+            </filter>
+        </defs>
+        <rect x="0" y="0" width="30" height="30" rx="10" fill="${color}" filter="url(#markerShadow)"/>
         <g transform="translate(6 6)">
             ${innerIcon}
         </g>
-        <circle cx="15" cy="35" r="2.4" fill="${color}" fill-opacity="0.5"/>
+        <ellipse cx="15" cy="34.5" rx="5.5" ry="2.3" fill="#000000" fill-opacity="0.12"/>
+        <circle cx="15" cy="35" r="2.4" fill="${color}" fill-opacity="0.42"/>
     </svg>`;
 }
 
@@ -66,7 +76,7 @@ function createMarkerIcon(type, status, scale) {
     return new ol.style.Icon({
         src,
         scale,
-        anchor: [0.5, 1],
+        anchor: [0.5, 0.1],
         anchorXUnits: "fraction",
         anchorYUnits: "fraction"
     });
@@ -77,23 +87,23 @@ function createMarkerIcon(type, status, scale) {
 ============================================================ */
 async function loadMapData() {
     try {
-        console.log("===== 📡 loadMapData 요청 시작 =====");
+        console.log("===== loadMapData 요청 시작 =====");
 
         const [cctvRes, speakerRes] = await Promise.all([
             fetch('/api/cctv/list'),
             fetch('/api/btype/query/config/speakers')
         ]);
 
-        console.log("📥 CCTV 응답 상태:", cctvRes.status);
-        console.log("📥 SPEAKER 응답 상태:", speakerRes.status);
+        console.log("CCTV 응답 상태:", cctvRes.status);
+        console.log("SPEAKER 응답 상태:", speakerRes.status);
 
         const cctvList = await cctvRes.json();
         const speakerList = await speakerRes.json();
 
-        console.log("===== 📌 원본 CCTV 데이터 =====");
+        console.log("===== 원본 CCTV 데이터 =====");
         console.table(cctvList);
 
-        console.log("===== 📌 원본 SPEAKER 데이터 =====");
+        console.log("===== 원본 SPEAKER 데이터 =====");
         console.table(speakerList);
 
         gpsData = []; // 초기화
@@ -127,7 +137,7 @@ async function loadMapData() {
             const lng = s.speakerLongitude;
 
             if (!isValidCoordinate(lat, lng)) {
-                console.warn(`❌ SPEAKER ${s.speakerName || s.speakerId || s.speakerKey} 좌표 오류 또는 한국 밖 → 제외`);
+                console.warn(`SPEAKER ${s.speakerName || s.speakerId || s.speakerKey} 좌표 오류 또는 한국 밖 → 제외`);
                 return;
             }
 
@@ -140,11 +150,11 @@ async function loadMapData() {
             });
         });
 
-        console.log("===== 🧭 변환된 GPS DATA =====");
+        console.log("===== 변환된 GPS DATA =====");
         console.table(gpsData);
 
         if (gpsData.length === 0) {
-            console.error("❌ gpsData 비어있음 → 지도 생성 중단");
+            console.error("gpsData 비어있음 → 지도 생성 중단");
             return;
         }
         console.table(gpsData);
@@ -153,7 +163,7 @@ async function loadMapData() {
         initVWorldMap();
 
     } catch (err) {
-        console.error("❌ loadMapData ERROR:", err);
+        console.error("loadMapData ERROR:", err);
     }
 }
 
@@ -214,7 +224,7 @@ function initVWorldMap() {
 
     const center = calculateCenterCoordinate(gpsData);
 
-    // ⭐ 처음 로딩 시 최초 중심값 저장
+    // 처음 로딩 시 최초 중심값 저장
     if (!initialCenter) {
         initialCenter = center;
     }
@@ -301,10 +311,16 @@ function addMarkers() {
     if (!window._mapEventRegistered) {
         vworldMap.on('pointermove', handlePointerMove);
         vworldMap.on('singleclick', handleSingleClick);
+        vworldMap.on('moveend', repositionMapPopup);
         window._mapEventRegistered = true;
     }
 
+    vworldMap.getView().on("change:center", function () {
+        repositionMapPopup();
+    });
+
     vworldMap.getView().on("change:resolution", function () {
+        repositionMapPopup();
         if (mapLayer) mapLayer.changed();
     });
 }
@@ -371,25 +387,13 @@ function ensureMapPopup() {
         popupEl.style.pointerEvents = "auto";
         popupEl.style.display = "none";
         popupEl.style.zIndex = "30";
-        popupEl.style.transform = "translate(-50%, calc(-100% - 22px))";
+        popupEl.style.transform = "translate(-50%, calc(-100% - 12px))";
 
         mapEl.appendChild(popupEl);
 
         const styleEl = document.createElement("style");
         styleEl.id = "mapDevicePopupStyle";
         styleEl.textContent = `
-            .map-device-popup::after {
-                content: "";
-                position: absolute;
-                left: 50%;
-                bottom: -8px;
-                width: 16px;
-                height: 16px;
-                background: rgba(10, 14, 22, 0.96);
-                border-right: 1px solid rgba(255,255,255,0.14);
-                border-bottom: 1px solid rgba(255,255,255,0.14);
-                transform: translateX(-50%) rotate(45deg);
-            }
             .map-device-popup-close {
                 position: absolute;
                 top: 12px;
@@ -475,10 +479,11 @@ function showMapPopup(data, coordinate) {
     const popupEl = document.getElementById("mapDevicePopup");
     if (!popupEl) return;
 
+    activePopupCoordinate = coordinate;
+
     const typeText = data.type === "speaker" ? "스피커" : "CCTV";
     const statusText = data.status === "online" ? "정상" : "오프라인";
     const statusEl = popupEl.querySelector("#mapDevicePopupStatus");
-    const pixel = vworldMap.getPixelFromCoordinate(coordinate);
 
     popupEl.querySelector("#mapDevicePopupName").textContent = data.name || "-";
     popupEl.querySelector("#mapDevicePopupType").textContent = typeText;
@@ -486,9 +491,17 @@ function showMapPopup(data, coordinate) {
     statusEl.classList.remove("is-online", "is-offline");
     statusEl.classList.add(data.status === "online" ? "is-online" : "is-offline");
 
+    popupEl.style.display = "block";
+    repositionMapPopup();
+}
+
+function repositionMapPopup() {
+    const popupEl = document.getElementById("mapDevicePopup");
+    if (!popupEl || !activePopupCoordinate || popupEl.style.display === "none" || !vworldMap) return;
+
+    const pixel = vworldMap.getPixelFromCoordinate(activePopupCoordinate);
     popupEl.style.left = `${pixel[0]}px`;
     popupEl.style.top = `${pixel[1]}px`;
-    popupEl.style.display = "block";
 }
 
 function hideMapPopup() {
@@ -496,6 +509,120 @@ function hideMapPopup() {
     if (popupEl) {
         popupEl.style.display = "none";
     }
+    activePopupCoordinate = null;
+}
+
+function getDeviceStatusLabel(status) {
+    return status === "online" ? "정상" : "오프라인";
+}
+
+function syncStatusListCollapsedUI() {
+    const summaryEl = document.querySelector(".camera-status-summary");
+    const toggleEl = document.getElementById("deviceStatusToggle");
+    if (!summaryEl || !toggleEl) return;
+
+    summaryEl.classList.toggle("is-collapsed", isStatusListCollapsed);
+    toggleEl.setAttribute("aria-expanded", String(!isStatusListCollapsed));
+}
+
+function bindStatusToggle() {
+    if (statusToggleBound) return;
+
+    const toggleEl = document.getElementById("deviceStatusToggle");
+    if (!toggleEl) return;
+
+    toggleEl.addEventListener("click", () => {
+        isStatusListCollapsed = !isStatusListCollapsed;
+        syncStatusListCollapsedUI();
+    });
+
+    syncStatusListCollapsedUI();
+    statusToggleBound = true;
+}
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function renderStatusList(listId, items, typeLabel) {
+    const listEl = document.getElementById(listId);
+    if (!listEl) return;
+
+    if (!Array.isArray(items) || items.length === 0) {
+        listEl.innerHTML = `<div class="device-status-empty">${typeLabel} 장치가 없습니다.</div>`;
+        return;
+    }
+
+    listEl.innerHTML = items.map((item, index) => {
+        const statusClass = item.status === "online" ? "is-online" : "is-offline";
+        const statusText = getDeviceStatusLabel(item.status);
+        const name = escapeHtml(item.name || `${typeLabel} ${index + 1}`);
+        const meta = escapeHtml(typeLabel);
+        const iconClass = item.type === "speaker" ? "bi-volume-up-fill" : "bi-camera-video-fill";
+
+        return `
+            <button type="button" class="device-status-item" data-device-index="${index}" data-device-type="${item.type}">
+                <span class="device-status-avatar" aria-hidden="true">
+                    <i class="bi ${iconClass}"></i>
+                </span>
+                <div class="device-status-main">
+                    <div class="device-status-name">${name}</div>
+                    <div class="device-status-meta">${meta}</div>
+                </div>
+                <span class="device-status-side">
+                    <span class="device-status-badge ${statusClass}">${statusText}</span>
+                    <span class="device-status-arrow" aria-hidden="true">
+                        <i class="bi bi-chevron-right"></i>
+                    </span>
+                </span>
+            </button>
+        `;
+    }).join("");
+}
+
+function getSortedDeviceItems(deviceType) {
+    return gpsData
+        .filter((item) => item.type === deviceType)
+        .sort((a, b) => a.name.localeCompare(b.name, "ko"));
+}
+
+function bindStatusListEvents() {
+    if (statusListBound) return;
+
+    ["cctvStatusList", "speakerStatusList"].forEach((listId) => {
+        const listEl = document.getElementById(listId);
+        if (!listEl) return;
+
+        listEl.addEventListener("click", (event) => {
+            const button = event.target.closest(".device-status-item");
+            if (!button) return;
+
+            const deviceType = button.dataset.deviceType;
+            const deviceIndex = Number(button.dataset.deviceIndex);
+            const items = getSortedDeviceItems(deviceType);
+            const selected = items[deviceIndex];
+
+            if (!selected || !vworldMap) return;
+
+            const coordinate = ol.proj.fromLonLat([selected.lng, selected.lat]);
+            const targetZoom = Math.max(vworldMap.getView().getZoom() || initialZoom, 16);
+
+            vworldMap.getView().animate({
+                center: coordinate,
+                zoom: Math.min(targetZoom, maxZoom),
+                duration: 350
+            });
+
+            showMapPopup(selected, coordinate);
+        });
+    });
+
+    statusListBound = true;
 }
 
 
@@ -621,12 +748,21 @@ function clearMarkers() {
 }
 
 function updateStatusSummary() {
-    const online = gpsData.filter(d => d.status === "online").length;
-    const offline = gpsData.filter(d => d.status === "offline").length;
+    const cctvItems = getSortedDeviceItems("cctv");
+    const speakerItems = getSortedDeviceItems("speaker");
 
-    document.getElementById("onlineCount").textContent = online;
-    document.getElementById("offlineCount").textContent = offline;
+    const cctvTotalEl = document.getElementById("cctvTotalCount");
+    const speakerTotalEl = document.getElementById("speakerTotalCount");
+
+    if (cctvTotalEl) cctvTotalEl.textContent = cctvItems.length;
+    if (speakerTotalEl) speakerTotalEl.textContent = speakerItems.length;
     // document.getElementById("warningCount").textContent = 0;
+
+    renderStatusList("cctvStatusList", cctvItems, "CCTV");
+    renderStatusList("speakerStatusList", speakerItems, "스피커");
+    bindStatusListEvents();
+    bindStatusToggle();
+    syncStatusListCollapsedUI();
 }
 
 window.showMapView = function () {

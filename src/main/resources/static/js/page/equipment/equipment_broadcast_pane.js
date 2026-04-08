@@ -323,11 +323,11 @@
 
             listEl.insertAdjacentHTML("beforeend", `
                 <button type="button" class="bc-disaster-card bc-disaster-card--${escapeHtml(priorityTone)} ${selectedCode === code ? "is-selected" : ""}" data-disaster-code="${escapeHtml(code)}">
-                    <div class="bc-disaster-card-head">
-                        <div class="bc-disaster-card-title-wrap">
-                            <div class="bc-disaster-card-title">${escapeHtml(title)}</div>
+                    <div class="bc-card-content">
+                        <div class="bc-card-title">${escapeHtml(title)}</div>
+                        <div class="bc-card-meta">
+                            <span class="bc-priority-badge bc-priority-badge--${escapeHtml(priorityTone)}">우선순위 ${escapeHtml(priority)}</span>
                         </div>
-                        <span class="bc-priority-badge bc-priority-badge--${escapeHtml(priorityTone)}">우선순위 ${escapeHtml(priority)}</span>
                     </div>
                 </button>
             `);
@@ -374,7 +374,8 @@
             const code = String(card.dataset.disasterCode ?? "");
             if (!code) return;
 
-            selectEl.value = code;
+            const currentSelected = String(window.selectedBroadcastType ?? "").trim();
+            selectEl.value = currentSelected === code ? "" : code;
             selectEl.dispatchEvent(new Event("change", { bubbles: true }));
         });
 
@@ -590,22 +591,6 @@
         return btn;
     }
 
-    function updateBgmStatusUI(isOn) {
-        const el = document.getElementById("broadcastBgmStatus");
-        if (!el) return;
-
-        const dot = el.querySelector(".status-dot");
-        const text = el.querySelector(".status-text");
-
-        if (isOn) {
-            el.classList.add("is-on");
-            if (text) text.textContent = "ON";
-        } else {
-            el.classList.remove("is-on");
-            if (text) text.textContent = "OFF";
-        }
-    }
-
     async function runBroadcastBgmAction(action, btnId) {
         const speakerIds = getSelectedSpeakerIds();
         if (!speakerIds.length) {
@@ -623,7 +608,6 @@
         try {
             await sendSpeakerAction({ speakerIds, action, password });
             uiAlert(`${label} 실행 완료 (${speakerIds.length}대)`, "success");
-            updateBgmStatusUI(isOn);
             appendBroadcastLogEntry({
                 html: buildAlertLogHtml({
                     status: "1",

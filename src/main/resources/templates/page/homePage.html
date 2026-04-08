@@ -117,24 +117,43 @@
 
                 <!-- GPS Map-->
                 <div id="map-container" class="d-none">
+                    <div class="map-device-topbar" aria-label="장치 전체 현황">
+                        <div class="map-device-total is-cctv" title="CCTV 전체 수" aria-label="CCTV 전체 수">
+                            <span class="map-device-total-dot" aria-hidden="true"></span>
+                            <span class="map-device-total-label">CCTV</span>
+                            <span class="map-device-total-value" id="cctvTotalCount">0</span>
+                        </div>
+                        <div class="map-device-total is-speaker" title="스피커 전체 수" aria-label="스피커 전체 수">
+                            <span class="map-device-total-dot" aria-hidden="true"></span>
+                            <span class="map-device-total-label">스피커</span>
+                            <span class="map-device-total-value" id="speakerTotalCount">0</span>
+                        </div>
+                    </div>
                     <div class="map-controls">
                         <div class="map-control-btn" id="refreshMap">
-                            <i class="bi bi-arrow-clockwise me-1"></i>
-                            새로고침
+                            <i class="bi bi-arrow-clockwise"></i>
                         </div>
                     </div>
                     <div class="camera-status-summary">
-                        <div class="summary-title">
-                            <i class="bi bi-speaker-fill me-2"></i>
-                            스피커 상태
-                        </div>
-                        <div class="status-count">
-                            <span class="count-label">온라인</span>
-                            <span class="count-number camera-online" id="onlineCount">0</span>
-                        </div>
-                        <div class="status-count">
-                            <span class="count-label">오프라인</span>
-                            <span class="count-number camera-offline" id="offlineCount">0</span>
+                        <button type="button" class="device-status-toggle" id="deviceStatusToggle" aria-expanded="true" aria-controls="deviceStatusLists">
+                            <span class="device-status-toggle-text">장치 리스트</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <div class="device-status-lists" id="deviceStatusLists">
+                            <div class="device-status-group">
+                                <div class="device-status-group-title">
+                                    <i class="bi bi-camera-video-fill me-1"></i>
+                                    CCTV
+                                </div>
+                                <div class="device-status-list" id="cctvStatusList"></div>
+                            </div>
+                            <div class="device-status-group">
+                                <div class="device-status-group-title">
+                                    <i class="bi bi-volume-up-fill me-1"></i>
+                                    스피커
+                                </div>
+                                <div class="device-status-list" id="speakerStatusList"></div>
+                            </div>
                         </div>
                     </div>
                     <div id="map">
