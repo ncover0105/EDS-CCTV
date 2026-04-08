@@ -29,7 +29,7 @@ public class MainController {
 
         SystemSetting systemSetting = systemSettingService.getSetting();
 
-        model.addAttribute("title", "Home");
+        model.addAttribute("title", "SafeSystem");
         model.addAttribute("cameras", cameraCache.getCameras());
         model.addAttribute("currentPage", "main");
         model.addAttribute("mapApiKey", systemSetting.getMapApiKey());

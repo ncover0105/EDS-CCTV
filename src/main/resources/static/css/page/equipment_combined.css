@@ -38,6 +38,7 @@
 
     /* Per-screen accents (overridden per pane) */
     --accent: #3b82f6;
+    --accent-rgb: 59, 130, 246;
     --accent-hover: #2563eb;
     --accent-glow: rgba(59, 130, 246, 0.20);
     --accent-soft: rgba(59, 130, 246, 0.10);
@@ -5452,22 +5453,6 @@ select.eq-input option {
     transition: all var(--t-base);
 }
 
-.bc-panel-composer.composer-type-a {
-    --accent: #f59e0b;
-    --accent-rgb: 245, 158, 11;
-    --accent-glow: rgba(245, 158, 11, 0.4);
-    --accent-soft: rgba(245, 158, 11, 0.08);
-    --accent-border: rgba(245, 158, 11, 0.24);
-}
-
-.bc-panel-composer.composer-type-b {
-    --accent: #3b82f6;
-    --accent-rgb: 59, 130, 246;
-    --accent-glow: rgba(59, 130, 246, 0.4);
-    --accent-soft: rgba(59, 130, 246, 0.08);
-    --accent-border: rgba(59, 130, 246, 0.24);
-}
-
 /* ============================================
    Broadcast Pipeline Interior Refresh
    - Keep outer bc-pipeline structure as-is
@@ -5784,10 +5769,6 @@ select.eq-input option {
 .broadcast-pane .bc-exec-group+.bc-exec-group {
     padding-top: 14px;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.broadcast-pane .bc-exec-group-main .card-label {
-    color: rgba(255, 255, 255, 0.92);
 }
 
 .broadcast-pane .bgm-ctrl-row {

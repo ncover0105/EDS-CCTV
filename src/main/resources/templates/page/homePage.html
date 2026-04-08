@@ -4,28 +4,28 @@
 
 <head>
     <meta charset="UTF-8">
-    <title th:text="${title}">Home</title>
-    <!-- <script src="/js/footer.js"></script> -->
+    <title th:text="${title}">SafeSystem</title>
+    <!-- Deprecated: footer.js -->
 
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
-    <!-- <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=66sw7wk0ye&callback=initMap"></script> -->
+    <!-- Deprecated: Naver Map API -->
     <link rel="stylesheet" href="css/weather.css">
     <link rel="stylesheet" href="css/cctv-placeholder.css">
-    <!-- OpenLayers 라이브러리 (필수) -->
+    <!-- Library: OpenLayers -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@7.4.0/ol.css" />
     <script src="https://cdn.jsdelivr.net/npm/ol@7.4.0/dist/ol.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/8.1.2/adapter.min.js"></script> -->
+    <!-- Deprecated: WebRTC adapter CDN -->
     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
-    <!-- <script src="https://cdn.jsdelivr.net/gh/meetecho/janus-gateway/html/demos/janus.js"></script> -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/janus-gateway@latest/dist/janus.js"></script> -->
+    <!-- Deprecated: Janus demo CDN -->
+    <!-- Deprecated: Janus latest CDN -->
     <script src="js/module/janus.js"></script>
 
-    <!-- 서버 데이터를 JavaScript로 전달 -->
+    <!-- Data: server values for JavaScript -->
     <script th:inline="javascript">
         /*<![CDATA[*/
         var cameras = /*[[${cameras}]]*/[];
@@ -49,11 +49,11 @@
     <script src="/js/ui/modal_speaker_broadcast.js?v=1"></script>
     <script src="/js/ui/modal_tts_manage.js?v=1"></script>
 
-    <!-- <script th:src="@{/js/btype_action_modal.js}"></script> -->
+    <!-- Deprecated: btype_action_modal.js -->
 </head>
 
 <body>
-    <!-- Main -->
+    <!-- Section: Main -->
     <div class="main-container p-0" layout:fragment="content">
         <div class="control-bar p-2 rounded-0">
             <div class="control-group">
@@ -95,13 +95,13 @@
                     <span class="d-none d-md-inline">수동발령</span>
                 </button>
 
-                <!-- 단순 Watch 재연결 -->
+                <!-- Action: reconnect watch -->
                 <button class="btn-apple-base btn-apple-warning d-none" id="reconnectAllBtn" type="button">
                     <i class="bi bi-arrow-repeat"></i>
                     <span class="d-none d-md-inline">전체 재연결</span>
                 </button>
 
-                <!-- 스트리밍 서버 재시작 -->
+                <!-- Action: restart streaming server -->
                 <button class="btn-apple-base btn-apple-warning btn-sm" id="restartAllServerBtn" type="button">
                     <i class="bi bi-arrow-clockwise"></i>
                     <span class="d-none d-md-inline">CCTV 전체 재시작</span>
@@ -112,10 +112,10 @@
         <div class="content-wrapper p-2">
             <div class="main-section rounded-0 p-0">
                 <div id="cctv-container">
-                    <!-- CCTV 피드 동적 생성 -->
+                    <!-- Block: CCTV feed container -->
                 </div>
 
-                <!-- GPS Map-->
+                <!-- Section: Map -->
                 <div id="map-container" class="d-none">
                     <div class="map-device-topbar" aria-label="장치 전체 현황">
                         <div class="map-device-total is-cctv" title="CCTV 전체 수" aria-label="CCTV 전체 수">
@@ -135,7 +135,8 @@
                         </div>
                     </div>
                     <div class="camera-status-summary">
-                        <button type="button" class="device-status-toggle" id="deviceStatusToggle" aria-expanded="true" aria-controls="deviceStatusLists">
+                        <button type="button" class="device-status-toggle" id="deviceStatusToggle" aria-expanded="true"
+                            aria-controls="deviceStatusLists">
                             <span class="device-status-toggle-text">장치 리스트</span>
                             <i class="bi bi-chevron-down"></i>
                         </button>
@@ -164,9 +165,7 @@
 
             <div class="sidebar">
 
-                <!-- ══════════════════════════════
-                        § 1  출입기록
-                ══════════════════════════════ -->
+                <!-- Section: 출입기록 -->
                 <div class="sb-sec">
                     <div class="sb-hd">
                         <span class="sb-hd-title">
@@ -191,9 +190,7 @@
                     </div>
                 </div>
 
-                <!-- ══════════════════════════════
-                        § 2  특보  (숨김 처리)
-                ══════════════════════════════ -->
+                <!-- Section: 특보 (hidden) -->
                 <div class="sb-sec d-none" id="specialReportPanel">
                     <div class="sb-hd d-none">
                         <span class="sb-hd-title">
@@ -213,9 +210,7 @@
                     </div>
                 </div>
 
-                <!-- ══════════════════════════════
-                        § 3  현재 날씨
-                ══════════════════════════════ -->
+                <!-- Section: 현재 날씨 -->
                 <div class="sb-sec">
                     <div class="sb-hd">
                         <span class="sb-hd-title">
@@ -224,10 +219,10 @@
                         </span>
                     </div>
 
-                    <!-- 하늘 배너 -->
+                    <!-- Block: 하늘 배너 -->
                     <div class="sb-wx-banner wx-clear" id="sbWxBanner">
                         <div class="sb-wx-fx" aria-hidden="true" id="sbWxFx"></div>
-                        <!-- 콘텐츠 -->
+                        <!-- Block: 날씨 콘텐츠 -->
                         <div class="sb-wx-banner-content">
                             <img id="weather_icon" alt="날씨" class="sb-wx-icon" />
                             <div style="display:flex;align-items:baseline;gap:3px;">
@@ -240,7 +235,7 @@
                         </div>
                     </div>
 
-                    <!-- 4-셀 수치 그리드: 강수량/습도/풍속/풍향 -->
+                    <!-- Block: 날씨 지표 그리드 -->
                     <div class="sb-wx-metrics">
                         <div class="sb-wx-cell">
                             <div class="sb-wx-lbl">강수량</div>
@@ -264,7 +259,7 @@
                         </div>
                     </div>
 
-                    <!-- 공기질 2셀 -->
+                    <!-- Block: 공기질 -->
                     <div class="sb-aq-row">
                         <div class="sb-aq-cell">
                             <span class="sb-aq-lbl">미세먼지(PM10)</span>
@@ -285,9 +280,7 @@
                     </div>
                 </div>
 
-                <!-- ══════════════════════════════
-                        § 4  레이더 / 위성
-                ══════════════════════════════ -->
+                <!-- Section: 레이더 / 위성 -->
                 <div class="sb-sec sb-sec-fluid">
                     <div class="sb-hd">
                         <span class="sb-hd-title">
@@ -305,7 +298,7 @@
                     </div>
                     <div class="sb-radar-body">
                         <div class="sb-radar-map-wrap">
-                            <!-- 레이더 지도 -->
+                            <!-- Block: 레이더 지도 -->
                             <div class="weather-map w-100 position-relative" id="radar-map">
                                 <div id="loadingSpinnerRadar"
                                     class="d-flex justify-content-center align-items-center flex-column position-absolute w-100 h-100">
@@ -314,7 +307,7 @@
                                 </div>
                                 <img id="radarImg" class="d-none w-100" alt="레이더 지도">
                             </div>
-                            <!-- 위성 지도 -->
+                            <!-- Block: 위성 지도 -->
                             <div class="weather-map w-100 d-none position-relative" id="satellite-map">
                                 <div id="loadingSpinnerSatellite"
                                     class="d-flex justify-content-center align-items-center flex-column position-absolute w-100 h-100">
@@ -330,7 +323,7 @@
             </div>
         </div>
 
-        <!-- ==================== 하단 Ticker Bar ==================== -->
+        <!-- Section: 하단 Ticker Bar -->
         <div class="ticker-bar" id="tickerBar">
             <div class="ticker-legend-panel">
                 <div class="ticker-panel-title">
@@ -362,10 +355,18 @@
                         <span class="t-item t-empty">수신된 특보 정보가 없습니다.</span>
                     </div>
                 </div>
+                <button type="button" class="ticker-toggle-btn" id="tickerToggleBtn" aria-label="하단 특보 바 숨기기"
+                    title="하단 특보 바 숨기기">
+                    <i class="bi bi-chevron-down"></i>
+                </button>
             </div>
         </div>
+        <button type="button" class="ticker-reveal-btn" id="tickerRevealBtn" aria-label="하단 특보 바 다시 보기"
+            title="하단 특보 바 다시 보기">
+            <i class="bi bi-chevron-up"></i>
+        </button>
 
-        <!-- 전체화면 뷰 -->
+        <!-- Section: 전체화면 뷰 -->
         <div id="fullscreenView" class="fullscreen-view d-none">
             <button id="closefullScreen" class="cctv-control-btn">
                 <i class="bi bi-x-lg"></i>
@@ -374,7 +375,7 @@
             </div>
         </div>
 
-        <!-- 알림 -->
+        <!-- Section: 알림 -->
         <div class="notification notification-danger" id="customNotification">
             <div class="notification-icon">
                 <i class="bi bi-exclamation-triangle-fill"></i>
@@ -384,12 +385,43 @@
                 <div id="notification-message" class="notification-message"></div>
             </div>
         </div>
-        <!-- Emergency Screen Overlay -->
+        <!-- Section: Emergency Screen Overlay -->
         <div id="emergencyOverlay" class="emergency-overlay" aria-hidden="true"></div>
-        <!-- <div class="overlay-3" id="overlay3"></div>
-        <div class="ripple" id="ripple"></div> -->
+        <!-- Deprecated: overlay effect -->
 
-        <!-- <script src="/js/notimodal.js"></script> -->
+        <!-- Deprecated: notimodal.js -->
+        <script>
+            (function () {
+                const storageKey = "homeTickerCollapsed";
+                const body = document.body;
+                const toggleBtn = document.getElementById("tickerToggleBtn");
+                const revealBtn = document.getElementById("tickerRevealBtn");
+
+                if (!toggleBtn || !revealBtn) {
+                    return;
+                }
+
+                function syncTickerState(collapsed) {
+                    body.classList.toggle("ticker-collapsed", collapsed);
+                    toggleBtn.setAttribute("aria-label", collapsed ? "하단 특보 바 다시 보기" : "하단 특보 바 숨기기");
+                    toggleBtn.setAttribute("title", collapsed ? "하단 특보 바 다시 보기" : "하단 특보 바 숨기기");
+                    revealBtn.setAttribute("aria-hidden", collapsed ? "false" : "true");
+                }
+
+                syncTickerState(localStorage.getItem(storageKey) === "true");
+
+                toggleBtn.addEventListener("click", function () {
+                    const collapsed = !body.classList.contains("ticker-collapsed");
+                    syncTickerState(collapsed);
+                    localStorage.setItem(storageKey, String(collapsed));
+                });
+
+                revealBtn.addEventListener("click", function () {
+                    syncTickerState(false);
+                    localStorage.setItem(storageKey, "false");
+                });
+            })();
+        </script>
     </div>
 </body>
 

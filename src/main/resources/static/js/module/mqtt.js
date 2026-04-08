@@ -111,28 +111,32 @@ window.SSE_MQTT = (function () {
     function showEmergencyToastr(camName, msg, boundaryNum) {
         const box = document.querySelector(".notification");
         const overlay = document.getElementById("emergencyOverlay");
+        if (!box) return;
+
+        const hideNotification = () => {
+            box.classList.remove("show");
+            box.setAttribute("aria-hidden", "true");
+            overlay?.classList.remove("active");
+            clearTimeout(box.__timer);
+        };
 
         document.getElementById("notification-title").innerText =
             `${camName}\n위험구역 출입 발생`;
 
         document.getElementById("notification-message").innerText = msg;
 
+        box.setAttribute("aria-hidden", "false");
         box.classList.add("show");
 
         // ===== 기존 타이머 제거 후 5초 타이머 설정 =====
         clearTimeout(box.__timer);
         box.__timer = setTimeout(() => {
-            box.classList.remove("show");
-            overlay?.classList.remove("active");
+            hideNotification();
         }, 5000);
 
         box.onclick = () => {
             window.openBroadcastModal(camName, boundaryNum);
-
-            box.classList.remove("show");
-            overlay?.classList.remove("active");
-
-            clearTimeout(box.__timer);
+            hideNotification();
         };
     }
 

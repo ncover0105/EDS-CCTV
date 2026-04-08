@@ -42,14 +42,14 @@ public class MenuController {
 
     @GetMapping("/dashboard")
     public String showMainPage(Model model) {
-        model.addAttribute("title", "EDS-DashBoard");
+        model.addAttribute("title", "SafeSystem");
         model.addAttribute("currentPage", "dashboard");
         return "page/dashboard";
     }
 
     @GetMapping("/equipment2")
     public String showEquipmentPage2(Model model) {
-        model.addAttribute("title", "EDS");
+        model.addAttribute("title", "SafeSystem");
         model.addAttribute("currentPage", "equipment2");
         return "page/menu/equipment/equipmentPage2";
     }
@@ -57,7 +57,7 @@ public class MenuController {
     @GetMapping("/equipment")
     public String showEquipmentPage(
             @RequestParam(value = "view", required = false, defaultValue = "speaker") String view, Model model) {
-        model.addAttribute("title", "EDS");
+        model.addAttribute("title", "SafeSystem");
         model.addAttribute("currentPage", "equipment");
         model.addAttribute("view", view);
         model.addAttribute("currentMenu", "speaker");
@@ -86,7 +86,7 @@ public class MenuController {
     @GetMapping("/cctv")
     public String showCctvPage(@RequestParam(value = "view", required = false, defaultValue = "cctv") String view,
             Model model) {
-        model.addAttribute("title", "EDS");
+        model.addAttribute("title", "SafeSystem");
         model.addAttribute("currentPage", "cctv");
         model.addAttribute("cctvList", cctvManagementService.getAllCCTVList());
         return "page/menu/cctvListPage";
@@ -105,7 +105,7 @@ public class MenuController {
     @GetMapping("/situation")
     public String showHistoryPage(
             @RequestParam(value = "view", required = false, defaultValue = "situation") String view, Model model) {
-        model.addAttribute("title", "EDS");
+        model.addAttribute("title", "SafeSystem");
         model.addAttribute("currentPage", "situation");
         model.addAttribute("view", view);
         model.addAttribute("currentMenu", "situation");
@@ -140,7 +140,7 @@ public class MenuController {
     @GetMapping("/settings")
     public String showSettingPage(@RequestParam(value = "view", required = false, defaultValue = "user") String view,
             Model model) {
-        model.addAttribute("title", "EDS");
+        model.addAttribute("title", "SafeSystem");
         model.addAttribute("currentPage", "settings");
         model.addAttribute("view", view);
         model.addAttribute("currentMenu", "user");
