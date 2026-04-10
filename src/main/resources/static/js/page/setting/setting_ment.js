@@ -172,31 +172,23 @@
             const card = document.createElement("article");
             card.className = "ment-card";
             card.innerHTML = `
-            <div class="ment-card-head">
-                <label class="ment-card-check">
-                    <input type="checkbox" name="selectedIds" value="${escapeHtml(item.id)}">
-                    <span>선택</span>
-                </label>
-                <span class="ment-card-no">${no}</span>
-            </div>
-            <div class="ment-card-body">
-                <div class="ment-card-title-wrap">
-                    <h4 class="ment-card-title">${escapeHtml(item.name) || "-"}</h4>
-                    <span class="ment-card-code">CODE ${escapeHtml(item.id)}</span>
+            <label class="ment-card-select">
+                <input type="checkbox" name="selectedIds" value="${escapeHtml(item.id)}">
+            </label>
+            <div class="ment-card-content">
+                <div class="ment-card-top">
+                    <span class="ment-card-title">${escapeHtml(item.name) || "-"}</span>
+                    <span class="ment-card-code">${escapeHtml(item.id)}</span>
                 </div>
                 <div class="ment-card-preview">${escapeHtml(item.content) || "-"}</div>
-                <dl class="ment-card-meta">
-                    <div class="ment-card-meta-row">
-                        <dt>사용 여부</dt>
-                        <dd>
-                            <span class="status-badge ${isUse ? "status-success" : "status-primary"}">
-                                ${isUse
-                    ? `<i class="bi bi-check-circle-fill me-1 text-success"></i>사용`
-                    : `<i class="bi bi-x-circle-fill me-1 text-secondary"></i>미사용`}
-                            </span>
-                        </dd>
-                    </div>
-                </dl>
+            </div>
+            <div class="ment-card-aside">
+                <span class="status-badge ${isUse ? "status-success" : "status-primary"}">
+                    ${isUse
+                        ? `<i class="bi bi-check-circle-fill"></i><span>사용</span>`
+                        : `<i class="bi bi-x-circle-fill"></i><span>미사용</span>`}
+                </span>
+                <span class="ment-card-no">${no}</span>
             </div>`;
 
             const cb = card.querySelector('input[name="selectedIds"]');

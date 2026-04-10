@@ -141,6 +141,7 @@
                                             th:data-user-name="${#strings.isEmpty(user.name) ? '-' : user.name}"
                                             th:data-user-phone="${#strings.isEmpty(user.phnNo) ? '-' : user.phnNo}"
                                             th:data-user-role="${#strings.isEmpty(user.role) ? 'USER' : user.role}">
+                                            <!-- 헤더: 체크박스 + 순번 -->
                                             <div class="user-manage-card-head">
                                                 <label class="user-card-check">
                                                     <input type="checkbox" name="selectedUserIds" th:value="${user.id}">
@@ -148,37 +149,36 @@
                                                 </label>
                                                 <span class="user-card-no" th:text="${iterStat.count}">1</span>
                                             </div>
-                                            <div class="user-card-body">
-                                                <div class="user-card-main">
-                                                    <strong class="user-card-id" th:text="${user.id}">user01</strong>
-                                                    <div class="user-card-role">
-                                                        <span class="status-badge status-info"
-                                                            th:if="${user.role == 'USER'}">
-                                                            <i class="bi bi-person"></i>
-                                                            <span>사용자</span>
-                                                        </span>
-                                                        <span class="status-badge status-danger"
-                                                            th:if="${user.role == 'MANAGER'}">
-                                                            <i class="bi bi-shield-check"></i>
-                                                            <span>관리자</span>
-                                                        </span>
-                                                        <span class="status-badge"
-                                                            th:if="${#strings.isEmpty(user.role)}">-</span>
-                                                    </div>
+                                            <!-- 프로필: 아바타 + ID/이름 + 역할 뱃지 -->
+                                            <div class="user-card-profile">
+                                                <div class="user-card-avatar"
+                                                    th:attr="data-role=${#strings.isEmpty(user.role) ? 'USER' : user.role}">
+                                                    <span th:text="${#strings.isEmpty(user.id) ? '?' : #strings.toUpperCase(#strings.substring(user.id, 0, 1))}">U</span>
                                                 </div>
-                                                <dl class="user-card-meta">
-                                                    <div class="user-card-meta-row">
-                                                        <dt>이름</dt>
-                                                        <dd th:text="${#strings.isEmpty(user.name) ? '-' : user.name}">
-                                                            -</dd>
-                                                    </div>
-                                                    <div class="user-card-meta-row">
-                                                        <dt>전화번호</dt>
-                                                        <dd
-                                                            th:text="${#strings.isEmpty(user.phnNo) ? '-' : user.phnNo}">
-                                                            -</dd>
-                                                    </div>
-                                                </dl>
+                                                <div class="user-card-identity">
+                                                    <strong class="user-card-id" th:text="${user.id}">user01</strong>
+                                                    <span class="user-card-name"
+                                                        th:text="${#strings.isEmpty(user.name) ? '이름 없음' : user.name}">-</span>
+                                                </div>
+                                                <div class="user-card-role">
+                                                    <span class="status-badge status-info"
+                                                        th:if="${user.role == 'USER'}">
+                                                        <i class="bi bi-person"></i><span>사용자</span>
+                                                    </span>
+                                                    <span class="status-badge status-danger"
+                                                        th:if="${user.role == 'MANAGER'}">
+                                                        <i class="bi bi-shield-check"></i><span>관리자</span>
+                                                    </span>
+                                                    <span class="status-badge"
+                                                        th:if="${#strings.isEmpty(user.role)}">-</span>
+                                                </div>
+                                            </div>
+                                            <!-- 메타: 전화번호 -->
+                                            <div class="user-card-meta">
+                                                <div class="user-card-meta-item">
+                                                    <i class="bi bi-telephone-fill"></i>
+                                                    <span th:text="${#strings.isEmpty(user.phnNo) ? '-' : user.phnNo}">-</span>
+                                                </div>
                                             </div>
                                         </article>
                                     </div>

@@ -4,8 +4,8 @@
 
 window.CCTVJanus = (function () {
 
-    // const janusServerUrl = "ws://localhost:8188/janus";
-    const janusServerUrl = "ws://172.24.55.162:8188/janus";
+    const janusServerUrl = "ws://localhost:8188/janus";
+    // const janusServerUrl = "ws://172.24.55.162:8188/janus";
     const CONNECT_GRACE_MS = 15000;
     const RECONNECT_COOLDOWN_MS = 10000;
     const DISPLAY_PENDING_GRACE_MS = 40000;

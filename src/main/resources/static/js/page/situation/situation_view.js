@@ -40,12 +40,12 @@
   // ====== 필터 읽기: "현재 입력된 값" 그대로 사용 ======
   function getFilters() {
     const startRaw = getTrimValue('startDateTime'); // "YYYY-MM-DDTHH:mm"
-    const endRaw   = getTrimValue('endDateTime');
+    const endRaw = getTrimValue('endDateTime');
     const boundaryNum = getTrimValue('boundaryFilter'); // ""이면 null
 
     // parseInputDateTime / toLocalDateTimeParam 은 situation_common.js의 유틸 사용 가정
     const startDt = startRaw ? window.SituationCommon.parseInputDateTime(startRaw) : null;
-    const endDt   = endRaw ? window.SituationCommon.parseInputDateTime(endRaw) : null;
+    const endDt = endRaw ? window.SituationCommon.parseInputDateTime(endRaw) : null;
 
     // ✅ 둘 다 비면 날짜조건 제외
     if (!startDt && !endDt) {
@@ -76,7 +76,7 @@
     }
 
     const from = fromDt ? window.SituationCommon.toLocalDateTimeParam(fromDt) : '';
-    const to   = toDt ? window.SituationCommon.toLocalDateTimeParam(toDt) : '';
+    const to = toDt ? window.SituationCommon.toLocalDateTimeParam(toDt) : '';
 
     return { from, to, boundaryNum: boundaryNum || '' };
   }
@@ -285,16 +285,15 @@
   // 통계 그래프
   // ====================================================================
   const CHART_COLORS = {
-    blue:   'rgba(59,130,246,0.85)',
-    green:  'rgba(34,197,94,0.85)',
-    amber:  'rgba(245,158,11,0.85)',
-    red:    'rgba(239,68,68,0.85)',
-    pink:   'rgba(236,72,153,0.88)',
-    cyan:   'rgba(6,182,212,0.85)',
+    blue: 'rgba(59,130,246,0.85)',
+    green: 'rgba(34,197,94,0.85)',
+    amber: 'rgba(245,158,11,0.85)',
+    red: 'rgba(239,68,68,0.85)',
+    pink: 'rgba(236,72,153,0.88)',
+    cyan: 'rgba(6,182,212,0.85)',
   };
-  const ZONE_COLORS = [CHART_COLORS.blue, CHART_COLORS.green, CHART_COLORS.red, CHART_COLORS.pink];
-  const CHART_GRID  = 'rgba(255,255,255,0.06)';
-  const CHART_TICK  = 'rgba(232,236,244,0.45)';
+const CHART_GRID = 'rgba(255,255,255,0.06)';
+  const CHART_TICK = 'rgba(232,236,244,0.45)';
 
   const chartCommonOptions = {
     responsive: true,
@@ -399,49 +398,121 @@
     destroyChart('zoneChart');
     const ctx = document.getElementById('zoneChart');
     if (!ctx) return;
+
+    // 중앙 텍스트 플러그인 (총 발생 건수 표시)
+    const centerTextPlugin = {
+      id: 'zoneCenterText',
+      afterDraw(chart) {
+        const { ctx: c, chartArea } = chart;
+        if (!chartArea) return;
+        const cx = (chartArea.left + chartArea.right) / 2;
+        const cy = (chartArea.top + chartArea.bottom) / 2;
+        const total = chart.data.datasets[0].data.reduce((a, b) => a + (isNaN(b) ? 0 : b), 0);
+        c.save();
+        c.textAlign = 'center';
+        c.textBaseline = 'middle';
+        c.font = 'bold 22px "Pretendard", "Noto Sans KR", sans-serif';
+        c.fillStyle = '#e8ecf4';
+        c.fillText(total > 0 ? total : '-', cx, cy - 9);
+        c.font = '11px "Pretendard", "Noto Sans KR", sans-serif';
+        c.fillStyle = 'rgba(232,236,244,0.45)';
+        c.fillText('총 발생', cx, cy + 11);
+        c.restore();
+      },
+    };
+
+    // 구역 번호 → 고정 색상 (1:파랑, 2:초록, 3:빨강, 4:핑크)
+    const ZONE_COLOR_MAP = {
+      1: 'rgba(99,179,237,0.92)',
+      2: 'rgba(72,187,120,0.92)',
+      3: 'rgba(239,68,68,0.92)',
+      4: 'rgba(236,72,153,0.90)',
+    };
+    const ZONE_COLOR_DEFAULT = 'rgba(255,255,255,0.25)';
+    function zoneColor(label) {
+      const m = label.match(/^(\d+)번 구역$/);
+      return m ? (ZONE_COLOR_MAP[parseInt(m[1], 10)] || ZONE_COLOR_DEFAULT) : ZONE_COLOR_DEFAULT;
+    }
+
     const hasData = byZone && byZone.some(z => z.count > 0);
     if (!hasData) {
       chartInstances['zoneChart'] = new Chart(ctx, {
         type: 'doughnut',
         data: {
           labels: ['데이터 없음'],
-          datasets: [{ data: [1], backgroundColor: ['rgba(255,255,255,0.08)'], borderWidth: 0 }],
+          datasets: [{ data: [1], backgroundColor: ['rgba(255,255,255,0.06)'], borderWidth: 0, hoverBackgroundColor: ['rgba(255,255,255,0.06)'] }],
         },
         options: {
           ...chartCommonOptions,
           plugins: {
             ...chartCommonOptions.plugins,
-            legend: { display: true, position: 'bottom', labels: { color: CHART_TICK, font: { size: 11 }, padding: 12 } },
+            legend: { display: false },
+            tooltip: { enabled: false },
           },
-          cutout: '62%',
+          cutout: '68%',
         },
+        plugins: [centerTextPlugin],
       });
       return;
     }
+
+    const total = byZone.reduce((s, z) => s + z.count, 0);
     chartInstances['zoneChart'] = new Chart(ctx, {
       type: 'doughnut',
       data: {
         labels: byZone.map(z => z.label),
         datasets: [{
           data: byZone.map(z => z.count),
-          backgroundColor: byZone.map((_, i) => ZONE_COLORS[i % ZONE_COLORS.length]),
-          borderColor: '#0d1117',
-          borderWidth: 2,
-          hoverOffset: 6,
+          backgroundColor: byZone.map(z => zoneColor(z.label)),
+          borderColor: 'rgba(13,17,23,0.9)',
+          borderWidth: 3,
+          hoverOffset: 10,
+          hoverBorderWidth: 0,
         }],
       },
       options: {
         ...chartCommonOptions,
-        cutout: '62%',
+        cutout: '68%',
         plugins: {
           ...chartCommonOptions.plugins,
           legend: {
             display: true,
             position: 'bottom',
-            labels: { color: CHART_TICK, font: { size: 11 }, padding: 12, usePointStyle: true },
+            labels: {
+              color: CHART_TICK,
+              font: { size: 11 },
+              padding: 14,
+              usePointStyle: false,
+              useBorderRadius: true,
+              boxWidth: 10,
+              boxHeight: 10,
+              borderRadius: 999,
+              generateLabels(chart) {
+                const data = chart.data;
+                return data.labels.map((label, i) => ({
+                  text: `${label}  ${data.datasets[0].data[i]}건`,
+                  fillStyle: data.datasets[0].backgroundColor[i],
+                  strokeStyle: data.datasets[0].backgroundColor[i],
+                  lineWidth: 0,
+                  hidden: false,
+                  index: i,
+                }));
+              },
+            },
+          },
+          tooltip: {
+            ...chartCommonOptions.plugins.tooltip,
+            callbacks: {
+              label(context) {
+                const val = context.parsed;
+                const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                return `  ${context.label}: ${val}건 (${pct}%)`;
+              },
+            },
           },
         },
       },
+      plugins: [centerTextPlugin],
     });
   }
 
@@ -573,7 +644,7 @@
 
     // 접기/펼치기
     const collapseBtn = document.getElementById('statsCollapseBtn');
-    const statsBody   = document.getElementById('sitStatsBody');
+    const statsBody = document.getElementById('sitStatsBody');
     if (collapseBtn && statsBody) {
       collapseBtn.addEventListener('click', () => {
         const collapsed = statsBody.classList.toggle('is-collapsed');
