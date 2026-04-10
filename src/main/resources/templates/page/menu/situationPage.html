@@ -14,13 +14,14 @@
     <script src="/js/page/situation/situation_common.js?v=1"></script>
 
     <!-- view별로 필요한 파일만 로드 -->
+    <script th:if="${view == 'situation'}" src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script th:if="${view == 'situation'}" src="/js/page/situation/situation_view.js?v=1"></script>
     <script th:if="${view == 'broadcast'}" src="/js/page/situation/broadcast_view.js?v=1"></script>
     <script th:if="${view == 'special'}" src="/js/page/situation/special_view.js?v=1"></script>
 </head>
 
 <body>
-    <div class="container-fluid p-0 d-flex flex-column" style="height:100vh; overflow:hidden;"
+    <div class="container-fluid p-0 d-flex flex-column situation-shell"
         layout:fragment="content">
         <div class="page-situation">
             <!-- Topbar -->
@@ -88,8 +89,7 @@
 
                 <main class="sit-main">
                     <!-- Main Content Pane -->
-                    <section class="sit-pane is-active"
-                        style="display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden;"
+                    <section class="sit-pane is-active sit-pane-main"
                         id="situation-active-pane">
                         <!-- 상황발생이력 -->
                         <div th:if="${view == 'situation'}"
@@ -102,27 +102,27 @@
                                     </div>
                                     <div class="sit-hist-title-text">
                                         <h3>상황 발생 이력</h3>
-                                        <p id="situationCount">상황 발생 이력 총 0개 | 상황 발생 이력을 관리하세요</p>
+                                        <p id="situationCount">조건검색 / 전체 구역 / 총 0건 | 상황 발생 이력을 조회합니다.</p>
                                     </div>
                                 </div>
                             </header>
 
                             <!-- Date Filter / Search Bar -->
-                            <div class="sit-hist-status-bar" style="gap: 15px; flex-wrap: wrap;">
-                                <div class="d-flex align-items-center gap-2">
+                            <div class="sit-hist-status-bar sit-hist-status-bar--filters">
+                                <div class="sit-hist-filter-group">
                                     <label for="startDateTime" class="form-label small mb-0 text-white-50">시작 일시</label>
                                     <input type="datetime-local" class="form-control form-control-sm form-control-dark"
                                         id="startDateTime">
                                 </div>
-                                <div class="d-flex align-items-center">
+                                <div class="sit-hist-filter-sep">
                                     <span class="fw-bold text-secondary">~</span>
                                 </div>
-                                <div class="d-flex align-items-center gap-2">
+                                <div class="sit-hist-filter-group">
                                     <label for="endDateTime" class="form-label small mb-0 text-white-50">종료 일시</label>
                                     <input type="datetime-local" class="form-control form-control-sm form-control-dark"
                                         id="endDateTime">
                                 </div>
-                                <div class="d-flex align-items-center gap-2">
+                                <div class="sit-hist-filter-group">
                                     <label for="boundaryFilter" class="form-label small mb-0 text-white-50">구역</label>
                                     <select class="form-select form-select-sm form-control-dark" id="boundaryFilter">
                                         <option value="">전체</option>
@@ -132,9 +132,73 @@
                                         <option value="4">4번 구역</option>
                                     </select>
                                 </div>
-                                <button type="button" class="btn-soft ms-auto" onclick="situationSearch()">
-                                    <i class="bi bi-search me-1"></i>검색
-                                </button>
+                                <div class="sit-hist-filter-actions">
+                                    <button type="button" class="btn-soft" onclick="situationSearch()">
+                                        <i class="bi bi-search me-1"></i>검색
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 통계 그래프 섹션 -->
+                            <div class="sit-stats-section" id="sitStatsSection">
+                                <div class="sit-stats-header">
+                                    <div class="sit-stats-title">
+                                        <i class="bi bi-bar-chart-fill"></i>
+                                        <span>통계 그래프</span>
+                                    </div>
+                                    <div class="sit-stats-controls">
+                                        <div class="dropdown-container dropdown-sm sit-stats-dropdown"
+                                            id="statsCctvFilter">
+                                            <button class="btn-dropdown btn-sm" type="button" id="statsCctvFilterButton"
+                                                aria-expanded="false">
+                                                <span id="statsCctvFilterLabel">전체 카메라</span>
+                                                <span class="dropdown-arrow">▼</span>
+                                            </button>
+                                            <div class="dropdown-menu sit-stats-dropdown-menu" id="statsCctvFilterMenu">
+                                                <div class="dropdown-item selected" data-cctv-code="">
+                                                    <span>전체 카메라</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="sit-stats-period-toggle" id="statsPeriodToggle">
+                                            <button class="is-active" data-period="weekly">주간</button>
+                                            <button data-period="monthly">월간</button>
+                                        </div>
+                                        <button class="sit-stats-collapse-btn" id="statsCollapseBtn" title="접기/펼치기">
+                                            <i class="bi bi-chevron-up"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="sit-stats-body" id="sitStatsBody">
+                                    <div class="sit-stats-grid">
+                                        <div class="sit-chart-card sit-chart-card--daily">
+                                            <div class="sit-chart-card-header">
+                                                <span class="sit-chart-card-title" id="statsDailyLabel">일자별 발생 건수 (최근
+                                                    7일)</span>
+                                            </div>
+                                            <div class="sit-chart-wrap">
+                                                <canvas id="dailyChart"></canvas>
+                                            </div>
+                                        </div>
+                                        <div class="sit-chart-card sit-chart-card--zone">
+                                            <div class="sit-chart-card-header">
+                                                <span class="sit-chart-card-title">구역별 발생 비중</span>
+                                            </div>
+                                            <div class="sit-chart-wrap">
+                                                <canvas id="zoneChart"></canvas>
+                                            </div>
+                                        </div>
+                                        <div class="sit-chart-card sit-chart-card--trend">
+                                            <div class="sit-chart-card-header">
+                                                <span class="sit-chart-card-title" id="statsTrendLabel">주간 추이 (최근
+                                                    8주)</span>
+                                            </div>
+                                            <div class="sit-chart-wrap">
+                                                <canvas id="trendChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Content Surface -->
@@ -144,26 +208,25 @@
                                     <div class="table-responsive h-100 overflow-auto custom-scrollbar">
                                         <table class="table-modern w-100">
                                             <colgroup>
-                                                <col style="width: 8%;">
-                                                <col style="width: 14%;">
-                                                <col style="width: 14%;">
-                                                <col style="width: 10%;">
-                                                <col style="width: 34%;">
                                                 <col style="width: 20%;">
+                                                <col style="width: 16%;">
+                                                <col style="width: 12%;">
+                                                <col style="width: 20%;">
+                                                <col style="width: 32%;">
                                             </colgroup>
                                             <thead style="position: sticky; top: 0; z-index: 1;">
                                                 <tr>
-                                                    <th scope="col" class="text-center">번호</th>
-                                                    <th scope="col">CCTV 코드</th>
-                                                    <th scope="col">알림 코드</th>
-                                                    <th scope="col" class="text-center">구역</th>
-                                                    <th scope="col">내용</th>
                                                     <th scope="col">발생 시각</th>
+                                                    <th scope="col">알림 유형</th>
+                                                    <th scope="col" class="text-center">구역</th>
+                                                    <th scope="col">CCTV 이름</th>
+                                                    <th scope="col">상세 내용</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="situationList"></tbody>
                                         </table>
                                     </div>
+                                    <div class="situation-timeline" id="situationTimeline"></div>
                                 </div>
                                 <!-- Pagination (우선 주석 처리) -->
                                 <!--
@@ -184,44 +247,44 @@
                                     </div>
                                     <div class="sit-hist-title-text">
                                         <h3>발령 이력</h3>
-                                        <p id="broadcastCount">총 0건 | 발령 내역을 관리하세요</p>
+                                        <p id="broadcastCount">총 0건 | 발령 내역을 조회합니다.</p>
                                     </div>
                                 </div>
                             </header>
 
-                            <div class="sit-hist-status-bar" style="justify-content: space-around; padding: 10px 20px;">
+                            <div class="sit-hist-status-bar sit-hist-status-bar--stats">
                                 <div class="sit-hist-stat">
                                     <span class="sit-hist-stat-num text-primary" id="broadcast_stat_total">0</span>
                                     <span>전체 발령</span>
                                 </div>
-                                <div class="sit-hist-stat border-start ps-4 border-secondary">
+                                <div class="sit-hist-stat sit-hist-stat--separated">
                                     <span class="sit-hist-stat-num text-success" id="broadcast_stat_today">0</span>
                                     <span>오늘 발령</span>
                                 </div>
-                                <div class="sit-hist-stat border-start ps-4 border-secondary">
+                                <div class="sit-hist-stat sit-hist-stat--separated">
                                     <span class="sit-hist-stat-num text-info" id="broadcast_stat_real">0</span>
                                     <span>실제 방송</span>
                                 </div>
-                                <div class="sit-hist-stat border-start ps-4 border-secondary">
+                                <div class="sit-hist-stat sit-hist-stat--separated">
                                     <span class="sit-hist-stat-num text-warning" id="broadcast_stat_test">0</span>
                                     <span>실험 방송</span>
                                 </div>
                             </div>
 
-                            <div class="sit-hist-status-bar" style="gap: 15px; flex-wrap: wrap;">
-                                <div class="d-flex align-items-center gap-2">
+                            <div class="sit-hist-status-bar sit-hist-status-bar--filters">
+                                <div class="sit-hist-filter-group">
                                     <label for="broadcastStartDateTime"
                                         class="form-label small mb-0 text-white-50">시작일시</label>
                                     <input type="datetime-local" class="form-control form-control-sm form-control-dark"
                                         id="broadcastStartDateTime">
                                 </div>
-                                <div class="d-flex align-items-center gap-2">
+                                <div class="sit-hist-filter-group">
                                     <label for="broadcastEndDateTime"
                                         class="form-label small mb-0 text-white-50">종료일시</label>
                                     <input type="datetime-local" class="form-control form-control-sm form-control-dark"
                                         id="broadcastEndDateTime">
                                 </div>
-                                <div class="d-flex align-items-center gap-2">
+                                <div class="sit-hist-filter-group">
                                     <label for="broadcastModeFilter"
                                         class="form-label small mb-0 text-white-50">방송모드</label>
                                     <select class="form-select form-select-sm form-control-dark"
@@ -231,7 +294,7 @@
                                         <option value="TEST">실험</option>
                                     </select>
                                 </div>
-                                <div class="d-flex align-items-center gap-2">
+                                <div class="sit-hist-filter-group">
                                     <label for="broadcastPriorityFilter"
                                         class="form-label small mb-0 text-white-50">우선순위</label>
                                     <select class="form-select form-select-sm form-control-dark"
@@ -243,7 +306,7 @@
                                         <option value="DANGER">위험</option>
                                     </select>
                                 </div>
-                                <div class="d-flex gap-2 ms-auto">
+                                <div class="sit-hist-filter-actions">
                                     <button type="button" class="btn-soft" id="broadcastSearchBtn">
                                         <i class="bi bi-search me-1"></i>검색
                                     </button>
@@ -257,8 +320,9 @@
                                 </div>
                             </div>
 
-                            <div id="broadcastAdvancedFilter" class="collapse sit-hist-status-bar border-top-0 pt-0">
-                                <div class="d-flex align-items-center gap-2 w-100">
+                            <div id="broadcastAdvancedFilter"
+                                class="collapse sit-hist-status-bar sit-hist-status-bar--filters border-top-0 pt-0">
+                                <div class="sit-hist-filter-group sit-hist-filter-group--full">
                                     <label for="broadcastSpeakerSearch"
                                         class="form-label small mb-0 text-white-50">스피커</label>
                                     <input type="text"
@@ -271,8 +335,8 @@
                             </div>
 
                             <section
-                                class="sit-hist-surface bg-transparent border-0 p-0 overflow-auto flex-grow-1 min-vh-0 mx-2 mb-2">
-                                <div id="broadcastCardList" class="h-100">
+                                class="sit-hist-surface sit-hist-surface--broadcast bg-transparent border-0 p-0 mx-2 mb-2">
+                                <div id="broadcastCardList">
                                     <div id="broadcastEmptyState" class="sit-hist-empty d-none mt-5 text-center">
                                         <div class="empty-icon"><i
                                                 class="bi bi-broadcast display-1 opacity-50 mb-3 text-secondary"></i>
@@ -296,27 +360,27 @@
                                     </div>
                                     <div class="sit-hist-title-text">
                                         <h3>특보 이력</h3>
-                                        <p id="specialCount">총 0건 | 특보 이력을 관리하세요</p>
+                                        <p id="specialCount">총 0건 | 특보 이력을 조회합니다.</p>
                                     </div>
                                 </div>
                             </header>
 
                             <!-- Date Filter / Search Bar -->
-                            <div class="sit-hist-status-bar" style="gap: 15px; flex-wrap: wrap;">
-                                <div class="d-flex align-items-center gap-2">
+                            <div class="sit-hist-status-bar sit-hist-status-bar--filters">
+                                <div class="sit-hist-filter-group">
                                     <label for="startDateTime" class="form-label small mb-0 text-white-50">시작일시</label>
                                     <input type="datetime-local" class="form-control form-control-sm form-control-dark"
                                         id="startDateTime">
                                 </div>
-                                <div class="d-flex align-items-center">
+                                <div class="sit-hist-filter-sep">
                                     <span class="fw-bold text-secondary">~</span>
                                 </div>
-                                <div class="d-flex align-items-center gap-2">
+                                <div class="sit-hist-filter-group">
                                     <label for="endDateTime" class="form-label small mb-0 text-white-50">종료일시</label>
                                     <input type="datetime-local" class="form-control form-control-sm form-control-dark"
                                         id="endDateTime">
                                 </div>
-                                <div class="d-flex align-items-center gap-2">
+                                <div class="sit-hist-filter-group">
                                     <label for="specialWrn" class="form-label small mb-0 text-white-50">특보 종류</label>
                                     <select class="form-select form-select-sm form-control-dark" id="specialWrn">
                                         <option value="">전체</option>
@@ -334,7 +398,7 @@
                                         <option value="F">안개</option>
                                     </select>
                                 </div>
-                                <div class="d-flex align-items-center gap-2">
+                                <div class="sit-hist-filter-group">
                                     <label for="specialLvl" class="form-label small mb-0 text-white-50">특보 단계</label>
                                     <select class="form-select form-select-sm form-control-dark" id="specialLvl">
                                         <option value="">전체</option>
@@ -343,9 +407,11 @@
                                         <option value="3">경보</option>
                                     </select>
                                 </div>
-                                <button type="button" class="btn-soft ms-auto" onclick="situationSearch()">
-                                    <i class="bi bi-search me-1"></i>검색
-                                </button>
+                                <div class="sit-hist-filter-actions">
+                                    <button type="button" class="btn-soft" onclick="situationSearch()">
+                                        <i class="bi bi-search me-1"></i>검색
+                                    </button>
+                                </div>
                             </div>
 
                             <!-- Content Surface -->

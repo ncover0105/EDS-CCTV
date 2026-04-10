@@ -474,11 +474,15 @@
 
     /* ─ 내부 헬퍼: 기존 위치 유지 ─ */
     const weekStrOf = s => {
-      if (!yn(s.repeatEnabled)) return '';
       const labels = weekDays
-        .filter(d => !!s.week && s.week[d.key])
-        .map(d => d.label);
-      return labels.length ? labels.join(', ') : '-';
+        .filter((d) => {
+          if (s?.week && d.key in s.week) return yn(s.week[d.key]);
+          return yn(s?.[d.key]);
+        })
+        .map((d) => d.label);
+
+      if (labels.length) return labels.join(', ');
+      return yn(s?.repeatEnabled) ? '-' : '1회';
     };
 
     const priorityMeta = {
@@ -488,11 +492,22 @@
       NONE: { cls: 'sc3-badge--none', icon: 'bi-dash-circle', label: 'NONE' },
     };
 
+    const getDisasterLabel = (code) => {
+      const normalized = String(code ?? '').trim();
+      if (!normalized) return '-';
+      const match = Array.isArray(disastersCache)
+        ? disastersCache.find((item) => String(item?.dstCode ?? '').trim() === normalized)
+        : null;
+      return String(match?.dstName ?? normalized);
+    };
+
     scheduleList.forEach(s => {
       const isExpanded = expandedSchedule === s.id;
       const pm = priorityMeta[String(s.bcPriority ?? 'NONE').toUpperCase()] ?? priorityMeta.NONE;
       const bcType = String(s.bcBroadcastType ?? 'TTS').toUpperCase();
       const bcMode = String(s.bcMode ?? 'REAL').toUpperCase();
+      const bcTypeLabel = bcType === 'STORED' ? '저장메시지' : 'TTS';
+      const bcModeLabel = bcMode === 'REAL' ? '실제 방송' : '시험 방송';
       const btypeCls = bcType === 'TTS' ? 'sc3-badge--tts' : 'sc3-badge--stored';
       const modeCls = bcMode === 'REAL' ? 'sc3-chip--real' : 'sc3-chip--test';
       const enabledCls = yn(s.enabledYn) ? 'sc3-badge--on' : 'sc3-badge--off';
@@ -503,6 +518,13 @@
         : Array.isArray(s.speakerIds) ? s.speakerIds.length : 0;
       const timeRange = `${escapeHtml(fmtTimeHHMM(s.startTime))} ~ ${escapeHtml(fmtTimeHHMM(s.endTime))}`;
       const weekStr = weekStrOf(s) || '-';
+      const repeatCls = yn(s.repeatEnabled) ? 'sc3-chip--repeat-on' : 'sc3-chip--repeat-off';
+      const repeatLabel = yn(s.repeatEnabled) ? '반복' : '1회';
+      const disasterChip = bcType !== 'TTS'
+        ? `<span class="sc3-chip sc3-chip--disaster">
+          <i class="bi bi-megaphone-fill"></i>${escapeHtml(getDisasterLabel(s.disasterCode))}
+        </span>`
+        : '';
 
       /* ─ TTS 미리보기 ─ */
       const ttsPrev = bcType === 'TTS' && s.ttsMessage
@@ -535,7 +557,7 @@
             <i class="bi ${pm.icon}"></i>${pm.label}
           </span>
           <span class="sc3-badge ${btypeCls}">
-            <i class="bi bi-volume-up-fill"></i>${escapeHtml(String(s.bcBroadcastType ?? 'TTS'))}
+            <i class="bi bi-volume-up-fill"></i>${escapeHtml(bcTypeLabel)}
           </span>
         </div>
         <div class="sc3-card-actions">
@@ -557,15 +579,15 @@
         <span class="sc3-chip sc3-chip--week">
           <i class="bi bi-calendar-week-fill"></i>${escapeHtml(weekStr)}
         </span>
+        <span class="sc3-chip ${repeatCls}">
+          <i class="bi bi-arrow-repeat"></i>${escapeHtml(repeatLabel)}
+        </span>
         <span class="sc3-chip ${modeCls}">
           <i class="bi bi-broadcast"></i>
-          ${escapeHtml(String(s.bcMode ?? 'REAL'))}
-          <span class="sc3-chip-sep">·</span>${escapeHtml(String(s.bcAlertType ?? 'CFW'))}
+          ${escapeHtml(bcModeLabel)}
           <span class="sc3-chip-sep">·</span>${escapeHtml(String(s.bcScope ?? 'SPEAKER'))}
         </span>
-        <span class="sc3-chip sc3-chip--disaster">
-          <i class="bi bi-megaphone-fill"></i>${escapeHtml(String(s.disasterCode || '-'))}
-        </span>
+        ${disasterChip}
         <span class="sc3-chip sc3-chip--speaker">
           <i class="bi bi-speaker-fill"></i>${speakerCount}
         </span>
@@ -694,6 +716,7 @@
   // CRUD: Schedule
   // -------------------------
   async function reloadScheduleList() {
+    await fetchDisasters();
     const res = await fetch('/api/btype/schedule/list');
     const data = res.ok ? await res.json() : [];
     scheduleList = groupSchedules(Array.isArray(data) ? data : []);

@@ -2388,6 +2388,167 @@ select.set-input option {
     background: rgba(255, 255, 255, 0.02);
 }
 
+.sms-card-board {
+    display: none;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: var(--sp-md);
+    gap: var(--sp-md);
+    align-content: start;
+}
+
+.sms-manage-surface,
+.sms-manage-wrap {
+    flex: 1;
+    min-height: 0;
+}
+
+.schedule-manage-surface,
+.schedule-list-wrap {
+    flex: 1;
+    min-height: 0;
+}
+
+.schedule-list-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.sms-user-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-md);
+    padding: var(--sp-lg);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-lg);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0)),
+        var(--bg-surface);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: border-color var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
+}
+
+.sms-user-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-md);
+}
+
+.sms-user-card.is-selected {
+    border-color: var(--accent-border);
+    background:
+        linear-gradient(180deg, rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.03)),
+        var(--bg-surface);
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.16), var(--shadow-md);
+}
+
+.sms-user-card-head,
+.sms-user-card-main,
+.sms-user-card-meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-sm);
+}
+
+.sms-card-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.sms-card-check input {
+    cursor: pointer;
+}
+
+.sms-card-no {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: var(--r-pill);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 12px;
+}
+
+.sms-user-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-md);
+    min-height: 0;
+}
+
+.sms-user-card-main {
+    align-items: flex-start;
+    flex-direction: column;
+}
+
+.sms-user-card-name {
+    color: var(--text-primary);
+    font-family: var(--font-display);
+    font-size: 18px;
+    line-height: 1.2;
+    word-break: break-word;
+}
+
+.sms-user-card-phone {
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 13px;
+}
+
+.sms-user-card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+}
+
+.sms-user-card-meta-row {
+    padding-top: 10px;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.sms-user-card-meta dt,
+.sms-user-card-meta dd {
+    margin: 0;
+}
+
+.sms-user-card-meta dt {
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+}
+
+.sms-user-card-meta dd {
+    color: var(--text-secondary);
+    font-size: 13px;
+    text-align: right;
+}
+
+.sms-empty-state {
+    min-height: 40vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed var(--border-mid);
+    border-radius: var(--r-lg);
+    background: rgba(255, 255, 255, 0.02);
+}
+
 @media (max-width: 1024px) {
     .user-card-board {
         padding: var(--sp-sm);
@@ -2420,9 +2581,34 @@ select.set-input option {
     min-height: 0;
 }
 
+.ment-list-actions {
+    display: none;
+}
+
 .ment-detail-panel {
     display: flex;
     flex-direction: column;
+}
+
+.ment-mobile-back-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid var(--border-mid);
+    border-radius: var(--r-sm);
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--t-fast);
+}
+
+.ment-mobile-back-btn:hover {
+    background: var(--bg-raised);
+    border-color: var(--border-strong);
+    color: var(--text-primary);
 }
 
 .ment-list-panel .panel-body,
@@ -2763,15 +2949,17 @@ select.set-input option {
 
 @media (max-width: 960px) {
     .ment-manager-layout {
+        display: flex;
+        flex-direction: column;
         grid-template-columns: 1fr;
         grid-auto-rows: minmax(0, auto);
-        overflow: auto;
+        overflow: visible;
         padding: var(--sp-sm);
     }
 
     .ment-list-panel,
     .ment-detail-panel {
-        min-height: auto;
+        min-height: 0;
     }
 
     .ment-list-panel .panel-body,
@@ -2787,8 +2975,25 @@ select.set-input option {
         overflow-y: auto;
     }
 
+    .ment-manager-layout:not(.is-mobile-detail-open) .ment-detail-panel {
+        display: none;
+    }
+
+    .ment-manager-layout.is-mobile-detail-open .ment-list-panel {
+        display: none;
+    }
+
+    .ment-list-actions {
+        display: flex;
+    }
+
+    .ment-mobile-back-btn {
+        display: inline-flex;
+        flex-shrink: 0;
+    }
+
     .ment-card-list {
-        max-height: 42vh;
+        max-height: none;
     }
 
     .ment-detail-content,
@@ -2807,12 +3012,12 @@ select.set-input option {
 
     .ment-detail-message {
         min-height: 180px;
-        max-height: 40vh;
+        max-height: none;
     }
 
     .ment-detail-edit-textarea {
         min-height: 220px;
-        max-height: 42vh;
+        max-height: none;
     }
 }
 
@@ -2832,7 +3037,7 @@ select.set-input option {
     }
 
     .ment-card-list {
-        max-height: 34vh;
+        max-height: none;
     }
 }
 
@@ -3737,6 +3942,34 @@ select.set-input option {
     .set-hist-action-buttons {
         flex-wrap: wrap;
     }
+
+    .sms-manage-surface,
+    .sms-manage-wrap {
+        flex: 1;
+        min-height: 0;
+        height: 100%;
+    }
+
+    .schedule-manage-surface,
+    .schedule-list-wrap {
+        flex: 1;
+        min-height: 0;
+        height: 100%;
+    }
+
+    .schedule-manage-surface {
+        overflow: hidden !important;
+    }
+
+    .schedule-list-wrap {
+        padding: var(--sp-md);
+        overflow-y: auto;
+    }
+
+    .sms-card-board {
+        flex: 1;
+        min-height: 0;
+    }
 }
 
 /* ── 768px: 폼/헤더/패딩 축소 ── */
@@ -3861,6 +4094,25 @@ select.set-input option {
         padding: 6px var(--sp-md);
     }
 
+    .sms-card-board {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .sms-manage-wrap {
+        display: none;
+    }
+
+    .sms-table-responsive {
+        display: none;
+    }
+
+    .schedule-list-wrap {
+        padding: var(--sp-sm);
+        gap: var(--sp-sm);
+    }
+
     /* Modal */
     .pinterest-form-grid {
         grid-template-columns: 1fr;
@@ -3941,6 +4193,15 @@ select.set-input option {
     .set-page-title {
         font-size: 14px;
     }
+
+    .sms-card-board {
+        padding: var(--sp-sm);
+        gap: var(--sp-sm);
+    }
+
+    .schedule-list-wrap {
+        padding: var(--sp-xs);
+    }
 }
 
 /* ============================================
@@ -3950,6 +4211,11 @@ select.set-input option {
     .set-hist-surface {
         overflow-x: auto;
         overflow-y: auto !important;
+    }
+
+    .schedule-manage-surface,
+    .sms-manage-surface {
+        overflow: hidden !important;
     }
 }
 
@@ -4362,26 +4628,27 @@ select.set-input option {
 
 /* 우선순위 */
 .sc3-badge--danger {
-    background: var(--bg-raised);
-    color: var(--text-primary);
-    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(239, 68, 68, 0.14);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.34);
 }
 
 .sc3-badge--warning {
-    background: var(--bg-raised);
-    color: var(--text-primary);
-    border-color: rgba(255, 255, 255, 0.10);
+    background: rgba(245, 158, 11, 0.14);
+    color: #fcd34d;
+    border-color: rgba(245, 158, 11, 0.34);
 }
 
 .sc3-badge--caution {
-    background: var(--bg-raised);
-    color: var(--text-secondary);
-    border-color: var(--border-subtle);
+    background: rgba(59, 130, 246, 0.14);
+    color: #93c5fd;
+    border-color: rgba(59, 130, 246, 0.34);
 }
 
 .sc3-badge--none {
-    color: var(--text-muted);
-    border-color: var(--border-subtle);
+    background: rgba(148, 163, 184, 0.14);
+    color: #cbd5e1;
+    border-color: rgba(148, 163, 184, 0.28);
 }
 
 /* 방송유형 */
@@ -4524,6 +4791,25 @@ select.set-input option {
 
 .sc3-chip--date {
     color: var(--text-muted);
+}
+
+.sc3-chip--repeat-on {
+    color: #93c5fd;
+    border-color: rgba(59, 130, 246, 0.32);
+    background: rgba(59, 130, 246, 0.12);
+}
+
+.sc3-chip--repeat-on i {
+    color: #60a5fa;
+}
+
+.sc3-chip--repeat-off {
+    color: var(--text-muted);
+    border-color: var(--border-subtle);
+}
+
+.sc3-chip--repeat-off i {
+    color: var(--text-disabled);
 }
 
 /* ── TTS 미리보기 ── */
@@ -5565,12 +5851,29 @@ select.set-input option {
 @media (max-width: 768px) {
     #scheduleModal .sc-modal-body {
         grid-template-columns: 1fr;
+        overflow-y: auto;
     }
 
     #scheduleModal .sc-m-left {
         border-right: none;
         border-bottom: 1px solid var(--sc-border-light);
         max-height: 50vh;
+    }
+
+    #scheduleModal .sc-m-right {
+        min-height: 280px;
+        max-height: 42vh;
+    }
+
+    #scheduleModal .sc-spk-head,
+    #scheduleModal .sc-spk-search-wrap,
+    #scheduleModal .sc-spk-footer {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    #scheduleModal .sc-spk-btns {
+        flex-wrap: wrap;
     }
 
     #scheduleModal .sc-modal-footer {

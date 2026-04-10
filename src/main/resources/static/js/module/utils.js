@@ -424,14 +424,16 @@ export function startClock(target, intervalMs = 1000) {
         const now = new Date();
 
         if (el.id === "currentDate") {
+            const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
             const y = now.getFullYear();
             const m = pad(now.getMonth() + 1);
             const d = pad(now.getDate());
+            const dayName = weekdays[now.getDay()];
             const hh = pad(now.getHours());
             const mm = pad(now.getMinutes());
             const ss = pad(now.getSeconds());
 
-            el.innerHTML = `<span class="clock-date">${y}년 ${m}월 ${d}일</span><span class="clock-time">${hh} : ${mm} : ${ss}</span>`;
+            el.innerHTML = `<span class="clock-date">${y}.${m}.${d} (${dayName})</span><span class="clock-time">${hh} : ${mm} : ${ss}</span>`;
             return;
         }
 

@@ -269,6 +269,11 @@
                                                 <i class="bi bi-card-list"></i>
                                                 <span>문안 목록</span>
                                             </div>
+                                            <div class="panel-actions ment-list-actions">
+                                                <button class="btn-primary-soft" type="button" id="mentListAddBtn" onclick="mentInsert()">
+                                                    <i class="bi bi-plus-lg"></i><span>추가</span>
+                                                </button>
+                                            </div>
                                         </header>
                                         <div class="panel-body">
                                             <div class="ment-card-list custom-scrollbar" id="mentList"></div>
@@ -278,6 +283,9 @@
                                     <section class="set-panel ment-detail-panel">
                                         <header class="panel-header">
                                             <div class="panel-title">
+                                                <button class="ment-mobile-back-btn" type="button" id="mentMobileBackBtn" aria-label="문안 목록으로 돌아가기">
+                                                    <i class="bi bi-arrow-left"></i>
+                                                </button>
                                                 <i class="bi bi-chat-square-text"></i>
                                                 <span>문안 상세</span>
                                             </div>
@@ -484,10 +492,11 @@
                                     </div>
                                 </div>
                             </header>
-                            <section class="set-hist-surface overflow-hidden d-flex flex-column"
+                            <section class="set-hist-surface sms-manage-surface overflow-hidden d-flex flex-column"
                                 style="flex: 1; min-height: 0;">
-                                <div class="set-hist-table-wrap overflow-hidden" style="flex: 1; min-height: 0;">
-                                    <div class="table-responsive h-100 overflow-auto custom-scrollbar">
+                                <div class="sms-card-board custom-scrollbar" id="smsCardBoard" hidden></div>
+                                <div class="set-hist-table-wrap sms-manage-wrap overflow-hidden" style="flex: 1; min-height: 0;">
+                                    <div class="table-responsive sms-table-responsive h-100 overflow-auto custom-scrollbar">
                                         <table class="table-modern w-100" style="table-layout: fixed;">
                                             <colgroup>
                                                 <col style="width: 7%;">
@@ -645,9 +654,8 @@
                                     </div>
                                 </div>
                             </header>
-                            <section class="set-hist-surface overflow-auto">
-                                <div class="d-flex flex-column gap-3 p-4 flex-grow-1 overflow-auto"
-                                    style="min-height: 0;">
+                            <section class="set-hist-surface schedule-manage-surface overflow-hidden d-flex flex-column">
+                                <div class="schedule-list-wrap">
                                     <div id="schedule-list"></div>
 
                                     <!-- 등록된 스케줄 없음 메시지 -->

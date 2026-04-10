@@ -33,13 +33,6 @@
             applyFilter();
         });
 
-        // 필터 칩
-        document.querySelectorAll(".cctv-filters .chip").forEach(chip => {
-            chip.addEventListener("click", () => {
-                setCurrentFilter(chip.dataset.filter);
-            });
-        });
-
         // 상태 요약 바
         document.querySelectorAll(".cctv-status-bar .cctv-stat").forEach(stat => {
             stat.addEventListener("click", () => {
@@ -80,6 +73,23 @@
             if (delBtn) {
                 deleteCctvFromRow(row);
                 return;
+            }
+        });
+
+        const cardList = document.getElementById("cctvCardList");
+        cardList?.addEventListener("click", (e) => {
+            const card = e.target.closest(".cctv-card");
+            if (!card) return;
+
+            const editBtn = e.target.closest(".row-edit-btn");
+            if (editBtn) {
+                openEditModalFromRow(card);
+                return;
+            }
+
+            const delBtn = e.target.closest(".row-del-btn");
+            if (delBtn) {
+                deleteCctvFromRow(card);
             }
         });
 
@@ -183,18 +193,21 @@
      * ----------------------------- */
     function renderPage() {
         const tbody = document.getElementById("cctvTbody");
+        const cardListEl = document.getElementById("cctvCardList");
         const emptyEl = document.getElementById("cctvEmpty");
         const tableEl = document.getElementById("cctvTable");
         const tableResponsiveEl = tableEl?.closest(".table-responsive");
         const pagingEl = document.getElementById("cctvPagination");
 
-        if (!tbody) return;
+        if (!tbody || !cardListEl) return;
 
         if (filteredList.length === 0) {
             tbody.innerHTML = "";
+            cardListEl.innerHTML = "";
             emptyEl?.classList.remove("d-none");
             tableEl?.classList.add("d-none");
             tableResponsiveEl?.classList.add("d-none");
+            cardListEl.hidden = true;
             if (pagingEl) pagingEl.innerHTML = "";
             return;
         }
@@ -202,6 +215,7 @@
         emptyEl?.classList.add("d-none");
         tableEl?.classList.remove("d-none");
         tableResponsiveEl?.classList.remove("d-none");
+        cardListEl.hidden = false;
 
         const totalPages = Math.max(1, Math.ceil(filteredList.length / PAGE_SIZE));
         if (currentPage > totalPages) currentPage = totalPages;
@@ -210,6 +224,7 @@
         const pageItems = filteredList.slice(start, start + PAGE_SIZE);
 
         tbody.innerHTML = pageItems.map(item => rowHtml(item)).join("");
+        cardListEl.innerHTML = pageItems.map(item => cardHtml(item)).join("");
 
         /* 페이지네이션 동작 주석 처리
         if (window.App?.utils?.renderPagination) {
@@ -241,36 +256,16 @@
         const lng = (item.longitude ?? "-");
         const status = getStatusValue(item);
 
-        let statusbadge = "";
-        if (status === "1") {
-            statusbadge = `<span class="badge ok-bg text-success border border-success border-opacity-25 py-1 px-2 d-inline-flex align-items-center gap-1">
-      <span class="status-dot ok"></span> 정상
-    </span>`;
-        } else {
-            statusbadge = `<span class="badge danger-bg text-danger border border-danger border-opacity-25 py-1 px-2 d-inline-flex align-items-center gap-1">
-      <span class="status-dot bad"></span> 신호없음
-    </span>`;
-        }
-
+        const statusbadge = buildStatusBadge(status);
+        const datasetAttrs = buildDatasetAttrs(item, { code, name, loc, url, lat, lng });
         const safeName = escapeHtml(String(name));
         const safeLoc = escapeHtml(String(loc));
         const safeCode = escapeHtml(String(code));
         const safeUrl = escapeHtml(String(url));
-
-        // 좌표는 "lat, lng" 형태로 표시
-        const coordText = (lat === "-" || lng === "-") ? "-" : `${lat}, ${lng}`;
+        const coordText = formatCoordText(lat, lng);
 
         return `
-    <tr data-location-code="${safeLoc}"
-        data-cctv-code="${safeCode}"
-        data-name="${safeName}"
-        data-url="${safeUrl}"
-        data-lat="${lat}"
-        data-lng="${lng}"
-        data-mountpoint-id="${item.mountpointId || ""}"
-        data-login-id="${item.id || ""}"
-        data-video-port="${item.videoPort || ""}"
-        data-ws-port="${item.wsPort || ""}">
+    <tr ${datasetAttrs}>
 
       <td class="text-center align-middle">${statusbadge}</td>
       <td class="text-primary fw-600 text-center align-middle">${safeName}</td>
@@ -299,6 +294,58 @@
   `;
     }
 
+    function cardHtml(item) {
+        const code = item.cctvCode || "-";
+        const name = item.name || "-";
+        const loc = item.locationCode || "-";
+        const url = item.rtspUrl || "-";
+        const lat = (item.latitude ?? "-");
+        const lng = (item.longitude ?? "-");
+        const status = getStatusValue(item);
+
+        const statusbadge = buildStatusBadge(status);
+        const datasetAttrs = buildDatasetAttrs(item, { code, name, loc, url, lat, lng });
+        const safeName = escapeHtml(String(name));
+        const safeLoc = escapeHtml(String(loc));
+        const safeCode = escapeHtml(String(code));
+        const safeUrl = escapeHtml(String(url));
+        const coordText = escapeHtml(String(formatCoordText(lat, lng)));
+
+        return `
+    <article class="cctv-card" ${datasetAttrs}>
+      <div class="cctv-card-top">
+        <div class="cctv-card-title-wrap">
+          <div class="cctv-card-title">${safeName}</div>
+          <div class="cctv-card-code">${safeCode}</div>
+        </div>
+        <div class="cctv-card-status">${statusbadge}</div>
+      </div>
+      <div class="cctv-card-meta">
+        <div class="cctv-card-row">
+          <span class="cctv-card-label">Location</span>
+          <span class="cctv-card-value">${safeLoc}</span>
+        </div>
+        <div class="cctv-card-row">
+          <span class="cctv-card-label">RTSP</span>
+          <span class="cctv-card-value cctv-card-url" title="${safeUrl}">${safeUrl}</span>
+        </div>
+        <div class="cctv-card-row">
+          <span class="cctv-card-label">좌표</span>
+          <span class="cctv-card-value">${coordText}</span>
+        </div>
+      </div>
+      <div class="cctv-card-actions">
+        <button class="icon-btn row-edit-btn" type="button" title="정보 수정" aria-label="정보 수정">
+          <i class="bi bi-pencil-square"></i>
+        </button>
+        <button class="icon-btn delete row-del-btn" type="button" title="삭제" aria-label="삭제">
+          <i class="bi bi-trash3"></i>
+        </button>
+      </div>
+    </article>
+  `;
+    }
+
     function setCurrentFilter(filter) {
         currentFilter = filter || "all";
         currentPage = 1;
@@ -307,10 +354,6 @@
     }
 
     function syncFilterUi() {
-        document.querySelectorAll(".cctv-filters .chip").forEach(chip => {
-            chip.classList.toggle("is-active", chip.dataset.filter === currentFilter);
-        });
-
         document.querySelectorAll(".cctv-status-bar .cctv-stat").forEach(stat => {
             const isActive = stat.dataset.filter === currentFilter;
             stat.classList.toggle("is-active", isActive);
@@ -531,6 +574,36 @@
         const status = getStatusValue(item);
         if (status === "1") return "ok";
         return "bad";
+    }
+
+    function buildStatusBadge(status) {
+        if (status === "1") {
+            return `<span class="badge ok-bg text-success border border-success border-opacity-25 py-1 px-2 d-inline-flex align-items-center gap-1">
+      <span class="status-dot ok"></span> 정상
+    </span>`;
+        }
+
+        return `<span class="badge danger-bg text-danger border border-danger border-opacity-25 py-1 px-2 d-inline-flex align-items-center gap-1">
+      <span class="status-dot bad"></span> 신호없음
+    </span>`;
+    }
+
+    function formatCoordText(lat, lng) {
+        return (lat === "-" || lng === "-") ? "-" : `${lat}, ${lng}`;
+    }
+
+    function buildDatasetAttrs(item, { code, name, loc, url, lat, lng }) {
+        return `
+        data-location-code="${escapeHtml(String(loc))}"
+        data-cctv-code="${escapeHtml(String(code))}"
+        data-name="${escapeHtml(String(name))}"
+        data-url="${escapeHtml(String(url))}"
+        data-lat="${escapeHtml(String(lat))}"
+        data-lng="${escapeHtml(String(lng))}"
+        data-mountpoint-id="${escapeHtml(String(item.mountpointId || ""))}"
+        data-login-id="${escapeHtml(String(item.id || ""))}"
+        data-video-port="${escapeHtml(String(item.videoPort || ""))}"
+        data-ws-port="${escapeHtml(String(item.wsPort || ""))}"`;
     }
 
     function escapeHtml(str) {

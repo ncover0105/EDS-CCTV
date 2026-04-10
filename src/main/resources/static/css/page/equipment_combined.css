@@ -759,14 +759,16 @@
 /* ============================================
    Search Widget
    ============================================ */
-.page-equipment .hud-search {
+.page-equipment .hud-search,
+.page-equipment .cctv-search {
     position: relative;
     display: flex;
     align-items: center;
     min-width: 200px;
 }
 
-.hud-search>i {
+.hud-search>i,
+.cctv-search>i {
     position: absolute;
     left: var(--sp-md);
     color: var(--text-muted);
@@ -774,7 +776,8 @@
     pointer-events: none;
 }
 
-.hud-search input {
+.hud-search input,
+.cctv-search input {
     width: 100%;
     padding: 7px 12px 7px calc(var(--sp-md)*2 + 13px);
     background: var(--bg-surface);
@@ -786,11 +789,13 @@
     transition: all var(--t-fast);
 }
 
-.hud-search input::placeholder {
+.hud-search input::placeholder,
+.cctv-search input::placeholder {
     color: var(--text-muted);
 }
 
-.hud-search input:focus {
+.hud-search input:focus,
+.cctv-search input:focus {
     outline: none;
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-soft);
@@ -1443,24 +1448,31 @@ select.eq-input option {
 .speaker-status-bar {
     display: flex;
     align-items: center;
-    gap: var(--sp-xl);
-    padding: 8px var(--sp-lg);
+    gap: 8px;
+    padding: 6px var(--sp-lg);
     border-bottom: 1px solid var(--border-subtle);
-    background: var(--bg-base);
+    background: rgba(255, 255, 255, 0.015);
     flex-shrink: 0;
+    flex-wrap: wrap;
 }
 
 .speaker-stat {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 12px;
+    gap: 5px;
+    font-size: 11px;
     color: var(--text-muted);
+    padding: 4px 8px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background var(--t-fast), color var(--t-fast), box-shadow var(--t-fast), border-color var(--t-fast);
+    border: 1px solid transparent;
+    line-height: 1;
 }
 
 .speaker-stat-num {
     font-family: var(--font-mono);
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 700;
     color: var(--text-primary);
 }
@@ -1477,16 +1489,16 @@ select.eq-input option {
     color: var(--danger);
 }
 
-/* Status filter chips (reusing cctv patterns) */
-.speaker-filters {
-    display: flex;
-    align-items: center;
-    gap: var(--sp-xs);
-    padding: 8px var(--sp-lg);
-    border-bottom: 1px solid var(--border-subtle);
-    background: var(--bg-panel);
-    flex-shrink: 0;
-    flex-wrap: wrap;
+.speaker-stat:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.speaker-stat.is-active {
+    color: var(--text-primary);
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(96, 165, 250, 0.18);
+    box-shadow: inset 0 0 0 1px rgba(147, 197, 253, 0.10);
 }
 
 .speaker-pane {
@@ -1513,7 +1525,7 @@ select.eq-input option {
     display: grid;
     grid-template-columns: minmax(700px, 1fr) 340px;
     gap: var(--sp-lg);
-    padding: var(--sp-lg);
+    padding: 10px var(--sp-lg) var(--sp-lg);
     flex: 1;
     min-height: 0;
     overflow: auto !important;
@@ -2801,7 +2813,7 @@ select.eq-input option {
 .bc-disaster-card {
     --bc-priority-accent: #94a3b8;
     --bc-priority-rgb: 148, 163, 184;
-    
+
     display: flex;
     align-items: center;
     position: relative;
@@ -2841,7 +2853,7 @@ select.eq-input option {
 .bc-disaster-card.is-selected {
     border-color: var(--bc-priority-accent);
     background: linear-gradient(135deg, rgba(var(--bc-priority-rgb), 0.24), rgba(var(--bc-priority-rgb), 0.08));
-    box-shadow: 
+    box-shadow:
         inset 0 0 0 1px rgba(var(--bc-priority-rgb), 0.15),
         0 12px 28px rgba(0, 0, 0, 0.35);
     z-index: 3;
@@ -2907,10 +2919,12 @@ select.eq-input option {
     --bc-priority-accent: #ef4444;
     --bc-priority-rgb: 239, 68, 68;
 }
+
 .bc-disaster-card--medium {
     --bc-priority-accent: #f59e0b;
     --bc-priority-rgb: 245, 158, 11;
 }
+
 .bc-disaster-card--low {
     --bc-priority-accent: #38bdf8;
     --bc-priority-rgb: 56, 189, 248;
@@ -2920,10 +2934,12 @@ select.eq-input option {
     background: rgba(239, 68, 68, 0.18);
     border-color: rgba(239, 68, 68, 0.3);
 }
+
 .bc-priority-badge--medium {
     background: rgba(245, 158, 11, 0.18);
     border-color: rgba(245, 158, 11, 0.3);
 }
+
 .bc-priority-badge--low {
     background: rgba(56, 189, 248, 0.18);
     border-color: rgba(56, 189, 248, 0.3);
@@ -2933,7 +2949,7 @@ select.eq-input option {
 .bc-disaster-card {
     --bc-priority-accent: #94a3b8;
     --bc-priority-rgb: 148, 163, 184;
-    
+
     display: flex;
     align-items: center;
     position: relative;
@@ -3069,7 +3085,8 @@ select.eq-input option {
     border-color: rgba(var(--bc-priority-rgb), 0.28);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
-.bc-msg-preview {
+
+.bc-msg-preview {
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -3792,40 +3809,7 @@ select.eq-input option {
 }
 
 .cctv-search {
-    position: relative;
-    display: flex;
-    align-items: center;
     min-width: 220px;
-}
-
-.cctv-search>i {
-    position: absolute;
-    left: var(--sp-md);
-    color: var(--text-muted);
-    font-size: 13px;
-    pointer-events: none;
-}
-
-.cctv-search input {
-    width: 100%;
-    padding: 7px 12px 7px 34px;
-    background: var(--bg-surface);
-    border: 1px solid var(--border-mid);
-    border-radius: var(--r-pill);
-    color: var(--text-primary);
-    font-family: var(--font-body);
-    font-size: 13px;
-    transition: all var(--t-fast);
-}
-
-.cctv-search input::placeholder {
-    color: var(--text-muted);
-}
-
-.cctv-search input:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .cctv-action-buttons {
@@ -3850,26 +3834,45 @@ select.eq-input option {
 .cctv-status-bar {
     display: flex;
     align-items: center;
-    gap: var(--sp-xl);
-    padding: 8px var(--sp-lg);
+    gap: 8px;
+    padding: 6px var(--sp-lg);
     border-bottom: 1px solid var(--border-subtle);
-    background: var(--bg-base);
+    background: rgba(255, 255, 255, 0.015);
     flex-shrink: 0;
+    flex-wrap: wrap;
 }
 
 .cctv-stat {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 12px;
+    gap: 5px;
+    font-size: 11px;
     color: var(--text-muted);
+    padding: 4px 8px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background var(--t-fast), color var(--t-fast), box-shadow var(--t-fast), border-color var(--t-fast);
+    border: 1px solid transparent;
+    line-height: 1;
 }
 
 .cctv-stat-num {
     font-family: var(--font-mono);
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 700;
     color: var(--text-primary);
+}
+
+.cctv-stat:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.cctv-stat.is-active {
+    color: var(--text-primary);
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(96, 165, 250, 0.18);
+    box-shadow: inset 0 0 0 1px rgba(147, 197, 253, 0.10);
 }
 
 .cctv-stat-num.ok {
@@ -3909,6 +3912,101 @@ select.eq-input option {
     overflow-y: auto;
     overflow-x: auto;
     /* thead sticky가 동작하려면 overflow-y:auto 필요 */
+}
+
+.cctv-card-list {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    gap: 12px;
+    padding: 12px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.cctv-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 16px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015)),
+        rgba(15, 23, 42, 0.94);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 10px 24px rgba(0, 0, 0, 0.16);
+}
+
+.cctv-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.cctv-card-title-wrap {
+    min-width: 0;
+}
+
+.cctv-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.3;
+}
+
+.cctv-card-code {
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+}
+
+.cctv-card-status {
+    flex: 0 0 auto;
+}
+
+.cctv-card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cctv-card-row {
+    display: grid;
+    grid-template-columns: 58px minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+}
+
+.cctv-card-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.cctv-card-value {
+    min-width: 0;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    overflow-wrap: anywhere;
+}
+
+.cctv-card-url {
+    color: var(--text-primary);
+}
+
+.cctv-card-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .page-equipment .col-check {
@@ -4812,25 +4910,28 @@ select.eq-input option {
 
     /* ── CCTV pane ── */
     .cctv-pane {
-        overflow-y: auto;
+        overflow: hidden;
     }
 
     .cctv-surface {
-        flex: none;
+        flex: 1;
+        min-height: 0;
         height: auto;
-        overflow: visible;
+        overflow: hidden;
     }
 
     .cctv-table-wrap {
-        flex: none;
-        min-height: 400px;
-        max-height: 65vh;
+        flex: 1;
+        min-height: 0;
+        max-height: none;
         overflow: hidden;
     }
 
     .cctv-table-wrap .table-responsive {
+        flex: 1;
+        min-height: 0;
         overflow-y: auto;
-        max-height: calc(65vh - 44px);
+        max-height: none;
     }
 
     .cctv-topbar {
@@ -4972,11 +5073,14 @@ select.eq-input option {
     }
 
     .cctv-table-wrap {
-        min-height: 300px;
-        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
+        max-height: none;
+        overflow: hidden;
     }
 
     .cctv-table-wrap .table-responsive {
+        flex: 1;
         min-height: 0;
         overflow-y: auto;
     }
@@ -5026,11 +5130,15 @@ select.eq-input option {
     .cctv-surface {
         padding: 0;
         gap: 0;
+        min-height: 0;
+        overflow: hidden;
     }
 
     .cctv-table-wrap {
-        min-height: 300px;
-        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
+        max-height: none;
+        overflow: hidden;
     }
 
     .cctv-table-wrap .table-responsive {
@@ -5109,14 +5217,17 @@ select.eq-input option {
     }
 
     .cctv-surface {
-        overflow-y: visible !important;
+        overflow: hidden !important;
         height: auto;
         padding: 0;
+        min-height: 0;
     }
 
     .cctv-table-wrap {
-        min-height: 300px;
-        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
+        max-height: none;
+        overflow: hidden;
     }
 
     .cctv-table-wrap .table-responsive {
@@ -5279,6 +5390,16 @@ select.eq-input option {
         -webkit-overflow-scrolling: touch;
     }
 
+    .cctv-table-wrap .table-responsive,
+    .cctv-table-wrap #cctvTable {
+        display: none !important;
+    }
+
+    .cctv-card-list {
+        display: flex;
+        overflow-y: auto;
+    }
+
     .cctv-table-wrap .table-modern {
         min-width: 760px;
     }
@@ -5347,6 +5468,21 @@ select.eq-input option {
 
     .cctv-table-wrap .table-modern {
         min-width: 680px;
+    }
+
+    .cctv-card-list {
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .cctv-card {
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .cctv-card-row {
+        grid-template-columns: 52px minmax(0, 1fr);
+        gap: 8px;
     }
 }
 
@@ -5429,6 +5565,10 @@ select.eq-input option {
         width: 100%;
         justify-content: flex-start;
         flex-basis: 100%;
+    }
+
+    .broadcast-pane #bc_disaster_area.bcp-input-block>.bc-disaster-card-list {
+        max-height: none;
     }
 }
 
@@ -6093,7 +6233,7 @@ select.eq-input option {
 }
 
 /* 2) 높이가 조금 낮아질 때 */
-@media (max-height: 900px) {
+@media (max-height: 820px) {
     .bc-pipeline {
         padding: var(--sp-md);
         gap: var(--sp-md);
@@ -6133,13 +6273,13 @@ select.eq-input option {
     }
 
     .bc-disaster-card-list {
-        max-height: clamp(180px, 28vh, 280px);
+        max-height: clamp(150px, 24vh, 240px);
         overflow-y: auto;
     }
 }
 
 /* 3) 높이가 더 낮아질 때: 실행영역을 세로 스택으로 전환 */
-@media (max-height: 820px) {
+@media (max-height: 760px) {
     .bc-pipeline {
         grid-template-columns: 280px 1fr;
         gap: var(--sp-md);
@@ -6367,5 +6507,861 @@ select.eq-input option {
     .bc-priority-badge {
         padding: 5px 8px !important;
         font-size: 9px !important;
+    }
+}
+
+/* ============================================================
+   BROADCAST PANE — NEXUS Ops Layout (V5)
+   Design : Glassmorphism panels w/ gradient top strip
+   Desktop (≥1200px) : 260px | 1fr | 280px
+   Tablet  (≤1024px) : 1fr 1fr top + full bottom
+   Mobile  (≤767px)  : single column stack
+   ============================================================ */
+
+/* ─────────────────────────────────────────
+   1. Pipeline grid
+   ───────────────────────────────────────── */
+.broadcast-pane .bc-pipeline {
+    display: grid !important;
+    grid-template-columns: 260px minmax(0, 1fr) 280px !important;
+    grid-template-rows: 1fr !important;
+    gap: 14px !important;
+    padding: 14px !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+}
+
+/* Column containers */
+.broadcast-pane .bc-target-col,
+.broadcast-pane .bc-compose-col {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+}
+
+.broadcast-pane .bc-exec-col {
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+    gap: 14px !important;
+    min-height: 0 !important;
+}
+
+/* ─────────────────────────────────────────
+   2. Panel shell
+   ───────────────────────────────────────── */
+.broadcast-pane .bcp-panel {
+    background: rgba(6, 10, 18, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    min-height: 0;
+}
+
+/* Top gradient strip — replaces left accent stripe */
+.broadcast-pane .bcp-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--nx-strip);
+    z-index: 1;
+}
+
+.broadcast-pane .bcp-panel--speakers {
+    --nx-strip: linear-gradient(90deg, #3b82f6 0%, rgba(59, 130, 246, 0.18) 60%, transparent 100%);
+    --nx-accent: #3b82f6;
+    --nx-accent-rgb: 59, 130, 246;
+}
+
+.broadcast-pane .bcp-panel--compose {
+    --nx-strip: linear-gradient(90deg, #3b82f6 0%, rgba(59, 130, 246, 0.18) 60%, transparent 100%);
+    --nx-accent: #3b82f6;
+    --nx-accent-rgb: 59, 130, 246;
+}
+
+.broadcast-pane .bcp-panel--ctrl {
+    --nx-strip: linear-gradient(90deg, #3b82f6 0%, rgba(59, 130, 246, 0.18) 60%, transparent 100%);
+    --nx-accent: #3b82f6;
+    --nx-accent-rgb: 59, 130, 246;
+}
+
+.broadcast-pane .bcp-panel--log {
+    --nx-strip: linear-gradient(90deg, #3b82f6 0%, rgba(59, 130, 246, 0.18) 60%, transparent 100%);
+    --nx-accent: #3b82f6;
+    --nx-accent-rgb: 59, 130, 246;
+}
+
+/* Tall panels fill their column */
+.broadcast-pane .bc-target-col>.bcp-panel,
+.broadcast-pane .bc-compose-col>.bcp-panel {
+    flex: 1 !important;
+    min-height: 0 !important;
+}
+
+/* ─────────────────────────────────────────
+   3. Panel header band
+   ───────────────────────────────────────── */
+.broadcast-pane .bcp-panel-band {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px 10px;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.045);
+    flex-shrink: 0;
+}
+
+.broadcast-pane .bcp-band-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.broadcast-pane .bcp-band-title>i {
+    font-size: 15px;
+    color: var(--nx-accent, #06b6d4);
+    filter: drop-shadow(0 0 6px rgba(var(--nx-accent-rgb, 6, 182, 212), 0.6));
+}
+
+/* ─────────────────────────────────────────
+   4. Target col — search / selectall / list
+   ───────────────────────────────────────── */
+.broadcast-pane .bcp-search-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    flex-shrink: 0;
+    background: rgba(6, 182, 212, 0.03);
+}
+
+.broadcast-pane .bcp-search-row>i {
+    color: rgba(6, 182, 212, 0.5);
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+.broadcast-pane .bcp-search-row>input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 12px;
+    padding: 0;
+}
+
+.broadcast-pane .bcp-search-row>input::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.broadcast-pane .bcp-selectall-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    flex-shrink: 0;
+}
+
+.broadcast-pane .bcp-selectall-row label {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.38);
+    cursor: pointer;
+    margin: 0;
+    user-select: none;
+}
+
+.broadcast-pane .bcp-chk {
+    width: 13px;
+    height: 13px;
+    cursor: pointer;
+    accent-color: #06b6d4;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.broadcast-pane .bcp-list-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px;
+    min-height: 0;
+}
+
+/* ─────────────────────────────────────────
+   5. Empty state
+   ───────────────────────────────────────── */
+.broadcast-pane .bcp-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 14px;
+    gap: 7px;
+    color: rgba(255, 255, 255, 0.22);
+    text-align: center;
+}
+
+.broadcast-pane .bcp-empty>i {
+    font-size: 26px;
+    opacity: 0.5;
+}
+
+.broadcast-pane .bcp-empty>p {
+    margin: 0;
+    font-size: 11.5px;
+}
+
+.broadcast-pane .bcp-empty>small {
+    font-size: 10.5px;
+    opacity: 0.7;
+}
+
+/* ─────────────────────────────────────────
+   6. Compose col — tab toggle bar
+   ───────────────────────────────────────── */
+.broadcast-pane .bcp-tabs-section {
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    flex-shrink: 0;
+}
+
+.broadcast-pane .bcp-tab-group {
+    display: block;
+}
+
+.broadcast-pane .bcp-tab-lbl {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.26);
+    margin-bottom: 6px;
+    white-space: nowrap;
+}
+
+/* Tab button container */
+.broadcast-pane .bcp-tab-btns {
+    display: flex;
+    gap: 1px;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 8px;
+    padding: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Override bc-choice-btn inside tab container */
+.broadcast-pane .bcp-tab-btns .bc-choice-btn.bcp-tab {
+    padding: 4px 11px !important;
+    border-radius: 6px !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    color: rgba(255, 255, 255, 0.36) !important;
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: all 0.14s !important;
+    white-space: nowrap !important;
+    line-height: 1.5 !important;
+    letter-spacing: 0.01em !important;
+}
+
+.broadcast-pane .bcp-tab-btns .bc-choice-btn.bcp-tab:hover {
+    color: rgba(255, 255, 255, 0.65) !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.broadcast-pane .bcp-tab-btns .bc-choice-btn.bcp-tab.is-active {
+    color: #fff !important;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.02)),
+        rgba(37, 99, 235, 0.38) !important;
+    box-shadow:
+        inset 0 0 0 1px rgba(147, 197, 253, 0.24),
+        0 1px 2px rgba(0, 0, 0, 0.22) !important;
+}
+
+/* ─────────────────────────────────────────
+   7. Compose col — input area
+   ───────────────────────────────────────── */
+.broadcast-pane .bcp-compose-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+    padding: 12px 14px;
+    gap: 8px;
+}
+
+.broadcast-pane .bcp-input-block {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    gap: 7px;
+}
+
+.broadcast-pane .bcp-input-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.38);
+}
+
+.broadcast-pane .bcp-hint {
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 10.5px;
+}
+
+.broadcast-pane .bcp-textarea {
+    flex: 1;
+    min-height: 0;
+    background: rgba(139, 92, 246, 0.04);
+    border: 1px solid rgba(139, 92, 246, 0.15);
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 12.5px;
+    line-height: 1.65;
+    padding: 10px 12px;
+    resize: none;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.broadcast-pane .bcp-textarea:focus {
+    border-color: rgba(139, 92, 246, 0.45);
+    background: rgba(139, 92, 246, 0.065);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.08);
+}
+
+.broadcast-pane .bcp-textarea::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.broadcast-pane .bcp-char-count {
+    font-size: 10.5px;
+    color: rgba(255, 255, 255, 0.28);
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* Disaster list scroll area */
+.broadcast-pane #bc_disaster_area.bcp-input-block>.bc-disaster-card-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* Selected message preview */
+.broadcast-pane .bcp-msg-preview {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    background: rgba(16, 185, 129, 0.06);
+    border: 1px solid rgba(16, 185, 129, 0.18);
+    border-radius: 8px;
+    padding: 9px 11px;
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.65);
+    flex-shrink: 0;
+}
+
+.broadcast-pane .bcp-msg-preview>i {
+    color: #10b981;
+    font-size: 13px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+/* ─────────────────────────────────────────
+   8. Progress bar
+   ───────────────────────────────────────── */
+.broadcast-pane .bcp-progress-bar {
+    padding: 9px 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
+}
+
+.broadcast-pane .bcp-progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10.5px;
+    color: rgba(255, 255, 255, 0.45);
+    margin-bottom: 5px;
+}
+
+.broadcast-pane .bcp-progress-track {
+    height: 3px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.broadcast-pane .bcp-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #8b5cf6, #c084fc);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+/* ─────────────────────────────────────────
+   9. Exec col — ctrl card body
+   ───────────────────────────────────────── */
+.broadcast-pane .bcp-ctrl-body {
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.broadcast-pane .bcp-ctrl-row {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.broadcast-pane .bcp-ctrl-row+.bcp-ctrl-row {
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.broadcast-pane .bcp-ctrl-lbl {
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: rgba(255, 255, 255, 0.32);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.broadcast-pane .bcp-ctrl-lbl>i {
+    font-size: 11px;
+    color: var(--nx-accent, #f59e0b);
+}
+
+/* ─────────────────────────────────────────
+   10. BGM buttons
+   ───────────────────────────────────────── */
+.broadcast-pane .bcp-bgm-btns {
+    display: flex;
+    gap: 7px;
+}
+
+.broadcast-pane .bcp-bgm-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: transparent;
+    letter-spacing: 0.03em;
+}
+
+.broadcast-pane .bcp-bgm-btn:active {
+    transform: scale(0.94);
+}
+
+.broadcast-pane .bcp-bgm-on {
+    color: #34d399;
+    border-color: rgba(52, 211, 153, 0.25);
+}
+
+.broadcast-pane .bcp-bgm-on:hover {
+    background: rgba(52, 211, 153, 0.1);
+    border-color: rgba(52, 211, 153, 0.5);
+    box-shadow: 0 0 12px rgba(52, 211, 153, 0.18);
+}
+
+.broadcast-pane .bcp-bgm-off {
+    color: #fb7185;
+    border-color: rgba(251, 113, 133, 0.25);
+}
+
+.broadcast-pane .bcp-bgm-off:hover {
+    background: rgba(251, 113, 133, 0.1);
+    border-color: rgba(251, 113, 133, 0.5);
+    box-shadow: 0 0 12px rgba(251, 113, 133, 0.18);
+}
+
+/* ─────────────────────────────────────────
+   11. Launch buttons (with pulse animation)
+   ───────────────────────────────────────── */
+@keyframes bcp-start-pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 4px 20px rgba(37, 99, 235, 0.28), 0 0 0 0 rgba(96, 165, 250, 0.32);
+    }
+
+    50% {
+        box-shadow: 0 4px 20px rgba(37, 99, 235, 0.28), 0 0 0 7px rgba(96, 165, 250, 0);
+    }
+}
+
+.broadcast-pane .bcp-launch-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 10px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.18s, opacity 0.15s;
+    position: relative;
+    overflow: hidden;
+}
+
+.broadcast-pane .bcp-launch-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.broadcast-pane .bcp-launch-btn>i {
+    font-size: 19px;
+}
+
+.broadcast-pane .bcp-launch-btn:active {
+    transform: scale(0.97);
+}
+
+.broadcast-pane .bcp-launch-start {
+    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #60a5fa 100%);
+    color: #fff;
+    animation: bcp-start-pulse 2.5s ease-in-out infinite;
+}
+
+.broadcast-pane .bcp-launch-start:hover {
+    box-shadow: 0 6px 28px rgba(59, 130, 246, 0.42);
+    animation: none;
+    opacity: 0.95;
+}
+
+.broadcast-pane .bcp-launch-stop {
+    background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 50%, #f87171 100%);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(220, 38, 38, 0.3);
+}
+
+.broadcast-pane .bcp-launch-stop:hover {
+    box-shadow: 0 6px 28px rgba(248, 113, 113, 0.42);
+    opacity: 0.95;
+}
+
+/* ─────────────────────────────────────────
+   12. Log card
+   ───────────────────────────────────────── */
+.broadcast-pane .bcp-log-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.broadcast-pane .bcp-log-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.broadcast-pane .bc-log-card {
+    background:
+        linear-gradient(180deg, rgba(148, 163, 184, 0.10), rgba(255, 255, 255, 0.025)),
+        rgba(20, 28, 40, 0.94);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 10px 24px rgba(0, 0, 0, 0.22);
+}
+
+.broadcast-pane .bc-log-card:hover {
+    background:
+        linear-gradient(180deg, rgba(148, 163, 184, 0.16), rgba(255, 255, 255, 0.04)),
+        rgba(24, 34, 48, 0.98);
+    border-color: rgba(148, 163, 184, 0.34);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 14px 28px rgba(0, 0, 0, 0.28);
+}
+
+.broadcast-pane .bc-log-kind {
+    color: #dbeafe;
+    background: rgba(59, 130, 246, 0.16);
+    border: 1px solid rgba(96, 165, 250, 0.22);
+}
+
+.broadcast-pane .bc-log-device {
+    color: rgba(226, 232, 240, 0.72);
+}
+
+/* ─────────────────────────────────────────
+   13. Phase steps — HUD chip bar
+   ───────────────────────────────────────── */
+.broadcast-pane .bc-phase-steps {
+    gap: 0 !important;
+    padding: 3px 5px !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    border-radius: var(--r-pill, 999px) !important;
+
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+}
+
+.broadcast-pane .bc-phase-step {
+    padding: 3px 9px !important;
+    border-radius: var(--r-pill, 999px) !important;
+    transition: background 0.15s !important;
+}
+
+.broadcast-pane .bc-phase-step.is-active {
+    background: rgba(var(--accent-rgb, 59, 130, 246), 0.17) !important;
+}
+
+.broadcast-pane .bc-phase-step.is-active .bc-phase-icon {
+    background: var(--accent, #3b82f6) !important;
+    border-color: var(--accent, #3b82f6) !important;
+    color: #fff !important;
+    box-shadow: 0 0 9px rgba(var(--accent-rgb, 59, 130, 246), 0.42) !important;
+}
+
+.broadcast-pane .bc-phase-step.is-active .bc-phase-label {
+    color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.broadcast-pane .bc-phase-step.is-done {
+    opacity: 0.65 !important;
+}
+
+.broadcast-pane .bc-phase-step.is-done .bc-phase-icon {
+    background: rgba(var(--accent-rgb, 59, 130, 246), 0.22) !important;
+    border-color: rgba(var(--accent-rgb, 59, 130, 246), 0.45) !important;
+    color: var(--accent, #3b82f6) !important;
+}
+
+.broadcast-pane .bc-phase-connector {
+    min-width: 20px !important;
+    max-width: 34px !important;
+    margin: 0 3px !important;
+    background: rgba(255, 255, 255, 0.09) !important;
+}
+
+/* ================================================================
+   RESPONSIVE — narrow desktop (≤1200px)
+   ================================================================ */
+/* ================================================================
+   RESPONSIVE — narrower desktop
+   ================================================================ */
+@media (max-width: 1200px) {
+    .broadcast-pane .bc-pipeline {
+        grid-template-columns: 240px minmax(0, 1fr) 250px !important;
+        gap: 12px !important;
+        padding: 12px !important;
+    }
+}
+
+/* ================================================================
+   RESPONSIVE — Tablet portrait (≤1024px):
+   2-column top (target | compose) + full-width bottom
+   ================================================================ */
+@media (max-width: 1024px) {
+    .broadcast-pane .bc-pipeline {
+        grid-template-columns: 1fr 1fr !important;
+        grid-template-rows: minmax(0, 1fr) auto !important;
+        overflow-y: auto !important;
+        height: auto !important;
+        gap: 12px !important;
+        padding: 12px !important;
+    }
+
+    .broadcast-pane .bc-target-col {
+        grid-column: 1 !important;
+        grid-row: 1 !important;
+    }
+
+    .broadcast-pane .bc-compose-col {
+        grid-column: 2 !important;
+        grid-row: 1 !important;
+    }
+
+    .broadcast-pane .bc-exec-col {
+        grid-column: 1 / -1 !important;
+        grid-row: 2 !important;
+        grid-template-columns: 230px minmax(0, 1fr) !important;
+        grid-template-rows: 1fr !important;
+        max-height: 300px !important;
+        gap: 12px !important;
+    }
+
+    .broadcast-pane #bc_disaster_area.bcp-input-block>.bc-disaster-card-list {
+        max-height: min(36vh, 320px);
+        overflow-y: auto;
+    }
+}
+
+/* ================================================================
+   RESPONSIVE — Mobile (≤767px): single column stack
+   ================================================================ */
+@media (max-width: 767px) {
+    .broadcast-pane .bc-pipeline {
+        grid-template-columns: 1fr !important;
+        grid-template-rows: none !important;
+        overflow-y: auto !important;
+        height: auto !important;
+        gap: 10px !important;
+        padding: 10px !important;
+    }
+
+    .broadcast-pane .bc-target-col,
+    .broadcast-pane .bc-compose-col,
+    .broadcast-pane .bc-exec-col {
+        grid-column: 1 !important;
+        grid-row: auto !important;
+    }
+
+    .broadcast-pane .bc-target-col {
+        max-height: 260px !important;
+    }
+
+    .broadcast-pane .bc-exec-col {
+        grid-template-columns: 1fr !important;
+        grid-template-rows: auto auto !important;
+        max-height: none !important;
+    }
+}
+
+/* ================================================================
+   RESPONSIVE — 1920px+ large screen
+   ================================================================ */
+@media (min-width: 1920px) {
+    .broadcast-pane .bc-pipeline {
+        grid-template-columns: 300px minmax(0, 1fr) 320px !important;
+        gap: 18px !important;
+        padding: 18px !important;
+    }
+}
+
+/* ================================================================
+   RESPONSIVE — low height screens
+   ================================================================ */
+@media (min-width: 768px) and (max-height: 860px) {
+    .broadcast-pane .bc-pipeline {
+        padding: 10px !important;
+        gap: 10px !important;
+    }
+
+    .broadcast-pane .bcp-ctrl-body {
+        padding: 10px 12px;
+        gap: 10px;
+    }
+
+    .broadcast-pane .bcp-launch-btn {
+        padding: 10px 10px !important;
+    }
+}
+
+@media (min-width: 768px) and (max-height: 720px) {
+    .broadcast-pane .bc-pipeline {
+        grid-template-columns: 220px minmax(0, 1fr) 240px !important;
+    }
+}
+
+/* ================================================================
+   RESPONSIVE — Short viewport (max-height: 900px)
+   ================================================================ */
+@media (min-width: 768px) and (max-height: 900px) {
+    .broadcast-pane .bc-pipeline {
+        padding: var(--sp-md) !important;
+        gap: var(--sp-md) !important;
+    }
+
+    .broadcast-pane .bc-exec-col {
+        gap: var(--sp-md) !important;
+    }
+}
+
+/* ================================================================
+   RESPONSIVE — Very short viewport (max-height: 720px):
+   3-col but compressed heights
+   ================================================================ */
+@media (min-width: 768px) and (max-height: 720px) {
+    .broadcast-pane .bc-pipeline {
+        grid-template-columns: 220px minmax(0, 1fr) 220px !important;
+        padding: var(--sp-sm) var(--sp-md) !important;
+        gap: var(--sp-sm) !important;
+    }
+
+    .broadcast-pane .bc-target-col {
+        max-height: unset;
+    }
+
+    .broadcast-pane .bc-exec-col .bc-panel-execution {
+        min-height: 140px !important;
+    }
+
+    .broadcast-pane .bc-compose-col .bc-composer-toolbar {
+        padding: 10px 12px !important;
+    }
+}
+
+/* ================================================================
+   Large desktop (≥1600px): wider side columns
+   ================================================================ */
+@media (min-width: 1600px) {
+    .broadcast-pane .bc-pipeline {
+        grid-template-columns: 300px minmax(0, 1fr) 300px !important;
+    }
+}
+
+@media (min-width: 1920px) {
+    .broadcast-pane .bc-pipeline {
+        grid-template-columns: 320px minmax(0, 1fr) 320px !important;
+        padding: var(--sp-xl) !important;
+        gap: var(--sp-xl) !important;
     }
 }

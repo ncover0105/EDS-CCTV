@@ -103,52 +103,131 @@
     return await res.json();
   }
 
+  function getCctvDisplayName(item) {
+    const directName = item?.cctvName ?? item?.name ?? item?.cameraName ?? item?.cctvNm;
+    if (directName != null && String(directName).trim()) {
+      return String(directName).trim();
+    }
+
+    const code = item?.cctvCode;
+    if (code != null && typeof window.getCameraNameByCode === 'function') {
+      const mapped = window.getCameraNameByCode(code);
+      if (mapped != null && String(mapped).trim()) {
+        return String(mapped).trim();
+      }
+    }
+
+    return String(code ?? '-');
+  }
+
+  function getAlertMeta(alertCode) {
+    const code = String(alertCode ?? '').trim();
+    const mapping = {
+      '001': { label: 'CCTV 연결', className: 'status-info' },
+      '002': { label: 'CCTV 연결 끊김', className: 'status-warning' },
+      '003': { label: '출입알림', className: 'status-error' },
+    };
+
+    return mapping[code] ?? {
+      label: code || '알 수 없음',
+      className: 'status-info',
+    };
+  }
+
+  function getBoundaryMeta(boundaryNum) {
+    const zone = Number(boundaryNum);
+    const mapping = {
+      1: { label: '1번 구역', className: 'status-zone-1' },
+      2: { label: '2번 구역', className: 'status-zone-2' },
+      3: { label: '3번 구역', className: 'status-zone-3' },
+      4: { label: '4번 구역', className: 'status-zone-4' },
+    };
+
+    return mapping[zone] ?? {
+      label: '-',
+      className: 'status-info',
+    };
+  }
+
   // ====== 테이블 렌더 ======
   function renderRows(items, page) {
     const tbody = document.getElementById('situationList');
-    if (!tbody) return;
+    const timeline = document.getElementById('situationTimeline');
+    if (!tbody || !timeline) return;
 
-    const cols = 6;
+    const cols = 5;
     const list = Array.isArray(items) ? items : [];
 
     if (list.length === 0) {
-      tbody.innerHTML = `
+      const emptyHtml = `
         <tr>
           <td colspan="${cols}" class="text-center text-white-50 py-5">
             조회된 상황 발생 이력이 없습니다.
           </td>
         </tr>
       `;
+      tbody.innerHTML = emptyHtml;
+      timeline.innerHTML = `
+        <div class="situation-timeline-empty">
+          조회된 상황 발생 이력이 없습니다.
+        </div>
+      `;
       return;
     }
 
-    const startNo = (page - 1) * pageSize;
-
-    tbody.innerHTML = list.map((it, idx) => {
-      const no = startNo + idx + 1;
-
-      const cctvCode = window.SituationCommon.escapeHtml(it.cctvCode ?? '-');
-      const alertCode = window.SituationCommon.escapeHtml(it.alertCode ?? '-');
-      const boundaryNum = window.SituationCommon.escapeHtml(it.boundaryNum ?? '-');
+    const rows = list.map((it) => {
+      const cctvName = window.SituationCommon.escapeHtml(getCctvDisplayName(it));
+      const alertMeta = getAlertMeta(it.alertCode);
+      const alertLabel = window.SituationCommon.escapeHtml(alertMeta.label);
+      const alertClassName = window.SituationCommon.escapeHtml(alertMeta.className);
+      const boundaryMeta = getBoundaryMeta(it.boundaryNum);
+      const boundaryText = window.SituationCommon.escapeHtml(boundaryMeta.label);
+      const boundaryClassName = window.SituationCommon.escapeHtml(boundaryMeta.className);
       const log = window.SituationCommon.escapeHtml(it.log ?? '-');
       const inpDttm = window.SituationCommon.escapeHtml(it.inpDttm ?? '-');
 
-      const alertCellHtml =
-        alertCode === '003'
-          ? `<span class="status-badge status-error">출입알림</span>`
-          : alertCode;
-
       return `
         <tr>
-          <td class="text-center">${no}</td>
-          <td>${cctvCode}</td>
-          <td>${alertCellHtml}</td>
-          <td class="text-center">${boundaryNum}번구역</td>
-          <td title="${log}">${log}</td>
-          <td>${inpDttm}</td>
+          <td class="situation-col-time">${inpDttm}</td>
+          <td><span class="status-badge ${alertClassName}">${alertLabel}</span></td>
+          <td class="text-center"><span class="status-badge ${boundaryClassName}">${boundaryText}</span></td>
+          <td class="situation-col-cctv" title="${cctvName}">${cctvName}</td>
+          <td class="situation-col-log" title="${log}">${log}</td>
         </tr>
       `;
     }).join('');
+
+    const timelineItems = list.map((it) => {
+      const cctvName = window.SituationCommon.escapeHtml(getCctvDisplayName(it));
+      const alertMeta = getAlertMeta(it.alertCode);
+      const alertLabel = window.SituationCommon.escapeHtml(alertMeta.label);
+      const alertClassName = window.SituationCommon.escapeHtml(alertMeta.className);
+      const boundaryMeta = getBoundaryMeta(it.boundaryNum);
+      const boundaryText = window.SituationCommon.escapeHtml(boundaryMeta.label);
+      const boundaryClassName = window.SituationCommon.escapeHtml(boundaryMeta.className);
+      const log = window.SituationCommon.escapeHtml(it.log ?? '-');
+      const inpDttm = window.SituationCommon.escapeHtml(it.inpDttm ?? '-');
+
+      return `
+        <article class="situation-timeline-item">
+          <div class="situation-timeline-dot"></div>
+          <div class="situation-timeline-content">
+            <div class="situation-timeline-top">
+              <time class="situation-timeline-time">${inpDttm}</time>
+            </div>
+            <div class="situation-timeline-meta">
+              <span class="status-badge ${alertClassName}">${alertLabel}</span>
+              <span class="status-badge ${boundaryClassName}">${boundaryText}</span>
+            </div>
+            <div class="situation-timeline-cctv">${cctvName}</div>
+            <p class="situation-timeline-log">${log}</p>
+          </div>
+        </article>
+      `;
+    }).join('');
+
+    tbody.innerHTML = rows;
+    timeline.innerHTML = timelineItems;
   }
 
   function renderCount() {
@@ -202,6 +281,318 @@
     loadPage().catch(console.error);
   };
 
+  // ====================================================================
+  // 통계 그래프
+  // ====================================================================
+  const CHART_COLORS = {
+    blue:   'rgba(59,130,246,0.85)',
+    green:  'rgba(34,197,94,0.85)',
+    amber:  'rgba(245,158,11,0.85)',
+    red:    'rgba(239,68,68,0.85)',
+    pink:   'rgba(236,72,153,0.88)',
+    cyan:   'rgba(6,182,212,0.85)',
+  };
+  const ZONE_COLORS = [CHART_COLORS.blue, CHART_COLORS.green, CHART_COLORS.red, CHART_COLORS.pink];
+  const CHART_GRID  = 'rgba(255,255,255,0.06)';
+  const CHART_TICK  = 'rgba(232,236,244,0.45)';
+
+  const chartCommonOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 350 },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1a2130',
+        borderColor: 'rgba(255,255,255,0.12)',
+        borderWidth: 1,
+        titleColor: '#e8ecf4',
+        bodyColor: 'rgba(232,236,244,0.75)',
+        padding: 10,
+      },
+    },
+  };
+
+  const axisStyle = {
+    grid: { color: CHART_GRID },
+    ticks: { color: CHART_TICK, font: { size: 11 } },
+    border: { color: 'rgba(255,255,255,0.08)' },
+  };
+
+  let chartInstances = {};
+  let statsPeriod = 'weekly';
+  let statsCctvCode = '';
+
+  function destroyChart(id) {
+    if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+  }
+
+  function destroyAllCharts() {
+    Object.keys(chartInstances).forEach(destroyChart);
+  }
+
+  function isStatsCollapsed() {
+    return document.getElementById('sitStatsBody')?.classList.contains('is-collapsed') ?? false;
+  }
+
+  let latestStatsData = {
+    daily: [],
+    trend: [],
+    byZone: [],
+  };
+
+  function renderDailyChart(daily) {
+    destroyChart('dailyChart');
+    const ctx = document.getElementById('dailyChart');
+    if (!ctx) return;
+    chartInstances['dailyChart'] = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: daily.map(d => d.date),
+        datasets: [{
+          label: '발생 건수',
+          data: daily.map(d => d.count),
+          backgroundColor: CHART_COLORS.blue,
+          borderColor: 'rgba(59,130,246,1)',
+          borderWidth: 1,
+          borderRadius: 4,
+          borderSkipped: false,
+        }],
+      },
+      options: {
+        ...chartCommonOptions,
+        scales: { x: axisStyle, y: { ...axisStyle, beginAtZero: true, ticks: { ...axisStyle.ticks, stepSize: 1 } } },
+      },
+    });
+  }
+
+  function renderTrendChart(trend, isMonthly) {
+    destroyChart('trendChart');
+    const ctx = document.getElementById('trendChart');
+    if (!ctx) return;
+    chartInstances['trendChart'] = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: trend.map(d => d.label),
+        datasets: [{
+          label: isMonthly ? '월별 발생' : '주별 발생',
+          data: trend.map(d => d.count),
+          borderColor: 'rgba(6,182,212,1)',
+          backgroundColor: 'rgba(6,182,212,0.12)',
+          pointBackgroundColor: 'rgba(6,182,212,1)',
+          pointBorderColor: '#0d1117',
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          tension: 0.35,
+          fill: true,
+          borderWidth: 2,
+        }],
+      },
+      options: {
+        ...chartCommonOptions,
+        scales: { x: axisStyle, y: { ...axisStyle, beginAtZero: true, ticks: { ...axisStyle.ticks, stepSize: 1 } } },
+      },
+    });
+  }
+
+  function renderZoneChart(byZone) {
+    destroyChart('zoneChart');
+    const ctx = document.getElementById('zoneChart');
+    if (!ctx) return;
+    const hasData = byZone && byZone.some(z => z.count > 0);
+    if (!hasData) {
+      chartInstances['zoneChart'] = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['데이터 없음'],
+          datasets: [{ data: [1], backgroundColor: ['rgba(255,255,255,0.08)'], borderWidth: 0 }],
+        },
+        options: {
+          ...chartCommonOptions,
+          plugins: {
+            ...chartCommonOptions.plugins,
+            legend: { display: true, position: 'bottom', labels: { color: CHART_TICK, font: { size: 11 }, padding: 12 } },
+          },
+          cutout: '62%',
+        },
+      });
+      return;
+    }
+    chartInstances['zoneChart'] = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: byZone.map(z => z.label),
+        datasets: [{
+          data: byZone.map(z => z.count),
+          backgroundColor: byZone.map((_, i) => ZONE_COLORS[i % ZONE_COLORS.length]),
+          borderColor: '#0d1117',
+          borderWidth: 2,
+          hoverOffset: 6,
+        }],
+      },
+      options: {
+        ...chartCommonOptions,
+        cutout: '62%',
+        plugins: {
+          ...chartCommonOptions.plugins,
+          legend: {
+            display: true,
+            position: 'bottom',
+            labels: { color: CHART_TICK, font: { size: 11 }, padding: 12, usePointStyle: true },
+          },
+        },
+      },
+    });
+  }
+
+  function updateCctvOptions(byCctv) {
+    const menu = document.getElementById('statsCctvFilterMenu');
+    const button = document.getElementById('statsCctvFilterButton');
+    const label = document.getElementById('statsCctvFilterLabel');
+    if (!menu || !button || !label) return;
+
+    const current = statsCctvCode || '';
+    const items = [{ cctvCode: '', cctvName: '전체 카메라', count: null }, ...(byCctv || [])];
+    menu.innerHTML = items.map((c) => {
+      const code = c.cctvCode || '';
+      const itemLabel = code ? `${c.cctvName} (${c.count}건)` : c.cctvName;
+      const selected = code === current ? ' selected' : '';
+      return `<div class="dropdown-item${selected}" data-cctv-code="${window.SituationCommon.escapeHtml(code)}"><span>${window.SituationCommon.escapeHtml(itemLabel)}</span></div>`;
+    }).join('');
+
+    const selected = items.find((c) => (c.cctvCode || '') === current);
+    label.textContent = selected
+      ? (selected.cctvCode ? `${selected.cctvName} (${selected.count}건)` : selected.cctvName)
+      : '전체 카메라';
+  }
+
+  function updateLabels(isMonthly) {
+    const dailyLbl = document.getElementById('statsDailyLabel');
+    const trendLbl = document.getElementById('statsTrendLabel');
+    if (dailyLbl) dailyLbl.textContent = isMonthly ? '일자별 발생 건수 (최근 30일)' : '일자별 발생 건수 (최근 7일)';
+    if (trendLbl) trendLbl.textContent = isMonthly ? '월간 추이 (최근 12개월)' : '주간 추이 (최근 8주)';
+  }
+
+  function resizeStatsCharts() {
+    Object.values(chartInstances).forEach((chart) => {
+      if (chart) chart.resize();
+    });
+  }
+
+  function renderStatsCharts() {
+    const isMonthly = statsPeriod === 'monthly';
+    updateLabels(isMonthly);
+    renderDailyChart(latestStatsData.daily || []);
+    renderTrendChart(latestStatsData.trend || [], isMonthly);
+    renderZoneChart(latestStatsData.byZone || []);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        resizeStatsCharts();
+      });
+    });
+  }
+
+  async function loadStats() {
+    try {
+      const params = new URLSearchParams({ period: statsPeriod });
+      if (statsCctvCode) params.set('cctvCode', statsCctvCode);
+      const res = await fetch(`/menu/situation/emergency/stats?${params}`, { headers: { Accept: 'application/json' } });
+      if (!res.ok) throw new Error(`Stats API error: ${res.status}`);
+      const data = await res.json();
+
+      latestStatsData = {
+        daily: data.daily || [],
+        trend: data.trend || [],
+        byZone: data.byZone || [],
+      };
+      updateCctvOptions(data.byCctv || []);
+
+      if (isStatsCollapsed()) {
+        destroyAllCharts();
+        updateLabels(statsPeriod === 'monthly');
+        return;
+      }
+
+      renderStatsCharts();
+    } catch (e) {
+      console.error('[situation_view] loadStats failed:', e);
+    }
+  }
+
+  function initStatsControls() {
+    // 주간/월간 토글
+    const toggle = document.getElementById('statsPeriodToggle');
+    if (toggle) {
+      toggle.addEventListener('click', e => {
+        const btn = e.target.closest('button[data-period]');
+        if (!btn) return;
+        toggle.querySelectorAll('button').forEach(b => b.classList.remove('is-active'));
+        btn.classList.add('is-active');
+        statsPeriod = btn.dataset.period;
+        loadStats().catch(console.error);
+      });
+    }
+
+    // 카메라 선택
+    const cctvDropdown = document.getElementById('statsCctvFilter');
+    const cctvButton = document.getElementById('statsCctvFilterButton');
+    const cctvMenu = document.getElementById('statsCctvFilterMenu');
+    if (cctvDropdown && cctvButton && cctvMenu) {
+      const closeDropdown = () => {
+        cctvButton.classList.remove('active');
+        cctvButton.setAttribute('aria-expanded', 'false');
+        cctvMenu.classList.remove('show');
+      };
+
+      cctvButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = cctvMenu.classList.contains('show');
+        closeDropdown();
+        if (!isOpen) {
+          cctvButton.classList.add('active');
+          cctvButton.setAttribute('aria-expanded', 'true');
+          cctvMenu.classList.add('show');
+        }
+      });
+
+      cctvMenu.addEventListener('click', (e) => {
+        const item = e.target.closest('.dropdown-item[data-cctv-code]');
+        if (!item) return;
+        statsCctvCode = item.dataset.cctvCode || '';
+        closeDropdown();
+        loadStats().catch(console.error);
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!cctvDropdown.contains(e.target)) {
+          closeDropdown();
+        }
+      });
+    }
+
+    // 접기/펼치기
+    const collapseBtn = document.getElementById('statsCollapseBtn');
+    const statsBody   = document.getElementById('sitStatsBody');
+    if (collapseBtn && statsBody) {
+      collapseBtn.addEventListener('click', () => {
+        const collapsed = statsBody.classList.toggle('is-collapsed');
+        collapseBtn.querySelector('i').className = collapsed ? 'bi bi-chevron-down' : 'bi bi-chevron-up';
+        if (collapsed) {
+          destroyAllCharts();
+          return;
+        }
+        renderStatsCharts();
+      });
+    }
+
+    window.addEventListener('resize', () => {
+      if (!isStatsCollapsed()) {
+        resizeStatsCharts();
+      }
+    });
+  }
+
   // ====== 최초 로딩 ======
   document.addEventListener('DOMContentLoaded', () => {
     if (window.currentView && window.currentView !== 'situation') return;
@@ -211,6 +602,10 @@
 
     // ✅ 최초 로딩도 "현재 입력된 값"으로 조회
     loadPage().catch(console.error);
+
+    // 통계 그래프
+    initStatsControls();
+    loadStats().catch(console.error);
   });
 
 })();

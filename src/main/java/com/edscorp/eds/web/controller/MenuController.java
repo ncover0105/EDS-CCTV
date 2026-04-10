@@ -137,6 +137,14 @@ public class MenuController {
                 "items", result.getContent());
     }
 
+    @GetMapping("/situation/emergency/stats")
+    @ResponseBody
+    public Map<String, Object> getEmergencyStats(
+            @RequestParam(name = "period", defaultValue = "weekly") String period,
+            @RequestParam(name = "cctvCode", required = false) String cctvCode) {
+        return emergencyService.getStats(period, cctvCode);
+    }
+
     @GetMapping("/settings")
     public String showSettingPage(@RequestParam(value = "view", required = false, defaultValue = "user") String view,
             Model model) {

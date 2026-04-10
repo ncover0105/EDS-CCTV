@@ -294,7 +294,7 @@
     }).join('');
 
     const countEl = document.getElementById('specialCount');
-    if (countEl) countEl.innerText = `총 ${totalItems}건 | 특보 이력을 조회하세요`;
+    if (countEl) countEl.innerText = `총 ${totalItems}건 | 특보 이력을 조회합니다.`;
 
     // 페이지네이션 렌더링 (임시 주석 처리)
     /*

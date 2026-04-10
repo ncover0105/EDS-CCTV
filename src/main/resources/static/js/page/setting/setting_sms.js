@@ -19,23 +19,38 @@
   };
 
   function getSelectedSmsUserIds() {
-    const tbody = $("smsUserList");
-    if (!tbody) return [];
+    return Array.from(document.querySelectorAll('.sms-select-toggle[type="checkbox"]:checked'))
+      .map((chk) => chk.closest("[data-user-id]")?.dataset?.userId)
+      .filter(Boolean);
+  }
 
-    const checks = tbody.querySelectorAll('input.alert-toggle[type="checkbox"]:checked');
-    const ids = [];
-    checks.forEach((chk) => {
-      const tr = chk.closest("tr");
-      const userId = tr?.dataset?.userId;
-      if (userId) ids.push(userId);
+  function clearSmsSelection() {
+    document.querySelectorAll('.sms-select-toggle[type="checkbox"]:checked')
+      .forEach((chk) => {
+        chk.checked = false;
+      });
+    syncSelectedSmsStyles();
+  }
+
+  function selectOnlySmsCheckbox(targetCheckbox) {
+    document.querySelectorAll('.sms-select-toggle[type="checkbox"]').forEach((chk) => {
+      chk.checked = chk === targetCheckbox;
     });
-    return ids;
+    syncSelectedSmsStyles();
   }
 
   function getRowByUserId(userId) {
-    const tbody = $("smsUserList");
-    if (!tbody) return null;
-    return tbody.querySelector(`tr[data-user-id="${CSS.escape(userId)}"]`);
+    return document.querySelector(`[data-user-id="${CSS.escape(userId)}"]`);
+  }
+
+  function getSmsUserById(userId) {
+    return smsUsers.find((user) => String(user.id) === String(userId)) || null;
+  }
+
+  function syncSmsResponsiveView() {
+    const cardBoard = $("smsCardBoard");
+    if (!cardBoard) return;
+    cardBoard.hidden = !window.matchMedia("(max-width: 768px)").matches;
   }
 
   function readYnFromCell(td) {
@@ -89,9 +104,54 @@
       .replaceAll("'", "&#039;");
   }
 
+  function syncSelectedSmsStyles() {
+    document.querySelectorAll("[data-user-id]").forEach((item) => {
+      const checked = !!item.querySelector('.sms-select-toggle[type="checkbox"]:checked');
+      item.classList.toggle("is-selected", checked);
+      if (item.tagName === "TR") {
+        item.classList.toggle("table-active", checked);
+      }
+    });
+  }
+
+  function smsCardHtml(user, no) {
+    return `
+      <article class="sms-user-card" data-user-id="${escapeHtml(user.id)}">
+        <div class="sms-user-card-head">
+          <label class="sms-card-check">
+            <input type="checkbox" class="sms-select-toggle" aria-label="선택">
+            <span>선택</span>
+          </label>
+          <span class="sms-card-no">${no}</span>
+        </div>
+        <div class="sms-user-card-body">
+          <div class="sms-user-card-main">
+            <strong class="sms-user-card-name">${escapeHtml(user.name) || "-"}</strong>
+            <span class="sms-user-card-phone">${escapeHtml(user.phnNo) || "-"}</span>
+          </div>
+          <dl class="sms-user-card-meta">
+            <div class="sms-user-card-meta-row">
+              <dt>상황 발생</dt>
+              <dd>${statusBadge(user.eventAlertYn)}</dd>
+            </div>
+            <div class="sms-user-card-meta-row">
+              <dt>경보 발령</dt>
+              <dd>${statusBadge(user.warnAlertYn)}</dd>
+            </div>
+            <div class="sms-user-card-meta-row">
+              <dt>알림 사용</dt>
+              <dd>${statusBadge(user.alertEnabledYn)}</dd>
+            </div>
+          </dl>
+        </div>
+      </article>`;
+  }
+
   function renderSmsTable() {
     const tbody = document.getElementById('smsUserList');
+    const cardBoard = $("smsCardBoard");
     if (!tbody) return;
+    syncSmsResponsiveView();
 
     const totalPages = Math.max(1, Math.ceil(smsUsers.length / PAGESIZE));
     if (currentPage > totalPages) currentPage = totalPages;
@@ -108,6 +168,12 @@
                     </div>
                 </td>
             </tr>`;
+      if (cardBoard) {
+        cardBoard.innerHTML = `
+          <div class="sms-empty-state">
+            <span class="text-muted"><i class="bi bi-inbox me-2"></i>등록된 SMS 수신자가 없습니다.</span>
+          </div>`;
+      }
 
       /*
       window.App.utils.renderPagination({
@@ -125,7 +191,7 @@
       const no = start + idx + 1;
       return `
             <tr data-user-id="${escapeHtml(user.id)}">
-                <td class="text-center"><input type="checkbox" class="alert-toggle"></td>
+                <td class="text-center"><input type="checkbox" class="alert-toggle sms-select-toggle"></td>
                 <td class="text-center">${no}</td>
                 <td>${escapeHtml(user.name) || '-'}</td>
                 <td>${escapeHtml(user.phnNo) || '-'}</td>
@@ -134,6 +200,12 @@
                 <td class="text-center">${statusBadge(user.alertEnabledYn)}</td>
             </tr>`;
     }).join('');
+
+    if (cardBoard) {
+      cardBoard.innerHTML = pageRows.map((user, idx) => smsCardHtml(user, start + idx + 1)).join("");
+    }
+
+    syncSelectedSmsStyles();
 
     /*
     window.App.utils.renderPagination({
@@ -243,8 +315,7 @@
       return;
     }
 
-    const tr = getRowByUserId(selected[0]);
-    const info = getUserInfoFromRow(tr);
+    const info = getSmsUserById(selected[0]);
     if (!info) {
       alert("선택된 사용자를 찾을 수 없습니다.");
       return;
@@ -306,18 +377,55 @@
     tbody.addEventListener("click", (e) => {
       const checkbox = e.target.closest('input.alert-toggle[type="checkbox"]');
       if (checkbox) {
-        const tr = checkbox.closest("tr");
-        if (tr) tr.classList.toggle("table-active", checkbox.checked);
+        if (checkbox.checked) {
+          selectOnlySmsCheckbox(checkbox);
+        } else {
+          clearSmsSelection();
+        }
         return;
       }
 
       const tr = e.target.closest("tr[data-user-id]");
       if (!tr) return;
-      const cb = tr.querySelector('input.alert-toggle[type="checkbox"]');
+      const cb = tr.querySelector('.sms-select-toggle[type="checkbox"]');
       if (!cb) return;
 
-      cb.checked = !cb.checked;
-      tr.classList.toggle("table-active", cb.checked);
+      if (cb.checked) {
+        clearSmsSelection();
+      } else {
+        cb.checked = true;
+        selectOnlySmsCheckbox(cb);
+      }
+    });
+  }
+
+  function bindSmsCardSelection() {
+    const cardBoard = $("smsCardBoard");
+    if (!cardBoard || cardBoard.dataset.rowBindDone === "Y") return;
+
+    cardBoard.dataset.rowBindDone = "Y";
+    cardBoard.addEventListener("click", (e) => {
+      const checkbox = e.target.closest('.sms-select-toggle[type="checkbox"]');
+      if (checkbox) {
+        if (checkbox.checked) {
+          selectOnlySmsCheckbox(checkbox);
+        } else {
+          clearSmsSelection();
+        }
+        return;
+      }
+
+      const card = e.target.closest(".sms-user-card[data-user-id]");
+      if (!card) return;
+      const cb = card.querySelector('.sms-select-toggle[type="checkbox"]');
+      if (!cb) return;
+
+      if (cb.checked) {
+        clearSmsSelection();
+      } else {
+        cb.checked = true;
+        selectOnlySmsCheckbox(cb);
+      }
     });
   }
 
@@ -341,6 +449,9 @@
     currentPage = 1;
     renderSmsTable();
     bindRowClickSelection();
+    bindSmsCardSelection();
     bindSmsEvents();
+    syncSmsResponsiveView();
+    window.addEventListener("resize", syncSmsResponsiveView);
   });
 })();

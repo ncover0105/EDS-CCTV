@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 public class EmergencyLogRowDTO {
     private Integer id;
     private String cctvCode;
+    private String cctvName;
     private String alertCode;
     private Integer boundaryNum;
     private String log;

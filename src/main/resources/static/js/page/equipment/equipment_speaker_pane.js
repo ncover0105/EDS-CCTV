@@ -243,22 +243,35 @@
     }
 
     function bindSpeakerFilterUI() {
-        const filterWrap = s$(".speaker-filters");
+        const filterWrap = s$(".speaker-status-bar");
         if (filterWrap && !filterWrap.dataset.bound) {
             filterWrap.addEventListener("click", (e) => {
-                const btn = e.target.closest(".chip[data-filter]");
+                const btn = e.target.closest(".speaker-stat[data-filter]");
                 if (!btn || !filterWrap.contains(btn)) return;
 
                 const filter = btn.dataset.filter || "all";
                 window.filterSpeakers(filter, btn);
             });
+
+            filterWrap.addEventListener("keydown", (e) => {
+                const btn = e.target.closest(".speaker-stat[data-filter]");
+                if (!btn || !filterWrap.contains(btn)) return;
+                if (e.key !== "Enter" && e.key !== " ") return;
+
+                e.preventDefault();
+                const filter = btn.dataset.filter || "all";
+                window.filterSpeakers(filter, btn);
+            });
+
             filterWrap.dataset.bound = "1";
         }
     }
 
     function syncSpeakerFilterUI() {
-        ss$(".speaker-filters .chip").forEach(chip => {
-            chip.classList.toggle("is-active", (chip.dataset.filter || "all") === currentFilter);
+        ss$(".speaker-status-bar .speaker-stat").forEach(stat => {
+            const isActive = (stat.dataset.filter || "all") === currentFilter;
+            stat.classList.toggle("is-active", isActive);
+            stat.setAttribute("aria-pressed", isActive ? "true" : "false");
         });
     }
 

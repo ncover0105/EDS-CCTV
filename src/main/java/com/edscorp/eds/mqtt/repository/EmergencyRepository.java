@@ -31,4 +31,8 @@ public interface EmergencyRepository extends JpaRepository<EmergencyEntity, Inte
 
         Page<EmergencyEntity> findByBoundaryNumAndInpDttmBetween(Integer boundaryNum, Date start, Date end,
                         Pageable pageable);
+
+        List<EmergencyEntity> findByInpDttmBetweenOrderByInpDttmAsc(Date start, Date end);
+
+        List<EmergencyEntity> findByCctvCodeAndInpDttmBetweenOrderByInpDttmAsc(String cctvCode, Date start, Date end);
 }

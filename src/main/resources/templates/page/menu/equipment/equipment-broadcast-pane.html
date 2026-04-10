@@ -1,6 +1,9 @@
 <div th:fragment="broadcastPane" class="broadcast-pane-root">
     <div class="broadcast-pane">
-        <!-- Top Bar -->
+
+        <!-- =====================================================
+             Top Bar — 공통 영역 (구조 유지, phase-steps 리디자인)
+             ===================================================== -->
         <header class="broadcast-topbar">
             <div class="broadcast-title">
                 <div class="broadcast-icon">
@@ -12,6 +15,7 @@
                 </div>
             </div>
 
+            <!-- Phase Steps (리디자인: 수직 아이콘 + 구분선 제거, HUD 스타일) -->
             <div class="bc-phase-steps">
                 <div class="bc-phase-step" id="bcPhase1">
                     <div class="bc-phase-icon">1</div>
@@ -38,211 +42,212 @@
             </div>
         </header>
 
+        <!-- =====================================================
+             3-Column Pipeline  [V4 Mission Control]
+             Desktop  : [260px] | [1fr] | [280px]
+             Tablet   : [1fr 1fr] top + [full] bottom
+             Mobile   : single column stack
+             ===================================================== -->
         <div class="bc-pipeline">
+
+            <!-- ══════════════════════════════════════════
+                 Col 1 : 대상 스피커
+                 ══════════════════════════════════════════ -->
             <div class="bc-target-col">
-                <section class="eq-panel bc-panel-target">
-                    <header class="panel-header">
-                        <div class="panel-title">
-                            <i class="bi bi-bullseye"></i>
-                            대상 스피커
-                        </div>
-                    </header>
-
-                    <div class="panel-body">
-                        <div class="bc-target-search-wrap">
-                            <div class="hud-search bc-full-width-search">
-                                <i class="bi bi-search"></i>
-                                <input id="targetSpeakerSearch" type="text" placeholder="ID / 이름 / 지역 검색"
-                                    autocomplete="off">
-                            </div>
-                        </div>
-
-                        <div class="bc-target-selectall">
-                            <div class="form-check bc-target-checkline">
-                                <input class="form-check-input" type="checkbox" id="targetSpeakerSelectAll">
-                                <label class="form-check-label bc-selectall-label" for="targetSpeakerSelectAll">전체
-                                    선택</label>
-                            </div>
-                        </div>
-
-                        <div class="bc-target-list-wrap" id="bc-target-list-scroll">
-                            <div id="targetSpeakerList"></div>
-                            <div id="targetSpeakerEmpty" class="d-none bc-empty-state">
-                                <i class="bi bi-inbox bc-empty-state-icon"></i>
-                                <p class="bc-empty-state-text">검색된 스피커가 없습니다</p>
-                                <p class="bc-empty-state-subtext">검색어를 조정하거나 스피커 목록을 다시 확인하세요.</p>
-                            </div>
+                <div class="bcp-panel bcp-panel--speakers">
+                    <div class="bcp-panel-band">
+                        <div class="bcp-band-title">
+                            <i class="bi bi-speaker-fill"></i>
+                            <span>대상 스피커</span>
                         </div>
                     </div>
-                </section>
 
-                <section class="eq-panel bc-panel-quick-actions v2-modern">
-                    <header class="panel-header">
-                        <div class="panel-title">
-                            <i class="bi bi-sliders"></i>
-                            방송 실행 제어
-                        </div>
-                    </header>
+                    <div class="bcp-search-row">
+                        <i class="bi bi-search"></i>
+                        <input id="targetSpeakerSearch" type="text" placeholder="ID / 이름 / 지역 검색" autocomplete="off">
+                    </div>
 
-                    <div class="panel-body">
-                        <div class="bc-exec-side">
-                            <div class="bc-exec-group">
-                                <div class="bc-exec-inline-head">
-                                    <div class="card-label">음원 제어</div>
-                                </div>
-                                <div class="bgm-ctrl-row">
-                                    <button class="bgm-bubble-btn on" id="broadcastBgmOnBtn"
-                                        onclick="startBroadcastBgm()">
-                                        <i class="bi bi-play-fill"></i> ON
-                                    </button>
-                                    <button class="bgm-bubble-btn off" id="broadcastBgmOffBtn"
-                                        onclick="stopBroadcastBgm()">
-                                        <i class="bi bi-stop-fill"></i> OFF
-                                    </button>
-                                </div>
-                            </div>
+                    <div class="bcp-selectall-row">
+                        <input type="checkbox" id="targetSpeakerSelectAll" class="bcp-chk">
+                        <label for="targetSpeakerSelectAll">전체 선택</label>
+                    </div>
 
-                            <div class="bc-exec-group bc-exec-group-main">
-                                <div class="card-label">방송 실행</div>
-                                <div class="exec-btn-group">
-                                    <button class="exec-main-btn start" id="broadcastStartBtn"
-                                        onclick="startBroadcast()">
-                                        <i class="bi bi-play-circle-fill"></i> 방송 시작
-                                    </button>
-                                    <button class="exec-main-btn stop d-none" id="broadcastStopBtn"
-                                        onclick="stopBroadcast()">
-                                        <i class="bi bi-stop-circle-fill"></i> 방송 종료
-                                    </button>
-                                </div>
-                            </div>
+                    <div class="bcp-list-scroll custom-scrollbar" id="bc-target-list-scroll">
+                        <div id="targetSpeakerList"></div>
+                        <div id="targetSpeakerEmpty" class="d-none bcp-empty">
+                            <i class="bi bi-inbox"></i>
+                            <p>검색된 스피커가 없습니다</p>
+                            <small>검색어를 조정하거나 목록을 다시 확인하세요.</small>
                         </div>
                     </div>
-                </section>
+                </div>
             </div>
 
-            <div class="bc-controls-col">
-                <!-- 1. 메시지 구성 패널 (V2 Modern Sidebar Style) -->
-                <section class="eq-panel bc-panel-composer v2-modern">
-                    <div class="panel-body">
-                        <div class="bc-composer-layout">
-                            <div class="bc-composer-toolbar">
-                                <div class="bc-toolbar-group">
-                                    <div class="card-label">방송 모드</div>
-                                    <div class="bc-choice-group" role="group">
-                                        <button type="button" class="bc-choice-btn is-active" data-target="bc_mode"
-                                            data-value="1">실제 방송</button>
-                                        <button type="button" class="bc-choice-btn" data-target="bc_mode"
-                                            data-value="0">시험 방송</button>
-                                    </div>
-                                    <select id="bc_mode" class="d-none">
-                                        <option value="0">시험 방송</option>
-                                        <option value="1" selected>실제 방송</option>
-                                    </select>
-                                </div>
-
-                                <div class="bc-toolbar-group">
-                                    <div class="card-label">카테고리</div>
-                                    <div class="bc-choice-group" role="group">
-                                        <button type="button" class="bc-choice-btn" data-target="bc_broadcast_type"
-                                            data-value="1">TTS 메시지</button>
-                                        <button type="button" class="bc-choice-btn is-active"
-                                            data-target="bc_broadcast_type" data-value="2">저장 메시지</button>
-                                        <button type="button" class="bc-choice-btn" data-target="bc_broadcast_type"
-                                            data-value="3">기타/수동</button>
-                                    </div>
-                                    <select id="bc_broadcast_type" class="d-none">
-                                        <option value="1">TTS</option>
-                                        <option value="2" selected>저장메시지</option>
-                                        <option value="3">기타</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="bc-input-side">
-                                <div class="input-glass-panel">
-                                    <!-- TTS 입력 영역 -->
-                                    <div class="bc-widget-group" id="customMessageArea">
-                                        <div class="input-header">
-                                            <div class="input-title"><i class="bi bi-chat-left-text"></i> 메시지 작성</div>
-                                            <span class="input-hint">방송할 내용을 직접 입력하세요.</span>
-                                        </div>
-                                        <textarea class="glass-textarea" id="customMessageText" maxlength="1000"
-                                            placeholder="이곳에 방송 내용을 입력하십시오..."></textarea>
-                                        <div class="input-footer">
-                                            <div class="text-counter"><i class="bi bi-type"></i> <span
-                                                    id="customMessageCount">0</span> / 1000 자</div>
-                                        </div>
-                                    </div>
-
-                                    <!-- 재난 메시지 선택 영역 -->
-                                    <div class="bc-widget-group d-none" id="bc_disaster_area">
-                                        <div class="input-header">
-                                            <div class="input-title"><i class="bi bi-grid-3x3-gap"></i> 재난 메시지 선택</div>
-                                            <span class="input-hint">등록된 메시지 중 하나를 선택하십시오.</span>
-                                        </div>
-                                        <select id="bc_disaster" class="d-none">
-                                            <option value="">-- 선택 --</option>
-                                        </select>
-                                        <div id="bc_disaster_card_list" class="bc-disaster-card-list custom-scrollbar">
-                                            <!-- 재난 카드가 여기에 동적으로 추가됩니다 -->
-                                        </div>
-                                        <div id="bc_disaster_empty" class="d-none bc-empty-state">
-                                            <i class="bi bi-inbox"></i>
-                                            <p>등록된 재난 메시지가 없습니다.</p>
-                                        </div>
-                                        <div id="bc_disaster_msg_area" class="bc-msg-preview d-none" hidden>
-                                            <div class="preview-header"><i class="bi bi-info-circle"></i> 선택된 안전 문구
-                                            </div>
-                                            <div id="bc_disaster_msg_text" class="preview-text"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 전송 진행 상태 -->
-                        <div id="broadcastProgress" class="d-none bc-modern-progress">
-                            <div class="progress-info">
-                                <span class="label">데이터 전송 중</span>
-                                <span class="percent" id="progressText">0%</span>
-                            </div>
-                            <div class="progress-track">
-                                <div class="progress-fill" id="progressFill"></div>
-                            </div>
+            <!-- ══════════════════════════════════════════
+                 Col 2 : 메시지 구성
+                 ══════════════════════════════════════════ -->
+            <div class="bc-compose-col">
+                <div class="bcp-panel bcp-panel--compose">
+                    <div class="bcp-panel-band">
+                        <div class="bcp-band-title">
+                            <i class="bi bi-pencil-square"></i>
+                            <span>메시지 구성</span>
                         </div>
                     </div>
-                </section>
 
-                <!-- 2. 방송 활동 및 실행 패널 (Execution) -->
-                <section class="eq-panel bc-panel-execution v2-modern">
-                    <header class="panel-header">
-                        <div class="panel-title">
+                    <!-- 방송 모드 & 카테고리 — 탭 스타일 -->
+                    <div class="bcp-tabs-section">
+                        <div class="bcp-tab-group">
+                            <span class="bcp-tab-lbl">방송 모드</span>
+                            <div class="bcp-tab-btns">
+                                <button type="button" class="bc-choice-btn bcp-tab is-active" data-target="bc_mode"
+                                    data-value="1">실제 방송</button>
+                                <button type="button" class="bc-choice-btn bcp-tab" data-target="bc_mode"
+                                    data-value="0">시험 방송</button>
+                            </div>
+                            <select id="bc_mode" class="d-none">
+                                <option value="0">시험 방송</option>
+                                <option value="1" selected>실제 방송</option>
+                            </select>
+                        </div>
+                        <div class="bcp-tab-group">
+                            <span class="bcp-tab-lbl">카테고리</span>
+                            <div class="bcp-tab-btns">
+                                <button type="button" class="bc-choice-btn bcp-tab" data-target="bc_broadcast_type"
+                                    data-value="1">TTS</button>
+                                <button type="button" class="bc-choice-btn bcp-tab is-active"
+                                    data-target="bc_broadcast_type" data-value="2">저장 메시지</button>
+                                <button type="button" class="bc-choice-btn bcp-tab" data-target="bc_broadcast_type"
+                                    data-value="3">기타</button>
+                            </div>
+                            <select id="bc_broadcast_type" class="d-none">
+                                <option value="1">TTS</option>
+                                <option value="2" selected>저장메시지</option>
+                                <option value="3">기타</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 입력 영역 -->
+                    <div class="bcp-compose-area">
+
+                        <!-- TTS 입력 -->
+                        <div class="bcp-input-block" id="customMessageArea">
+                            <div class="bcp-input-meta">
+                                <span>메시지 작성</span>
+                                <span class="bcp-hint">방송할 내용을 직접 입력하세요.</span>
+                            </div>
+                            <textarea class="bcp-textarea" id="customMessageText" maxlength="1000"
+                                placeholder="이곳에 방송 내용을 입력하십시오..."></textarea>
+                            <div class="bcp-char-count">
+                                <span id="customMessageCount">0</span> / 1000
+                            </div>
+                        </div>
+
+                        <!-- 재난 메시지 선택 -->
+                        <div class="bcp-input-block d-none" id="bc_disaster_area">
+                            <div class="bcp-input-meta">
+                                <span>재난 메시지 선택</span>
+                                <span class="bcp-hint">등록된 메시지 중 하나를 선택하십시오.</span>
+                            </div>
+                            <select id="bc_disaster" class="d-none">
+                                <option value="">-- 선택 --</option>
+                            </select>
+                            <div id="bc_disaster_card_list" class="bc-disaster-card-list custom-scrollbar"></div>
+                            <div id="bc_disaster_empty" class="d-none bcp-empty">
+                                <i class="bi bi-inbox"></i>
+                                <p>등록된 재난 메시지가 없습니다.</p>
+                            </div>
+                            <div id="bc_disaster_msg_area" class="bcp-msg-preview d-none" hidden>
+                                <i class="bi bi-check-circle-fill"></i>
+                                <div id="bc_disaster_msg_text"></div>
+                            </div>
+                        </div>
+
+                    </div><!-- /bcp-compose-area -->
+
+                    <!-- 전송 진행 상태 -->
+                    <div id="broadcastProgress" class="d-none bcp-progress-bar">
+                        <div class="bcp-progress-info">
+                            <span>데이터 전송 중</span>
+                            <span id="progressText">0%</span>
+                        </div>
+                        <div class="bcp-progress-track">
+                            <div class="bcp-progress-fill" id="progressFill"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════
+                 Col 3 : 실행 제어 + 방송 이력
+                 ══════════════════════════════════════════ -->
+            <div class="bc-exec-col">
+
+                <!-- 실행 제어 패널 -->
+                <div class="bcp-panel bcp-panel--ctrl">
+                    <div class="bcp-panel-band">
+                        <div class="bcp-band-title">
                             <i class="bi bi-broadcast"></i>
-                            방송 이력
-                        </div>
-                    </header>
-
-                    <div class="panel-body">
-                        <div class="bc-execution-v2-layout">
-                            <!-- 방송 로그 메인 (Logs) -->
-                            <div class="bc-log-main">
-                                <!-- <div class="log-header">
-                                    <div class="log-title">최근 방송 이력</div>
-                                </div> -->
-                                <div id="broadcastLogSection" class="bc-log-viewport custom-scrollbar">
-                                    <div id="broadcastLogEmpty" class="bc-log-empty">
-                                        <i class="bi bi-clipboard-x"></i>
-                                        <p>오늘의 방송 이력이 없습니다.</p>
-                                    </div>
-                                    <div id="broadcastLogPanel" class="bc-log-card-list d-none">
-                                        <!-- 로그 데이터 동적 삽입 (카드 형태) -->
-                                    </div>
-                                </div>
-                            </div>
+                            <span>방송 실행 제어</span>
                         </div>
                     </div>
-                </section>
-            </div>
-        </div>
+                    <div class="bcp-ctrl-body">
+                        <!-- 음원 제어 -->
+                        <div class="bcp-ctrl-row">
+                            <div class="bcp-ctrl-lbl">
+                                <i class="bi bi-music-note-beamed"></i> 음원 제어
+                            </div>
+                            <div class="bcp-bgm-btns">
+                                <button class="bcp-bgm-btn bcp-bgm-on" id="broadcastBgmOnBtn"
+                                    onclick="startBroadcastBgm()">
+                                    <i class="bi bi-play-fill"></i><span>ON</span>
+                                </button>
+                                <button class="bcp-bgm-btn bcp-bgm-off" id="broadcastBgmOffBtn"
+                                    onclick="stopBroadcastBgm()">
+                                    <i class="bi bi-stop-fill"></i><span>OFF</span>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- 방송 실행 -->
+                        <div class="bcp-ctrl-row bcp-ctrl-launch">
+                            <div class="bcp-ctrl-lbl">
+                                <i class="bi bi-wifi"></i> 방송 실행
+                            </div>
+                            <button class="bcp-launch-btn bcp-launch-start" id="broadcastStartBtn"
+                                onclick="startBroadcast()">
+                                <i class="bi bi-play-circle-fill"></i>
+                                <span>방송 시작</span>
+                            </button>
+                            <button class="bcp-launch-btn bcp-launch-stop d-none" id="broadcastStopBtn"
+                                onclick="stopBroadcast()">
+                                <i class="bi bi-stop-circle-fill"></i>
+                                <span>방송 종료</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 방송 이력 패널 -->
+                <div class="bcp-panel bcp-panel--log">
+                    <div class="bcp-panel-band">
+                        <div class="bcp-band-title">
+                            <i class="bi bi-clock-history"></i>
+                            <span>방송 이력</span>
+                        </div>
+                    </div>
+                    <div class="bcp-log-scroll custom-scrollbar" id="broadcastLogSection">
+                        <div id="broadcastLogEmpty" class="bcp-empty">
+                            <i class="bi bi-clipboard-x"></i>
+                            <p>오늘의 방송 이력이 없습니다.</p>
+                        </div>
+                        <div id="broadcastLogPanel" class="d-none bcp-log-list">
+                            <!-- 로그 데이터 동적 삽입 -->
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /bc-exec-col -->
+        </div><!-- /bc-pipeline -->
     </div>
 </div>

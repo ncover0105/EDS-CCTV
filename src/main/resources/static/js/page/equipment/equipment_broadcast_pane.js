@@ -861,6 +861,17 @@
         return s === "Y" || s === "USE" || s === "1" || s === "TRUE";
     }
 
+    function getDisasterNameByCode(code) {
+        const normalizedCode = String(code ?? "").trim();
+        if (!normalizedCode) return "-";
+
+        const found = (Array.isArray(disasterCache) ? disasterCache : []).find(
+            (d) => String(d?.dstCode ?? "").trim() === normalizedCode
+        );
+
+        return String(found?.dstName ?? "").trim() || normalizedCode;
+    }
+
     async function renderBroadcastTypes() {
         const disasters = await listDisasters();
         disasterCache = Array.isArray(disasters) ? disasters : [];
@@ -1107,6 +1118,7 @@
                         createdAt: new Date(),
                         deviceId: payload.deviceId ?? "-",
                         commandCode: payload.commandCode ?? "41",
+                        alertMode: payload.alertMode,
                         disasterCode: payload.disasterCode,
                         alertKind: payload.alertKind,
                         ttsMessage: payload.ttsMessage,
@@ -1125,6 +1137,7 @@
                         createdAt: new Date(),
                         deviceId: payload?.deviceId ?? "-",
                         commandCode: payload?.commandCode ?? "41",
+                        alertMode: payload?.alertMode ?? Number(document.getElementById("bc_mode")?.value ?? 1),
                         disasterCode: payload?.disasterCode ?? String(window.selectedBroadcastType ?? "").trim(),
                         alertKind: payload?.alertKind ?? Number(document.getElementById("bc_broadcast_type")?.value ?? 2),
                         ttsMessage: payload?.ttsMessage ?? msg,
@@ -1232,13 +1245,20 @@
         const deviceId = String(row?.deviceId ?? "-");
         const commandCode = String(row?.commandCode ?? "").trim();
         const bgmReqType = String(row?.bgmReqType ?? "").trim();
-        const disaster = String(row?.disasterCode ?? "-");
+        const disasterCode = String(row?.disasterCode ?? "-");
+        const disasterName = getDisasterNameByCode(disasterCode);
         const kind = String(row?.alertKind ?? "-");
+        const alertMode = String(row?.alertMode ?? "-");
 
         const kindMap = {
             "1": "TTS",
             "2": "저장 메시지",
             "3": "기타"
+        };
+
+        const alertModeMap = {
+            "0": "시험 방송",
+            "1": "실제 방송"
         };
 
         const statusMap = {
@@ -1249,12 +1269,15 @@
         const kindText = commandCode === "47"
             ? "BGM 제어"
             : (kindMap[kind] ?? kind);
+        const alertModeText = commandCode === "47"
+            ? "음원 제어"
+            : (alertModeMap[alertMode] ?? alertMode);
         const { text: statusText, className: statusClass } =
             statusMap[status] ?? { text: status || "-", className: "status-none" };
 
         const content = commandCode === "47"
             ? (bgmReqType === "01" ? "BGM ON" : bgmReqType === "00" ? "BGM OFF" : "BGM 제어")
-            : (kind === "1" && row?.ttsMessage ? row.ttsMessage : `재난: ${disaster}`);
+            : (kind === "1" && row?.ttsMessage ? row.ttsMessage : `재난: ${disasterName}`);
 
         return `
             <div class="bc-log-card">
@@ -1265,6 +1288,7 @@
                 <div class="bc-log-card-body">
                     <div class="bc-log-main-info">
                         <span class="bc-log-kind">${escapeHtml(kindText)}</span>
+                        <span class="bc-log-kind">${escapeHtml(alertModeText)}</span>
                         <span class="bc-log-device">ID: ${escapeHtml(deviceId)}</span>
                     </div>
                     <div class="bc-log-content">${escapeHtml(content)}</div>

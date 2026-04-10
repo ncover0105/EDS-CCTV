@@ -1,36 +1,4 @@
 <div th:fragment="cctvPane" style="display:flex; flex-direction:column; flex:1; min-height:0;">
-    <!-- <style>
-        #equipment-cctv-pane .cctv-pane {
-            display: flex;
-            flex-direction: column;
-            flex: 1 1 auto;
-            min-height: 0;
-        }
-
-        #equipment-cctv-pane .cctv-surface {
-            display: flex;
-            flex-direction: column;
-            flex: 1 1 auto;
-            min-height: 0;
-        }
-
-        #equipment-cctv-pane .cctv-table-wrap {
-            flex: 1 1 auto;
-            min-height: 0;
-            overflow: hidden;
-        }
-
-        #equipment-cctv-pane .cctv-table-wrap .table-responsive {
-            height: 100%;
-            min-height: 0;
-            overflow: auto;
-        }
-
-        #equipment-cctv-pane .panel-footer {
-            flex: 0 0 auto;
-        }
-    </style> -->
-
     <div class="cctv-pane d-flex flex-column" style="flex: 1; min-height: 0;">
 
         <!-- Top Bar -->
@@ -46,7 +14,7 @@
             </div>
 
             <div class="cctv-actions">
-                <div class="cctv-search">
+                <div class="hud-search cctv-search">
                     <i class="bi bi-search"></i>
                     <input id="cctvSearch" type="text" placeholder="이름 / 코드 검색" autocomplete="off">
                 </div>
@@ -80,17 +48,6 @@
             </div>
         </div>
 
-        <!-- Filter Chips -->
-        <div class="cctv-filters">
-            <button type="button" class="chip is-active" data-filter="all">전체</button>
-            <button type="button" class="chip" data-filter="ok">
-                <span class="status-dot ok"></span> 정상
-            </button>
-            <button type="button" class="chip" data-filter="bad">
-                <span class="status-dot bad"></span> 신호없음
-            </button>
-        </div>
-
         <!-- Content Surface -->
         <section class="cctv-surface d-flex flex-column" style="flex: 1; min-height: 0;">
 
@@ -121,6 +78,8 @@
                         <tbody id="cctvTbody" style="height:auto;"></tbody>
                     </table>
                 </div>
+
+                <div class="cctv-card-list" id="cctvCardList"></div>
 
                 <!-- Empty State -->
                 <div class="cctv-empty d-none" id="cctvEmpty">

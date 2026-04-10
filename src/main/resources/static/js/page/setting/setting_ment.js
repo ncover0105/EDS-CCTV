@@ -39,6 +39,10 @@
         return detailMode === "edit" || detailMode === "create";
     }
 
+    function isMentMobileLayout() {
+        return window.matchMedia("(max-width: 960px)").matches;
+    }
+
     function getSelectedMentIds() {
         return Array.from(document.querySelectorAll('input[name="selectedIds"]:checked'))
             .map((cb) => String(cb.value));
@@ -68,6 +72,17 @@
                 ? '<i class="bi bi-plus-lg"></i><span>추가</span>'
                 : '<i class="bi bi-check-lg"></i><span>저장</span>';
         }
+
+        syncMentMobileLayout();
+    }
+
+    function syncMentMobileLayout() {
+        const layoutEl = document.querySelector(".ment-manager-layout");
+        if (!layoutEl) return;
+
+        const hasSelection = !!getSelectedMentId();
+        const shouldOpenDetail = isDetailEditing() || hasSelection;
+        layoutEl.classList.toggle("is-mobile-detail-open", isMentMobileLayout() && shouldOpenDetail);
     }
 
     function fillDetailEditForm(item) {
@@ -93,6 +108,7 @@
             });
         setDetailMode("view");
         renderMentDetail(null);
+        syncMentMobileLayout();
     }
 
     function updateMentCountText() {
@@ -113,6 +129,8 @@
         if (detailMode !== "create") {
             renderMentDetail(getSelectedMentId());
         }
+
+        syncMentMobileLayout();
     }
 
     function selectOnlyThisCheckbox(targetCb) {
@@ -143,6 +161,7 @@
             if (detailMode !== "create") {
                 renderMentDetail(null);
             }
+            syncMentMobileLayout();
             return;
         }
 
@@ -232,6 +251,7 @@
             emptyEl.classList.remove("d-none");
             contentEl.classList.add("d-none");
             setDetailMode("view");
+            syncMentMobileLayout();
             return;
         }
 
@@ -253,6 +273,7 @@
 
         fillDetailEditForm(item);
         setDetailMode(detailMode === "edit" ? "edit" : "view");
+        syncMentMobileLayout();
     }
 
     async function loadMentList() {
@@ -523,5 +544,10 @@
                 setDetailMode("view");
                 renderMentDetail(getSelectedMentId());
             });
+        document.getElementById("mentMobileBackBtn")
+            ?.addEventListener("click", () => {
+                clearMentSelection();
+            });
+        window.addEventListener("resize", syncMentMobileLayout);
     });
 })();
