@@ -8,6 +8,15 @@
     let settingInitialized = false;
     let radioGroupBound = false;
 
+    function notify(message, type = 'info', options = {}) {
+        if (window.App?.utils?.notify) {
+            window.App.utils.notify(message, type, options);
+        } else {
+            console.warn('App.utils.notify is not available');
+            window.alert(message);
+        }
+    }
+
     function initSettingManager() {
         if (settingInitialized) return;
         settingInitialized = true;
@@ -21,7 +30,29 @@
         // 저장 버튼은 HTML onclick="saveSetting()" 사용
 
         bindRadioGroupsOnce();
+        applyManagerPermissions();
         loadSetting();
+    }
+
+    function applyManagerPermissions() {
+        if (window.IS_MANAGER) return;
+
+        [
+            'autoApproval',
+            'modeReal',
+            'modeTest',
+            'mediaCable',
+            'mediaDmb',
+            'typeTts',
+            'typeSaved',
+            'mapApiKey'
+        ].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = true;
+        });
+
+        const saveBtn = document.getElementById('btn-setting-save');
+        if (saveBtn) saveBtn.disabled = true;
     }
 
     function bindRadioGroupsOnce() {
@@ -59,6 +90,13 @@
 
     // ====== Setting API ======
     async function saveSetting() {
+        if (!window.IS_MANAGER) {
+            notify('시스템 설정 변경은 관리자만 가능합니다.', 'warning', {
+                title: '권한 없음'
+            });
+            return;
+        }
+
         const payload = {
             id: 1,
             autoApproval: document.getElementById('autoApproval')?.checked ?? false,
@@ -77,27 +115,26 @@
 
             if (!res.ok) {
                 const err = await res.text();
-                alert('설정 저장 실패: ' + err);
+                notify('설정 저장 실패', 'danger', {
+                    title: '실패'
+                });
                 return;
             }
 
             const result = await res.json();
 
-            if (window.iziToast) {
-                window.iziToast.success({
-                    message: '설정이 성공적으로 저장되었습니다.',
-                    position: 'topRight',
-                    timeout: 4000,
-                    progressBar: true
-                });
-            } else {
-                alert('설정이 저장되었습니다.');
-            }
+            notify('설정이 성공적으로 저장되었습니다.', 'success', {
+                title: '성공'
+            });
 
             console.log('[setting_set] saved:', result);
         } catch (e) {
+            notify('오류가 발생했습니다: ' + (e?.message || ''), 'danger', {
+                title: '오류'
+            });
+
             console.error('[setting_set] save error:', e);
-            alert('오류가 발생했습니다: ' + e.message);
+
         }
     }
 

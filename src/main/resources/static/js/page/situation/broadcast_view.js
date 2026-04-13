@@ -4,9 +4,11 @@
 
     // ✅ 당신 컨트롤러 기준 (Page / Slice 형태든 content 배열만 있으면 됨)
     const API_LIST = '/api/spk/web/alert-logs';
+    const API_DISASTER = '/api/disaster';
 
     let broadcastData = [];
     let broadcastFiltered = [];
+    let disasterNameMap = new Map();
 
     /* ---------------------------
     * 공통 유틸
@@ -69,12 +71,27 @@
         return null;
     }
 
-    function kindToText(kind) {
-        const n = parseInt(kind, 10);
+    function broadcastTypeToText(item) {
+        if (String(item?.disasterCode ?? '').toUpperCase() === 'BGM' || item?.bgmReqType) {
+            return 'BGM';
+        }
+
+        const n = parseInt(item?.alertKind, 10);
         if (n === 1) return 'TTS';
-        if (n === 2) return '사이렌';
-        if (n === 3) return '혼합';
-        return '-';
+        if (n === 2 || n === 3) return '재난 메시지';
+        return '발령';
+    }
+
+    function broadcastTitle(item) {
+        const typeText = broadcastTypeToText(item);
+        return typeText;
+    }
+
+    function bgmReqToText(bgmReqType) {
+        const s = String(bgmReqType ?? '').trim();
+        if (s === '01') return 'BGM ON';
+        if (s === '00') return 'BGM OFF';
+        return 'BGM';
     }
 
     function modeToText(mode) {
@@ -138,6 +155,26 @@
         return await res.json();
     }
 
+    async function loadDisasterNames() {
+        if (disasterNameMap.size > 0) return;
+
+        try {
+            const res = await fetch(API_DISASTER, { method: 'GET' });
+            if (!res.ok) return;
+
+            const rows = await res.json();
+            if (!Array.isArray(rows)) return;
+
+            disasterNameMap = new Map(
+                rows
+                    .map(row => [String(row?.dstCode ?? '').trim(), String(row?.dstName ?? '').trim()])
+                    .filter(([code, name]) => code && name)
+            );
+        } catch (err) {
+            console.warn('disaster name load error:', err);
+        }
+    }
+
     /* ---------------------------
     * 데이터 → 화면 모델 매핑
     * (SpkWebAlertLogResponseDTO 기반)
@@ -148,6 +185,9 @@
 
         const deviceId = row?.deviceId ?? '-';
         const disasterCode = row?.disasterCode ?? '-';
+        const disasterName = row?.disasterName
+            ?? disasterNameMap.get(String(disasterCode).trim())
+            ?? '';
 
         const alertKind = row?.alertKind;
         const alertRange = row?.alertRange;
@@ -155,9 +195,6 @@
         const alertPriority = row?.alertPriority;
 
         const status = String(row?.status ?? '').toUpperCase() || '-';
-        const commandCode = row?.commandCode ?? '';
-
-        const title = `${disasterCode} · ${kindToText(alertKind)}`;
 
         return {
             id: row?.id ?? 0,
@@ -166,9 +203,9 @@
                 ? window.SituationCommon.formatDateTime(dt)
                 : dt.toLocaleString(),
 
-            title,
             deviceId,
             disasterCode,
+            disasterName,
 
             alertKind,
             alertRange,
@@ -176,11 +213,9 @@
             alertPriority,
 
             status,
-            commandCode,
+            bgmReqType: row?.bgmReqType ?? '',
 
             ttsMessage: (row?.ttsMessage ?? '').toString(),
-            alertStoCd: row?.alertStoCd ?? '',
-            alertSirenCd: row?.alertSirenCd ?? '',
         };
     }
 
@@ -260,8 +295,6 @@
         const card = document.createElement("div");
         const modeText = modeToText(item.alertMode);
         const priorityText = priorityToText(item.alertPriority);
-        const kindText = kindToText(item.alertKind);
-
         const status = String(item?.status ?? "");
         const isSuccess = status === "1";
         const statusText = isSuccess ? "성공" : status === "0" ? "실패" : "-";
@@ -270,9 +303,28 @@
         card.className = `broadcast-card-modern fade-in ${statusClass}`;
         card.dataset.id = item.id;
 
-        const msg = (item.ttsMessage || "").trim() || "메시지 없음";
-        const stoCd = (item.alertStoCd || "-").trim();
-        const sirenCd = (item.alertSirenCd || "-").trim();
+        const typeText = broadcastTypeToText(item);
+        const titleText = broadcastTitle(item);
+        const msg = typeText === "BGM"
+            ? bgmReqToText(item.bgmReqType)
+            : (item.ttsMessage || "").trim() || "메시지 없음";
+        const msgLabel = typeText === "BGM" ? "BGM 요청" : `${typeText} 내용`;
+        const disasterNameDetail = typeText === "재난 메시지"
+            ? `
+                        <div class="bcm-message-box" style="margin-bottom: 10px;">
+                            <div class="bcm-msg-label">재난명</div>
+                            <div class="bcm-msg-content">${esc(item.disasterName || "재난명 없음")}</div>
+                        </div>
+            `
+            : "";
+        const messageDetail = typeText === "재난 메시지"
+            ? ""
+            : `
+                        <div class="bcm-message-box" style="margin-bottom: 5px;">
+                            <div class="bcm-msg-label"> ${esc(msgLabel)}</div>
+                            <div class="bcm-msg-content">${esc(msg)}</div>
+                        </div>
+            `;
 
         const priorityClass = priorityToKey(item.alertPriority);
         const accId = `bcm_acc_${item.id}`;
@@ -284,7 +336,7 @@
                         <i class="bi bi-broadcast"></i>
                     </div>
                     <div class="bcm-title-info">
-                        <h4 class="bcm-title">${esc(item.disasterCode)} · ${esc(kindText)}</h4>
+                        <h4 class="bcm-title">${esc(titleText)}</h4>
                         <span class="bcm-time"><i class="bi bi-calendar3"></i> ${esc(item.time)}</span>
                     </div>
                 </div>
@@ -296,9 +348,9 @@
 
             <div class="bcm-body-content">
                 <div class="bcm-meta-compact">
-                    <span class="bcm-compact-val"><i class="bi bi-cpu"></i> ${esc(item.deviceId)}</span>
+                    <span class="bcm-compact-val"><i class="bi bi-speaker"></i> ${esc(item.deviceId)}</span>
                     <span class="bcm-compact-val priority-${priorityClass}"><i class="bi bi-shield-exclamation"></i> ${esc(priorityText)}</span>
-                    <span class="bcm-compact-val"><i class="bi bi-activity"></i> ${esc(modeText)}</span>
+                    <span class="bcm-compact-val"><i class="bi bi-play-circle"></i> ${esc(modeText)}</span>
                     <span class="bcm-compact-val"><i class="bi bi-geo"></i> 범위: ${esc(item.alertRange ?? "-")}</span>
                 </div>
 
@@ -308,25 +360,8 @@
                     </button>
                     
                     <div id="${accId}_body" class="collapse bcm-inline-acc-body" data-bs-parent="#${accId}_parent">
-                        <div class="bcm-meta-grid" style="grid-template-columns: repeat(3, 1fr); margin-top: 10px;">
-                            <div class="bcm-meta-item">
-                                <span class="bcm-meta-label">전송 명령</span>
-                                <span class="bcm-meta-val">${esc(item.commandCode || "-")}</span>
-                            </div>
-                            <div class="bcm-meta-item">
-                                <span class="bcm-meta-label">STO 코드</span>
-                                <span class="bcm-meta-val">${esc(stoCd)}</span>
-                            </div>
-                            <div class="bcm-meta-item">
-                                <span class="bcm-meta-label">사이렌 코드</span>
-                                <span class="bcm-meta-val">${esc(sirenCd)}</span>
-                            </div>
-                        </div>
-
-                        <div class="bcm-message-box" style="margin-bottom: 5px;">
-                            <div class="bcm-msg-label"><i class="bi bi-chat-right-dots"></i> TTS 방송 메시지</div>
-                            <div class="bcm-msg-content">${esc(msg)}</div>
-                        </div>
+                        ${disasterNameDetail}
+                        ${messageDetail}
                     </div>
                 </div>
             </div>
@@ -379,6 +414,7 @@
         if (deviceId) params.deviceId = deviceId;
 
         try {
+            await loadDisasterNames();
             const data = await fetchAlertLogs(params);
             const rows = extractRowsFromResponse(data);
 

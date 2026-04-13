@@ -156,10 +156,70 @@ function extractApiErrorMessage(rawText, fallback = "요청 처리 중 오류가
     return text;
 }
 
-function promptSpeakerPassword(message = "비밀번호를 입력하세요.") {
-    const password = window.prompt(message);
-    if (password === null) return null;
-    return password;
+function isPasswordError(err) {
+    const message = String(err?.message ?? err ?? "").toLowerCase();
+    return ["password", "비밀번호", "unauthorized", "forbidden", "auth", "401", "403"]
+        .some((keyword) => message.includes(keyword));
+}
+
+let autoApprovalCache = null;
+async function isAutoApprovalEnabled() {
+    if (autoApprovalCache !== null) return autoApprovalCache;
+    try {
+        const res = await fetch("/api/settings", { headers: { "Accept": "application/json" } });
+        if (!res.ok) return false;
+        const setting = await res.json();
+        autoApprovalCache = !!setting?.autoApproval;
+        return autoApprovalCache;
+    } catch (_) {
+        return false;
+    }
+}
+
+function promptSpeakerPasswordWithServerValidation({ message = "비밀번호를 입력하세요.", onVerify } = {}) {
+    return new Promise(async (resolve) => {
+        if (await isAutoApprovalEnabled()) {
+            try {
+                const result = typeof onVerify === "function" ? await onVerify("") : null;
+                resolve({ ok: true, password: "", result, autoApproved: true });
+            } catch (err) {
+                resolve({ ok: false, error: err, autoApproved: true });
+            }
+            return;
+        }
+
+        if (!window.PasswordModal?.show) {
+            if (window.App?.utils?.showGlobalAlert) {
+                window.App.utils.showGlobalAlert("비밀번호 입력 모달을 사용할 수 없습니다.", "danger");
+            } else {
+                window.alert("비밀번호 입력 모달을 사용할 수 없습니다.");
+            }
+            resolve({ ok: false, cancelled: true });
+            return;
+        }
+
+        window.PasswordModal.show({
+            title: "비밀번호 확인",
+            message,
+            closeOnConfirm: false,
+            onConfirm: async (password, modal) => {
+                try {
+                    const result = typeof onVerify === "function" ? await onVerify(password) : null;
+                    modal.hide();
+                    resolve({ ok: true, password, result });
+                } catch (err) {
+                    if (isPasswordError(err)) {
+                        modal.showError(err.message || "비밀번호가 올바르지 않습니다.");
+                        return;
+                    }
+
+                    modal.hide();
+                    resolve({ ok: false, error: err });
+                }
+            },
+            onCancel: () => resolve({ ok: false, cancelled: true })
+        });
+    });
 }
 
 /* ---------- Selection State (multi) ---------- */
@@ -647,18 +707,19 @@ const BroadcastModal = {
         setActionStatus(activePrefix, "bgm", "");
         setSendButtonState(btn, true, selectedIds.length);
 
-        const password = promptSpeakerPassword("비밀번호를 입력하세요.");
-        if (password === null) {
-            setSendButtonState(btn, false);
-            return;
-        }
-
         try {
-            await BroadcastApi.action({
-                speakerIds: selectedIds,
-                action,
-                password
+            const verification = await promptSpeakerPasswordWithServerValidation({
+                message: "비밀번호를 입력하세요.",
+                onVerify: (password) => BroadcastApi.action({
+                    speakerIds: selectedIds,
+                    action,
+                    password
+                })
             });
+
+            if (verification.cancelled) return;
+            if (!verification.ok) throw verification.error;
+
             setActionStatus(activePrefix, "bgm", `${actionLabel} 실행 완료 (${selectedIds.length}대)`, "success");
         } catch (err) {
             console.error(err);
@@ -845,18 +906,22 @@ const BroadcastModal = {
             // setActionStatus(activePrefix, "broadcast", "");
             setSendButtonState(btn, true, selectedIds.length);
 
-            const password = promptSpeakerPassword("비밀번호를 입력하세요.");
-            if (password === null) {
-                setSendButtonState(btn, false);
-                return;
-            }
-
             try {
-                const serverPayload = this.buildServerPayload(selectedIds, payloadUI);
-                serverPayload.password = password;
+                let serverPayload = null;
+                const verification = await promptSpeakerPasswordWithServerValidation({
+                    message: "비밀번호를 입력하세요.",
+                    onVerify: (password) => {
+                        serverPayload = this.buildServerPayload(selectedIds, payloadUI);
+                        serverPayload.password = password;
 
-                console.log("[BC SEND]", serverPayload);
-                await BroadcastApi.send(serverPayload);
+                        console.log("[BC SEND]", serverPayload);
+                        return BroadcastApi.send(serverPayload);
+                    }
+                });
+
+                if (verification.cancelled) return;
+                if (!verification.ok) throw verification.error;
+
                 App.utils.showGlobalAlert("발령 전송 완료", "success");
 
                 // setActionStatus(

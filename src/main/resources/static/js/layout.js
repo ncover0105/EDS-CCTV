@@ -12,8 +12,10 @@ window.App = {
 
 (function initWebSocketModule() {
     let socket;
+    const wsEnabled = false;
 
     function connect() {
+        if (!wsEnabled) return;
         if (socket && socket.readyState === WebSocket.OPEN) return;
 
         socket = new WebSocket("ws://localhost:8080/ws/chat");
@@ -47,6 +49,7 @@ window.App = {
     }
 
     function sendMessage(obj) {
+        if (!wsEnabled) return;
         if (socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify(obj));
         } else {

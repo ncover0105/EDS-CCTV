@@ -1363,6 +1363,57 @@
     color: #dbeafe;
 }
 
+/* 방송 모달 스피커 아이템: 설정 모달 sp-item 디자인 기준 */
+#speaker_broadcast_modal .speaker-item {
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: var(--r-s);
+    background: transparent;
+    transition: background var(--ease), box-shadow var(--ease);
+    margin-bottom: 2px;
+}
+
+#speaker_broadcast_modal .speaker-item:hover:not(.offline),
+#speaker_broadcast_modal .speaker-item.selected {
+    background: var(--bg3);
+}
+
+#speaker_broadcast_modal .speaker-item.selected {
+    box-shadow: inset 0 0 0 1px rgba(79, 142, 247, .45);
+}
+
+#speaker_broadcast_modal .speaker-item.selected::before {
+    background: var(--blue);
+    box-shadow: 0 0 8px rgba(79, 142, 247, .4);
+}
+
+#speaker_broadcast_modal .speaker-item.offline {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
+#speaker_broadcast_modal .speaker-cb {
+    display: none;
+}
+
+#speaker_broadcast_modal .speaker-name {
+    color: var(--tx0);
+    line-height: 1.2;
+}
+
+#speaker_broadcast_modal .speaker-loc {
+    color: var(--tx2) !important;
+    font-family: var(--mono);
+}
+
+#speaker_broadcast_modal .speaker-arrow {
+    color: var(--tx3);
+}
+
+#speaker_broadcast_modal .speaker-item.selected .speaker-arrow {
+    color: var(--blue);
+}
+
 /* ╔══════════════════════════════════════════════════════════════╗
    ║  speaker-setting-modal.css                                   ║
    ║  스피커 설정 모달 전용 스타일 (#speaker_setting_modal)          ║
@@ -3006,3 +3057,282 @@ body.modal-open .ticker-bar {
     justify-content: center !important;
     line-height: normal !important;
 }
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   PasswordModal — 비밀번호 입력 모달 (다크 테마)
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── CSS 변수 (다크 테마 기준) ── */
+.pw-modal-overlay {
+    --pw-font:          'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    /* 배경/표면 */
+    --pw-bg:            #1a1e2e;
+    --pw-surface:       #141821;
+    /* 테두리 */
+    --pw-border:        #2a3142;
+    --pw-border-focus:  #60a5fa;
+    /* 텍스트 */
+    --pw-text:          #f0f4ff;
+    --pw-text-sub:      #cbd5e1;
+    --pw-muted:         #94a3b8;
+    --pw-placeholder:   #4e5a6e;
+    /* 액센트 */
+    --pw-primary:       #60a5fa;
+    --pw-primary-d:     #3b82f6;
+    --pw-primary-glow:  rgba(96, 165, 250, .18);
+    /* 에러 */
+    --pw-danger:        #fb7185;
+    --pw-danger-glow:   rgba(251, 113, 133, .15);
+    /* 아이콘 */
+    --pw-icon-color:    #60a5fa;
+    /* 기타 */
+    --pw-shadow:        0 24px 70px rgba(0, 0, 0, .65), 0 6px 24px rgba(0, 0, 0, .40);
+    --pw-radius:        14px;
+    --pw-ease:          180ms cubic-bezier(.4, 0, .2, 1);
+}
+
+/* ── 오버레이 ── */
+/* JS가 show() 시 display:flex, hide() 후 display:none으로 제어합니다.
+   초기 상태는 display:none (pointer-events 완전 차단) */
+.pw-modal-overlay {
+    display: none;           /* JS show()에서 flex로 바꿈 */
+    position: fixed;
+    inset: 0;
+    z-index: 10000;          /* Bootstrap modal(1055)보다 높게 */
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, .60);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: opacity var(--pw-ease);
+    /* 오버레이 자체는 pointer-events 허용, 박스 내부도 허용 */
+    pointer-events: auto;
+}
+
+.pw-modal-overlay.pw-modal-active {
+    opacity: 1;
+}
+
+/* ── 모달 박스 ── */
+.pw-modal-box {
+    font-family: var(--pw-font);
+    background: var(--pw-bg);
+    border: 1px solid var(--pw-border);
+    border-radius: var(--pw-radius);
+    box-shadow: var(--pw-shadow);
+    width: 100%;
+    max-width: 380px;
+    margin: 16px;
+    overflow: hidden;
+    transform: translateY(14px) scale(.96);
+    transition: transform var(--pw-ease);
+    /* 박스 내부 요소가 이벤트를 정상 수신하도록 명시 */
+    pointer-events: auto;
+}
+
+.pw-modal-overlay.pw-modal-active .pw-modal-box {
+    transform: translateY(0) scale(1);
+}
+
+/* ── 헤더 ── */
+.pw-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 22px 24px 0;
+}
+
+.pw-modal-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: var(--pw-primary-glow);
+    color: var(--pw-icon-color);
+    flex-shrink: 0;
+}
+
+.pw-modal-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--pw-text);
+    letter-spacing: -.01em;
+}
+
+/* ── 구분선 ── */
+.pw-modal-header::after {
+    content: '';
+    display: block;
+}
+
+/* ── 본문 ── */
+.pw-modal-body {
+    padding: 18px 24px 6px;
+}
+
+.pw-modal-message {
+    font-size: .84rem;
+    color: var(--pw-text-sub);
+    margin: 0 0 14px;
+    line-height: 1.6;
+}
+
+/* ── input 래퍼 ── */
+.pw-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.pw-modal-input {
+    width: 100%;
+    padding: 11px 42px 11px 13px;
+    font-family: var(--pw-font);
+    font-size: .875rem;
+    color: var(--pw-text);
+    background: var(--pw-surface);
+    border: 1.5px solid var(--pw-border);
+    border-radius: 8px;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color var(--pw-ease), box-shadow var(--pw-ease), background var(--pw-ease);
+    /* 입력 이벤트 명시적 허용 */
+    pointer-events: auto;
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+.pw-modal-input::placeholder {
+    color: var(--pw-placeholder);
+}
+
+.pw-modal-input:focus {
+    border-color: var(--pw-border-focus);
+    box-shadow: 0 0 0 3px var(--pw-primary-glow);
+    background: #0f1115;
+}
+
+.pw-modal-input.pw-input-error {
+    border-color: var(--pw-danger);
+    box-shadow: 0 0 0 3px var(--pw-danger-glow);
+}
+
+@keyframes pwShake {
+    0%, 100% { transform: translateX(0); }
+    20%       { transform: translateX(-6px); }
+    40%       { transform: translateX(6px); }
+    60%       { transform: translateX(-4px); }
+    80%       { transform: translateX(4px); }
+}
+
+.pw-input-shake {
+    animation: pwShake 300ms ease;
+}
+
+/* ── 눈 토글 버튼 ── */
+.pw-toggle-eye {
+    position: absolute;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 5px;
+    color: var(--pw-muted);
+    cursor: pointer;
+    transition: color var(--pw-ease), background var(--pw-ease);
+    pointer-events: auto;
+}
+
+.pw-toggle-eye:hover {
+    color: var(--pw-primary);
+    background: var(--pw-primary-glow);
+}
+
+.pw-toggle-eye:focus {
+    outline: none;
+}
+
+/* ── 에러 문구 ── */
+.pw-modal-error {
+    min-height: 20px;
+    margin: 7px 0 2px;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--pw-danger);
+    opacity: 0;
+    transition: opacity var(--pw-ease);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.pw-modal-error--visible {
+    opacity: 1;
+}
+
+/* ── 푸터 ── */
+.pw-modal-footer {
+    display: flex;
+    gap: 8px;
+    padding: 10px 24px 22px;
+}
+
+/* ── 버튼 공통 ── */
+.pw-btn {
+    flex: 1;
+    padding: 10px 0;
+    font-family: var(--pw-font);
+    font-size: .875rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    outline: none;
+    pointer-events: auto;
+    transition: background var(--pw-ease), box-shadow var(--pw-ease), transform 80ms ease;
+}
+
+.pw-btn:active {
+    transform: scale(.96);
+}
+
+.pw-btn:focus-visible {
+    outline: 2px solid var(--pw-primary);
+    outline-offset: 2px;
+}
+
+/* 확인 */
+.pw-btn-confirm {
+    background: var(--pw-primary);
+    color: #0a0f1e;
+    font-weight: 700;
+    box-shadow: 0 2px 10px rgba(96, 165, 250, .30);
+}
+
+.pw-btn-confirm:hover {
+    background: var(--pw-primary-d);
+    box-shadow: 0 4px 16px rgba(96, 165, 250, .40);
+}
+
+/* 취소 */
+.pw-btn-cancel {
+    background: rgba(255, 255, 255, .06);
+    color: var(--pw-muted);
+    border: 1px solid var(--pw-border);
+}
+
+.pw-btn-cancel:hover {
+    background: rgba(255, 255, 255, .10);
+    color: var(--pw-text-sub);
+    border-color: #3d4a60;
+}
+

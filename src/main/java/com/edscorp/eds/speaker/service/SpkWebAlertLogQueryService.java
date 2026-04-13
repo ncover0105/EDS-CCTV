@@ -33,7 +33,7 @@ public class SpkWebAlertLogQueryService {
         LocalDate fromReq = req.getFrom();
         LocalDate toReq = req.getTo();
 
-        // ✅ 날짜 해석 규칙
+        // 날짜 해석 규칙
         // 1) date 있으면 date 하루
         // 2) from/to 둘 다 있으면 기간
         // 3) from만 있으면 from 하루

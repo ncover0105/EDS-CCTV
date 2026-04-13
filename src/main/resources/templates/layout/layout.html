@@ -42,6 +42,7 @@
     <link rel="stylesheet" th:href="@{/css/modal.css}" />
 
     <script type="module" src="/js/layout.js?v=1"></script>
+    <script src="/js/ui/modal_password.js?v=1"></script>
     <!-- <script src="/js/speaker/btype_action_modal.js?v=1"></script> -->
 </head>
 
@@ -65,6 +66,7 @@
             <div th:replace="~{fragments/modal/speaker_setting_modal :: #speaker_setting_modal}"></div>
             <div th:replace="~{fragments/modal/tts_manage_modal :: #tts_manage_modal}"></div>
             <div th:replace="~{fragments/modal/confirm_modal :: #confirm_modal}"></div>
+            <div th:replace="~{fragments/modal/password_modal :: password_modal}"></div>
             <div th:replace="~{fragments/modal/btype_action_modal :: #btype_action_modal}"></div>
             <div th:replace="~{fragments/modal/speaker_broadcast_modal :: #speaker_broadcast_modal}"></div>
 

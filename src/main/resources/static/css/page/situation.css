@@ -315,6 +315,7 @@
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     background: var(--bg-panel);
+    gap: 4px;
 }
 
 .sit-tab-nav::-webkit-scrollbar {
@@ -324,6 +325,7 @@
 .sit-tab-item {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: var(--sp-xs);
     padding: 10px var(--sp-lg);
     background: transparent;
@@ -336,6 +338,8 @@
     cursor: pointer;
     transition: all var(--t-base);
     white-space: nowrap;
+    flex: 1 1 0;
+    min-width: max-content;
 }
 
 .sit-tab-item:hover {
@@ -1489,10 +1493,11 @@ select.sit-input {
 
 /* ── 1024px: 사이드바 오버레이 전환 ── */
 @media (max-width: 1024px) {
-
     /* 모바일 탭 네비게이션 표시 */
     .sit-tab-nav {
         display: flex;
+        align-items: stretch;
+        justify-content: center;
     }
 
     /* 햄버거 토글 버튼 표시 */
@@ -1539,6 +1544,14 @@ select.sit-input {
 
 /* ── 768px: 패딩 및 폰트 축소 ── */
 @media (max-width: 768px) {
+    .sit-tab-nav {
+        padding: 0 var(--sp-md);
+    }
+
+    .sit-tab-item {
+        padding: 10px var(--sp-sm);
+    }
+
     .sit-topbar-content {
         padding: var(--sp-sm) var(--sp-md);
     }
@@ -1591,6 +1604,24 @@ select.sit-input {
 
 /* ── 480px: 모바일 레이아웃 ── */
 @media (max-width: 480px) {
+    .sit-tab-nav {
+        padding: 0 var(--sp-xs);
+        gap: 2px;
+    }
+
+    .sit-tab-item {
+        flex-direction: column;
+        gap: 3px;
+        min-width: 0;
+        padding: 8px 4px;
+        font-size: 11px;
+        line-height: 1.2;
+    }
+
+    .sit-tab-item i {
+        font-size: 14px;
+    }
+
     /* .sit-hist-surface {
         padding: var(--sp-xs);
     } */
@@ -2041,7 +2072,7 @@ select.sit-input {
 }
 
 .bcm-inline-accordion {
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    /* border-top: 1px solid rgba(255, 255, 255, 0.06); */
     padding-top: 10px;
 }
 
@@ -2149,6 +2180,88 @@ select.sit-input {
     font-size: 13px;
     font-weight: 600;
     color: var(--text-primary);
+}
+
+@media (max-width: 600px) {
+    #broadcastCardItems {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        padding: 14px 10px 80px;
+    }
+
+    .sit-hist-surface--broadcast {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .broadcast-card-modern {
+        width: 100%;
+        min-width: 0;
+        border-radius: 10px;
+    }
+
+    .bcm-header {
+        align-items: flex-start;
+        gap: 10px;
+        padding: 14px 16px;
+    }
+
+    .bcm-title-wrap {
+        gap: 10px;
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .bcm-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+
+    .bcm-title-info {
+        min-width: 0;
+    }
+
+    .bcm-title {
+        font-size: 14px;
+        overflow-wrap: anywhere;
+    }
+
+    .bcm-time {
+        font-size: 12px;
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .bcm-status-badge {
+        flex: 0 0 auto;
+        padding: 4px 8px;
+        font-size: 10px;
+    }
+
+    .bcm-meta-compact {
+        grid-template-columns: 1fr;
+        gap: 6px;
+        padding: 12px 14px;
+    }
+
+    .bcm-compact-val {
+        min-width: 0;
+        padding: 7px 10px;
+    }
+
+    .bcm-inline-accordion {
+        padding: 0 14px 14px !important;
+    }
+
+    .bcm-message-box {
+        padding: 12px;
+    }
+
+    .bcm-msg-content {
+        font-size: 13px;
+        overflow-wrap: anywhere;
+    }
 }
 
 /* ============================================

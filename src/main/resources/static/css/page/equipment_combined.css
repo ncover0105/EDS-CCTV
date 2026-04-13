@@ -309,6 +309,7 @@
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     background: var(--bg-panel);
+    gap: 4px;
 }
 
 .eq-tab-nav::-webkit-scrollbar {
@@ -318,6 +319,7 @@
 .eq-tab-item {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: var(--sp-xs);
     padding: 10px var(--sp-lg);
     background: transparent;
@@ -330,6 +332,8 @@
     cursor: pointer;
     transition: all var(--t-base);
     white-space: nowrap;
+    flex: 1 1 0;
+    min-width: max-content;
 }
 
 .eq-tab-item:hover {
@@ -4768,6 +4772,8 @@ select.eq-input option {
 
     .eq-tab-nav {
         display: flex;
+        align-items: stretch;
+        justify-content: center;
     }
 
     /* ── eq-main: 모바일에서 pane 레벨 세로 스크롤 허용 ── */
@@ -5281,14 +5287,12 @@ select.eq-input option {
    ============================================ */
 @media (max-width: 768px) {
     .eq-tab-nav {
-        padding-left: var(--sp-md);
-        padding-right: var(--sp-md);
+        padding: 0 var(--sp-md);
     }
 
     .eq-tab-item {
         min-height: 44px;
-        padding-left: var(--sp-md);
-        padding-right: var(--sp-md);
+        padding: 10px var(--sp-sm);
     }
 
     .broadcast-topbar,
@@ -5412,16 +5416,18 @@ select.eq-input option {
 
 @media (max-width: 480px) {
     .eq-tab-nav {
-        padding-left: var(--sp-sm);
-        padding-right: var(--sp-sm);
+        padding: 0 var(--sp-xs);
+        gap: 2px;
     }
 
     .eq-tab-item {
+        flex-direction: column;
         flex: 1 1 0;
-        justify-content: center;
-        padding-left: 10px;
-        padding-right: 10px;
-        font-size: 12px;
+        gap: 3px;
+        min-width: 0;
+        padding: 8px 4px;
+        font-size: 11px;
+        line-height: 1.2;
     }
 
     .eq-tab-item i {

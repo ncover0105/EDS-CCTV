@@ -374,6 +374,7 @@
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     background: var(--bg-panel);
+    gap: 4px;
 }
 
 .set-tab-nav::-webkit-scrollbar {
@@ -383,6 +384,7 @@
 .set-tab-item {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: var(--sp-xs);
     padding: 10px var(--sp-lg);
     background: transparent;
@@ -395,6 +397,8 @@
     cursor: pointer;
     transition: all var(--t-base);
     white-space: nowrap;
+    flex: 1 1 0;
+    min-width: max-content;
 }
 
 .set-tab-item:hover {
@@ -2327,31 +2331,38 @@ select.set-input option {
     padding: 14px 16px 8px;
 }
 
-.user-card-check {
-    display: inline-flex;
+/* 카드 액션 버튼 */
+.user-card-actions {
+    display: flex;
     align-items: center;
-    gap: 8px;
-    color: var(--text-secondary);
-    font-size: 12px;
-    cursor: pointer;
+    gap: 4px;
 }
 
-.user-card-check input {
-    cursor: pointer;
-}
-
-.user-card-no {
+.user-card-action-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 26px;
-    height: 20px;
-    padding: 0 7px;
-    border-radius: var(--r-pill);
-    background: rgba(255, 255, 255, 0.05);
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--border-soft);
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.04);
     color: var(--text-muted);
-    font-family: var(--font-mono);
     font-size: 11px;
+    cursor: pointer;
+    transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
+}
+
+.user-card-action-btn:hover {
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.30);
+    color: var(--accent);
+}
+
+.user-card-action-btn.danger:hover {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.30);
+    color: var(--danger);
 }
 
 /* 프로필 영역 */
@@ -2386,6 +2397,11 @@ select.set-input option {
     color: rgba(252, 129, 74, 0.95);
 }
 
+.user-card-avatar i {
+    font-size: 18px;
+    line-height: 1;
+}
+
 /* ID / 이름 */
 .user-card-identity {
     flex: 1;
@@ -2418,7 +2434,13 @@ select.set-input option {
     flex-shrink: 0;
 }
 
-/* 메타 정보 (전화번호 등) */
+.user-card-role .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* 메타 정보 (전화번호 + SMS 칩) */
 .user-card-meta {
     margin: 0 14px 14px;
     padding: 9px 13px;
@@ -2427,6 +2449,7 @@ select.set-input option {
     border-radius: 9px;
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
     gap: 7px;
 }
 
@@ -2453,6 +2476,260 @@ select.set-input option {
     border: 1px dashed var(--border-mid);
     border-radius: var(--r-lg);
     background: rgba(255, 255, 255, 0.02);
+}
+
+/* ── 사용자 추가 카드 ────────────────────────────── */
+.user-add-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 0;
+    border: 1.5px dashed var(--border-mid);
+    border-radius: var(--r-lg);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    min-height: 160px;
+    transition: border-color var(--t-fast), background var(--t-fast), color var(--t-fast);
+}
+
+.user-add-card:hover {
+    border-color: var(--accent);
+    background: rgba(59, 130, 246, 0.05);
+    color: var(--accent);
+}
+
+.user-add-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1.5px dashed currentColor;
+    font-size: 18px;
+    transition: background var(--t-fast);
+}
+
+.user-add-card:hover .user-add-card-icon {
+    background: rgba(59, 130, 246, 0.08);
+}
+
+.user-add-card-label {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+
+/* ── SMS 상태 칩 (카드 하단) ─────────────────────── */
+.user-card-sms-chips {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    padding-top: 7px;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.user-sms-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px 3px 6px;
+    height: 22px;
+    border-radius: 100px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-soft);
+    color: var(--text-disabled);
+    font-size: 10px;
+    white-space: nowrap;
+    transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
+}
+
+.user-sms-chip-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    line-height: 1;
+}
+
+.user-sms-chip.is-on {
+    background: rgba(34, 197, 94, 0.12);
+    border-color: rgba(34, 197, 94, 0.28);
+    color: #22c55e;
+}
+
+/* ── 사용자 수정 모달 탭 ────────────────────────── */
+.user-modal-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-soft);
+    background: var(--bg-panel);
+    padding: 0 12px;
+    gap: 0;
+    list-style: none;
+    margin: 0;
+}
+
+.user-modal-tabs .nav-item {
+    flex-shrink: 0;
+}
+
+.user-modal-tabs .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted);
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 11px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--font-body);
+    transition: color var(--t-fast), border-color var(--t-fast);
+    background: transparent;
+    border-radius: 0;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.user-modal-tabs .nav-link:hover:not(:disabled) {
+    color: var(--text-secondary);
+    border-bottom-color: var(--border-mid);
+    background: transparent;
+}
+
+.user-modal-tabs .nav-link.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: transparent;
+}
+
+.user-modal-tabs .nav-link:disabled {
+    color: var(--text-disabled);
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* ── SMS 알림 탭 내용 ────────────────────────────── */
+.user-sms-insert-notice {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    background: var(--info-bg);
+    border: 1px solid rgba(96, 165, 250, 0.18);
+    border-radius: var(--r-md);
+    color: var(--info);
+    font-size: 13.5px;
+}
+
+.user-sms-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 18px;
+    background: var(--bg-raised);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-md);
+}
+
+.user-sms-toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.user-sms-toggle-label > i {
+    color: var(--accent);
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+.user-sms-toggle-label > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.user-sms-toggle-label small {
+    display: block;
+    color: var(--text-muted);
+    font-size: 11.5px;
+    font-weight: 400;
+}
+
+.user-sms-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+    transition: opacity var(--t-fast);
+}
+
+.user-sms-options.is-disabled {
+    opacity: 0.35;
+    pointer-events: none;
+}
+
+.user-sms-option-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 18px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-sm);
+    transition: border-color var(--t-fast);
+}
+
+.user-sms-option-item:hover {
+    border-color: var(--border-soft);
+}
+
+.user-sms-option-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    flex: 1;
+    color: var(--text-secondary);
+    font-size: 13.5px;
+    margin: 0;
+}
+
+.user-sms-option-label > i {
+    color: var(--text-muted);
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.user-sms-option-label > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.user-sms-option-label span {
+    color: var(--text-primary);
+    font-size: 13.5px;
+}
+
+.user-sms-option-label small {
+    color: var(--text-muted);
+    font-size: 11.5px;
+}
+
+/* form-switch 색상 보정 (dark theme) */
+#userTabSms .form-check-input:checked {
+    background-color: var(--accent);
+    border-color: var(--accent);
 }
 
 .sms-card-board {
@@ -2622,15 +2899,25 @@ select.set-input option {
     }
 
     .user-card-grid {
-        grid-template-columns: repeat(2, minmax(260px, 1fr));
-        min-width: 560px;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        min-width: 0;
     }
 }
 
 @media (max-width: 640px) {
     .user-card-grid {
-        grid-template-columns: minmax(260px, 1fr);
-        min-width: 260px;
+        grid-template-columns: 1fr;
+        min-width: 0;
+    }
+
+    .user-modal-tabs .nav-link {
+        padding: 9px 12px;
+        font-size: 12px;
+    }
+
+    .user-sms-toggle-row,
+    .user-sms-option-item {
+        padding: 11px 14px;
     }
 }
 
@@ -3807,6 +4094,8 @@ select.set-input option {
 
     .set-tab-nav {
         display: flex;
+        align-items: stretch;
+        justify-content: center;
     }
 
     /* ── set-main: 모바일에서 pane 레벨 세로 스크롤 허용 ── */
@@ -3999,6 +4288,14 @@ select.set-input option {
 
 /* ── 768px: 폼/헤더/패딩 축소 ── */
 @media (max-width: 768px) {
+    .set-tab-nav {
+        padding: 0 var(--sp-md);
+    }
+
+    .set-tab-item {
+        padding: 10px var(--sp-sm);
+    }
+
     .set-topbar-content {
         padding: var(--sp-sm) var(--sp-md);
     }
@@ -4158,6 +4455,23 @@ select.set-input option {
 
 /* ── 480px: 최소 UI ── */
 @media (max-width: 480px) {
+    .set-tab-nav {
+        padding: 0 var(--sp-xs);
+        gap: 2px;
+    }
+
+    .set-tab-item {
+        flex-direction: column;
+        gap: 3px;
+        min-width: 0;
+        padding: 8px 4px;
+        font-size: 11px;
+        line-height: 1.2;
+    }
+
+    .set-tab-item i {
+        font-size: 14px;
+    }
 
     /* .speaker-layout,
     .bc-pipeline,
@@ -4523,6 +4837,23 @@ select.set-input option {
 
 /* ── 반응형 ── */
 @media (max-width: 768px) {
+    .sapi-hint {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 0.25rem 0.4rem;
+        font-size: 0.76rem;
+        line-height: 1.45;
+    }
+
+    .sapi-hint i {
+        margin-top: 0.12rem;
+        flex-shrink: 0;
+    }
+
+    .sapi-hint a {
+        overflow-wrap: anywhere;
+    }
+
     .scard--grid3 {
         flex-direction: column;
     }

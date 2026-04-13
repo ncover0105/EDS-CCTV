@@ -85,6 +85,7 @@ public class SecurityConfig {
 
                         // ✅ 2) "권한 변경"은 관리자만
                         .requestMatchers(HttpMethod.PUT, "/api/users/*/role").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.POST, "/api/settings").hasRole("MANAGER")
 
                         // ✅ 3) 나머지 USER 영역은 USER/MANAGER 모두 허용
                         .requestMatchers(USER_URLS).hasAnyRole("USER", "MANAGER")

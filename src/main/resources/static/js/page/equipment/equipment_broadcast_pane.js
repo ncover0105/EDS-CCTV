@@ -22,6 +22,68 @@
         window.alert(message);
     }
 
+    function isPasswordError(err) {
+        const message = String(err?.message ?? err ?? "").toLowerCase();
+        return ["password", "비밀번호", "unauthorized", "forbidden", "auth", "401", "403"]
+            .some((keyword) => message.includes(keyword));
+    }
+
+    let autoApprovalCache = null;
+    async function isAutoApprovalEnabled() {
+        if (autoApprovalCache !== null) return autoApprovalCache;
+        try {
+            const res = await fetch("/api/settings", { headers: { "Accept": "application/json" } });
+            if (!res.ok) return false;
+            const setting = await res.json();
+            autoApprovalCache = !!setting?.autoApproval;
+            return autoApprovalCache;
+        } catch (_) {
+            return false;
+        }
+    }
+
+    function requestPasswordWithServerValidation({ message = "비밀번호를 입력하세요.", onVerify } = {}) {
+        return new Promise(async (resolve) => {
+            if (await isAutoApprovalEnabled()) {
+                try {
+                    const result = typeof onVerify === "function" ? await onVerify("") : null;
+                    resolve({ ok: true, password: "", result, autoApproved: true });
+                } catch (err) {
+                    resolve({ ok: false, error: err, autoApproved: true });
+                }
+                return;
+            }
+
+            if (!window.PasswordModal?.show) {
+                uiAlert("비밀번호 입력 모달을 사용할 수 없습니다.", "danger");
+                resolve({ ok: false, cancelled: true });
+                return;
+            }
+
+            window.PasswordModal.show({
+                title: "비밀번호 확인",
+                message,
+                closeOnConfirm: false,
+                onConfirm: async (password, modal) => {
+                    try {
+                        const result = typeof onVerify === "function" ? await onVerify(password) : null;
+                        modal.hide();
+                        resolve({ ok: true, password, result });
+                    } catch (err) {
+                        if (isPasswordError(err)) {
+                            modal.showError(err.message || "비밀번호가 올바르지 않습니다.");
+                            return;
+                        }
+
+                        modal.hide();
+                        resolve({ ok: false, error: err });
+                    }
+                },
+                onCancel: () => resolve({ ok: false, cancelled: true })
+            });
+        });
+    }
+
     function extractApiErrorMessage(rawText, fallback) {
         const text = String(rawText ?? "").trim();
         if (!text) return fallback;
@@ -598,15 +660,18 @@
             return;
         }
 
-        const password = prompt("비밀번호를 입력하세요.");
-        if (password === null) return; // 취소
-
         const isOn = (action === "bgmOn");
         const label = isOn ? "BGM ON" : "BGM OFF";
         setActionButtonBusy(btnId, true);
 
         try {
-            await sendSpeakerAction({ speakerIds, action, password });
+            const verification = await requestPasswordWithServerValidation({
+                message: "비밀번호를 입력하세요.",
+                onVerify: (password) => sendSpeakerAction({ speakerIds, action, password })
+            });
+            if (verification.cancelled) return;
+            if (!verification.ok) throw verification.error;
+
             uiAlert(`${label} 실행 완료 (${speakerIds.length}대)`, "success");
             appendBroadcastLogEntry({
                 html: buildAlertLogHtml({
@@ -896,42 +961,6 @@
         resetSelection();
     }
 
-    function edsConfirm(message, onConfirm) {
-        const modalEl = document.getElementById("edsConfirmModal");
-        if (!modalEl || !window.bootstrap) {
-            // 모달이 없으면 즉시 confirm fallback
-            if (window.confirm(message.replaceAll(/<[^>]*>/g, ""))) onConfirm?.();
-            return;
-        }
-
-        const msgEl = document.getElementById("edsConfirmMessage");
-        const titleEl = document.getElementById("edsConfirmTitle");
-        if (msgEl) msgEl.innerHTML = message;
-        if (titleEl) titleEl.innerText = "확인";
-
-        const okBtn = document.getElementById("edsConfirmOk");
-        const cancelBtn = document.getElementById("edsConfirmCancel");
-
-        const modal = new bootstrap.Modal(modalEl);
-
-        if (okBtn) {
-            okBtn.onclick = () => {
-                modal.hide();
-                if (onConfirm) onConfirm();
-            };
-        }
-        if (cancelBtn) cancelBtn.onclick = () => modal.hide();
-
-        modal.show();
-    }
-
-    function getOfflineSpeakers() {
-        const keys = getSelectedSpeakerCodes();
-        return (broadcastSpeakerCache || [])
-            .filter(sp => keys.includes(getSpeakerKey(sp)))
-            .filter(sp => String(sp?.connStat ?? sp?.connectStat ?? sp?.status ?? "") !== "01");
-    }
-
     function updateCustomMessageAreaVisibility() {
         const customArea = document.getElementById("customMessageArea");
         const customText = document.getElementById("customMessageText");
@@ -1093,24 +1122,27 @@
             return;
         }
 
-        const offlineList = getOfflineSpeakers();
-
         const doSend = async () => {
-            const password = prompt("비밀번호를 입력하세요.");
-            if (password === null) return;
-
             let payload = null;
             try {
-                setBroadcastExecutionState("loading");
-                payload = buildServerAlertPayload({
-                    deviceId: alertTargets[0]?.deviceId ?? "",
-                    deviceIds: alertTargets.map(target => target.deviceId),
-                    ttsMessage: isTts ? msg : "",
-                    password
+                const verification = await requestPasswordWithServerValidation({
+                    message: "비밀번호를 입력하세요.",
+                    onVerify: (password) => {
+                        setBroadcastExecutionState("loading");
+                        payload = buildServerAlertPayload({
+                            deviceId: alertTargets[0]?.deviceId ?? "",
+                            deviceIds: alertTargets.map(target => target.deviceId),
+                            ttsMessage: isTts ? msg : "",
+                            password
+                        });
+
+                        console.log("[BC PANE SEND SERVER PAYLOAD]", payload);
+                        return sendAlertToServer(payload);
+                    }
                 });
 
-                console.log("[BC PANE SEND SERVER PAYLOAD]", payload);
-                await sendAlertToServer(payload);
+                if (verification.cancelled) return;
+                if (!verification.ok) throw verification.error;
 
                 appendBroadcastLogEntry({
                     html: buildAlertLogHtml({
@@ -1146,17 +1178,6 @@
             }
         };
 
-        if (offlineList.length > 0) {
-            const names = offlineList.map(sp => getSpeakerName(sp, getSpeakerKey(sp))).join(", ");
-            edsConfirm(
-                `다음 스피커는 <span class="text-danger fw-bold">오프라인</span>입니다:<br><br>
-         <b>${escapeHtml(names)}</b><br><br>
-         그래도 발령을 전송할까요?`,
-                () => { doSend(); }
-            );
-            return;
-        }
-
         await doSend();
     }
     window.startBroadcast = startBroadcast;
@@ -1167,8 +1188,6 @@
             uiAlert("발령 대상을 선택해 주세요.", "warning");
             return;
         }
-        const password = prompt("비밀번호를 입력하세요.");
-        if (password === null) return;
 
         setBroadcastExecutionState("idle");
         uiAlert("방송 종료 명령은 현재 백엔드 액션이 연결되어 있지 않습니다.", "info");

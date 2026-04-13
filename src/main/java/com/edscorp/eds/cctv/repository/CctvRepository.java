@@ -15,26 +15,26 @@ import com.edscorp.eds.cctv.domain.CctvId;
 
 public interface CctvRepository extends JpaRepository<CctvEntity, CctvId> {
 
-    Optional<CctvEntity> findByLocationCodeAndCctvCode(String locationCode, String cctvCode);
+        Optional<CctvEntity> findByLocationCodeAndCctvCode(String locationCode, String cctvCode);
 
-    // (주의) cctvCode 단독은 복수일 수 있으니 List가 안전
-    List<CctvEntity> findAllByCctvCode(String cctvCode);
+        // (주의) cctvCode 단독은 복수일 수 있으니 List가 안전
+        List<CctvEntity> findAllByCctvCode(String cctvCode);
 
-    List<CctvEntity> findByStatusCam(String status);
+        List<CctvEntity> findByStatusCam(String status);
 
-    boolean existsByLocationCodeAndCctvCode(String locationCode, String cctvCode);
+        boolean existsByLocationCodeAndCctvCode(String locationCode, String cctvCode);
 
-    @Modifying
-    @Transactional
-    @Query("delete from CctvEntity c where c.locationCode = :locationCode and c.cctvCode = :cctvCode")
-    void deleteByLocationCodeAndCctvCode(@Param("locationCode") String locationCode,
-            @Param("cctvCode") String cctvCode);
+        @Modifying
+        @Transactional
+        @Query("delete from CctvEntity c where c.locationCode = :locationCode and c.cctvCode = :cctvCode")
+        void deleteByLocationCodeAndCctvCode(@Param("locationCode") String locationCode,
+                        @Param("cctvCode") String cctvCode);
 
-    @Modifying
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @Query("update CctvEntity c set c.statusProc = :statusProc where c.locationCode = :locationCode and c.cctvCode = :cctvCode")
-    int updateStatusProc(@Param("locationCode") String locationCode,
-            @Param("cctvCode") String cctvCode,
-            @Param("statusProc") String statusProc);
+        @Modifying
+        @Transactional(propagation = Propagation.REQUIRES_NEW)
+        @Query("update CctvEntity c set c.statusProc = :statusProc where c.locationCode = :locationCode and c.cctvCode = :cctvCode")
+        int updateStatusProc(@Param("locationCode") String locationCode,
+                        @Param("cctvCode") String cctvCode,
+                        @Param("statusProc") String statusProc);
 
 }

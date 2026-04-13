@@ -95,6 +95,68 @@
         }
     }
 
+    function isPasswordError(err) {
+        const message = String(err?.message ?? err ?? "").toLowerCase();
+        return ["password", "비밀번호", "unauthorized", "forbidden", "auth", "401", "403"]
+            .some((keyword) => message.includes(keyword));
+    }
+
+    let autoApprovalCache = null;
+    async function isAutoApprovalEnabled() {
+        if (autoApprovalCache !== null) return autoApprovalCache;
+        try {
+            const res = await fetch("/api/settings", { headers: { "Accept": "application/json" } });
+            if (!res.ok) return false;
+            const setting = await res.json();
+            autoApprovalCache = !!setting?.autoApproval;
+            return autoApprovalCache;
+        } catch (_) {
+            return false;
+        }
+    }
+
+    function requestPasswordWithServerValidation({ message = "비밀번호를 입력하세요.", onVerify } = {}) {
+        return new Promise(async (resolve) => {
+            if (await isAutoApprovalEnabled()) {
+                try {
+                    const result = typeof onVerify === "function" ? await onVerify("") : null;
+                    resolve({ ok: true, password: "", result, autoApproved: true });
+                } catch (err) {
+                    resolve({ ok: false, error: err, autoApproved: true });
+                }
+                return;
+            }
+
+            if (!window.PasswordModal?.show) {
+                alertMsg("비밀번호 입력 모달을 사용할 수 없습니다.", "danger");
+                resolve({ ok: false, cancelled: true });
+                return;
+            }
+
+            window.PasswordModal.show({
+                title: "비밀번호 확인",
+                message,
+                closeOnConfirm: false,
+                onConfirm: async (password, modal) => {
+                    try {
+                        const result = typeof onVerify === "function" ? await onVerify(password) : null;
+                        modal.hide();
+                        resolve({ ok: true, password, result });
+                    } catch (err) {
+                        if (isPasswordError(err)) {
+                            modal.showError(err.message || "비밀번호가 올바르지 않습니다.");
+                            return;
+                        }
+
+                        modal.hide();
+                        resolve({ ok: false, error: err });
+                    }
+                },
+                onCancel: () => resolve({ ok: false, cancelled: true })
+            });
+        });
+    }
+
     function extractApiErrorMessage(rawText, fallback) {
         const text = String(rawText ?? "").trim();
         if (!text) return fallback;
@@ -535,14 +597,14 @@
         const speakerName = selectedCheckbox.dataset.name;
         const speakerAdr = selectedCheckbox.dataset.adr;
 
-        const password = prompt("비밀번호를 입력하세요.");
-        if (password === null) return; // 취소 시 중단
-
         let actionSuccess = true;
-        try {
-            await postSpeakerAction({ speakerIds: [speakerId], action: "status", password });
-        } catch (e) {
-            console.error(e);
+        const verification = await requestPasswordWithServerValidation({
+            message: "비밀번호를 입력하세요.",
+            onVerify: (password) => postSpeakerAction({ speakerIds: [speakerId], action: "status", password })
+        });
+        if (verification.cancelled) return;
+        if (!verification.ok) {
+            console.error(verification.error);
             actionSuccess = false;
         }
 
@@ -599,9 +661,9 @@
             }
 
             if (actionSuccess) {
-                alertMsg("스피커 상태 조회가 완료되었습니다.", "success");
+                alertMsg("스피커 상태 조회 완료", "success");
             } else {
-                alertMsg("상태 요청(발신)에는 실패했으나 최근 정보를 표시합니다.", "warning");
+                alertMsg("요청 실패, 최근 정보 표시", "warning");
             }
         } catch (e) {
             console.error(e);
@@ -613,11 +675,14 @@
     async function setTime(selectedCheckbox) {
         const speakerId = selectedCheckbox.dataset.id;
 
-        const password = prompt("비밀번호를 입력하세요.");
-        if (password === null) return; // 취소 시 중단
-
         try {
-            await postSpeakerAction({ speakerIds: [speakerId], action: "time", password });
+            const verification = await requestPasswordWithServerValidation({
+                message: "비밀번호를 입력하세요.",
+                onVerify: (password) => postSpeakerAction({ speakerIds: [speakerId], action: "time", password })
+            });
+            if (verification.cancelled) return;
+            if (!verification.ok) throw verification.error;
+
             alertMsg("시간 동기화(발신) 요청을 전송했습니다.", "success");
         } catch (e) {
             console.error(e);
@@ -628,11 +693,14 @@
     async function resetRequest(selectedCheckbox) {
         const speakerId = selectedCheckbox.dataset.id;
 
-        const password = prompt("비밀번호를 입력하세요.");
-        if (password === null) return; // 취소 시 중단
-
         try {
-            await postSpeakerAction({ speakerIds: [speakerId], action: "reset", password });
+            const verification = await requestPasswordWithServerValidation({
+                message: "비밀번호를 입력하세요.",
+                onVerify: (password) => postSpeakerAction({ speakerIds: [speakerId], action: "reset", password })
+            });
+            if (verification.cancelled) return;
+            if (!verification.ok) throw verification.error;
+
             alertMsg("리셋(발신) 요청을 전송했습니다.", "success");
         } catch (e) {
             console.error(e);

@@ -117,49 +117,35 @@
                                     </div>
                                 </div>
                                 <div class="set-hist-actions">
-                                    <div class="set-hist-action-buttons">
-                                        <button id="user_btn_register" class="btn-soft d-none" onclick="userInsert()"><i
-                                                class="bi bi-person-plus"></i><span>등록</span></button>
-                                        <button id="user_btn_edit" class="btn-soft"><i
-                                                class="bi bi-person-fill-add"></i><span>수정</span></button>
-                                        <button id="user_btn_disable" class="btn-soft danger"><i
-                                                class="bi bi-person-x-fill"></i><span>삭제</span></button>
-                                    </div>
                                 </div>
                             </header>
                             <section class="set-hist-surface overflow-auto">
                                 <div class="user-card-board">
                                     <div class="user-card-grid" id="userList">
+                                        <!-- 사용자 추가 카드 -->
+                                        <button class="user-add-card" id="user_btn_register" type="button">
+                                            <span class="user-add-card-icon">
+                                                <i class="bi bi-person-plus-fill"></i>
+                                            </span>
+                                            <span class="user-add-card-label">사용자 추가</span>
+                                        </button>
+
+                                        <!-- 빈 상태 -->
                                         <div th:if="${#lists.isEmpty(userList)}" class="user-empty-state">
                                             <span class="text-muted">
                                                 <i class="bi bi-inbox me-2"></i>
                                                 등록된 사용자가 없습니다.
                                             </span>
                                         </div>
+
+                                        <!-- 사용자 카드 -->
                                         <article class="user-manage-card" th:each="user, iterStat : ${userList}"
                                             th:data-user-id="${user.id}"
                                             th:data-user-name="${#strings.isEmpty(user.name) ? '-' : user.name}"
                                             th:data-user-phone="${#strings.isEmpty(user.phnNo) ? '-' : user.phnNo}"
                                             th:data-user-role="${#strings.isEmpty(user.role) ? 'USER' : user.role}">
-                                            <!-- 헤더: 체크박스 + 순번 -->
+                                            <!-- 헤더: 역할 뱃지 + 액션 버튼 -->
                                             <div class="user-manage-card-head">
-                                                <label class="user-card-check">
-                                                    <input type="checkbox" name="selectedUserIds" th:value="${user.id}">
-                                                    <span>선택</span>
-                                                </label>
-                                                <span class="user-card-no" th:text="${iterStat.count}">1</span>
-                                            </div>
-                                            <!-- 프로필: 아바타 + ID/이름 + 역할 뱃지 -->
-                                            <div class="user-card-profile">
-                                                <div class="user-card-avatar"
-                                                    th:attr="data-role=${#strings.isEmpty(user.role) ? 'USER' : user.role}">
-                                                    <span th:text="${#strings.isEmpty(user.id) ? '?' : #strings.toUpperCase(#strings.substring(user.id, 0, 1))}">U</span>
-                                                </div>
-                                                <div class="user-card-identity">
-                                                    <strong class="user-card-id" th:text="${user.id}">user01</strong>
-                                                    <span class="user-card-name"
-                                                        th:text="${#strings.isEmpty(user.name) ? '이름 없음' : user.name}">-</span>
-                                                </div>
                                                 <div class="user-card-role">
                                                     <span class="status-badge status-info"
                                                         th:if="${user.role == 'USER'}">
@@ -169,15 +155,55 @@
                                                         th:if="${user.role == 'MANAGER'}">
                                                         <i class="bi bi-shield-check"></i><span>관리자</span>
                                                     </span>
-                                                    <span class="status-badge"
-                                                        th:if="${#strings.isEmpty(user.role)}">-</span>
+                                                </div>
+                                                <div class="user-card-actions">
+                                                    <button class="user-card-action-btn" type="button"
+                                                        data-action="edit" title="수정">
+                                                        <i class="bi bi-pencil-fill"></i>
+                                                    </button>
+                                                    <button class="user-card-action-btn danger" type="button"
+                                                        data-action="delete" title="삭제">
+                                                        <i class="bi bi-trash-fill"></i>
+                                                    </button>
                                                 </div>
                                             </div>
-                                            <!-- 메타: 전화번호 -->
+                                            <!-- 프로필: 아바타 + ID/이름 -->
+                                            <div class="user-card-profile">
+                                                <div class="user-card-avatar"
+                                                    th:attr="data-role=${#strings.isEmpty(user.role) ? 'USER' : user.role}">
+                                                    <i class="bi bi-person-fill" aria-hidden="true"></i>
+                                                </div>
+                                                <div class="user-card-identity">
+                                                    <strong class="user-card-id" th:text="${user.id}">user01</strong>
+                                                    <span class="user-card-name"
+                                                        th:text="${#strings.isEmpty(user.name) ? '이름 없음' : user.name}">-</span>
+                                                </div>
+                                            </div>
+                                            <!-- 데이터: 전화번호 + SMS 상태 -->
                                             <div class="user-card-meta">
                                                 <div class="user-card-meta-item">
                                                     <i class="bi bi-telephone-fill"></i>
                                                     <span th:text="${#strings.isEmpty(user.phnNo) ? '-' : user.phnNo}">-</span>
+                                                </div>
+                                                <div class="user-card-sms-chips">
+                                                    <span class="user-sms-chip"
+                                                        th:classappend="${user.alertEnabledYn == 'Y'} ? ' is-on' : ''"
+                                                        title="알림 사용">
+                                                        <i class="bi bi-envelope-fill"></i>
+                                                        <span class="user-sms-chip-label">알림</span>
+                                                    </span>
+                                                    <span class="user-sms-chip"
+                                                        th:classappend="${user.eventAlertYn == 'Y'} ? ' is-on' : ''"
+                                                        title="상황 발생 알림">
+                                                        <i class="bi bi-exclamation-triangle-fill"></i>
+                                                        <span class="user-sms-chip-label">상황</span>
+                                                    </span>
+                                                    <span class="user-sms-chip"
+                                                        th:classappend="${user.warnAlertYn == 'Y'} ? ' is-on' : ''"
+                                                        title="경보 발령 알림">
+                                                        <i class="bi bi-bell-fill"></i>
+                                                        <span class="user-sms-chip-label">경보</span>
+                                                    </span>
                                                 </div>
                                             </div>
                                         </article>
@@ -199,40 +225,129 @@
                                                 <i class="bi bi-x-lg"></i>
                                             </button>
                                         </div>
-                                        <div class="cm-body p-4">
-                                            <form id="editUserForm">
-                                                <div class="row mb-3">
-                                                    <label for="editUserId" class="col-sm-3 col-form-label">ID</label>
-                                                    <div class="col-sm-9">
-                                                        <input type="text" class="form-control" id="editUserId"
-                                                            readonly>
+                                        <div class="cm-body p-0">
+                                            <!-- 탭 네비게이션 -->
+                                            <ul class="nav user-modal-tabs" id="userEditModalTabs" role="tablist">
+                                                <li class="nav-item" role="presentation">
+                                                    <button class="nav-link active" id="userTabInfoBtn"
+                                                        data-bs-toggle="tab" data-bs-target="#userTabInfo" type="button"
+                                                        role="tab" aria-controls="userTabInfo" aria-selected="true">
+                                                        <i class="bi bi-person-fill"></i>기본 정보
+                                                    </button>
+                                                </li>
+                                                <li class="nav-item" role="presentation">
+                                                    <button class="nav-link" id="userTabSmsBtn" data-bs-toggle="tab"
+                                                        data-bs-target="#userTabSms" type="button" role="tab"
+                                                        aria-controls="userTabSms" aria-selected="false">
+                                                        <i class="bi bi-envelope-fill"></i>SMS 알림
+                                                    </button>
+                                                </li>
+                                            </ul>
+                                            <div class="tab-content">
+                                                <!-- 기본 정보 탭 -->
+                                                <div class="tab-pane fade show active p-4" id="userTabInfo"
+                                                    role="tabpanel" aria-labelledby="userTabInfoBtn">
+                                                    <form id="editUserForm">
+                                                        <div class="row mb-3">
+                                                            <label for="editUserId"
+                                                                class="col-sm-3 col-form-label">ID</label>
+                                                            <div class="col-sm-9">
+                                                                <input type="text" class="form-control" id="editUserId"
+                                                                    readonly>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row mb-3 d-none" id="pwField">
+                                                            <label for="editUserPw"
+                                                                class="col-sm-3 col-form-label">비밀번호</label>
+                                                            <div class="col-sm-9">
+                                                                <input type="password" class="form-control"
+                                                                    id="editUserPw" placeholder="비밀번호 입력(필수)">
+                                                            </div>
+                                                        </div>
+                                                        <div class="row mb-3">
+                                                            <label for="editUserName"
+                                                                class="col-sm-3 col-form-label">이름</label>
+                                                            <div class="col-sm-9">
+                                                                <input type="text" class="form-control"
+                                                                    id="editUserName" placeholder="사용자 이름 입력">
+                                                            </div>
+                                                        </div>
+                                                        <div class="row mb-3">
+                                                            <label for="editUserPhone"
+                                                                class="col-sm-3 col-form-label">전화번호</label>
+                                                            <div class="col-sm-9">
+                                                                <input type="text" class="form-control"
+                                                                    id="editUserPhone" placeholder="010-0000-0000">
+                                                            </div>
+                                                        </div>
+                                                        <div class="row mb-3">
+                                                            <label for="editUserRole"
+                                                                class="col-sm-3 col-form-label">권한</label>
+                                                            <div class="col-sm-9">
+                                                                <select class="form-select" id="editUserRole">
+                                                                    <option value="USER">사용자</option>
+                                                                    <option value="MANAGER">관리자</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                                <!-- SMS 알림 탭 -->
+                                                <div class="tab-pane fade p-4" id="userTabSms" role="tabpanel"
+                                                    aria-labelledby="userTabSmsBtn">
+                                                    <div class="user-sms-insert-notice d-none" id="userSmsInsertNotice">
+                                                        <i class="bi bi-info-circle-fill"></i>
+                                                        사용자 등록 후 SMS 알림을 설정할 수 있습니다.
+                                                    </div>
+                                                    <div id="userSmsEditSection">
+                                                        <!-- 알림 사용 마스터 토글 -->
+                                                        <div class="user-sms-toggle-row mb-3">
+                                                            <div class="user-sms-toggle-label">
+                                                                <i class="bi bi-bell-fill"></i>
+                                                                <div>
+                                                                    <span>알림 사용</span>
+                                                                    <small>비활성화 시 모든 알림이 중지됩니다</small>
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-check form-switch mb-0">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    id="editSmsAlertEnabled" role="switch">
+                                                            </div>
+                                                        </div>
+                                                        <!-- 세부 알림 항목 -->
+                                                        <div class="user-sms-options" id="editSmsOptions">
+                                                            <div class="user-sms-option-item">
+                                                                <label class="user-sms-option-label"
+                                                                    for="editSmsEventAlert">
+                                                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                                                    <div>
+                                                                        <span>상황 발생 알림</span>
+                                                                        <small>상황 발생 시 SMS 수신</small>
+                                                                    </div>
+                                                                </label>
+                                                                <div class="form-check form-switch mb-0">
+                                                                    <input class="form-check-input" type="checkbox"
+                                                                        id="editSmsEventAlert" role="switch">
+                                                                </div>
+                                                            </div>
+                                                            <div class="user-sms-option-item">
+                                                                <label class="user-sms-option-label"
+                                                                    for="editSmsWarnAlert">
+                                                                    <i class="bi bi-bell-fill"></i>
+                                                                    <div>
+                                                                        <span>경보 발령 알림</span>
+                                                                        <small>경보 발령 시 SMS 수신</small>
+                                                                    </div>
+                                                                </label>
+                                                                <div class="form-check form-switch mb-0">
+                                                                    <input class="form-check-input" type="checkbox"
+                                                                        id="editSmsWarnAlert" role="switch">
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div class="row mb-3">
-                                                    <label for="editUserName" class="col-sm-3 col-form-label">이름</label>
-                                                    <div class="col-sm-9">
-                                                        <input type="text" class="form-control" id="editUserName"
-                                                            placeholder="사용자 이름 입력">
-                                                    </div>
-                                                </div>
-                                                <div class="row mb-3">
-                                                    <label for="editUserPhone"
-                                                        class="col-sm-3 col-form-label">전화번호</label>
-                                                    <div class="col-sm-9">
-                                                        <input type="text" class="form-control" id="editUserPhone"
-                                                            placeholder="010-0000-0000">
-                                                    </div>
-                                                </div>
-                                                <div class="row mb-3">
-                                                    <label for="editUserRole" class="col-sm-3 col-form-label">권한</label>
-                                                    <div class="col-sm-9">
-                                                        <select class="form-select" id="editUserRole">
-                                                            <option value="USER">사용자</option>
-                                                            <option value="MANAGER">관리자</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            </form>
+                                            </div>
                                         </div>
                                         <div class="cm-footer">
                                             <button type="button" class="cm-btn cm-btn-primary"
@@ -270,7 +385,8 @@
                                                 <span>문안 목록</span>
                                             </div>
                                             <div class="panel-actions ment-list-actions">
-                                                <button class="btn-primary-soft" type="button" id="mentListAddBtn" onclick="mentInsert()">
+                                                <button class="btn-primary-soft" type="button" id="mentListAddBtn"
+                                                    onclick="mentInsert()">
                                                     <i class="bi bi-plus-lg"></i><span>추가</span>
                                                 </button>
                                             </div>
@@ -283,20 +399,24 @@
                                     <section class="set-panel ment-detail-panel">
                                         <header class="panel-header">
                                             <div class="panel-title">
-                                                <button class="ment-mobile-back-btn" type="button" id="mentMobileBackBtn" aria-label="문안 목록으로 돌아가기">
+                                                <button class="ment-mobile-back-btn" type="button"
+                                                    id="mentMobileBackBtn" aria-label="문안 목록으로 돌아가기">
                                                     <i class="bi bi-arrow-left"></i>
                                                 </button>
                                                 <i class="bi bi-chat-square-text"></i>
                                                 <span>문안 상세</span>
                                             </div>
                                             <div class="panel-actions" id="mentDetailViewActions">
-                                                <button class="btn-primary-soft" type="button" id="mentDetailAddBtn" onclick="mentInsert()">
+                                                <button class="btn-primary-soft" type="button" id="mentDetailAddBtn"
+                                                    onclick="mentInsert()">
                                                     <i class="bi bi-plus-lg"></i><span>추가</span>
                                                 </button>
-                                                <button class="btn-soft" type="button" id="mentDetailEditBtn" onclick="mentUpdate()">
+                                                <button class="btn-soft" type="button" id="mentDetailEditBtn"
+                                                    onclick="mentUpdate()">
                                                     <i class="bi bi-pencil-square"></i><span>수정</span>
                                                 </button>
-                                                <button class="btn-soft danger" type="button" id="mentDetailDeleteBtn" onclick="mentDeprecated()">
+                                                <button class="btn-soft danger" type="button" id="mentDetailDeleteBtn"
+                                                    onclick="mentDeprecated()">
                                                     <i class="bi bi-trash"></i><span>삭제</span>
                                                 </button>
                                             </div>
@@ -325,72 +445,97 @@
                                                             <div class="ment-detail-eyebrow">문안 이름</div>
                                                             <h4 id="mentDetailName">-</h4>
                                                         </div>
-                                                        <span class="status-badge status-primary" id="mentDetailStatus">미사용</span>
+                                                        <span class="status-badge status-primary"
+                                                            id="mentDetailStatus">미사용</span>
                                                     </div>
 
                                                     <div class="ment-detail-meta">
                                                         <div class="ment-detail-meta-item">
                                                             <span class="ment-detail-meta-label">문안 코드</span>
-                                                            <span class="ment-detail-meta-value" id="mentDetailCode">-</span>
+                                                            <span class="ment-detail-meta-value"
+                                                                id="mentDetailCode">-</span>
                                                         </div>
                                                         <div class="ment-detail-meta-item">
                                                             <span class="ment-detail-meta-label">우선순위</span>
-                                                            <span class="ment-detail-meta-value" id="mentDetailPriority">-</span>
+                                                            <span class="ment-detail-meta-value"
+                                                                id="mentDetailPriority">-</span>
                                                         </div>
                                                         <div class="ment-detail-meta-item">
                                                             <span class="ment-detail-meta-label">사이렌 코드</span>
-                                                            <span class="ment-detail-meta-value" id="mentDetailSirenCode">-</span>
+                                                            <span class="ment-detail-meta-value"
+                                                                id="mentDetailSirenCode">-</span>
                                                         </div>
                                                         <div class="ment-detail-meta-item">
                                                             <span class="ment-detail-meta-label">저장 코드</span>
-                                                            <span class="ment-detail-meta-value" id="mentDetailStoCode">-</span>
+                                                            <span class="ment-detail-meta-value"
+                                                                id="mentDetailStoCode">-</span>
                                                         </div>
                                                         <div class="ment-detail-meta-item">
                                                             <span class="ment-detail-meta-label">문안 길이</span>
-                                                            <span class="ment-detail-meta-value" id="mentDetailLength">0자</span>
+                                                            <span class="ment-detail-meta-value"
+                                                                id="mentDetailLength">0자</span>
                                                         </div>
                                                     </div>
 
                                                     <div class="ment-detail-body">
                                                         <div class="ment-detail-body-label">문안 내용</div>
-                                                        <div class="ment-detail-message custom-scrollbar" id="mentDetailMessage">-</div>
+                                                        <div class="ment-detail-message custom-scrollbar"
+                                                            id="mentDetailMessage">-</div>
                                                     </div>
                                                 </div>
 
                                                 <div class="ment-detail-edit d-none" id="mentDetailEditMode">
                                                     <div class="ment-detail-edit-grid">
                                                         <div class="ment-detail-field">
-                                                            <label class="ment-detail-field-label" for="mentDetailEditName">문안 이름</label>
-                                                            <input type="text" class="pinterest-form-control" id="mentDetailEditName" placeholder="문안 이름 입력">
+                                                            <label class="ment-detail-field-label"
+                                                                for="mentDetailEditName">문안 이름</label>
+                                                            <input type="text" class="pinterest-form-control"
+                                                                id="mentDetailEditName" placeholder="문안 이름 입력">
                                                         </div>
                                                         <div class="ment-detail-meta">
                                                             <div class="ment-detail-field">
-                                                                <label class="ment-detail-field-label" for="mentDetailEditCode">문안 코드</label>
-                                                                <input type="text" class="pinterest-form-control" id="mentDetailEditCode" maxlength="5" placeholder="코드 입력 (최대 5자)">
+                                                                <label class="ment-detail-field-label"
+                                                                    for="mentDetailEditCode">문안 코드</label>
+                                                                <input type="text" class="pinterest-form-control"
+                                                                    id="mentDetailEditCode" maxlength="5"
+                                                                    placeholder="코드 입력 (최대 5자)">
                                                             </div>
                                                             <div class="ment-detail-field">
-                                                                <label class="ment-detail-field-label" for="mentDetailEditPriority">우선순위</label>
-                                                                <input type="number" class="pinterest-form-control" id="mentDetailEditPriority" placeholder="우선순위 입력">
+                                                                <label class="ment-detail-field-label"
+                                                                    for="mentDetailEditPriority">우선순위</label>
+                                                                <input type="number" class="pinterest-form-control"
+                                                                    id="mentDetailEditPriority" placeholder="우선순위 입력">
                                                             </div>
                                                             <div class="ment-detail-field">
-                                                                <label class="ment-detail-field-label" for="mentDetailEditSirenCode">사이렌 코드</label>
-                                                                <input type="text" class="pinterest-form-control" id="mentDetailEditSirenCode" placeholder="사이렌 코드 입력">
+                                                                <label class="ment-detail-field-label"
+                                                                    for="mentDetailEditSirenCode">사이렌 코드</label>
+                                                                <input type="text" class="pinterest-form-control"
+                                                                    id="mentDetailEditSirenCode"
+                                                                    placeholder="사이렌 코드 입력">
                                                             </div>
                                                             <div class="ment-detail-field">
-                                                                <label class="ment-detail-field-label" for="mentDetailEditStoCode">저장 코드</label>
-                                                                <input type="text" class="pinterest-form-control" id="mentDetailEditStoCode" placeholder="저장 코드 입력">
+                                                                <label class="ment-detail-field-label"
+                                                                    for="mentDetailEditStoCode">저장 코드</label>
+                                                                <input type="text" class="pinterest-form-control"
+                                                                    id="mentDetailEditStoCode" placeholder="저장 코드 입력">
                                                             </div>
                                                             <div class="ment-detail-field ment-detail-status-field">
-                                                                <label class="ment-detail-field-label" for="mentDetailEditStatus">사용 여부</label>
-                                                                <select class="pinterest-form-control" id="mentDetailEditStatus">
+                                                                <label class="ment-detail-field-label"
+                                                                    for="mentDetailEditStatus">사용 여부</label>
+                                                                <select class="pinterest-form-control"
+                                                                    id="mentDetailEditStatus">
                                                                     <option value="Use">사용</option>
                                                                     <option value="Unuse">미사용</option>
                                                                 </select>
                                                             </div>
                                                         </div>
                                                         <div class="ment-detail-field ment-detail-field-full">
-                                                            <label class="ment-detail-field-label" for="mentDetailEditMessage">문안 내용</label>
-                                                            <textarea class="pinterest-form-control ment-detail-edit-textarea custom-scrollbar" id="mentDetailEditMessage" rows="12" placeholder="문안 내용 입력"></textarea>
+                                                            <label class="ment-detail-field-label"
+                                                                for="mentDetailEditMessage">문안 내용</label>
+                                                            <textarea
+                                                                class="pinterest-form-control ment-detail-edit-textarea custom-scrollbar"
+                                                                id="mentDetailEditMessage" rows="12"
+                                                                placeholder="문안 내용 입력"></textarea>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -495,8 +640,10 @@
                             <section class="set-hist-surface sms-manage-surface overflow-hidden d-flex flex-column"
                                 style="flex: 1; min-height: 0;">
                                 <div class="sms-card-board custom-scrollbar" id="smsCardBoard" hidden></div>
-                                <div class="set-hist-table-wrap sms-manage-wrap overflow-hidden" style="flex: 1; min-height: 0;">
-                                    <div class="table-responsive sms-table-responsive h-100 overflow-auto custom-scrollbar">
+                                <div class="set-hist-table-wrap sms-manage-wrap overflow-hidden"
+                                    style="flex: 1; min-height: 0;">
+                                    <div
+                                        class="table-responsive sms-table-responsive h-100 overflow-auto custom-scrollbar">
                                         <table class="table-modern w-100" style="table-layout: fixed;">
                                             <colgroup>
                                                 <col style="width: 7%;">
@@ -654,7 +801,8 @@
                                     </div>
                                 </div>
                             </header>
-                            <section class="set-hist-surface schedule-manage-surface overflow-hidden d-flex flex-column">
+                            <section
+                                class="set-hist-surface schedule-manage-surface overflow-hidden d-flex flex-column">
                                 <div class="schedule-list-wrap">
                                     <div id="schedule-list"></div>
 
@@ -969,7 +1117,7 @@
                                                 <label class="sradio-item">
                                                     <input type="radio" name="mode" id="modeTest" value="test">
                                                     <span class="sradio-box">
-                                                        <i class="bi bi-bug"></i>
+                                                        <i class="bi bi-play-circle"></i>
                                                         <span>시험발령</span>
                                                     </span>
                                                 </label>
@@ -979,7 +1127,7 @@
                                         <div class="scard-divider"></div>
 
                                         <!-- 전송 매체 -->
-                                        <div class="scard-group">
+                                        <div class="scard-group d-none">
                                             <p class="scard-group-label">
                                                 <i class="bi bi-wifi"></i>
                                                 <span>전송 매체</span>
@@ -1021,7 +1169,7 @@
                                                 <label class="sradio-item">
                                                     <input type="radio" name="type" id="typeSaved" value="saved">
                                                     <span class="sradio-box">
-                                                        <i class="bi bi-music-note-beamed"></i>
+                                                        <i class="bi bi-music-note-list"></i>
                                                         <span>저장 메시지</span>
                                                     </span>
                                                 </label>

@@ -223,6 +223,41 @@ function timeAgo(date) {
     return `${hours}시간 전`;
 }
 
+export function notify(message, type = 'info', options = {}) {
+    const {
+        position = 'topRight',
+        timeout = 2000,
+        progressBar = true,
+        title = '',
+        duration
+    } = options;
+
+    const normalizedType = ['success', 'warning', 'error', 'info'].includes(type)
+        ? type
+        : (type === 'danger' ? 'error' : 'info');
+
+    if (window.iziToast && typeof window.iziToast[normalizedType] === 'function') {
+        window.iziToast[normalizedType]({
+            title,
+            message,
+            position,
+            timeout,
+            progressBar
+        });
+        return;
+    }
+
+    const alertType = normalizedType === 'error' ? 'danger' : normalizedType;
+    const alertDuration = duration ?? timeout;
+
+    if (typeof window.showGlobalAlert === 'function') {
+        window.showGlobalAlert(message, alertType, alertDuration);
+        return;
+    }
+
+    window.alert(message);
+}
+
 export function showToast(message, title = '알림') {
     const toastContainer = document.getElementById('globalToastContainer');
     const createdAt = new Date();

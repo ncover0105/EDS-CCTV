@@ -15,6 +15,7 @@ import com.edscorp.eds.speaker.typeb.dto.BTypeActionRequest;
 import com.edscorp.eds.speaker.typeb.dto.BTypeAlertRequest;
 import com.edscorp.eds.speaker.typeb.service.BTypeCommandService;
 import com.edscorp.eds.speaker.typeb.service.SpkSystemConfigService;
+import com.edscorp.eds.web.service.SystemSettingService;
 import com.edscorp.eds.speaker.typeb.domain.SpkSystemConfigEntity;
 import com.edscorp.eds.common.util.Sha256Util;
 
@@ -28,11 +29,13 @@ public class BtypeCommandController {
 
     private final BTypeCommandService bTypeCommandService;
     private final SpkSystemConfigService spkSystemConfigService;
+    private final SystemSettingService systemSettingService;
 
     // B 타입 발령 (재난/방송)
     @PostMapping("/alert")
     public ResponseEntity<Map<String, Object>> sendAlert(@RequestBody BTypeAlertRequest req,
             HttpServletRequest httpReq) {
+        applyAutoApprovalPassword(req);
         ResponseEntity<Map<String, Object>> passwordError = validatePassword(req.getPassword());
         if (passwordError != null) {
             return passwordError;
@@ -51,6 +54,7 @@ public class BtypeCommandController {
     @PostMapping("/control")
     public ResponseEntity<Map<String, Object>> control(@RequestBody BTypeActionRequest req,
             HttpServletRequest httpReq) {
+        applyAutoApprovalPassword(req);
         ResponseEntity<Map<String, Object>> passwordError = validatePassword(req.getPassword());
         if (passwordError != null) {
             return passwordError;
@@ -81,6 +85,7 @@ public class BtypeCommandController {
                     "ok", false,
                     "message", "action이 비어있습니다."));
         }
+        applyAutoApprovalPassword(req);
         ResponseEntity<Map<String, Object>> passwordError = validatePassword(req.getPassword());
         if (passwordError != null) {
             return passwordError;
@@ -106,7 +111,31 @@ public class BtypeCommandController {
         return ResponseEntity.ok(result);
     }
 
+    private void applyAutoApprovalPassword(BTypeAlertRequest req) {
+        if (req == null || !isAutoApprovalEnabled() || hasText(req.getPassword())) {
+            return;
+        }
+        String configuredPassword = resolveConfiguredPassword();
+        if (canUseConfiguredPasswordAsRaw(configuredPassword)) {
+            req.setPassword(configuredPassword);
+        }
+    }
+
+    private void applyAutoApprovalPassword(BTypeActionRequest req) {
+        if (req == null || !isAutoApprovalEnabled() || hasText(req.getPassword())) {
+            return;
+        }
+        String configuredPassword = resolveConfiguredPassword();
+        if (canUseConfiguredPasswordAsRaw(configuredPassword)) {
+            req.setPassword(configuredPassword);
+        }
+    }
+
     private ResponseEntity<Map<String, Object>> validatePassword(String inputPassword) {
+        if (isAutoApprovalEnabled()) {
+            return null;
+        }
+
         String configuredPassword = resolveConfiguredPassword();
 
         if (configuredPassword == null || configuredPassword.isBlank()) {
@@ -129,6 +158,18 @@ public class BtypeCommandController {
         }
 
         return null;
+    }
+
+    private boolean isAutoApprovalEnabled() {
+        return systemSettingService.getSetting().isAutoApproval();
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
+    }
+
+    private boolean canUseConfiguredPasswordAsRaw(String configuredPassword) {
+        return hasText(configuredPassword) && !configuredPassword.matches("(?i)^[0-9a-f]{64}$");
     }
 
     private String resolveConfiguredPassword() {

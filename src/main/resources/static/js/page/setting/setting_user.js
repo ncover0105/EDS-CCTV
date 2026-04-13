@@ -9,7 +9,7 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     const list = document.getElementById("userList");
-    if (list) bindCardToggle(list);
+    if (list) bindCardActions(list);
 
     bindButtons();
     bindSave();
@@ -18,72 +18,56 @@
     if (roleSelect && !IS_MANAGER) roleSelect.disabled = true;
   });
 
-  function bindCardToggle(list) {
-    const selector = 'input[type="checkbox"][name="selectedUserIds"]';
-
-    function clearOthers(keepCb) {
-      list.querySelectorAll(selector).forEach((cb) => {
-        if (cb !== keepCb) {
-          cb.checked = false;
-          cb.closest(".user-manage-card")?.classList.remove("is-selected");
-        }
-      });
+  function bindCardActions(list) {
+    // 추가 카드 클릭
+    const addCard = document.getElementById("user_btn_register");
+    if (addCard) {
+      if (!IS_MANAGER) addCard.style.display = "none";
+      else addCard.addEventListener("click", () => openModal("insert"));
     }
 
-    list.addEventListener("click", (e) => {
-      const card = e.target.closest(".user-manage-card");
-      if (!card) return;
+    // 카드 내 액션 버튼 위임
+    list.addEventListener("click", async (e) => {
+      const editBtn = e.target.closest('[data-action="edit"]');
+      const delBtn  = e.target.closest('[data-action="delete"]');
 
-      const cb = card.querySelector(selector);
-      if (!cb) return;
+      if (editBtn) {
+        e.stopPropagation();
+        const id = editBtn.closest(".user-manage-card")?.dataset.userId;
+        if (id) await onEditById(id);
+        return;
+      }
 
-      if (e.target === cb) return;
-
-      const willCheck = !cb.checked;
-      if (willCheck) clearOthers(cb);
-      cb.checked = willCheck;
-      card.classList.toggle("is-selected", cb.checked);
-    });
-
-    list.addEventListener("change", (e) => {
-      if (!e.target.matches(selector)) return;
-
-      const cb = e.target;
-      const card = cb.closest(".user-manage-card");
-      if (!card) return;
-
-      if (cb.checked) clearOthers(cb);
-      card.classList.toggle("is-selected", cb.checked);
+      if (delBtn) {
+        e.stopPropagation();
+        const id = delBtn.closest(".user-manage-card")?.dataset.userId;
+        if (id) await onDeleteById(id);
+        return;
+      }
     });
   }
 
   function bindButtons() {
-    const btnRegister = document.getElementById("user_btn_register");
-    const btnEdit = document.getElementById("user_btn_edit");
-    const btnDelete = document.getElementById("user_btn_disable");
-
-    if (btnRegister) btnRegister.addEventListener("click", () => openModal("insert"));
-    if (btnEdit) btnEdit.addEventListener("click", onEdit);
-    if (btnDelete) btnDelete.addEventListener("click", onDelete);
+    document.getElementById("editSmsAlertEnabled")?.addEventListener("change", syncEditSmsToggle);
 
     window.userInsert = function () {
       openModal("insert");
     };
   }
 
-  async function onEdit() {
-    const ids = getSelectedIds();
-    if (ids.length !== 1) {
-      alert("수정은 1명만 선택하세요.");
-      return;
-    }
+  function syncEditSmsToggle() {
+    const enabled = document.getElementById("editSmsAlertEnabled")?.checked;
+    const ev = document.getElementById("editSmsEventAlert");
+    const wa = document.getElementById("editSmsWarnAlert");
+    const optionsEl = document.getElementById("editSmsOptions");
+    if (!ev || !wa) return;
+    ev.disabled = !enabled;
+    wa.disabled = !enabled;
+    if (optionsEl) optionsEl.classList.toggle("is-disabled", !enabled);
+    if (!enabled) { ev.checked = false; wa.checked = false; }
+  }
 
-    const id = ids[0];
-    if (!id || id.includes("${")) {
-      alert("선택 값이 사용자 ID가 아닙니다. 체크박스 th:value를 user.id로 수정하세요.");
-      return;
-    }
-
+  async function onEditById(id) {
     try {
       const user = await fetchJson(`${API_BASE}/${encodeURIComponent(id)}`);
       openModal("update", user);
@@ -93,19 +77,11 @@
     }
   }
 
-  async function onDelete() {
-    const ids = getSelectedIds();
-    if (ids.length === 0) {
-      alert("삭제(비활성)할 사용자를 선택하세요.");
-      return;
-    }
-
-    if (!confirm(`선택한 ${ids.length}명을 삭제(비활성) 처리할까요?`)) return;
+  async function onDeleteById(id) {
+    if (!confirm("해당 사용자를 삭제(비활성) 처리할까요?")) return;
 
     try {
-      for (const id of ids) {
-        await fetch(`${API_BASE}/${encodeURIComponent(id)}`, { method: "DELETE" });
-      }
+      await fetch(`${API_BASE}/${encodeURIComponent(id)}`, { method: "DELETE" });
       location.reload();
     } catch (err) {
       console.error(err);
@@ -163,6 +139,34 @@
       roleEl.disabled = !IS_MANAGER;
     }
 
+    // ── SMS 탭 처리 ────────────────────────────────────
+    const smsTabBtn = document.getElementById("userTabSmsBtn");
+    const smsInsertNotice = document.getElementById("userSmsInsertNotice");
+    const smsEditSection = document.getElementById("userSmsEditSection");
+
+    if (mode === "insert") {
+      if (smsTabBtn) smsTabBtn.disabled = true;
+      if (smsInsertNotice) smsInsertNotice.classList.remove("d-none");
+      if (smsEditSection) smsEditSection.classList.add("d-none");
+    } else {
+      if (smsTabBtn) smsTabBtn.disabled = false;
+      if (smsInsertNotice) smsInsertNotice.classList.add("d-none");
+      if (smsEditSection) smsEditSection.classList.remove("d-none");
+
+      const alertEnabled = document.getElementById("editSmsAlertEnabled");
+      const eventAlert   = document.getElementById("editSmsEventAlert");
+      const warnAlert    = document.getElementById("editSmsWarnAlert");
+
+      if (alertEnabled) alertEnabled.checked = (user?.alertEnabledYn ?? "Y") === "Y";
+      if (eventAlert)   eventAlert.checked   = (user?.eventAlertYn   ?? "N") === "Y";
+      if (warnAlert)    warnAlert.checked     = (user?.warnAlertYn    ?? "N") === "Y";
+      syncEditSmsToggle();
+    }
+
+    // 기본 정보 탭으로 복귀
+    const infoTabBtn = document.getElementById("userTabInfoBtn");
+    if (infoTabBtn) bootstrap.Tab.getOrCreateInstance(infoTabBtn).show();
+
     bootstrap.Modal.getOrCreateInstance(modalEl).show();
   }
 
@@ -216,6 +220,22 @@
         });
       }
 
+      // SMS 알림 설정 저장
+      const alertEnabledEl = document.getElementById("editSmsAlertEnabled");
+      if (alertEnabledEl) {
+        const alertEnabledYn = alertEnabledEl.checked ? "Y" : "N";
+        const eventAlertYn   = document.getElementById("editSmsEventAlert")?.checked ? "Y" : "N";
+        const warnAlertYn    = document.getElementById("editSmsWarnAlert")?.checked  ? "Y" : "N";
+        await fetchJson(`/api/users/sms/${encodeURIComponent(id)}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            alertEnabledYn,
+            eventAlertYn: alertEnabledYn === "Y" ? eventAlertYn : "N",
+            warnAlertYn:  alertEnabledYn === "Y" ? warnAlertYn  : "N",
+          }),
+        });
+      }
+
       location.reload();
     } catch (err) {
       console.error(err);
@@ -227,12 +247,6 @@
 
       alert("저장에 실패했습니다.");
     }
-  }
-
-  function getSelectedIds() {
-    return Array.from(document.querySelectorAll('input[name="selectedUserIds"]:checked')).map(
-      (cb) => cb.value
-    );
   }
 
   async function fetchJson(url, options = {}) {
