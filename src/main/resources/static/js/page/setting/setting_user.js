@@ -95,10 +95,14 @@
       alert("userEditModal이 없습니다.");
       return;
     }
-    modalEl.dataset.mode = mode;
+    const modalMode = mode === "insert" ? "insert" : "update";
+    modalEl.dataset.mode = modalMode;
 
-    const titleEl = modalEl.querySelector(".modal-title");
-    if (titleEl) titleEl.textContent = mode === "insert" ? "사용자 등록" : "사용자 정보 수정";
+    const titleEl = document.getElementById("userEditModalLabel") || modalEl.querySelector(".cm-title");
+    if (titleEl) titleEl.textContent = modalMode === "insert" ? "사용자 추가" : "사용자 정보 수정";
+
+    const saveBtn = document.getElementById("saveUserBtn");
+    if (saveBtn) saveBtn.textContent = modalMode === "insert" ? "저장" : "수정";
 
     const idEl = document.getElementById("editUserId");
     const pwEl = document.getElementById("editUserPw");
@@ -109,7 +113,7 @@
 
     if (idEl) {
       idEl.value = user?.id ?? "";
-      if (mode === "insert") {
+      if (modalMode === "insert") {
         idEl.removeAttribute("readonly");
         idEl.placeholder = "사용자 ID";
       } else {
@@ -117,7 +121,7 @@
       }
     }
 
-    if (mode === "insert") {
+    if (modalMode === "insert") {
       if (pwField) pwField.classList.remove("d-none");
       if (pwEl) {
         pwEl.value = "";
@@ -135,7 +139,7 @@
     if (phoneEl) phoneEl.value = user?.phnNo ?? "";
 
     if (roleEl) {
-      roleEl.value = user?.userRole ?? "USER";
+      roleEl.value = user?.userRole ?? user?.role ?? "USER";
       roleEl.disabled = !IS_MANAGER;
     }
 
@@ -144,7 +148,7 @@
     const smsInsertNotice = document.getElementById("userSmsInsertNotice");
     const smsEditSection = document.getElementById("userSmsEditSection");
 
-    if (mode === "insert") {
+    if (modalMode === "insert") {
       if (smsTabBtn) smsTabBtn.disabled = true;
       if (smsInsertNotice) smsInsertNotice.classList.remove("d-none");
       if (smsEditSection) smsEditSection.classList.add("d-none");
@@ -172,16 +176,21 @@
 
   function bindSave() {
     const saveBtn = document.getElementById("saveUserBtn");
-    if (!saveBtn) return;
-    saveBtn.addEventListener("click", onSave);
+    if (saveBtn) saveBtn.addEventListener("click", onSave);
+
+    document.getElementById("editUserForm")?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      onSave();
+    });
   }
 
   async function onSave() {
     const modalEl = document.getElementById("userEditModal");
-    const mode = modalEl?.dataset.mode || "update";
+    const mode = modalEl?.dataset.mode === "insert" ? "insert" : "update";
 
     const id = (document.getElementById("editUserId")?.value ?? "").trim();
     const pw = document.getElementById("editUserPw")?.value ?? "";
+    const name = (document.getElementById("editUserName")?.value ?? "").trim();
     const phnNo = (document.getElementById("editUserPhone")?.value ?? "").trim();
     const userRole = (document.getElementById("editUserRole")?.value ?? "USER").trim();
 
@@ -199,6 +208,7 @@
           body: JSON.stringify({
             id,
             pw,
+            name,
             phnNo,
             userRole: IS_MANAGER ? userRole : "USER",
           }),
@@ -210,7 +220,7 @@
 
       await fetchJson(`${API_BASE}/${encodeURIComponent(id)}`, {
         method: "PUT",
-        body: JSON.stringify({ phnNo }),
+        body: JSON.stringify({ name, phnNo }),
       });
 
       if (IS_MANAGER) {

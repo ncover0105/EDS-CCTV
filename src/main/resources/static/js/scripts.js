@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
     Weather.init();          // AWS, 예보, 레이더, 위성 (2분 주기)
     loadTodayLatestDisasterOneLine();
     if (typeof Janus === "undefined") {
-        alert("❌ Janus.js 라이브러리 로드 실패");
+        alert("Janus.js 라이브러리 로드 실패");
         return;
     }
 
@@ -56,7 +56,6 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("reconnectAllBtn")?.addEventListener("click", () => {
         showConfirmModal("전체 재연결", "모든 CCTV를 재연결할까요?", async () => {
             await CCTVJanus.reconnectAll(cameras);
-            // showToast("전체 재연결 완료", "success");
             App.utils.showGlobalAlert("전체 재연결 완료", "success");
         });
     });
@@ -69,6 +68,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 await callRestartAllServer();
             }
         );
+    });
+
+    document.getElementById("testBtn")?.addEventListener("click", () => {
+        notify('시스템 설정 변경은 관리자만 가능합니다.', 'warning', {
+            title: '권한 없음'
+        });
     });
 
     const refreshBtn = document.getElementById("refreshMap");
@@ -117,7 +122,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 저장 및 발령 버튼 이벤트
     document.querySelector('.btn-primary').addEventListener('click', function () {
-        // showToast('설정이 저장되었습니다.', 'success');
         App.utils.showGlobalAlert('설정이 저장되었습니다.', 'success');
     });
 
@@ -224,48 +228,6 @@ function getSelectedCameraName(key) {
         String(c.mountpointId) === String(key) || String(c.cctvCode) === String(key)
     );
     return cam?.name ?? "선택 CCTV";
-}
-
-function showToast(message, type) {
-    const toastEl = document.createElement("div");
-    toastEl.className = "toast position-fixed top-0 end-0 m-3";
-    toastEl.style.zIndex = 9999;
-
-    toastEl.setAttribute("role", "alert");
-    toastEl.setAttribute("aria-live", "assertive");
-    toastEl.setAttribute("aria-atomic", "true");
-
-    toastEl.innerHTML = `
-        <div class="toast-body bg-${type} text-white d-flex align-items-center">
-        <i class="fas fa-${type === "success" ? "check" : "exclamation-triangle"} me-2"></i>
-        ${message}
-        </div>
-    `;
-
-    document.body.appendChild(toastEl);
-
-    const t = bootstrap.Toast.getOrCreateInstance(toastEl, { delay: 3000, autohide: true });
-
-    try {
-        t.show();
-    } catch (e) {
-        console.error("Toast show failed:", e);
-        // fallback: 그냥 DOM만 보여주고 제거
-        toastEl.classList.add("show");
-    }
-
-    toastEl.addEventListener("hidden.bs.toast", () => {
-        toastEl.remove();
-    });
-
-    // hidden 이벤트가 안 뜨는 경우를 대비한 안전 제거
-    setTimeout(() => {
-        if (toastEl.isConnected) toastEl.remove();
-    }, 3500);
-}
-
-function CctvStream() {
-
 }
 
 function updateSpeakerSettings(speakerId) {
@@ -559,15 +521,3 @@ function updateTickerCamStatus() {
     onlineEl.textContent = online;
     totalEl.textContent = total;
 }
-
-/**
- * ticker 오른쪽 시간 업데이트
- */
-// function syncTickerTime() {
-//     const el = document.getElementById("tickerTime");
-//     if (!el) return;
-//     const now = new Date();
-//     const pad = v => String(v).padStart(2, "0");
-//     el.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-// }
-

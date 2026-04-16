@@ -59,7 +59,8 @@ public class BtypeQueryController {
     // ===================== 발령 이력 =====================
     // B 타입 발령 이력 조회 - alertKey 기준
     @GetMapping("/dispatch/alert/{alertKey}")
-    public ResponseEntity<List<SpkAlertDispatch>> getDispatchHistoryByAlertKey(@PathVariable Integer alertKey) {
+    public ResponseEntity<List<SpkAlertDispatch>> getDispatchHistoryByAlertKey(
+            @PathVariable("alertKey") Integer alertKey) {
         // List<SpkAlertDispatch> dispatchHistory =
         // btypeSpkService.getDispatchHistoryByAlertKey(alertKey);
         return ResponseEntity.ok(btypeSpkService.getDispatchHistoryByAlertKey(alertKey));
@@ -67,7 +68,8 @@ public class BtypeQueryController {
 
     // B 타입 발령 이력 조회 - deviceUid 기준
     @GetMapping("/dispatch/device/{deviceUid}")
-    public ResponseEntity<List<SpkAlertDispatch>> getDispatchHistoryByDeviceUid(@PathVariable String deviceUid) {
+    public ResponseEntity<List<SpkAlertDispatch>> getDispatchHistoryByDeviceUid(
+            @PathVariable("deviceUid") String deviceUid) {
         // List<SpkAlertDispatch> dispatchHistory =
         // btypeSpkService.getDispatchHistoryByDeviceUid(deviceUid);
         return ResponseEntity.ok(btypeSpkService.getDispatchHistoryByDeviceUid(deviceUid));
@@ -86,14 +88,14 @@ public class BtypeQueryController {
     // B 타입 발령 결과 조회 - 스피커 기준
     @GetMapping("/history/speaker/{speakerKey}")
     public ResponseEntity<List<SpkAlertHistory>> getBySpeakerKey(
-            @PathVariable Integer speakerKey) {
+            @PathVariable("speakerKey") Integer speakerKey) {
         return ResponseEntity.ok(btypeSpkService.getHistoryBySpeakerKey(speakerKey));
     }
 
     // B 타입 발령 결과 조회 - 특정 alertHistKey 기준
     @GetMapping("/history/key/{alertHistKey}")
     public ResponseEntity<List<SpkAlertHistory>> getByAlertHistKey(
-            @PathVariable Integer alertHistKey) {
+            @PathVariable("alertHistKey") Integer alertHistKey) {
         return ResponseEntity.ok(btypeSpkService.getHistoryByAlertHistKey(alertHistKey));
     }
 
@@ -113,7 +115,7 @@ public class BtypeQueryController {
     // 단일 스피커 설정 조회 (speakerKey 기준)
     // GET /api/btype/config/{speakerKey}
     @GetMapping("/config/{speakerKey}")
-    public ResponseEntity<SpkConfig> getSpeakerConfig(@PathVariable Integer speakerKey) {
+    public ResponseEntity<SpkConfig> getSpeakerConfig(@PathVariable("speakerKey") Integer speakerKey) {
         SpkConfig config = spkConfigService.getSpeakerByKey(speakerKey);
         if (config == null)
             return ResponseEntity.notFound().build();
@@ -124,7 +126,7 @@ public class BtypeQueryController {
     // GET /api/btype/config/location/{locationCode}
     @GetMapping("/config/location/{locationCode}")
     public ResponseEntity<List<SpkConfig>> getSpeakersByLocation(
-            @PathVariable String locationCode) {
+            @PathVariable("locationCode") String locationCode) {
 
         return ResponseEntity.ok(spkConfigService.getSpeakersByLocation(locationCode));
     }
@@ -139,7 +141,7 @@ public class BtypeQueryController {
     // ===================== 스피커 설정 조회 =====================
     @GetMapping("/setting/{speakerKey}")
     public ResponseEntity<SpkSettingEntity> getSpeakerSetting(
-            @PathVariable Integer speakerKey) {
+            @PathVariable("speakerKey") Integer speakerKey) {
 
         SpkSettingEntity setting = spkSettingService.getSetting(speakerKey);
         if (setting == null) {
@@ -167,7 +169,7 @@ public class BtypeQueryController {
     // 특정 설정 조회
     @GetMapping("/system/config/{key}")
     public ResponseEntity<SpkSystemConfigEntity> getSystemConfig(
-            @PathVariable String key) {
+            @PathVariable("key") String key) {
 
         SpkSystemConfigEntity config = spkSystemConfigService.getConfig(key);
         if (config == null)
@@ -189,7 +191,7 @@ public class BtypeQueryController {
     // 스피커별 시험 결과 조회
     @GetMapping("/test-result/{speakerKey}")
     public ResponseEntity<List<SpkTestResultEntity>> getTestResults(
-            @PathVariable Integer speakerKey) {
+            @PathVariable("speakerKey") Integer speakerKey) {
 
         return ResponseEntity.ok(spkTestResultService.getTestResults(speakerKey));
     }

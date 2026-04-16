@@ -175,14 +175,21 @@ public class CctvStreamService {
         Object lock = lockFor(mountId);
 
         synchronized (lock) {
-            if (!force && isInCooldown(mountId))
+            if (!force && isInCooldown(mountId)) {
+                log.info("restart skipped by cooldown [{}] cctv={}/{} mountpoint={}",
+                        quality, e.getLocationCode(), e.getCctvCode(), mountId);
                 return;
+            }
             String rtsp = buildRtspUrlWithAuth(e, stream.getRtspUrl());
             try {
+                log.info("restart requested [{}] cctv={}/{} name={} mountpoint={} force={}",
+                        quality, e.getLocationCode(), e.getCctvCode(), e.getName(), mountId, force);
                 janusManager.restartStream(mountId, stream.getVideoPort(),
-                        rtsp, e.getId(), e.getPassword(), e.getType());
+                        rtsp, e.getId(), e.getPassword(), e.getType(), force);
                 updateStatusProcIfPresent(e.getLocationCode(), e.getCctvCode(), 1);
                 markRestart(mountId);
+                log.info("restart success [{}] cctv={}/{} mountpoint={}",
+                        quality, e.getLocationCode(), e.getCctvCode(), mountId);
             } catch (Exception ex) {
                 log.error("restartStream failed ({}) mountpoint={} url={}",
                         quality, mountId, rtsp, ex);
@@ -193,20 +200,30 @@ public class CctvStreamService {
 
     private void restartLegacyIfPresent(CctvEntity e, boolean force) {
         if (!hasText(e.getRtspUrl()) || e.getMountpointId() == null || e.getVideoPort() == null) {
+            log.warn("restart skipped [LEGACY] cctv={}/{} name={} rtspUrl={}, mountpointId={}, videoPort={}",
+                    e.getLocationCode(), e.getCctvCode(), e.getName(),
+                    hasText(e.getRtspUrl()) ? "present" : "blank", e.getMountpointId(), e.getVideoPort());
             return;
         }
 
         Integer mountId = e.getMountpointId();
         Object lock = lockFor(mountId);
         synchronized (lock) {
-            if (!force && isInCooldown(mountId))
+            if (!force && isInCooldown(mountId)) {
+                log.info("restart skipped by cooldown [LEGACY] cctv={}/{} mountpoint={}",
+                        e.getLocationCode(), e.getCctvCode(), mountId);
                 return;
+            }
             String rtsp = buildRtspUrlWithAuth(e, e.getRtspUrl());
             try {
+                log.info("restart requested [LEGACY] cctv={}/{} name={} mountpoint={} force={}",
+                        e.getLocationCode(), e.getCctvCode(), e.getName(), mountId, force);
                 janusManager.restartStream(mountId, e.getVideoPort(),
-                        rtsp, e.getId(), e.getPassword(), e.getType());
+                        rtsp, e.getId(), e.getPassword(), e.getType(), force);
                 updateStatusProcIfPresent(e.getLocationCode(), e.getCctvCode(), 1);
                 markRestart(mountId);
+                log.info("restart success [LEGACY] cctv={}/{} mountpoint={}",
+                        e.getLocationCode(), e.getCctvCode(), mountId);
             } catch (Exception ex) {
                 log.error("restartStream failed (LEGACY) mountpoint={} url={}",
                         mountId, rtsp, ex);
@@ -223,9 +240,11 @@ public class CctvStreamService {
 
         try {
             List<CctvEntity> all = cctvRepository.findAll();
+            log.info("restartAllStreams start force={} total={}", force, all.size());
             for (CctvEntity e : all) {
                 restart(e.getLocationCode(), e.getCctvCode(), force);
             }
+            log.info("restartAllStreams requested force={} total={}", force, all.size());
         } finally {
             restartAllRunning.set(false);
         }

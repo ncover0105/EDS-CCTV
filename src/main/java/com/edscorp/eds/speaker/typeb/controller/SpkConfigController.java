@@ -28,13 +28,13 @@ public class SpkConfigController {
 
     @PutMapping("/{speakerKey}")
     public ResponseEntity<SpkConfig> update(
-            @PathVariable Integer speakerKey,
+            @PathVariable("speakerKey") Integer speakerKey,
             @RequestBody SpkConfigUpsertRequest req) {
         return ResponseEntity.ok(service.update(speakerKey, req));
     }
 
     @DeleteMapping("/{speakerKey}")
-    public ResponseEntity<Void> delete(@PathVariable Integer speakerKey) {
+    public ResponseEntity<Void> delete(@PathVariable("speakerKey") Integer speakerKey) {
         service.deleteSoft(speakerKey, null);
         return ResponseEntity.noContent().build();
     }

@@ -81,6 +81,7 @@ public class UserService {
         UserEntity user = new UserEntity();
         user.setId(req.getId());
         user.setPw(passwordEncoder.encode(req.getPw()));
+        user.setName(req.getName());
         user.setPhnNo(req.getPhnNo());
         user.setRole((req.getUserRole() == null || req.getUserRole().isBlank()) ? "USER" : req.getUserRole());
 
@@ -99,6 +100,9 @@ public class UserService {
         UserEntity user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
+        if (req.getName() != null) {
+            user.setName(req.getName());
+        }
         user.setPhnNo(req.getPhnNo());
         return userRepository.save(user);
     }

@@ -74,6 +74,16 @@ public class MainController {
                 return ResponseEntity.badRequest().body("type은 'tts' 또는 'saved'만 허용됩니다.");
             }
 
+            int riskMode = incoming.getRiskMode();
+            if (riskMode < 0 || riskMode > 2) {
+                return ResponseEntity.badRequest().body("riskMode는 0(1회), 1(주기 반복), 2(확인 시까지 반복)만 허용됩니다.");
+            }
+
+            int riskSec = incoming.getRiskSec();
+            if (riskSec < 1 || riskSec > 3600) {
+                return ResponseEntity.badRequest().body("riskSec는 1 ~ 3600 범위여야 합니다.");
+            }
+
             // id 강제 고정 (단일 row 정책)
             incoming.setId(1L);
 

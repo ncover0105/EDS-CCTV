@@ -261,29 +261,10 @@ function showTypeArea(type) {
   if (area) area.style.display = "flex";
 }
 
-function showGlobalAlert(message, type = "warning") {
-  try {
-    if (window.App?.utils?.showGlobalAlert) {
-      window.App.utils.showGlobalAlert(message, type);
-      return;
-    }
-  } catch (_) { }
-  alert(message);
-}
-
-function notify(message, type = 'info', options = {}) {
-  if (window.App?.utils?.notify) {
-    window.App.utils.notify(message, type, options);
-  } else {
-    console.warn('App.utils.notify is not available');
-    window.alert(message);
-  }
-}
-
 function requestPassword({ title = "비밀번호 확인", message = "비밀번호를 입력하세요." } = {}) {
   return new Promise((resolve) => {
     if (!window.PasswordModal?.show) {
-      showGlobalAlert("비밀번호 입력 모달을 사용할 수 없습니다.", "danger");
+      notify("비밀번호 입력 모달을 사용할 수 없습니다.", "danger");
       resolve(null);
       return;
     }
@@ -328,7 +309,7 @@ function requestPasswordWithServerValidation({
     }
 
     if (!window.PasswordModal?.show) {
-      showGlobalAlert("비밀번호 입력 모달을 사용할 수 없습니다.", "danger");
+      notify("비밀번호 입력 모달을 사용할 수 없습니다.", "danger");
       resolve({ ok: false, cancelled: true });
       return;
     }
@@ -423,7 +404,11 @@ async function pollSpeakerSetting(speakerKey, {
 }
 
 const SpeakerApi = {
-  async list() {
+  async list({ force = false } = {}) {
+    if (window.SpeakerDataCache?.get) {
+      return await window.SpeakerDataCache.get({ force });
+    }
+
     const res = await fetch("/api/btype/query/config/list");
     if (!res.ok) return [];
     return (await res.json()) ?? [];
@@ -476,8 +461,7 @@ function populateSelectedSpeakerBasicInfo(speaker = selectedSpeaker) {
 ========================= */
 const SpeakerList = {
   speakers: [],
-  async load() {
-    const list = await SpeakerApi.list();
+  apply(list) {
     this.speakers = (Array.isArray(list) ? list : []).map((spk) => ({
       ...spk,
       speakerType: SPEAKER_TYPE
@@ -485,15 +469,48 @@ const SpeakerList = {
     this.render();
     this.updateCount();
   },
+  async load({ force = false, showLoading = false } = {}) {
+    const cached = window.SpeakerDataCache?.peek?.();
+    if (!force && Array.isArray(cached)) {
+      this.apply(cached);
+      if (window.SpeakerDataCache?.isFresh?.()) return;
+    } else if (showLoading) {
+      this.renderLoading();
+    }
+
+    try {
+      const list = await SpeakerApi.list({ force });
+      this.apply(list);
+    } catch (err) {
+      console.error("스피커 목록 로드 실패:", err);
+      if (!this.speakers.length) {
+        this.apply([]);
+      } else {
+        notify("스피커 목록 갱신에 실패했습니다. 기존 목록을 유지합니다.", "warning");
+      }
+    }
+  },
   updateCount() {
     const el = document.getElementById("speakerCount");
     if (el) el.textContent = `총 ${this.speakers.length}개`;
+  },
+  renderLoading() {
+    const container = document.getElementById("speakerOffcanvasList");
+    const emptyMsg = document.getElementById("emptySpeakerMessage");
+    if (!container) return;
+    emptyMsg?.classList.add("d-none");
+    container.querySelectorAll(".speaker-item, .sp-item, .sp-list-loading").forEach(el => el.remove());
+    container.insertAdjacentHTML("beforeend", `
+    <div class="sp-list-loading text-center py-4 text-white-50">
+      <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+      스피커 목록을 불러오는 중...
+    </div>`);
   },
   render() {
     const container = document.getElementById("speakerOffcanvasList");
     const emptyMsg = document.getElementById("emptySpeakerMessage");
     if (!container) return;
-    container.querySelectorAll(".speaker-item, .sp-item").forEach(el => el.remove());
+    container.querySelectorAll(".speaker-item, .sp-item, .sp-list-loading").forEach(el => el.remove());
 
     if (!Array.isArray(this.speakers) || this.speakers.length === 0) {
       emptyMsg?.classList.remove("d-none");
@@ -510,20 +527,20 @@ const SpeakerList = {
     const speakerType = SPEAKER_TYPE;
     const uiTypeKey = speakerType.toLowerCase();
     const name = safe(spk.speakerName ?? spk.name ?? speakerKey);
-    const subId = safe(spk.speakerId);
+    const locationName = safe(spk.locationName);
     return `
-    <div class="sp-item sp-type-${uiTypeKey}"
+    <div class="speaker-list-item sp-item sp-type-${uiTypeKey} is-type-${uiTypeKey}"
          data-speaker-key="${String(speakerKey)}"
          data-speaker-id="${String(speakerId)}"
          data-speaker-type="${String(speakerType)}">
-      <div class="sp-item-info">
+      <div class="speaker-list-item-info sp-item-info">
         <div class="d-flex align-items-center gap-2 mb-1">
             <!-- <span class="speaker-type-tag type-${uiTypeKey}">${speakerType}</span> -->
-            <div class="sp-item-name">${name}</div>
+            <div class="speaker-list-item-name sp-item-name">${name}</div>
         </div>
-        <div class="sp-item-sub">${subId}</div>
+        <div class="speaker-list-item-meta sp-item-sub">${locationName}</div>
       </div>
-      <i class="bi bi-chevron-right sp-item-arrow"></i>
+      <i class="speaker-list-item-arrow bi bi-chevron-right sp-item-arrow"></i>
     </div>`;
   },
 };
@@ -568,9 +585,11 @@ const SpeakerSettingModal = {
       }
     }, true);
 
-    modalEl.addEventListener("shown.bs.modal", () => {
+    window.SpeakerDataCache?.preload?.();
+
+    modalEl.addEventListener("show.bs.modal", () => {
       this.resetState();
-      SpeakerList.load();
+      SpeakerList.load({ showLoading: true });
     });
 
     modalEl.addEventListener("hidden.bs.modal", () => {
@@ -587,7 +606,7 @@ const SpeakerSettingModal = {
     this.clearScheduledRefresh();
     selectedSpeaker = null;
     this.requestSeq += 1;
-    document.querySelectorAll(".sp-item.active").forEach((c) => c.classList.remove("active"));
+    document.querySelectorAll(".sp-item.active").forEach((c) => c.classList.remove("active", "is-active"));
     showTab("tab-info-b");
     showTypeArea(null);
     clearSpeakerReadOnlyFields();
@@ -650,14 +669,14 @@ const SpeakerSettingModal = {
       if (!card) return;
 
       if (card.classList.contains("active")) {
-        card.classList.remove("active");
+        card.classList.remove("active", "is-active");
         selectedSpeaker = null;
         this.resetState();
         return;
       }
 
-      document.querySelectorAll(".sp-item").forEach(c => c.classList.remove("active"));
-      card.classList.add("active");
+      document.querySelectorAll(".sp-item").forEach(c => c.classList.remove("active", "is-active"));
+      card.classList.add("active", "is-active");
 
       const speakerKey = card.dataset.speakerKey;
       const raw = SpeakerList.speakers.find(s => String(s?.speakerKey) === String(speakerKey));
@@ -714,8 +733,7 @@ const SpeakerSettingModal = {
       if (!btn) return;
 
       if (!selectedSpeaker?.speakerKey) {
-        showGlobalAlert("스피커를 먼저 선택해주세요.", "warning");
-        // notify('스피커를 먼저 선택해주세요.');
+        notify("스피커를 먼저 선택해주세요.", "warning");
         return;
       }
 
@@ -772,7 +790,7 @@ const SpeakerSettingModal = {
         if (isEmptySetting(dto)) {
           this.resetViewOnlyKeepSelection();
           populateSelectedSpeakerBasicInfo();
-          showGlobalAlert(requestErr?.message || "조회된 설정 정보가 없습니다. (응답 대기 시간 초과)", "warning");
+          notify(requestErr?.message || "조회된 설정 정보가 없습니다. (응답 대기 시간 초과)", "warning");
           return;
         }
 
@@ -786,12 +804,12 @@ const SpeakerSettingModal = {
         const targetTab = this.AUTO_OPEN_CONFIG_TAB ? "tab-config-b" : "tab-info-b";
         showTab(targetTab);
         if (requestErr) {
-          showGlobalAlert(`데이터 요청은 실패했지만 DB 설정값을 표시합니다. (${requestErr.message})`, "warning");
+          notify("최신 정보를 불러오지 못해 최근 저장된 설정값을 표시합니다.", "warning");
         }
       } catch (err) {
         if (this.isRequestStale(requestToken, speakerKey)) return;
         this.resetViewOnlyKeepSelection();
-        showGlobalAlert(`정보 요청 중 오류: ${err.message}`, "danger");
+        notify(`정보 요청 중 오류: ${err.message}`, "danger");
       } finally {
         this.setInfoButtonIdle();
       }
@@ -804,7 +822,7 @@ const SpeakerSettingModal = {
       if (!btn || btn.id === "speakerSettingInfo") return;
 
       if (!selectedSpeaker?.speakerKey) {
-        showGlobalAlert("스피커를 먼저 선택해주세요.", "warning");
+        notify("스피커를 먼저 선택해주세요.", "warning");
         return;
       }
 
@@ -846,7 +864,7 @@ const SpeakerSettingModal = {
         const val = document.getElementById(targetId)?.value;
 
         if (val === "None") {
-          showGlobalAlert("폴더를 선택해주세요.", "warning");
+          notify("폴더를 선택해주세요.", "warning");
           return;
         }
 
@@ -953,9 +971,9 @@ const SpeakerSettingModal = {
           extraParam: String(extraParam),
           password: password
         });
-        showGlobalAlert("설정 변경 명령을 전송했습니다.", "success");
+        notify("설정 변경 명령을 전송했습니다.", "success");
       } catch (err) {
-        showGlobalAlert(`저장 실패: ${err.message}`, "danger");
+        notify(`저장 실패: ${err.message}`, "danger");
       } finally {
         btn.disabled = false;
       }

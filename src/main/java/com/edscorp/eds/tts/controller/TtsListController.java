@@ -36,7 +36,7 @@ public class TtsListController {
 
     // GET /api/tts/{id}
     @GetMapping("/{id}")
-    public TtsResponse get(@PathVariable Long id) {
+    public TtsResponse get(@PathVariable("id") Long id) {
         return ttsListService.get(id);
     }
 
@@ -50,14 +50,14 @@ public class TtsListController {
     // PUT /api/tts/{id}
     @PutMapping("/{id}")
     public TtsResponse update(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody TtsUpsertRequest req) {
         return ttsListService.update(id, req);
     }
 
     // DELETE /api/tts/{id}
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
         ttsListService.delete(id);
         return ResponseEntity.noContent().build();
     }

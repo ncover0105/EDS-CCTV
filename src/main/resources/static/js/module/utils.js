@@ -226,7 +226,7 @@ function timeAgo(date) {
 export function notify(message, type = 'info', options = {}) {
     const {
         position = 'topRight',
-        timeout = 2000,
+        timeout = 3000,
         progressBar = true,
         title = '',
         duration
@@ -256,58 +256,6 @@ export function notify(message, type = 'info', options = {}) {
     }
 
     window.alert(message);
-}
-
-export function showToast(message, title = '알림') {
-    const toastContainer = document.getElementById('globalToastContainer');
-    const createdAt = new Date();
-
-    if (!toastContainer) {
-        console.error('toast container가 없습니다.');
-        return;
-    }
-
-    const toast = document.createElement('div');
-    // toast.className = 'toast align-items-center text-bg-primary border-0';
-    toast.className = 'toast';
-    toast.setAttribute('role', 'alert');
-    toast.setAttribute('aria-live', 'assertive');
-    toast.setAttribute('aria-atomic', 'true');
-    toast.setAttribute('data-bs-autohide', 'false');  // 자동 닫힘 비활성화
-    // toast.setAttribute('data-bs-delay', '5000'); // 5초 후 자동 닫힘
-
-    const timeId = `time-${Date.now()}`;
-
-    toast.innerHTML = `
-        <div class="toast-header">
-            <div style="width: 20px; height: 20px; background-color: #BE3D2A; border-radius: 0.375rem;" class="me-2"></div>
-            <strong class="me-auto">${title}</strong>
-            <small id="${timeId}">${timeAgo(createdAt)}</small>
-            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-        <div class="toast-body">
-            ${message}
-        </div>
-    `;
-
-    toastContainer.appendChild(toast);
-
-    const bsToast = new bootstrap.Toast(toast);
-    bsToast.show();
-
-    const intervalId = setInterval(() => {
-        const timeEl = document.getElementById(timeId);
-        if (timeEl) {
-            timeEl.innerText = timeAgo(createdAt);
-        } else {
-            clearInterval(intervalId);
-        }
-    }, 1000);
-
-    toast.addEventListener('hidden.bs.toast', () => {
-        clearInterval(intervalId);
-        toast.remove();
-    });
 }
 
 /**
@@ -362,7 +310,6 @@ export function fillDateTimeInputs(startId = "startDateTime", endId = "endDateTi
     if (endInput && !endInput.value) endInput.value = now;
 }
 
-export const toast = showToast;
 export const alert = showGlobalAlert;
 export const confirm = function (title, msg, onConfirm) {
     const modal = document.getElementById("confirm_modal");

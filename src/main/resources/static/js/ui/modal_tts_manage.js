@@ -31,8 +31,11 @@ const TtsManageApi = {
     },
 
     async remove(id) {
-        const res = await fetch(`/api/tts/${id}`, { method: "DELETE" });
-        if (!res.ok) throw new Error("TTS delete failed");
+        const res = await fetch(`/api/tts/${encodeURIComponent(id)}`, { method: "DELETE" });
+        if (!res.ok) {
+            const message = await res.text().catch(() => "");
+            throw new Error(message || `TTS delete failed: ${res.status}`);
+        }
         return true;
     },
 };
@@ -42,6 +45,7 @@ window.TtsManageModal = {
         items: [],
         selectedId: null,
         mode: "create",
+        statusConfirmResolve: null,
     },
 
     els() {
@@ -51,6 +55,13 @@ window.TtsManageModal = {
             search: document.getElementById("tts_search"),
             btnSave: document.getElementById("tts_save"),
             btnDelete: document.getElementById("tts_delete"),
+            status: document.getElementById("tts_inline_status"),
+            statusText: document.getElementById("tts_inline_status_text"),
+            statusIcon: document.getElementById("tts_inline_status_icon"),
+            statusActions: document.getElementById("tts_inline_status_actions"),
+            statusConfirm: document.getElementById("tts_inline_status_confirm"),
+            statusCancel: document.getElementById("tts_inline_status_cancel"),
+            statusClose: document.getElementById("tts_inline_status_close"),
 
             id: document.getElementById("tts_id"),
             name: document.getElementById("tts_name"),
@@ -60,14 +71,19 @@ window.TtsManageModal = {
     },
 
     init() {
+        if (this.state.initialized) return;
+
         const el = this.els();
         if (!el.list) return; // 모달 fragment가 포함되지 않은 페이지일 수 있음
+
+        this.state.initialized = true;
 
         el.filterUse?.addEventListener("change", () => this.renderList());
         el.search?.addEventListener("input", () => this.renderList());
 
         el.btnSave?.addEventListener("click", () => this.save());
         el.btnDelete?.addEventListener("click", () => this.remove());
+        el.statusClose?.addEventListener("click", () => this.hideStatus());
 
         // 모달 열릴 때마다 목록 갱신하고 싶으면(선택)
         const modalEl = document.getElementById("tts_manage_modal");
@@ -86,8 +102,73 @@ window.TtsManageModal = {
             if (!this.state.selectedId) this.resetForm();
         } catch (e) {
             console.error(e);
-            // alert("TTS 목록을 불러오지 못했습니다.");
+            this.showStatus("TTS 목록을 불러오지 못했습니다.", "danger");
         }
+    },
+
+    clearStatusActions() {
+        const el = this.els();
+        if (this.state.statusConfirmResolve) {
+            const resolve = this.state.statusConfirmResolve;
+            this.state.statusConfirmResolve = null;
+            resolve(false);
+        }
+        if (el.statusConfirm) el.statusConfirm.onclick = null;
+        if (el.statusCancel) el.statusCancel.onclick = null;
+        el.statusActions?.classList.add("d-none");
+        el.statusClose?.classList.remove("d-none");
+    },
+
+    showStatus(message, type = "info") {
+        const el = this.els();
+        if (!el.status || !el.statusText) return;
+
+        this.clearStatusActions();
+
+        el.status.classList.remove("d-none", "is-success", "is-warning", "is-danger", "is-info");
+        el.status.classList.add(`is-${type}`);
+        el.statusText.textContent = message;
+
+        if (el.statusIcon) {
+            const iconMap = {
+                success: "bi-check-circle",
+                warning: "bi-exclamation-triangle",
+                danger: "bi-x-circle",
+                info: "bi-info-circle",
+            };
+            el.statusIcon.className = `bi ${iconMap[type] ?? iconMap.info} bc-inline-status-icon`;
+        }
+    },
+
+    hideStatus() {
+        this.clearStatusActions();
+        this.els().status?.classList.add("d-none");
+    },
+
+    confirmStatus(message, type = "warning") {
+        const el = this.els();
+        if (!el.status || !el.statusText || !el.statusConfirm || !el.statusCancel || !el.statusActions) {
+            return Promise.resolve(window.confirm(message));
+        }
+
+        this.showStatus(message, type);
+        el.statusActions.classList.remove("d-none");
+        el.statusClose?.classList.add("d-none");
+
+        return new Promise(resolve => {
+            this.state.statusConfirmResolve = resolve;
+
+            el.statusConfirm.onclick = () => {
+                this.state.statusConfirmResolve = null;
+                this.hideStatus();
+                resolve(true);
+            };
+            el.statusCancel.onclick = () => {
+                this.state.statusConfirmResolve = null;
+                this.hideStatus();
+                resolve(false);
+            };
+        });
     },
 
     getFilteredItems() {
@@ -125,6 +206,24 @@ window.TtsManageModal = {
     updateCountUi(items = []) {
         const totalEl = document.getElementById("tts_count_badge");
         if (totalEl) totalEl.textContent = String(items.length);
+    },
+
+    async notifyChanged(action, payload = {}) {
+        window.TtsDataCache?.clear?.();
+
+        window.dispatchEvent(new CustomEvent("tts:list-changed", {
+            detail: { action, ...payload }
+        }));
+        document.dispatchEvent(new CustomEvent("tts:list-changed", {
+            detail: { action, ...payload }
+        }));
+
+        if (window.BroadcastModal?.loadTtsList) {
+            await window.BroadcastModal.loadTtsList({ force: true });
+        }
+        if (window.refreshBroadcastTtsTemplates) {
+            await window.refreshBroadcastTtsTemplates();
+        }
     },
 
     renderList() {
@@ -227,11 +326,11 @@ window.TtsManageModal = {
 
         // Validation을 서버에서 안 쓰는 구성이라면, 프론트에서 최소 체크 권장
         if (!ttsName) {
-            alert("TTS 이름(ttsName)을 입력하세요.");
+            this.showStatus("TTS 이름을 입력하세요.", "warning");
             return;
         }
         if (!ttsMsg) {
-            alert("TTS 메시지(ttsMsg)을 입력하세요.");
+            this.showStatus("TTS 메시지를 입력하세요.", "warning");
             return;
         }
 
@@ -247,42 +346,40 @@ window.TtsManageModal = {
             // 정책에 따라 유지 or 해제
             this.resetForm(); // 요청대로: 저장 후 해제
 
-            if (window.BroadcastModal?.loadTtsList) await BroadcastModal.loadTtsList();
+            await this.notifyChanged(idVal ? "update" : "create", { item: saved });
 
-            alert("저장되었습니다.");
+            this.showStatus("저장되었습니다.", "success");
         } catch (e) {
             console.error(e);
-            alert("저장에 실패했습니다.");
+            this.showStatus("저장에 실패했습니다.", "danger");
         }
     },
 
     async remove() {
+        console.log("TTS 삭제");
+
         const el = this.els();
-        const idVal = (el.id?.value ?? "").trim();
+        const idVal = String((el.id?.value || this.state.selectedId || "")).trim();
         if (!idVal) {
-            alert("삭제할 항목을 선택하세요.");
+            this.showStatus("삭제할 항목을 선택하세요.", "warning");
             return;
         }
 
-        if (!confirm("선택한 TTS를 삭제하시겠습니까?")) return;
+        if (!await this.confirmStatus("선택한 TTS를 삭제하시겠습니까?", "danger")) return;
 
         try {
             await TtsManageApi.remove(idVal);
 
-            // 폼 초기화 + 목록 새로고침
+            this.state.items = (this.state.items ?? []).filter(item => String(item.ttsId) !== String(idVal));
             this.resetForm();
             await this.loadList();
 
-            // 발령 모달 select 갱신
-            if (window.BroadcastModal?.loadTtsList) {
-                await BroadcastModal.loadTtsList();
-            }
+            await this.notifyChanged("delete", { id: idVal });
 
-            alert("삭제되었습니다.");
-            await this.loadList();
+            this.showStatus("삭제되었습니다.", "success");
         } catch (e) {
             console.error(e);
-            alert("삭제에 실패했습니다.");
+            this.showStatus("삭제에 실패했습니다.", "danger");
         }
     },
 

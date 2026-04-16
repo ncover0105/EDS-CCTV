@@ -1177,7 +1177,80 @@
                                         </div>
                                     </div><!-- /scard--grid3 -->
 
-                                    <!-- ③ 지도 API 키 ──────────────────────────── -->
+                                    <!-- ③ 위험 알림 설정 ─────────────────────── -->
+                                    <div class="scard scard--grid3">
+
+                                        <!-- 알림 방식 (riskMode) -->
+                                        <div class="scard-group">
+                                            <p class="scard-group-label">
+                                                <i class="bi bi-bell-fill"></i>
+                                                <span>알림 방식</span>
+                                            </p>
+                                            <div class="sradio-stack">
+                                                <label class="sradio-item">
+                                                    <input type="radio" name="riskMode" id="riskMode0" value="0">
+                                                    <span class="sradio-box">
+                                                        <i class="bi bi-1-circle"></i>
+                                                        <span>1회</span>
+                                                    </span>
+                                                </label>
+                                                <label class="sradio-item">
+                                                    <input type="radio" name="riskMode" id="riskMode1" value="1">
+                                                    <span class="sradio-box">
+                                                        <i class="bi bi-arrow-repeat"></i>
+                                                        <span>주기 반복</span>
+                                                    </span>
+                                                </label>
+                                                <label class="sradio-item">
+                                                    <input type="radio" name="riskMode" id="riskMode2" value="2">
+                                                    <span class="sradio-box">
+                                                        <i class="bi bi-check2-circle"></i>
+                                                        <span>확인 시까지</span>
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="scard-divider"></div>
+
+                                        <!-- 반복 간격 (riskSec) -->
+                                        <div class="scard-group">
+                                            <p class="scard-group-label">
+                                                <i class="bi bi-stopwatch-fill"></i>
+                                                <span>반복 간격(초)</span>
+                                            </p>
+                                            <div class="sapi-input-wrap">
+                                                <i class="bi bi-stopwatch sapi-icon"></i>
+                                                <input type="number" class="sapi-input" id="riskSec"
+                                                    min="1" max="3600" placeholder="60"
+                                                    style="padding-right: 0.9rem; font-family: inherit;">
+                                            </div>
+                                            <p class="sapi-hint">
+                                                <i class="bi bi-info-circle"></i>
+                                                주기 반복 모드일 때 적용됩니다. (1 ~ 3600초)
+                                            </p>
+                                        </div>
+
+                                        <div class="scard-divider"></div>
+
+                                        <!-- 자동 방송 (riskAutoBcast) -->
+                                        <div class="scard-group">
+                                            <p class="scard-group-label">
+                                                <i class="bi bi-broadcast-pin"></i>
+                                                <span>자동 방송</span>
+                                            </p>
+                                            <p style="font-size: 0.83rem; color: rgba(255,255,255,0.55); margin-bottom: 1rem; line-height: 1.5;">
+                                                위험 발생 시 자동으로 방송을 실행합니다
+                                            </p>
+                                            <label class="stoggle" title="자동 방송 토글">
+                                                <input class="form-check-input stoggle-input" type="checkbox"
+                                                    role="switch" id="riskAutoBcast">
+                                                <span class="stoggle-track"></span>
+                                            </label>
+                                        </div>
+                                    </div><!-- /위험 알림 설정 -->
+
+                                    <!-- ④ 지도 API 키 ──────────────────────────── -->
                                     <div class="scard scard--api">
                                         <div class="scard-header">
                                             <span class="scard-icon"><i class="bi bi-map-fill"></i></span>

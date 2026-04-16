@@ -216,10 +216,13 @@ window.PasswordModal = (function () {
         errorEl.textContent = msg;
         errorEl.classList.add('pw-modal-error--visible');
         input.classList.add('pw-input-error');
-        // 흔들기 애니메이션 재실행 (reflow 강제)
+        // 흔들기 애니메이션 재실행: void offsetWidth(강제 reflow) 대신 rAF 2프레임으로 대체
         input.classList.remove('pw-input-shake');
-        void input.offsetWidth;
-        input.classList.add('pw-input-shake');
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                input.classList.add('pw-input-shake');
+            });
+        });
     }
 
     function showError(msg) {
@@ -283,8 +286,9 @@ window.PasswordModal = (function () {
 
         if (!window.bootstrap?.Modal) return;
 
-        const openModals = Array.from(document.querySelectorAll('.modal.show'));
-        const activeModalEl = openModals[openModals.length - 1];
+        // Bootstrap modal이 열려있는 경우에만 DOM 순회 수행
+        const activeModalEl = document.querySelector('.modal.show:last-of-type') ||
+                              document.querySelector('.modal.show');
         if (!activeModalEl) return;
 
         const modalInstance = window.bootstrap.Modal.getInstance(activeModalEl);

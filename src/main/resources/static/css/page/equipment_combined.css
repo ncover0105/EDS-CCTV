@@ -6748,6 +6748,14 @@ select.eq-input option {
     flex-shrink: 0;
 }
 
+.broadcast-pane .bcp-tabs-section.is-default-pending {
+    visibility: hidden;
+}
+
+.broadcast-pane .bcp-panel--compose.is-default-pending .bcp-compose-area {
+    visibility: hidden;
+}
+
 .broadcast-pane .bcp-tab-group {
     display: block;
 }
@@ -6839,6 +6847,110 @@ select.eq-input option {
     font-weight: 400;
     color: rgba(255, 255, 255, 0.6);
     font-size: 10.5px;
+}
+
+.broadcast-pane .bc-tts-picker {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: stretch;
+    flex-shrink: 0;
+}
+
+.broadcast-pane .bc-tts-select-shell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    min-height: 46px;
+    padding: 7px 10px;
+    border: 1px solid rgba(34, 197, 94, 0.18);
+    border-radius: 8px;
+    background: rgba(15, 23, 42, 0.48);
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.broadcast-pane .bc-tts-select-shell:focus-within {
+    border-color: rgba(34, 197, 94, 0.42);
+    background: rgba(15, 23, 42, 0.62);
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.08);
+}
+
+.broadcast-pane .bc-tts-select-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+    color: #bbf7d0;
+    background: rgba(34, 197, 94, 0.13);
+    flex-shrink: 0;
+    font-size: 14px;
+}
+
+.broadcast-pane .bc-tts-select-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.broadcast-pane #bc_tts_list.form-select-dark {
+    width: 100%;
+    min-width: 0;
+    height: 20px;
+    padding: 0 24px 0 0;
+    border: 0;
+    border-radius: 0;
+    background-color: transparent;
+    color: rgba(255, 255, 255, 0.86);
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 1.2;
+    box-shadow: none;
+}
+
+.broadcast-pane #bc_tts_list.form-select-dark:focus {
+    box-shadow: none;
+}
+
+.broadcast-pane #bc_tts_list.form-select-dark:disabled {
+    color: rgba(255, 255, 255, 0.34);
+    cursor: not-allowed;
+}
+
+.broadcast-pane .bc-tts-select-shell:has(#bc_tts_list:disabled) {
+    opacity: 0.72;
+}
+
+.broadcast-pane .bc-tts-manage-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 96px;
+    min-height: 46px;
+    padding: 0 13px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.12s, background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.broadcast-pane .bc-tts-manage-btn:hover {
+    border-color: rgba(34, 197, 94, 0.34);
+    background: rgba(34, 197, 94, 0.12);
+    color: #d1fae5;
+}
+
+.broadcast-pane .bc-tts-manage-btn:active {
+    transform: translateY(1px);
 }
 
 .broadcast-pane .bcp-textarea {
@@ -7272,6 +7384,14 @@ select.eq-input option {
 
     .broadcast-pane .bc-target-col {
         max-height: 260px !important;
+    }
+
+    .broadcast-pane .bc-tts-picker {
+        grid-template-columns: 1fr;
+    }
+
+    .broadcast-pane .bc-tts-manage-btn {
+        width: 100%;
     }
 
     .broadcast-pane .bc-exec-col {

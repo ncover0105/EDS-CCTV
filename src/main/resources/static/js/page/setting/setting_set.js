@@ -8,15 +8,6 @@
     let settingInitialized = false;
     let radioGroupBound = false;
 
-    function notify(message, type = 'info', options = {}) {
-        if (window.App?.utils?.notify) {
-            window.App.utils.notify(message, type, options);
-        } else {
-            console.warn('App.utils.notify is not available');
-            window.alert(message);
-        }
-    }
-
     function initSettingManager() {
         if (settingInitialized) return;
         settingInitialized = true;
@@ -45,7 +36,12 @@
             'mediaDmb',
             'typeTts',
             'typeSaved',
-            'mapApiKey'
+            'mapApiKey',
+            'riskMode0',
+            'riskMode1',
+            'riskMode2',
+            'riskSec',
+            'riskAutoBcast'
         ].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.disabled = true;
@@ -103,7 +99,10 @@
             mode: (document.querySelector("input[name='mode']:checked")?.value === 'real') ? 0 : 1,
             media: document.querySelector("input[name='media']:checked")?.value ?? '',
             type: document.querySelector("input[name='type']:checked")?.value ?? '',
-            mapApiKey: document.getElementById('mapApiKey')?.value ?? ''
+            mapApiKey: document.getElementById('mapApiKey')?.value ?? '',
+            riskMode: parseInt(document.querySelector("input[name='riskMode']:checked")?.value ?? '0'),
+            riskSec: parseInt(document.getElementById('riskSec')?.value ?? '60'),
+            riskAutoBcast: document.getElementById('riskAutoBcast')?.checked ?? false
         };
 
         try {
@@ -114,7 +113,7 @@
             });
 
             if (!res.ok) {
-                const err = await res.text();
+                await res.text();
                 notify('설정 저장 실패', 'danger', {
                     title: '실패'
                 });
@@ -159,6 +158,16 @@
 
             const apiKey = document.getElementById('mapApiKey');
             if (apiKey) apiKey.value = setting.mapApiKey || '';
+
+            setChecked('riskMode0', setting.riskMode === 0);
+            setChecked('riskMode1', setting.riskMode === 1);
+            setChecked('riskMode2', setting.riskMode === 2);
+
+            const riskSecEl = document.getElementById('riskSec');
+            if (riskSecEl) riskSecEl.value = setting.riskSec ?? '';
+
+            const riskAutoBcastEl = document.getElementById('riskAutoBcast');
+            if (riskAutoBcastEl) riskAutoBcastEl.checked = !!setting.riskAutoBcast;
 
             // 라디오 스타일 재적용
             const groups = [

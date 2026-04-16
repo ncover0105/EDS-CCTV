@@ -40,15 +40,15 @@ window.SSE_MQTT = (function () {
         switch (topic) {
             case "send/emergency":
                 handleEmergency(message);
+
                 break;
 
             case "cctv/req":
-                // App.utils.showToast("CCTV 요청 감지", "알림");
-                // App.utils.showGlobalAlert("CCTV 요청 감지", "Info");
+
                 break;
 
             case "cctv/resetIP":
-                // App.utils.showToast("CCTV IP 초기화됨", "알림");
+
                 break;
 
             default:

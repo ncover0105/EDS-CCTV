@@ -440,11 +440,9 @@ window.CCTVLayout = (function () {
             // 재-watch 방식
             try {
                 await CCTVJanus.reconnectOne(cameras, cam.mountpointId);
-                // showToast(`${cam.name} 재연결 완료`, "success");
                 App.utils.showGlobalAlert(`${cam.name} 재연결 완료`, "success");
             } catch (err) {
                 console.error("reconnectOne error", err);
-                // showToast(`${cam.name} 재연결 실패`, "danger");
                 App.utils.showGlobalAlert(`${cam.name} 재연결 실패`, "danger");
             }
         });

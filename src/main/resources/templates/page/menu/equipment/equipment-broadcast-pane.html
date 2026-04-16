@@ -87,7 +87,7 @@
                  Col 2 : 메시지 구성
                  ══════════════════════════════════════════ -->
             <div class="bc-compose-col">
-                <div class="bcp-panel bcp-panel--compose">
+                <div class="bcp-panel bcp-panel--compose is-default-pending">
                     <div class="bcp-panel-band">
                         <div class="bcp-band-title">
                             <i class="bi bi-pencil-square"></i>
@@ -96,35 +96,26 @@
                     </div>
 
                     <!-- 방송 모드 & 카테고리 — 탭 스타일 -->
-                    <div class="bcp-tabs-section">
+                    <div class="bcp-tabs-section is-default-pending">
                         <div class="bcp-tab-group">
                             <span class="bcp-tab-lbl">방송 모드</span>
                             <div class="bcp-tab-btns">
-                                <button type="button" class="bc-choice-btn bcp-tab is-active" data-target="bc_mode"
+                                <button type="button" class="bc-choice-btn bcp-tab" data-target="bc_mode"
                                     data-value="1">실제 방송</button>
                                 <button type="button" class="bc-choice-btn bcp-tab" data-target="bc_mode"
                                     data-value="0">시험 방송</button>
                             </div>
-                            <select id="bc_mode" class="d-none">
-                                <option value="0">시험 방송</option>
-                                <option value="1" selected>실제 방송</option>
-                            </select>
                         </div>
                         <div class="bcp-tab-group">
-                            <span class="bcp-tab-lbl">카테고리</span>
+                            <span class="bcp-tab-lbl">방송 유형</span>
                             <div class="bcp-tab-btns">
                                 <button type="button" class="bc-choice-btn bcp-tab" data-target="bc_broadcast_type"
                                     data-value="1">TTS</button>
-                                <button type="button" class="bc-choice-btn bcp-tab is-active"
-                                    data-target="bc_broadcast_type" data-value="2">저장 메시지</button>
+                                <button type="button" class="bc-choice-btn bcp-tab" data-target="bc_broadcast_type"
+                                    data-value="2">저장 메시지</button>
                                 <button type="button" class="bc-choice-btn bcp-tab" data-target="bc_broadcast_type"
                                     data-value="3">기타</button>
                             </div>
-                            <select id="bc_broadcast_type" class="d-none">
-                                <option value="1">TTS</option>
-                                <option value="2" selected>저장메시지</option>
-                                <option value="3">기타</option>
-                            </select>
                         </div>
                     </div>
 
@@ -136,6 +127,21 @@
                             <div class="bcp-input-meta">
                                 <span>메시지 작성</span>
                                 <span class="bcp-hint">방송할 내용을 직접 입력하세요.</span>
+                            </div>
+                            <div class="bc-tts-picker">
+                                <div class="bc-tts-select-shell">
+                                    <i class="bi bi-chat-left-text bc-tts-select-icon" aria-hidden="true"></i>
+                                    <div class="bc-tts-select-copy">
+                                        <select id="bc_tts_list" class="form-select-dark form-select-sm"
+                                            aria-label="TTS 프리셋 선택">
+                                            <option value="">직접 입력</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button type="button" class="bc-tts-manage-btn" id="bc_open_tts_manage">
+                                    <i class="bi bi-sliders" aria-hidden="true"></i>
+                                    <span>TTS 관리</span>
+                                </button>
                             </div>
                             <textarea class="bcp-textarea" id="customMessageText" maxlength="1000"
                                 placeholder="이곳에 방송 내용을 입력하십시오..."></textarea>

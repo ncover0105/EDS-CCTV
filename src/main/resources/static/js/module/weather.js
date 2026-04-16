@@ -91,7 +91,7 @@ window.Weather = (function () {
     function updateForecast(data) {
         safeText("#rainfall", data?.rainfall, "%");
         safeText("#weather", data?.weather);
-        safeText("#weather_loc", "영덕군");
+        safeText("#weather_loc", "대구광역시");
 
         safeIcon(
             "#weather_icon",

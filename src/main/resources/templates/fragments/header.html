@@ -51,9 +51,8 @@
 
                 <!-- 이력조회 -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle text-nowrap"
-                        th:classappend="${currentPage == 'situation' ? 'active' : ''}" role="button"
-                        data-bs-toggle="dropdown">이력조회</a>
+                    <a class="nav-link text-nowrap" th:classappend="${currentPage == 'situation' ? 'active' : ''}"
+                        role="button" data-bs-toggle="dropdown">이력조회</a>
                     <ul class="dropdown-menu dropdown-menu-dark">
                         <li><a class="dropdown-item text-nowrap" th:classappend="${view == 'situation' ? 'active' : ''}"
                                 th:href="@{/menu/situation?view=situation}">상황발생이력</a></li>
@@ -66,9 +65,8 @@
 
                 <!-- 설정 -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle text-nowrap"
-                        th:classappend="${currentPage == 'settings' ? 'active' : ''}" role="button"
-                        data-bs-toggle="dropdown">설정</a>
+                    <a class="nav-link text-nowrap" th:classappend="${currentPage == 'settings' ? 'active' : ''}"
+                        role="button" data-bs-toggle="dropdown">설정</a>
                     <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
                         <li><a class="dropdown-item text-nowrap" th:classappend="${view == 'user' ? 'active' : ''}"
                                 th:href="@{/menu/settings?view=user}">사용자설정</a></li>
@@ -94,8 +92,8 @@
             </div>
             <ul class="navbar-nav">
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button"
-                        data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
                         <i class="fas fa-user-large fa-fw"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark" aria-labelledby="navbarDropdown">

@@ -50,7 +50,7 @@ public class SpeakerController {
     // }
 
     @DeleteMapping("/delete/{code}")
-    public void delete(@PathVariable String code) {
+    public void delete(@PathVariable("code") String code) {
         speakerService.delete(code);
     }
 

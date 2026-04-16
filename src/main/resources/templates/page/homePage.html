@@ -14,6 +14,7 @@
     <!-- Deprecated: Naver Map API -->
     <link rel="stylesheet" href="css/weather.css">
     <link rel="stylesheet" href="css/cctv-placeholder.css">
+    <link rel="stylesheet" href="css/map.css">
     <!-- Library: OpenLayers -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@7.4.0/ol.css" />
     <script src="https://cdn.jsdelivr.net/npm/ol@7.4.0/dist/ol.js"></script>
@@ -106,6 +107,8 @@
                     <i class="bi bi-arrow-clockwise"></i>
                     <span class="d-none d-md-inline">CCTV 전체 재시작</span>
                 </button>
+
+                <button class="btn-apple-base btn-apple-warning btn-sm" id="testBtn" type="button">테스트</button>
             </div>
         </div>
 
@@ -129,32 +132,39 @@
                             <span class="map-device-total-value" id="speakerTotalCount">0</span>
                         </div>
                     </div>
-                    <div class="map-controls">
-                        <div class="map-control-btn" id="refreshMap">
-                            <i class="bi bi-arrow-clockwise"></i>
-                        </div>
-                    </div>
                     <div class="camera-status-summary">
-                        <button type="button" class="device-status-toggle" id="deviceStatusToggle" aria-expanded="true"
-                            aria-controls="deviceStatusLists">
-                            <span class="device-status-toggle-text">장치 리스트</span>
-                            <i class="bi bi-chevron-down"></i>
-                        </button>
-                        <div class="device-status-lists" id="deviceStatusLists">
-                            <div class="device-status-group">
-                                <div class="device-status-group-title">
-                                    <i class="bi bi-camera-video-fill me-1"></i>
-                                    CCTV
-                                </div>
-                                <div class="device-status-list" id="cctvStatusList"></div>
+                        <div class="css-panel-header">
+                            <div class="css-panel-title">
+                                <span class="css-panel-dot" aria-hidden="true"></span>
+                                <span class="css-panel-label">장치 현황</span>
+                                <span class="css-panel-count" id="deviceTotalCount">0</span>
                             </div>
-                            <div class="device-status-group">
-                                <div class="device-status-group-title">
-                                    <i class="bi bi-volume-up-fill me-1"></i>
-                                    스피커
-                                </div>
-                                <div class="device-status-list" id="speakerStatusList"></div>
+                            <div class="css-panel-actions">
+                                <button type="button" class="css-action-btn" id="refreshMap" title="새로고침"
+                                    aria-label="지도 새로고침">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </button>
+                                <button type="button" class="css-action-btn" id="deviceStatusToggle"
+                                    aria-expanded="true" aria-controls="deviceStatusLists" title="목록 접기">
+                                    <i class="bi bi-chevron-up"></i>
+                                </button>
                             </div>
+                        </div>
+                        <div class="css-panel-body" id="deviceStatusLists">
+                            <div class="device-filter-tabs" id="deviceFilterChips">
+                                <button type="button" class="device-filter-tab is-active" data-filter="all">
+                                    전체 <span class="dft-count" id="filterCountAll">0</span>
+                                </button>
+                                <button type="button" class="device-filter-tab" data-filter="cctv">
+                                    <i class="bi bi-camera-video-fill"></i><span class="dft-count"
+                                        id="filterCountCctv">0</span>
+                                </button>
+                                <button type="button" class="device-filter-tab" data-filter="speaker">
+                                    <i class="bi bi-volume-up-fill"></i><span class="dft-count"
+                                        id="filterCountSpeaker">0</span>
+                                </button>
+                            </div>
+                            <div class="device-status-list" id="deviceStatusList"></div>
                         </div>
                     </div>
                     <div id="map">

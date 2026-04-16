@@ -84,10 +84,11 @@ public class TtsListService {
 
     @Transactional
     public void delete(Long id) {
-        if (!ttsListRepository.existsById(id)) {
-            throw new EntityNotFoundException("TTS not found: " + id);
-        }
-        ttsListRepository.deleteById(id);
+        TtsList entity = ttsListRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("TTS not found: " + id));
+
+        ttsListRepository.delete(entity);
+        ttsListRepository.flush();
     }
 
     private Boolean normalizeUseFlag(Boolean flag) {

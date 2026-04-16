@@ -1493,6 +1493,7 @@ select.sit-input {
 
 /* ── 1024px: 사이드바 오버레이 전환 ── */
 @media (max-width: 1024px) {
+
     /* 모바일 탭 네비게이션 표시 */
     .sit-tab-nav {
         display: flex;
@@ -2269,7 +2270,7 @@ select.sit-input {
    ============================================ */
 .sit-stats-section {
     flex-shrink: 0;
-    margin: 0 12px 8px;
+    margin: 12px 8px;
     background: var(--bg-panel);
     border: 1px solid var(--border-soft);
     border-radius: var(--r-lg);

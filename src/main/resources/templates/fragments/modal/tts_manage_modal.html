@@ -20,6 +20,22 @@
                     </button>
                 </div>
 
+                <div class="bc-inline-status d-none" id="tts_inline_status" role="status" aria-live="polite">
+                    <div class="bc-inline-status-mark">
+                        <i class="bi bi-info-circle bc-inline-status-icon" id="tts_inline_status_icon"
+                            aria-hidden="true"></i>
+                    </div>
+                    <span id="tts_inline_status_text" class="bc-inline-status-text">안내 메시지</span>
+                    <div class="tts-inline-status-actions d-none" id="tts_inline_status_actions">
+                        <button type="button" class="tts-inline-status-btn confirm" id="tts_inline_status_confirm">확인</button>
+                        <button type="button" class="tts-inline-status-btn cancel" id="tts_inline_status_cancel">취소</button>
+                    </div>
+                    <button type="button" class="bc-inline-status-close" id="tts_inline_status_close"
+                        aria-label="안내 닫기">
+                        <i class="bi bi-x-lg" aria-hidden="true"></i>
+                    </button>
+                </div>
+
                 <div class="modal-body">
 
                     <div class="panel-left">

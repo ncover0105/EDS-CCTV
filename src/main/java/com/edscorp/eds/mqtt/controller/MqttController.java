@@ -114,7 +114,7 @@ public class MqttController {
     }
 
     @GetMapping("/alert/{alertCode}")
-    public ResponseEntity<String> getAlertMessage(@PathVariable String alertCode) {
+    public ResponseEntity<String> getAlertMessage(@PathVariable("alertCode") String alertCode) {
         return ResponseEntity.ok(mqttService.getMessageBtAlertCode(alertCode));
     }
 

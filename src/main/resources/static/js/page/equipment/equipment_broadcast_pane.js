@@ -42,6 +42,90 @@
         }
     }
 
+    function getBroadcastDefaultsFromSystemSetting(setting) {
+        const mode = Number(setting?.mode);
+        const type = String(setting?.type ?? "").trim().toLowerCase();
+
+        return {
+            // SystemSetting: 0=실제, 1=시험 / 현재 방송 UI: 1=실제, 0=시험
+            mode: mode === 1 ? "0" : "1",
+            broadcastType: type === "saved" ? "2" : "1"
+        };
+    }
+
+    let broadcastSystemDefaults = getBroadcastDefaultsFromSystemSetting(null);
+
+    function setBroadcastDefaultsPending(isPending) {
+        document.querySelector(".broadcast-pane .bcp-tabs-section")
+            ?.classList.toggle("is-default-pending", isPending);
+        document.querySelector(".broadcast-pane .bcp-panel--compose")
+            ?.classList.toggle("is-default-pending", isPending);
+    }
+
+    function setBroadcastDefaultsLoading(isLoading) {
+        document.querySelectorAll(".bc-choice-btn[data-target='bc_mode'], .bc-choice-btn[data-target='bc_broadcast_type']")
+            .forEach(btn => {
+                btn.classList.toggle("is-default-loading", isLoading);
+                btn.disabled = isLoading;
+            });
+    }
+
+    async function loadBroadcastSystemDefaults() {
+        setBroadcastDefaultsLoading(true);
+        try {
+            const res = await fetch("/api/settings", { headers: { "Accept": "application/json" } });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            broadcastSystemDefaults = getBroadcastDefaultsFromSystemSetting(await res.json());
+        } catch (err) {
+            console.warn("방송 기본 설정 로드 실패:", err);
+        } finally {
+            setBroadcastDefaultsLoading(false);
+        }
+        return broadcastSystemDefaults;
+    }
+
+    function ensureChoiceStateInput(id, fallbackValue) {
+        let el = document.getElementById(id);
+        if (el) return el;
+
+        const root = document.getElementById("equipment-broadcast-pane")
+            || document.querySelector(".broadcast-pane-root")
+            || document.body;
+        el = document.createElement("input");
+        el.type = "hidden";
+        el.id = id;
+        el.value = String(fallbackValue ?? "");
+        root.appendChild(el);
+        return el;
+    }
+
+    function ensureBroadcastChoiceStateInputs() {
+        const modeEl = ensureChoiceStateInput("bc_mode", broadcastSystemDefaults.mode);
+        const typeEl = ensureChoiceStateInput("bc_broadcast_type", broadcastSystemDefaults.broadcastType);
+        if (!modeEl.value) modeEl.value = broadcastSystemDefaults.mode;
+        if (!typeEl.value) typeEl.value = broadcastSystemDefaults.broadcastType;
+        return { modeEl, typeEl };
+    }
+
+    function applyBroadcastSystemDefaults() {
+        const { modeEl, typeEl } = ensureBroadcastChoiceStateInputs();
+        modeEl.value = broadcastSystemDefaults.mode;
+        typeEl.value = broadcastSystemDefaults.broadcastType;
+        syncChoiceButtons("bc_mode");
+        syncChoiceButtons("bc_broadcast_type");
+        updateCustomMessageAreaVisibility();
+        setBroadcastDefaultsPending(false);
+    }
+
+    let __broadcastDefaultsPrepared = false;
+    async function prepareBroadcastDefaults({ force = false } = {}) {
+        if (!force && __broadcastDefaultsPrepared) return;
+        await loadBroadcastSystemDefaults();
+        ensureBroadcastChoiceStateInputs();
+        applyBroadcastSystemDefaults();
+        __broadcastDefaultsPrepared = true;
+    }
+
     function requestPasswordWithServerValidation({ message = "비밀번호를 입력하세요.", onVerify } = {}) {
         return new Promise(async (resolve) => {
             if (await isAutoApprovalEnabled()) {
@@ -273,6 +357,7 @@
         const sel = document.getElementById("bc_tts_list");
         if (!sel) return;
 
+        const currentValue = String(sel.value ?? "");
         sel.innerHTML = `<option value="">직접 입력</option>`;
 
         const list = Array.isArray(ttsTemplateCache) ? ttsTemplateCache : [];
@@ -288,6 +373,9 @@
             sel.appendChild(opt);
         });
 
+        if (currentValue && visible.some(t => String(t.ttsId) === currentValue)) {
+            sel.value = currentValue;
+        }
         sel.disabled = visible.length === 0;
     }
 
@@ -469,6 +557,29 @@
             console.warn("tts template list load failed:", e);
         }
     }
+
+    async function refreshBroadcastTtsTemplates() {
+        await initTtsTemplateDropdown();
+
+        const sel = document.getElementById("bc_tts_list");
+        const text = document.getElementById("customMessageText");
+        if (!sel || !text || !sel.value) return;
+
+        const selected = (ttsTemplateCache || []).find(t => String(t?.ttsId) === String(sel.value));
+        if (!selected) {
+            sel.value = "";
+            text.value = "";
+            updateCustomMessageCounter();
+            syncBroadcastPhaseState();
+            return;
+        }
+
+        text.value = String(selected.ttsMsg ?? "").slice(0, 1000);
+        updateCustomMessageCounter();
+        syncBroadcastPhaseState();
+    }
+
+    window.refreshBroadcastTtsTemplates = refreshBroadcastTtsTemplates;
 
     /* -----------------------------
      * 발령 API (전송)
@@ -1447,6 +1558,8 @@
         if (!options.refresh && options.once && __broadcastInitOnce) return;
 
         try {
+            await prepareBroadcastDefaults({ force: options.refresh });
+
             broadcastSpeakerCache = await listSpeakers();
             renderTargetSpeakerList(broadcastSpeakerCache);
             bindTargetSpeakerUI();
@@ -1455,6 +1568,7 @@
             bindChoiceButtonGroup("bc_mode");
             bindChoiceButtonGroup("bc_broadcast_type");
             bindBroadcastTypeSelector();
+            applyBroadcastSystemDefaults();
             bindDisasterSelector();
             bindDisasterCardList();
             bindBroadcastMessageInput();
@@ -1474,10 +1588,7 @@
 
                     const ttsModal = bootstrap.Modal.getOrCreateInstance(ttsEl);
                     ttsModal.show();
-
-                    ttsEl.addEventListener("shown.bs.modal", () => {
-                        window.TtsManageModal?.loadList?.();
-                    }, { once: true });
+                    window.TtsManageModal?.loadList?.();
                 });
                 btn.dataset.bound = "1";
             }
@@ -1485,6 +1596,8 @@
             __broadcastInitOnce = true;
         } catch (e) {
             console.error("broadcast pane init error:", e);
+        } finally {
+            setBroadcastDefaultsPending(false);
         }
     }
 
@@ -1503,6 +1616,12 @@
     }
 
     function boot() {
+        // 숨겨진 방송 pane에 기본 선택값을 먼저 적용해 탭 전환 시 바로 보이게 함
+        prepareBroadcastDefaults().catch(err => {
+            console.warn("방송 기본 선택값 사전 적용 실패:", err);
+            setBroadcastDefaultsPending(false);
+        });
+
         // 초기 로딩: 이미 방송 pane가 active면 init
         if (isBroadcastPaneActive()) {
             initBroadcastPane({ once: true, refresh: false });
@@ -1527,6 +1646,12 @@
             // 전환 직후 DOM 반영을 기다렸다가 init
             setTimeout(() => initBroadcastPane({ once: true, refresh: false }), 0);
         }, { capture: true });
+
+        document.addEventListener("tts:list-changed", () => {
+            refreshBroadcastTtsTemplates().catch(err => {
+                console.warn("TTS 템플릿 갱신 실패:", err);
+            });
+        });
     }
 
     if (document.readyState === "loading") {

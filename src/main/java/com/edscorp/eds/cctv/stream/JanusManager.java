@@ -150,46 +150,35 @@ public class JanusManager {
     }
 
     // ===================== restartStream =====================
-    // 순서: 1) gst stopAndWait → 2) mountpoint 존재 확인(없으면 생성) → 3) gst startNoStop
+    // 순서: 1) mountpoint/port 확인(없으면 생성) → 2) gst stopAndWait → 3) gst startNoStop
     // 운영 안정성을 위해 restart 시 mountpoint/session 파괴는 하지 않는다.
     public synchronized JanusApi.JanusSession restartStream(
             int mountpointId, int videoPort,
             String rtspUrl, String rtspId, String rtspPw, String type) {
-        throwIfRtspBlocked(mountpointId, rtspUrl);
+        return restartStream(mountpointId, videoPort, rtspUrl, rtspId, rtspPw, type, false);
+    }
 
-        // 1. GStreamer 정지 대기
+    public synchronized JanusApi.JanusSession restartStream(
+            int mountpointId, int videoPort,
+            String rtspUrl, String rtspId, String rtspPw, String type, boolean force) {
+        if (!force) {
+            throwIfRtspBlocked(mountpointId, rtspUrl);
+        }
+
+        // 1. Janus 수신 슬롯을 먼저 확인한다. 실패하면 기존 GStreamer 프로세스는 건드리지 않는다.
+        JanusApi.JanusSession js = getOrCreateSession(mountpointId);
+        int actualPort;
+        try {
+            actualPort = ensureMountpointAndGetActualPort(js, mountpointId, videoPort, rtspUrl, rtspId, rtspPw);
+        } catch (Exception ex) {
+            log.warn("Janus session unusable during restart. recreate session. mountpoint={}", mountpointId, ex);
+            janusSessions.remove(mountpointId, js);
+            js = createSession();
+            actualPort = ensureMountpointAndGetActualPort(js, mountpointId, videoPort, rtspUrl, rtspId, rtspPw);
+        }
+
+        // 2. GStreamer 재시작
         gstProcessManager.stopAndWait(String.valueOf(mountpointId), 8000);
-
-        // 2. 세션 확보(기존 세션 우선, 없으면 생성)
-        JanusApi.JanusSession js = janusSessions.get(mountpointId);
-        if (js == null) {
-            JsonNode sess = janusApi.createSession();
-            long sessionId = sess.path("data").path("id").asLong();
-            JsonNode attach = janusApi.attachPlugin(sessionId);
-            long handleId = attach.path("data").path("id").asLong();
-            js = new JanusApi.JanusSession();
-            js.sessionId = sessionId;
-            js.handleId = handleId;
-        }
-
-        // 3. mountpoint 존재 확인(없으면 생성)
-        JsonNode list = janusApi.listMountpoints(js.sessionId, js.handleId);
-        boolean exists = list.path("plugindata").path("data").path("list")
-                .findValuesAsText("id").contains(String.valueOf(mountpointId));
-
-        if (!exists) {
-            janusApi.createMountpoint(js.sessionId, js.handleId, rtspUrl, mountpointId, videoPort, rtspId, rtspPw);
-            log.info("Mountpoint 생성(재시작 경로) 완료 mountpoint={} port={}", mountpointId, videoPort);
-        }
-
-        // 4. 실제 Janus 수신 포트 조회 후 GStreamer 재시작
-        JsonNode infoNode = janusApi.getMountpointInfoNode(js.sessionId, js.handleId, mountpointId);
-        int actualPort = infoNode.path("plugindata").path("data").path("info")
-                .path("media").path(0).path("port").asInt(-1);
-        if (actualPort <= 0) {
-            throw new IllegalStateException(
-                    "Janus mountpoint port not found after restart. mountpoint=" + mountpointId);
-        }
 
         GstProcessManager.StartResult startResult = gstProcessManager.startNoStopDetailed(
                 String.valueOf(mountpointId), rtspUrl, actualPort, type);
@@ -209,6 +198,44 @@ public class JanusManager {
 
         janusSessions.put(mountpointId, js);
         return js;
+    }
+
+    private JanusApi.JanusSession getOrCreateSession(int mountpointId) {
+        JanusApi.JanusSession js = janusSessions.get(mountpointId);
+        return js != null ? js : createSession();
+    }
+
+    private JanusApi.JanusSession createSession() {
+        JsonNode sess = janusApi.createSession();
+        long sessionId = sess.path("data").path("id").asLong();
+        JsonNode attach = janusApi.attachPlugin(sessionId);
+        long handleId = attach.path("data").path("id").asLong();
+        JanusApi.JanusSession js = new JanusApi.JanusSession();
+        js.sessionId = sessionId;
+        js.handleId = handleId;
+        return js;
+    }
+
+    private int ensureMountpointAndGetActualPort(
+            JanusApi.JanusSession js, int mountpointId, int videoPort,
+            String rtspUrl, String rtspId, String rtspPw) {
+        JsonNode list = janusApi.listMountpoints(js.sessionId, js.handleId);
+        boolean exists = list.path("plugindata").path("data").path("list")
+                .findValuesAsText("id").contains(String.valueOf(mountpointId));
+
+        if (!exists) {
+            janusApi.createMountpoint(js.sessionId, js.handleId, rtspUrl, mountpointId, videoPort, rtspId, rtspPw);
+            log.info("Mountpoint 생성(재시작 경로) 완료 mountpoint={} port={}", mountpointId, videoPort);
+        }
+
+        JsonNode infoNode = janusApi.getMountpointInfoNode(js.sessionId, js.handleId, mountpointId);
+        int actualPort = infoNode.path("plugindata").path("data").path("info")
+                .path("media").path(0).path("port").asInt(-1);
+        if (actualPort <= 0) {
+            throw new IllegalStateException(
+                    "Janus mountpoint port not found after restart. mountpoint=" + mountpointId);
+        }
+        return actualPort;
     }
 
     // ===================== keepAlive =====================

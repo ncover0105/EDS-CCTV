@@ -61,7 +61,7 @@ public class SpkDisasterController {
      * 이름 검색
      */
     @GetMapping("/search")
-    public ResponseEntity<List<SpkDisaster>> search(@RequestParam String keyword) {
+    public ResponseEntity<List<SpkDisaster>> search(@RequestParam("keyword") String keyword) {
         return ResponseEntity.ok(spkDisasterService.searchDisasterByName(keyword));
     }
 

@@ -42,7 +42,9 @@ public class BTypeCommandService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     // private static final String PLAYRADIO_URL =
     // "http://localhost:3000/playradio";
-    @Value("${playradio.url:http://127.0.0.1:3000/playradio}")
+    // @Value("${playradio.url:http://127.0.0.1:3000/playradio}")
+    @Value("${playradio.url:http://192.168.0.42:3000/playradio}")
+
     private String playRadioUrl;
 
     private final SpkWebAlertLogQueryService spkWebAlertLogQueryService;
