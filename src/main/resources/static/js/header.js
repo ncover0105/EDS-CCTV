@@ -1,5 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
 
+    startHeaderClock("currentDate");
+
     const sidebarToggleEl = document.getElementById('sidebarToggle');
     const sidebarToggleHiddenQuery = window.matchMedia('(min-width: 992px)');
 
@@ -58,6 +60,32 @@ document.addEventListener("DOMContentLoaded", function () {
         closeSidenavAccordion();
     }
 
-    // setTime();
-
 });
+
+function startHeaderClock(targetId) {
+    const el = document.getElementById(targetId);
+    if (!el) return;
+
+    if (window.__headerClockInterval) {
+        clearInterval(window.__headerClockInterval);
+    }
+
+    const pad = (n) => String(n).padStart(2, "0");
+    const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
+
+    function render() {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = pad(now.getMonth() + 1);
+        const d = pad(now.getDate());
+        const dayName = weekdays[now.getDay()];
+        const hh = pad(now.getHours());
+        const mm = pad(now.getMinutes());
+        const ss = pad(now.getSeconds());
+
+        el.innerHTML = `<span class="clock-date">${y}.${m}.${d} (${dayName})</span><span class="clock-time">${hh} : ${mm} : ${ss}</span>`;
+    }
+
+    render();
+    window.__headerClockInterval = setInterval(render, 1000);
+}

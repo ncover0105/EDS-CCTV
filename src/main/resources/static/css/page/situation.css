@@ -1199,7 +1199,10 @@ select.sit-input {
 
 .sit-hist-status-bar--stats {
     justify-content: space-around;
-    padding: 10px 20px;
+    gap: var(--sp-lg);
+    padding: 10px var(--sp-lg);
+    background: rgba(13, 17, 23, 0.92);
+    flex-wrap: wrap;
 }
 
 .sit-hist-status-bar--filters {
@@ -1283,8 +1286,10 @@ select.sit-input {
     display: flex;
     align-items: center;
     gap: 8px;
+    min-height: 28px;
     font-size: 12px;
     color: var(--text-muted);
+    white-space: nowrap;
 }
 
 .sit-hist-stat--separated {
@@ -1568,6 +1573,7 @@ select.sit-input {
 
     .sit-hist-status-bar--stats {
         justify-content: flex-start;
+        gap: var(--sp-md);
         padding: 10px var(--sp-md);
     }
 
@@ -1647,6 +1653,7 @@ select.sit-input {
     /* 상단 30px 여유 공간으로 호버 컷 방지 */
     min-height: 0;
     align-content: start;
+    align-items: start;
 }
 
 .broadcast-card-modern {

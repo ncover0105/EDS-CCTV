@@ -39,7 +39,6 @@
             'mapApiKey',
             'riskMode0',
             'riskMode1',
-            'riskMode2',
             'riskSec',
             'riskAutoBcast'
         ].forEach(id => {
@@ -159,9 +158,8 @@
             const apiKey = document.getElementById('mapApiKey');
             if (apiKey) apiKey.value = setting.mapApiKey || '';
 
-            setChecked('riskMode0', setting.riskMode === 0);
+            setChecked('riskMode0', setting.riskMode !== 1);
             setChecked('riskMode1', setting.riskMode === 1);
-            setChecked('riskMode2', setting.riskMode === 2);
 
             const riskSecEl = document.getElementById('riskSec');
             if (riskSecEl) riskSecEl.value = setting.riskSec ?? '';

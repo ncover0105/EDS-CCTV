@@ -75,8 +75,8 @@ public class MainController {
             }
 
             int riskMode = incoming.getRiskMode();
-            if (riskMode < 0 || riskMode > 2) {
-                return ResponseEntity.badRequest().body("riskMode는 0(1회), 1(주기 반복), 2(확인 시까지 반복)만 허용됩니다.");
+            if (riskMode != 0 && riskMode != 1) {
+                return ResponseEntity.badRequest().body("riskMode는 0(타이머), 1(확인 시까지 반복)만 허용됩니다.");
             }
 
             int riskSec = incoming.getRiskSec();

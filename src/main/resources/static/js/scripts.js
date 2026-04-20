@@ -31,8 +31,6 @@ document.addEventListener("DOMContentLoaded", function () {
         hideMethod: "fadeOut"
     };
 
-    App.utils.startClock("currentDate");
-
     Logs.init();
 
     // Mqtt 연동

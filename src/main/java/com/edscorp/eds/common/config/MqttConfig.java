@@ -34,6 +34,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class MqttConfig {
+    private static final int MIN_BOUNDARY_NUM = 1;
+    private static final int MAX_BOUNDARY_NUM = 4;
 
     // private final String BROKER_URL = "tcp://localhost:1883";
     // private final String CLIENT_ID = "mqttClient";
@@ -122,6 +124,11 @@ public class MqttConfig {
                     JsonNode jsonMessage = objectMapper.readTree(payload);
                     String alertCode = jsonMessage.get("alertCode").asText();
                     int boundaryNum = jsonMessage.get("boundaryNum").asInt();
+                    if (!isValidBoundaryNum(boundaryNum)) {
+                        log.warn("Invalid emergency boundaryNum received. topic={}, boundaryNum={}, payload={}",
+                                topic, boundaryNum, payload);
+                        return;
+                    }
                     String receptionDttm = jsonMessage.get("receptionDttm").asText();
                     String formatDttm = Util.parseReceptionDttm(receptionDttm);
                     String logData = "";
@@ -148,5 +155,9 @@ public class MqttConfig {
                 eventPublisher.publishEvent(new MqttMessageEvent(topic, payload)); // 메시지를 클라이언트로 전달
             }
         };
+    }
+
+    private boolean isValidBoundaryNum(int boundaryNum) {
+        return boundaryNum >= MIN_BOUNDARY_NUM && boundaryNum <= MAX_BOUNDARY_NUM;
     }
 }

@@ -1,6 +1,6 @@
 // /js/page/situation/special_view.js
 // - API: /api/weather/warning/history
-// - 검색 조건: 날짜는 "사용자 직접 변경했을 때만" 포함, 특보종류/단계는 값 있을 때만 포함
+// - 검색 조건: 날짜는 화면 입력값을 항상 포함, 특보종류/단계는 값 있을 때만 포함
 (function () {
   'use strict';
 
@@ -8,14 +8,8 @@
   const PAGE_SIZE = 1000; // 페이지네이션 전체 표출로 변경
   let specialData = [];
   let currentPage = 1;
-
-  // -------------------------
-  // 사용자 입력 여부 플래그(날짜만)
-  // -------------------------
-  const userTouched = {
-    startDateTime: false,
-    endDateTime: false
-  };
+  let activeController = null;
+  let requestSeq = 0;
 
   // =========================
   // 코드 매핑
@@ -157,7 +151,7 @@
   function formatLvlText(lvl) {
     const lvlTxt = formatLvl(lvl);
     if (!lvlTxt || lvlTxt === '-') return `<span>-</span>`;
-    return `<span class="status-badge ${getLvlBadgeClass(lvlTxt)} fw-bold">${lvlTxt}</span>`;
+    return `<span class="status-badge ${getLvlBadgeClass(lvlTxt)} fw-bold">${escapeHtml(lvlTxt)}</span>`;
   }
 
   function getRegKoById(regId) {
@@ -199,24 +193,82 @@
     return t.length ? t : null;
   }
 
+  function pad2(n) {
+    return String(n).padStart(2, '0');
+  }
+
+  function toDatetimeLocalValue(d) {
+    if (!(d instanceof Date)) return '';
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  }
+
+  function setDefaultTodayRange() {
+    const startEl = document.getElementById('startDateTime');
+    const endEl = document.getElementById('endDateTime');
+    if (!startEl || !endEl) return;
+
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 0, 0);
+
+    if (!startEl.value) startEl.value = toDatetimeLocalValue(start);
+    if (!endEl.value) endEl.value = toDatetimeLocalValue(end);
+  }
+
+  function escapeHtml(value) {
+    const esc = window.SituationCommon?.escapeHtml;
+    return esc ? esc(value) : String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
+  function setLoading(isLoading) {
+    const btn = document.getElementById('specialSearchBtn');
+    if (!btn) return;
+    btn.disabled = isLoading;
+    btn.innerHTML = isLoading
+      ? '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>검색 중'
+      : '<i class="bi bi-search me-1"></i>검색';
+  }
+
+  async function fetchSpecialJson(url, signal) {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      signal
+    });
+
+    if (!res.ok) {
+      let message = `HTTP ${res.status}`;
+      try {
+        const err = await res.json();
+        message = err?.message || JSON.stringify(err);
+      } catch (_) { }
+      throw new Error(message);
+    }
+
+    return await res.json();
+  }
+
   // =========================
   // 서버 호출
   // =========================
   async function loadSpecialFromServer() {
+    if (activeController) {
+      activeController.abort();
+    }
+
+    const seq = ++requestSeq;
+    activeController = new AbortController();
     const params = new URLSearchParams();
 
-    // ✅ 날짜: "사용자 직접 변경"한 경우에만 파라미터 포함
-    if (userTouched.startDateTime) {
-      const startRaw = getTrimValue('startDateTime');
-      const start = dtLocalToIsoLdt(startRaw);
-      if (start) params.set('startDateTime', start);
-    }
-
-    if (userTouched.endDateTime) {
-      const endRaw = getTrimValue('endDateTime');
-      const end = dtLocalToIsoLdt(endRaw);
-      if (end) params.set('endDateTime', end);
-    }
+    const start = dtLocalToIsoLdt(getTrimValue('startDateTime'));
+    const end = dtLocalToIsoLdt(getTrimValue('endDateTime'));
+    if (start) params.set('startDateTime', start);
+    if (end) params.set('endDateTime', end);
 
     // ✅ 특보 종류/단계: 선택된 경우만 포함 (value=""이면 제외)
     const wrn = getTrimValue('specialWrn');
@@ -229,14 +281,22 @@
     const url = `/api/weather/warning/history?${params.toString()}`;
 
     try {
-      const data = await App.utils.fetchJson(url);
+      setLoading(true);
+      const data = await fetchSpecialJson(url, activeController.signal);
+      if (seq !== requestSeq) return;
       specialData = Array.isArray(data) ? data : [];
       currentPage = 1;
       renderSpecialTable();
     } catch (e) {
+      if (e?.name === 'AbortError') return;
       console.error('특보 이력 데이터 오류:', e);
       specialData = [];
       renderSpecialTable();
+    } finally {
+      if (seq === requestSeq) {
+        activeController = null;
+        setLoading(false);
+      }
     }
   }
 
@@ -283,12 +343,12 @@
       return `
         <tr>
           <td>${globalIdx}</td>
-          <td>${wrnText}</td>
-          <td>${tmInText}</td>
-          <td>${regionText}</td>
+          <td>${escapeHtml(wrnText)}</td>
+          <td>${escapeHtml(tmInText)}</td>
+          <td>${escapeHtml(regionText)}</td>
           <td>${lvlHtml}</td>
-          <td>${cmdText}</td>
-          <td>${sendText}</td>
+          <td>${escapeHtml(cmdText)}</td>
+          <td>${escapeHtml(sendText)}</td>
         </tr>
       `;
     }).join('');
@@ -325,15 +385,15 @@
     const startEl = document.getElementById('startDateTime');
     const endEl = document.getElementById('endDateTime');
 
-    // ✅ 사용자가 직접 변경했을 때만 true
-    if (startEl) {
-      startEl.addEventListener('change', () => { userTouched.startDateTime = true; });
-      startEl.addEventListener('input', () => { userTouched.startDateTime = true; });
-    }
-    if (endEl) {
-      endEl.addEventListener('change', () => { userTouched.endDateTime = true; });
-      endEl.addEventListener('input', () => { userTouched.endDateTime = true; });
-    }
+    [startEl, endEl].forEach((el) => {
+      if (!el) return;
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          loadSpecialFromServer();
+        }
+      });
+    });
 
     // 변경 시 자동조회가 필요하면 아래를 주석 해제
     // const wrnEl = document.getElementById('specialWrn');
@@ -351,12 +411,9 @@
 
     bindOnce();
 
-    // ✅ fillDateTimeInputs()가 값을 넣더라도 userTouched가 false면 날짜 조건은 전송되지 않음
-    if (window.App?.utils?.fillDateTimeInputs) {
-      window.App.utils.fillDateTimeInputs();
-    }
+    setDefaultTodayRange();
 
-    // 최초 로딩: 날짜 조건 제외 상태로 조회
+    // 최초 로딩: 오늘 날짜 범위를 포함해서 조회
     loadSpecialFromServer();
   });
 })();

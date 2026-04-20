@@ -1379,6 +1379,8 @@
         const disasterName = getDisasterNameByCode(disasterCode);
         const kind = String(row?.alertKind ?? "-");
         const alertMode = String(row?.alertMode ?? "-");
+        const isStoredMessageLog = commandCode !== "47" && kind === "1" && disasterCode && disasterCode !== "-" && disasterCode !== "CFW";
+        const displayKind = isStoredMessageLog ? "2" : kind;
 
         const kindMap = {
             "1": "TTS",
@@ -1398,7 +1400,7 @@
 
         const kindText = commandCode === "47"
             ? "BGM 제어"
-            : (kindMap[kind] ?? kind);
+            : (kindMap[displayKind] ?? displayKind);
         const alertModeText = commandCode === "47"
             ? "음원 제어"
             : (alertModeMap[alertMode] ?? alertMode);
@@ -1407,7 +1409,7 @@
 
         const content = commandCode === "47"
             ? (bgmReqType === "01" ? "BGM ON" : bgmReqType === "00" ? "BGM OFF" : "BGM 제어")
-            : (kind === "1" && row?.ttsMessage ? row.ttsMessage : `재난: ${disasterName}`);
+            : (displayKind === "1" && row?.ttsMessage ? row.ttsMessage : `재난: ${disasterName}`);
 
         return `
             <div class="bc-log-card">

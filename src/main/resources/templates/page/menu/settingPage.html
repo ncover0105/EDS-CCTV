@@ -53,7 +53,7 @@
                     <button class="set-tab-item" type="button" data-view="ment"
                         th:classappend="${view == 'ment'} ? 'is-active' : ''"><i class="bi bi-chat-left-text-fill"></i>
                         문안</button>
-                    <button class="set-tab-item" type="button" data-view="sms"
+                    <button class="set-tab-item d-none" type="button" data-view="sms"
                         th:classappend="${view == 'sms'} ? 'is-active' : ''"><i class="bi bi-envelope-fill"></i>
                         SMS</button>
                     <button class="set-tab-item" type="button" data-view="schedule"
@@ -79,7 +79,7 @@
                                 th:classappend="${view == 'ment'} ? 'is-active' : ''">
                                 <i class="bi bi-chat-left-text-fill"></i><span class="set-nav-label">문안 관리</span>
                             </button>
-                            <button class="set-nav-item" type="button" data-view="sms"
+                            <button class="set-nav-item d-none" type="button" data-view="sms"
                                 th:classappend="${view == 'sms'} ? 'is-active' : ''">
                                 <i class="bi bi-envelope-fill"></i><span class="set-nav-label">SMS 관리</span>
                             </button>
@@ -1190,22 +1190,15 @@
                                                 <label class="sradio-item">
                                                     <input type="radio" name="riskMode" id="riskMode0" value="0">
                                                     <span class="sradio-box">
-                                                        <i class="bi bi-1-circle"></i>
-                                                        <span>1회</span>
+                                                        <i class="bi bi-stopwatch"></i>
+                                                        <span>타이머</span>
                                                     </span>
                                                 </label>
                                                 <label class="sradio-item">
                                                     <input type="radio" name="riskMode" id="riskMode1" value="1">
                                                     <span class="sradio-box">
-                                                        <i class="bi bi-arrow-repeat"></i>
-                                                        <span>주기 반복</span>
-                                                    </span>
-                                                </label>
-                                                <label class="sradio-item">
-                                                    <input type="radio" name="riskMode" id="riskMode2" value="2">
-                                                    <span class="sradio-box">
                                                         <i class="bi bi-check2-circle"></i>
-                                                        <span>확인 시까지</span>
+                                                        <span>확인 시까지 반복</span>
                                                     </span>
                                                 </label>
                                             </div>
@@ -1227,7 +1220,7 @@
                                             </div>
                                             <p class="sapi-hint">
                                                 <i class="bi bi-info-circle"></i>
-                                                주기 반복 모드일 때 적용됩니다. (1 ~ 3600초)
+                                                타이머 방식일 때 적용됩니다. (1 ~ 3600초)
                                             </p>
                                         </div>
 

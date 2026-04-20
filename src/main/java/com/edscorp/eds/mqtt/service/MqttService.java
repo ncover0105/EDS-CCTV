@@ -29,6 +29,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class MqttService {
+    private static final int MIN_BOUNDARY_NUM = 1;
+    private static final int MAX_BOUNDARY_NUM = 4;
 
     private final EmergencyRepository emergencyMessageRepository;
 
@@ -83,7 +85,6 @@ public class MqttService {
     }
 
     // JPA
-
     private void processREQ(ReqDTO message) {
         log.info("Mqtt processREQ : ", message);
     }
@@ -109,10 +110,19 @@ public class MqttService {
                 + message.getBoundaryNum());
         // String logData = message.getBoundaryNum() + "번 구역 " +
         // getMessageBtAlertCode(message.getAlertCode().toString());
+        Integer boundaryNum = parseBoundaryNum(message.getBoundaryNum());
+        if (!isValidBoundaryNum(boundaryNum)) {
+            log.warn(
+                    "Invalid emergency boundaryNum skipped. alertCode={}, boundaryNum={}, cctvCode={}, receptionDttm={}",
+                    message.getAlertCode(), message.getBoundaryNum(), message.getCctvCode(),
+                    message.getReceptionDttm());
+            return;
+        }
+
         Date inpDttm = Util.parseDttm(message.getReceptionDttm());
 
         boolean exists = emergencyMessageRepository.existsByCctvCodeAndAlertCodeAndBoundaryNumAndInpDttm(
-                message.getCctvCode(), message.getAlertCode(), Integer.valueOf(message.getBoundaryNum()), inpDttm);
+                message.getCctvCode(), message.getAlertCode(), boundaryNum, inpDttm);
 
         if (exists) {
             log.info("MqttService processEmergency : Duplicate emergency log detected. Insert skipped.");
@@ -122,7 +132,7 @@ public class MqttService {
         EmergencyEntity emergencyMessageEntity = EmergencyEntity.builder()
                 .cctvCode(message.getCctvCode())
                 .alertCode(message.getAlertCode())
-                .boundaryNum(Integer.valueOf(message.getBoundaryNum()))
+                .boundaryNum(boundaryNum)
                 .log(message.getLog())
                 .inpDttm(inpDttm)
                 .build();
@@ -158,5 +168,17 @@ public class MqttService {
     // alertCode 전체 message 조회
     public Map<String, String> getAllAlertMessages() {
         return new HashMap<>(alertListCache);
+    }
+
+    private boolean isValidBoundaryNum(Integer boundaryNum) {
+        return boundaryNum != null && boundaryNum >= MIN_BOUNDARY_NUM && boundaryNum <= MAX_BOUNDARY_NUM;
+    }
+
+    private Integer parseBoundaryNum(String boundaryNum) {
+        try {
+            return Integer.valueOf(boundaryNum);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

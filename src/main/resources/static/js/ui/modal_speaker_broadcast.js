@@ -1013,8 +1013,8 @@ const BroadcastModal = {
             } catch (err) {
                 console.error(err);
                 // 서버 응답 실패 메시지는 우선 노출하지 않음.
-                // window.notify(err?.message || "발령 전송 실패", "danger");
-                window.notify("발령 전송 완료", "success");
+                window.notify(err?.message || "발령 전송 실패", "danger");
+                // window.notify("발령 전송 완료", "success");
                 // setActionStatus(activePrefix, "broadcast", "발령 전송 실패", "danger");
             } finally {
                 setSendButtonState(btn, false);

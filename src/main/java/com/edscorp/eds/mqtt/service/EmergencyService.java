@@ -144,7 +144,8 @@ public class EmergencyService {
     }
 
     private Map<String, String> loadCctvNames(Collection<String> codes) {
-        if (codes == null || codes.isEmpty()) return Map.of();
+        if (codes == null || codes.isEmpty())
+            return Map.of();
         try {
             return cctvRepository.findAllByCctvCodeIn(codes).stream()
                     .filter(c -> c.getName() != null && !c.getName().isBlank())
@@ -165,9 +166,8 @@ public class EmergencyService {
             countMap.put(today.minusDays(i).format(fmt), 0L);
         }
         for (Object[] row : rows) {
-            // DATE(inp_dttm) → java.sql.Date → "yyyy-MM-dd"
-            String dbDate = row[0].toString();           // e.g. "2026-04-20"
-            String key = dbDate.substring(5).replace("-", "/");  // → "04/20"
+            String dbDate = row[0].toString();
+            String key = dbDate.substring(5).replace("-", "/");
             countMap.computeIfPresent(key, (k, v) -> v + ((Number) row[1]).longValue());
         }
         return countMap.entrySet().stream().map(entry -> {
@@ -210,7 +210,7 @@ public class EmergencyService {
             countMap.put(today.minusMonths(i).format(fmt), 0L);
         }
         for (Object[] row : rows) {
-            String key = (String) row[0];  // DATE_FORMAT('%y.%m') → String
+            String key = (String) row[0]; // DATE_FORMAT('%y.%m') → String
             countMap.computeIfPresent(key, (k, v) -> v + ((Number) row[1]).longValue());
         }
         return countMap.entrySet().stream().map(entry -> {

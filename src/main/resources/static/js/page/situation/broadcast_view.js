@@ -72,13 +72,15 @@
     }
 
     function broadcastTypeToText(item) {
-        if (String(item?.disasterCode ?? '').toUpperCase() === 'BGM' || item?.bgmReqType) {
+        const disasterCode = String(item?.disasterCode ?? '').trim().toUpperCase();
+        if (disasterCode === 'BGM' || item?.bgmReqType) {
             return 'BGM';
         }
 
         const n = parseInt(item?.alertKind, 10);
+        const hasDisasterCode = disasterCode && disasterCode !== '-' && disasterCode !== 'CFW';
+        if (n === 2 || n === 3 || (n === 1 && hasDisasterCode)) return '재난 메시지';
         if (n === 1) return 'TTS';
-        if (n === 2 || n === 3) return '재난 메시지';
         return '발령';
     }
 
@@ -289,7 +291,7 @@
     `;
     }
 
-    function createBroadcastCard(item) {
+    function createBroadcastCard(item, index) {
         const esc = window.SituationCommon?.escapeHtml || ((s) => String(s));
 
         const card = document.createElement("div");
@@ -327,7 +329,8 @@
             `;
 
         const priorityClass = priorityToKey(item.alertPriority);
-        const accId = `bcm_acc_${item.id}`;
+        const safeId = String(item?.id ?? 'row').replace(/[^a-zA-Z0-9_-]/g, '_');
+        const accId = `bcm_acc_${safeId}_${index}`;
 
         card.innerHTML = `
             <div class="bcm-header">
