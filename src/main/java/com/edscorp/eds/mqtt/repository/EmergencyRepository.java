@@ -35,4 +35,55 @@ public interface EmergencyRepository extends JpaRepository<EmergencyEntity, Inte
         List<EmergencyEntity> findByInpDttmBetweenOrderByInpDttmAsc(Date start, Date end);
 
         List<EmergencyEntity> findByCctvCodeAndInpDttmBetweenOrderByInpDttmAsc(String cctvCode, Date start, Date end);
+
+        @Query(value = """
+                        SELECT DATE(inp_dttm) AS day, COUNT(*) AS cnt
+                        FROM tb_emergency_log
+                        WHERE inp_dttm BETWEEN :start AND :end
+                          AND (:cctvCode IS NULL OR cctvCode = :cctvCode)
+                        GROUP BY day ORDER BY day
+                        """, nativeQuery = true)
+        List<Object[]> countByDay(@Param("start") Date start, @Param("end") Date end,
+                        @Param("cctvCode") String cctvCode);
+
+        @Query(value = """
+                        SELECT YEARWEEK(inp_dttm, 1) AS week, COUNT(*) AS cnt
+                        FROM tb_emergency_log
+                        WHERE inp_dttm BETWEEN :start AND :end
+                          AND (:cctvCode IS NULL OR cctvCode = :cctvCode)
+                        GROUP BY week ORDER BY week
+                        """, nativeQuery = true)
+        List<Object[]> countByWeek(@Param("start") Date start, @Param("end") Date end,
+                        @Param("cctvCode") String cctvCode);
+
+        @Query(value = """
+                        SELECT DATE_FORMAT(inp_dttm, '%y.%m') AS month, COUNT(*) AS cnt
+                        FROM tb_emergency_log
+                        WHERE inp_dttm BETWEEN :start AND :end
+                          AND (:cctvCode IS NULL OR cctvCode = :cctvCode)
+                        GROUP BY month ORDER BY month
+                        """, nativeQuery = true)
+        List<Object[]> countByMonth(@Param("start") Date start, @Param("end") Date end,
+                        @Param("cctvCode") String cctvCode);
+
+        @Query(value = """
+                        SELECT COALESCE(boundaryNum, 0) AS zone, COUNT(*) AS cnt
+                        FROM tb_emergency_log
+                        WHERE inp_dttm BETWEEN :start AND :end
+                          AND (:cctvCode IS NULL OR cctvCode = :cctvCode)
+                        GROUP BY zone ORDER BY zone
+                        """, nativeQuery = true)
+        List<Object[]> countByZone(@Param("start") Date start, @Param("end") Date end,
+                        @Param("cctvCode") String cctvCode);
+
+        @Query(value = """
+                        SELECT cctvCode, COUNT(*) AS cnt
+                        FROM tb_emergency_log
+                        WHERE inp_dttm BETWEEN :start AND :end
+                          AND cctvCode IS NOT NULL AND cctvCode != ''
+                          AND (:cctvCode IS NULL OR cctvCode = :cctvCode)
+                        GROUP BY cctvCode ORDER BY cnt DESC
+                        """, nativeQuery = true)
+        List<Object[]> countByCctv(@Param("start") Date start, @Param("end") Date end,
+                        @Param("cctvCode") String cctvCode);
 }

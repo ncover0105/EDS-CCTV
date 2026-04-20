@@ -1,5 +1,6 @@
 package com.edscorp.eds.cctv.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,6 +20,8 @@ public interface CctvRepository extends JpaRepository<CctvEntity, CctvId> {
 
         // (주의) cctvCode 단독은 복수일 수 있으니 List가 안전
         List<CctvEntity> findAllByCctvCode(String cctvCode);
+
+        List<CctvEntity> findAllByCctvCodeIn(Collection<String> cctvCodes);
 
         List<CctvEntity> findByStatusCam(String status);
 

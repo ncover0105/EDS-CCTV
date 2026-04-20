@@ -9,10 +9,12 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -21,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import com.edscorp.eds.cctv.domain.CctvEntity;
 import com.edscorp.eds.cctv.repository.CctvRepository;
 import com.edscorp.eds.mqtt.domain.EmergencyEntity;
 import com.edscorp.eds.mqtt.dto.EmergencyLogRowDTO;
@@ -42,19 +45,15 @@ public class EmergencyService {
     public Page<EmergencyLogRowDTO> search(Integer boundaryNum, LocalDateTime from, LocalDateTime to, int page,
             int size) {
 
-        // from/to 둘 다 없으면 "오늘 00:00 ~ now" 기본값
         if (from == null && to == null) {
             LocalDate today = LocalDate.now(ZONE);
             from = today.atStartOfDay();
             to = LocalDateTime.now(ZONE);
         }
-
-        // 하나만 있을 경우 보정(실무에서 자주 발생)
         if (from != null && to == null) {
             to = LocalDateTime.now(ZONE);
         }
         if (from == null && to != null) {
-            // to 기준 당일 00:00
             from = to.toLocalDate().atStartOfDay();
         }
 
@@ -67,12 +66,9 @@ public class EmergencyService {
                 Sort.by(Sort.Direction.DESC, "inpDttm").and(Sort.by(Sort.Direction.DESC, "id")));
 
         Page<EmergencyEntity> entityPage;
-
-        // boundaryNum 없으면 전체
         if (boundaryNum == null) {
             entityPage = repo.findByInpDttmBetween(start, end, pageable);
         } else {
-            // 1~4만 허용(그 외 값은 전체 처리 또는 예외 처리 중 선택)
             if (boundaryNum < 1 || boundaryNum > 4) {
                 entityPage = repo.findByInpDttmBetween(start, end, pageable);
             } else {
@@ -80,10 +76,16 @@ public class EmergencyService {
             }
         }
 
+        Set<String> codeSet = entityPage.getContent().stream()
+                .map(EmergencyEntity::getCctvCode)
+                .filter(c -> c != null && !c.isBlank())
+                .collect(Collectors.toSet());
+        Map<String, String> nameMap = loadCctvNames(codeSet);
+
         return entityPage.map(e -> new EmergencyLogRowDTO(
                 e.getId(),
                 e.getCctvCode(),
-                resolveCctvName(e.getCctvCode()),
+                nameMap.getOrDefault(e.getCctvCode(), e.getCctvCode() != null ? e.getCctvCode() : "-"),
                 e.getAlertCode(),
                 e.getBoundaryNum(),
                 e.getLog(),
@@ -98,31 +100,32 @@ public class EmergencyService {
             boolean isMonthly = "monthly".equals(period);
             int dailyDays = isMonthly ? 30 : 7;
             LocalDate today = LocalDate.now(ZONE);
-            Date dEnd = Date.from(LocalDateTime.now(ZONE).atZone(ZONE).toInstant());
-
-            // 일자별·구역별·카메라별 데이터 범위
+            Date dEnd = toDate(LocalDateTime.now(ZONE));
             Date dStart = toDate(today.minusDays(dailyDays - 1).atStartOfDay());
-            List<EmergencyEntity> dailyEntities = fetchList(cctvCode, dStart, dEnd);
 
-            // 추이 데이터 범위 (주간: 8주, 월간: 12개월)
             Date tStart;
             if (isMonthly) {
                 tStart = toDate(today.minusMonths(11).withDayOfMonth(1).atStartOfDay());
             } else {
                 tStart = toDate(today.minusWeeks(7).with(DayOfWeek.MONDAY).atStartOfDay());
             }
-            List<EmergencyEntity> trendEntities = fetchList(cctvCode, tStart, dEnd);
 
-            List<Map<String, Object>> trend = isMonthly
-                    ? buildMonthlyTrend(trendEntities, today)
-                    : buildWeeklyTrend(trendEntities, today);
+            String code = (cctvCode != null && !cctvCode.isBlank()) ? cctvCode : null;
+
+            List<Object[]> byCctvRows = repo.countByCctv(dStart, dEnd, code);
+            Set<String> cctvCodes = byCctvRows.stream()
+                    .map(r -> (String) r[0])
+                    .collect(Collectors.toSet());
+            Map<String, String> nameMap = loadCctvNames(cctvCodes);
 
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("period", period);
-            result.put("daily", buildDailyCounts(dailyEntities, today, dailyDays));
-            result.put("trend", trend);
-            result.put("byZone", buildByZone(dailyEntities));
-            result.put("byCctv", buildByCctv(dailyEntities));
+            result.put("daily", buildDailyFromDb(repo.countByDay(dStart, dEnd, code), today, dailyDays));
+            result.put("trend", isMonthly
+                    ? buildMonthlyTrendFromDb(repo.countByMonth(tStart, dEnd, code), today)
+                    : buildWeeklyTrendFromDb(repo.countByWeek(tStart, dEnd, code), today));
+            result.put("byZone", buildByZoneFromDb(repo.countByZone(dStart, dEnd, code)));
+            result.put("byCctv", buildByCctvFromDb(byCctvRows, nameMap));
             return result;
         } catch (Exception e) {
             log.error("Emergency stats build failed. period={}, cctvCode={}", period, cctvCode, e);
@@ -136,27 +139,36 @@ public class EmergencyService {
         }
     }
 
-    private List<EmergencyEntity> fetchList(String cctvCode, Date start, Date end) {
-        if (cctvCode != null && !cctvCode.isBlank()) {
-            return repo.findByCctvCodeAndInpDttmBetweenOrderByInpDttmAsc(cctvCode, start, end);
-        }
-        return repo.findByInpDttmBetweenOrderByInpDttmAsc(start, end);
-    }
-
     private Date toDate(LocalDateTime ldt) {
         return Date.from(ldt.atZone(ZONE).toInstant());
     }
 
-    private List<Map<String, Object>> buildDailyCounts(List<EmergencyEntity> entities, LocalDate today, int days) {
+    private Map<String, String> loadCctvNames(Collection<String> codes) {
+        if (codes == null || codes.isEmpty()) return Map.of();
+        try {
+            return cctvRepository.findAllByCctvCodeIn(codes).stream()
+                    .filter(c -> c.getName() != null && !c.getName().isBlank())
+                    .collect(Collectors.toMap(
+                            CctvEntity::getCctvCode,
+                            CctvEntity::getName,
+                            (a, b) -> a));
+        } catch (Exception e) {
+            log.warn("CCTV name batch load failed", e);
+            return Map.of();
+        }
+    }
+
+    private List<Map<String, Object>> buildDailyFromDb(List<Object[]> rows, LocalDate today, int days) {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MM/dd");
         Map<String, Long> countMap = new LinkedHashMap<>();
         for (int i = days - 1; i >= 0; i--) {
             countMap.put(today.minusDays(i).format(fmt), 0L);
         }
-        for (EmergencyEntity e : entities) {
-            if (e.getInpDttm() == null) continue;
-            String key = e.getInpDttm().toInstant().atZone(ZONE).toLocalDate().format(fmt);
-            countMap.computeIfPresent(key, (k, v) -> v + 1);
+        for (Object[] row : rows) {
+            // DATE(inp_dttm) → java.sql.Date → "yyyy-MM-dd"
+            String dbDate = row[0].toString();           // e.g. "2026-04-20"
+            String key = dbDate.substring(5).replace("-", "/");  // → "04/20"
+            countMap.computeIfPresent(key, (k, v) -> v + ((Number) row[1]).longValue());
         }
         return countMap.entrySet().stream().map(entry -> {
             Map<String, Object> m = new LinkedHashMap<>();
@@ -166,20 +178,19 @@ public class EmergencyService {
         }).collect(Collectors.toList());
     }
 
-    private List<Map<String, Object>> buildWeeklyTrend(List<EmergencyEntity> entities, LocalDate today) {
+    private List<Map<String, Object>> buildWeeklyTrendFromDb(List<Object[]> rows, LocalDate today) {
         WeekFields wf = WeekFields.ISO;
-        Map<String, Long> countMap = new LinkedHashMap<>();
+        Map<Integer, Long> countMap = new LinkedHashMap<>();
         for (int i = 7; i >= 0; i--) {
             LocalDate w = today.minusWeeks(i);
-            countMap.put(w.getYear() + "-W" + String.format("%02d", w.get(wf.weekOfWeekBasedYear())), 0L);
+            int yw = w.getYear() * 100 + w.get(wf.weekOfWeekBasedYear());
+            countMap.put(yw, 0L);
         }
-        for (EmergencyEntity e : entities) {
-            if (e.getInpDttm() == null) continue;
-            LocalDate d = e.getInpDttm().toInstant().atZone(ZONE).toLocalDate();
-            String key = d.getYear() + "-W" + String.format("%02d", d.get(wf.weekOfWeekBasedYear()));
-            countMap.computeIfPresent(key, (k, v) -> v + 1);
+        for (Object[] row : rows) {
+            int yw = ((Number) row[0]).intValue();
+            countMap.computeIfPresent(yw, (k, v) -> v + ((Number) row[1]).longValue());
         }
-        List<String> keys = new ArrayList<>(countMap.keySet());
+        List<Integer> keys = new ArrayList<>(countMap.keySet());
         int size = keys.size();
         List<Map<String, Object>> result = new ArrayList<>();
         for (int i = 0; i < size; i++) {
@@ -192,16 +203,15 @@ public class EmergencyService {
         return result;
     }
 
-    private List<Map<String, Object>> buildMonthlyTrend(List<EmergencyEntity> entities, LocalDate today) {
+    private List<Map<String, Object>> buildMonthlyTrendFromDb(List<Object[]> rows, LocalDate today) {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yy.MM");
         Map<String, Long> countMap = new LinkedHashMap<>();
         for (int i = 11; i >= 0; i--) {
             countMap.put(today.minusMonths(i).format(fmt), 0L);
         }
-        for (EmergencyEntity e : entities) {
-            if (e.getInpDttm() == null) continue;
-            String key = e.getInpDttm().toInstant().atZone(ZONE).toLocalDate().format(fmt);
-            countMap.computeIfPresent(key, (k, v) -> v + 1);
+        for (Object[] row : rows) {
+            String key = (String) row[0];  // DATE_FORMAT('%y.%m') → String
+            countMap.computeIfPresent(key, (k, v) -> v + ((Number) row[1]).longValue());
         }
         return countMap.entrySet().stream().map(entry -> {
             Map<String, Object> m = new LinkedHashMap<>();
@@ -211,57 +221,24 @@ public class EmergencyService {
         }).collect(Collectors.toList());
     }
 
-    private List<Map<String, Object>> buildByZone(List<EmergencyEntity> entities) {
-        Map<Integer, Long> zoneCount = new LinkedHashMap<>();
-        for (EmergencyEntity e : entities) {
-            Integer z = e.getBoundaryNum() != null ? e.getBoundaryNum() : 0;
-            zoneCount.merge(z, 1L, Long::sum);
-        }
-        return zoneCount.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .map(entry -> {
-                    Map<String, Object> m = new LinkedHashMap<>();
-                    m.put("label", entry.getKey() == 0 ? "미지정" : entry.getKey() + "번 구역");
-                    m.put("count", entry.getValue());
-                    return m;
-                }).collect(Collectors.toList());
+    private List<Map<String, Object>> buildByZoneFromDb(List<Object[]> rows) {
+        return rows.stream().map(row -> {
+            int zone = ((Number) row[0]).intValue();
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("label", zone == 0 ? "미지정" : zone + "번 구역");
+            m.put("count", ((Number) row[1]).longValue());
+            return m;
+        }).collect(Collectors.toList());
     }
 
-    private List<Map<String, Object>> buildByCctv(List<EmergencyEntity> entities) {
-        Map<String, Long> cctvCount = new LinkedHashMap<>();
-        Map<String, String> cctvNames = new LinkedHashMap<>();
-        for (EmergencyEntity e : entities) {
-            String code = e.getCctvCode();
-            if (code == null || code.isBlank()) continue;
-            cctvCount.merge(code, 1L, Long::sum);
-            if (!cctvNames.containsKey(code)) {
-                cctvNames.put(code, resolveCctvName(code));
-            }
-        }
-        return cctvCount.entrySet().stream()
-                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-                .map(entry -> {
-                    Map<String, Object> m = new LinkedHashMap<>();
-                    m.put("cctvCode", entry.getKey());
-                    m.put("cctvName", cctvNames.getOrDefault(entry.getKey(), entry.getKey()));
-                    m.put("count", entry.getValue());
-                    return m;
-                }).collect(Collectors.toList());
-    }
-
-    private String resolveCctvName(String cctvCode) {
-        if (cctvCode == null || cctvCode.isBlank()) {
-            return "-";
-        }
-        try {
-            return cctvRepository.findAllByCctvCode(cctvCode).stream()
-                    .map(c -> c.getName())
-                    .filter(name -> name != null && !name.isBlank())
-                    .findFirst()
-                    .orElse(cctvCode);
-        } catch (Exception e) {
-            log.warn("CCTV name resolve failed. cctvCode={}", cctvCode, e);
-            return cctvCode;
-        }
+    private List<Map<String, Object>> buildByCctvFromDb(List<Object[]> rows, Map<String, String> nameMap) {
+        return rows.stream().map(row -> {
+            String code = (String) row[0];
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("cctvCode", code);
+            m.put("cctvName", nameMap.getOrDefault(code, code));
+            m.put("count", ((Number) row[1]).longValue());
+            return m;
+        }).collect(Collectors.toList());
     }
 }
