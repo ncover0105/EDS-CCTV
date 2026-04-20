@@ -47,7 +47,7 @@
     const startDt = startRaw ? window.SituationCommon.parseInputDateTime(startRaw) : null;
     const endDt = endRaw ? window.SituationCommon.parseInputDateTime(endRaw) : null;
 
-    // ✅ 둘 다 비면 날짜조건 제외
+    // 둘 다 비면 날짜조건 제외
     if (!startDt && !endDt) {
       return { from: '', to: '', boundaryNum: boundaryNum || '' };
     }
@@ -90,7 +90,7 @@
       size: String(pageSize),
     });
 
-    // ✅ 선택(입력)된 항목만 전송 (미선택은 제외)
+    // 선택(입력)된 항목만 전송 (미선택은 제외)
     if (f.from) params.set('from', f.from);
     if (f.to) params.set('to', f.to);
     if (f.boundaryNum) params.set('boundaryNum', f.boundaryNum);
@@ -292,7 +292,7 @@
     pink: 'rgba(236,72,153,0.88)',
     cyan: 'rgba(6,182,212,0.85)',
   };
-const CHART_GRID = 'rgba(255,255,255,0.06)';
+  const CHART_GRID = 'rgba(255,255,255,0.06)';
   const CHART_TICK = 'rgba(232,236,244,0.45)';
 
   const chartCommonOptions = {

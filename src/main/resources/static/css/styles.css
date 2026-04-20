@@ -15841,6 +15841,171 @@ body {
   }
 }
 
+/* Access Event Notification */
+.emergency-notification {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 360px;
+  max-width: 92vw;
+  padding: 22px 20px 16px;
+  background: linear-gradient(160deg, rgba(100, 10, 10, 0.97) 0%, rgba(60, 6, 6, 0.98) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  border-radius: 14px;
+  box-shadow:
+    0 0 0 1px rgba(239, 68, 68, 0.2),
+    0 28px 72px rgba(0, 0, 0, 0.8),
+    0 0 60px rgba(220, 38, 38, 0.25);
+  text-align: center;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.9);
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.22s ease, visibility 0.22s;
+  will-change: opacity, transform;
+  z-index: 9999;
+  cursor: pointer;
+  user-select: none;
+}
+
+.emergency-notification.is-visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* 경고 아이콘 */
+.en-warn-icon {
+  font-size: 40px;
+  color: #fca5a5;
+  line-height: 1;
+  margin-bottom: 10px;
+  /* 부드러운 pulse */
+  animation: en-icon-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes en-icon-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* 뱃지 라인 (이벤트 유형 + 시각) */
+.en-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(252, 165, 165, 0.8);
+  margin-bottom: 14px;
+}
+
+.en-badge i {
+  font-size: 11px;
+}
+
+.en-timestamp {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.en-timestamp::before {
+  content: "·";
+  margin: 0 3px;
+}
+
+/* 카메라명 */
+.en-cam-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+.en-cam-row i {
+  flex-shrink: 0;
+  font-size: 13px;
+  /* color: #fca5a5; */
+  color: #fff;
+}
+
+/* 이벤트 메시지 */
+.en-msg-row {
+  font-size: 12.5px;
+  /* color: rgba(255, 200, 200, 0.65); */
+  color: #fff;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 하단 액션 영역 */
+.en-footer {
+  display: flex;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+/* footer 버튼 공통 */
+.en-btn-dismiss,
+.en-btn-broadcast {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 0;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+  border: none;
+}
+
+/* 닫기 — 낮은 시각 강도 */
+.en-btn-dismiss {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(252, 165, 165, 0.6);
+}
+
+.en-btn-dismiss:hover {
+  background: rgba(255, 255, 255, 0.13);
+  color: rgba(252, 165, 165, 0.9);
+}
+
+/* 방송 발령 — 높은 시각 강도 */
+.en-btn-broadcast {
+  background: rgba(220, 38, 38, 0.55);
+  color: #fff;
+  border: 1px solid rgba(239, 68, 68, 0.6);
+}
+
+.en-btn-broadcast:hover {
+  background: rgba(220, 38, 38, 0.75);
+}
+
+.en-btn-broadcast:active {
+  opacity: 0.85;
+}
+
 /* Fullscreen view - Dark Theme */
 .fullscreen-view {
   position: fixed;
@@ -19366,106 +19531,69 @@ section.card.card-surface {
 
   background:
     radial-gradient(circle at center,
-      rgba(255, 0, 0, 0.12) 0%,
-      rgba(255, 0, 0, 0.16) 45%,
-      rgba(255, 0, 0, 0.34) 100%),
-    linear-gradient(0deg, rgba(255, 0, 0, 0.14), rgba(255, 0, 0, 0.14));
+      rgba(255, 42, 42, 0.30) 0%,
+      rgba(255, 0, 0, 0.46) 46%,
+      rgba(155, 0, 0, 0.72) 100%),
+    linear-gradient(0deg, rgba(90, 0, 0, 0.34), rgba(255, 0, 0, 0.28));
 
-  mix-blend-mode: screen;
-  filter: saturate(1.25) contrast(1.04);
+  mix-blend-mode: normal;
+  filter: saturate(1.35) contrast(1.06);
 
-  /* 합성 레이어 힌트(버벅임 방지) */
   will-change: opacity, transform;
   transform: translateZ(0);
   animation: none;
 }
 
-/* 기존: 1.1s * 3회 = 3.3s (체감상 끊김/반복 경계가 보일 수 있음)
-   개선: 2.2s 1회로 "연속 펄스"처럼 보이게 */
-/* .emergency-overlay.active {
-  animation: emergency-pulse-smooth 2.2s ease-in-out 0s 1,
-          emergency-shake-soft 0.55s ease-in-out 0s 2;
-} */
-.emergency-overlay.active {
-  animation:
-    emergency-pulse-smooth 2.2s ease-in-out 0s infinite,
-    emergency-shake-soft 0.55s ease-in-out 0s infinite;
-  /* 흔들림도 계속이면 */
+.emergency-overlay::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    repeating-linear-gradient(0deg,
+      rgba(255, 255, 255, 0.08) 0,
+      rgba(255, 255, 255, 0.08) 2px,
+      transparent 2px,
+      transparent 18px),
+    linear-gradient(90deg,
+      rgba(255, 0, 0, 0.42),
+      transparent 18%,
+      transparent 82%,
+      rgba(255, 0, 0, 0.42));
+  box-shadow:
+    inset 0 0 0 8px rgba(255, 35, 35, 0.58),
+    inset 0 0 90px rgba(255, 0, 0, 0.72);
 }
 
-/* 급격한 점프(0.78 -> 0.30 등)를 완화한 곡선형 펄스 */
-@keyframes emergency-pulse-smooth {
-  0% {
-    opacity: 0;
-  }
+/* 절제된 red pulse — 2박자 부드러운 명멸, 흔들림 없음 */
+.emergency-overlay.active {
+  animation: access-alert-pulse 2s ease-in-out infinite;
+}
 
-  8% {
+@keyframes access-alert-pulse {
+  0% {
     opacity: 0.22;
   }
 
-  16% {
-    opacity: 0.62;
+  25% {
+    opacity: 0.52;
   }
 
-  26% {
-    opacity: 0.35;
-  }
-
-  36% {
-    opacity: 0.72;
-  }
-
-  50% {
-    opacity: 0.40;
-  }
-
-  62% {
-    opacity: 0.68;
-  }
-
-  76% {
-    opacity: 0.32;
-  }
-
-  90% {
-    opacity: 0.18;
-  }
-
-  100% {
-    opacity: 0;
-  }
-}
-
-/* 흔들림은 "미세하게" + 횟수 줄임(끊김/피로 감소) */
-@keyframes emergency-shake-soft {
-  0% {
-    transform: translate3d(0, 0, 0);
-  }
-
-  20% {
-    transform: translate3d(-1px, 0, 0);
-  }
-
-  40% {
-    transform: translate3d(1px, 0, 0);
-  }
-
-  60% {
-    transform: translate3d(-0.5px, 0, 0);
+  55% {
+    opacity: 0.28;
   }
 
   80% {
-    transform: translate3d(0.5px, 0, 0);
+    opacity: 0.44;
   }
 
   100% {
-    transform: translate3d(0, 0, 0);
+    opacity: 0.22;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .emergency-overlay.active {
-    animation: emergency-pulse-smooth 1.6s ease-in-out 0s 1;
+    animation: access-alert-pulse 2.4s ease-in-out 0s 1;
   }
 }
 
@@ -19891,7 +20019,6 @@ body.ticker-collapsed .ticker-reveal-btn {
   flex: 0 0 auto;
   gap: 14px;
   padding-right: 18px;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .ticker-panel-title {
@@ -20727,7 +20854,7 @@ body.ticker-collapsed .ticker-reveal-btn {
 .sb-radar-map-wrap {
   flex: 1;
   min-height: clamp(140px, 24vh, 260px);
-  max-height: 360px;
+  /* max-height: 360px; */
   position: relative;
   border-radius: 7px;
   overflow: hidden;

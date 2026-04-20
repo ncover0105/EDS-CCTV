@@ -52,6 +52,7 @@ document.addEventListener("DOMContentLoaded", function () {
     CCTVJanus.initSignaling(cameras);
 
     setInterval(updateTickerCamStatus, 5000); // 5초마다 카메라 상태 업데이트
+    initHomeTickerCollapse();
 
     document.getElementById("reconnectAllBtn")?.addEventListener("click", () => {
         showConfirmModal("전체 재연결", "모든 CCTV를 재연결할까요?", async () => {
@@ -71,9 +72,16 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     document.getElementById("testBtn")?.addEventListener("click", () => {
-        notify('시스템 설정 변경은 관리자만 가능합니다.', 'warning', {
-            title: '권한 없음'
-        });
+        const testCamera = cameras?.[0];
+        const camName = testCamera?.name || "테스트 CCTV";
+        const boundaryNum = 1;
+
+        window.triggerEmergencyScreenEffect?.();
+        window.SSE_MQTT?.showEmergencyToastr(
+            camName,
+            `${boundaryNum}번 위험구역 출입 테스트 알림입니다.`,
+            boundaryNum
+        );
     });
 
     const refreshBtn = document.getElementById("refreshMap");
@@ -520,4 +528,35 @@ function updateTickerCamStatus() {
 
     onlineEl.textContent = online;
     totalEl.textContent = total;
+}
+
+function initHomeTickerCollapse() {
+    const storageKey = "homeTickerCollapsed";
+    const body = document.body;
+    const toggleBtn = document.getElementById("tickerToggleBtn");
+    const revealBtn = document.getElementById("tickerRevealBtn");
+
+    if (!toggleBtn || !revealBtn) {
+        return;
+    }
+
+    function syncTickerState(collapsed) {
+        body.classList.toggle("ticker-collapsed", collapsed);
+        toggleBtn.setAttribute("aria-label", collapsed ? "하단 특보 바 다시 보기" : "하단 특보 바 숨기기");
+        toggleBtn.setAttribute("title", collapsed ? "하단 특보 바 다시 보기" : "하단 특보 바 숨기기");
+        revealBtn.setAttribute("aria-hidden", collapsed ? "false" : "true");
+    }
+
+    syncTickerState(localStorage.getItem(storageKey) === "true");
+
+    toggleBtn.addEventListener("click", function () {
+        const collapsed = !body.classList.contains("ticker-collapsed");
+        syncTickerState(collapsed);
+        localStorage.setItem(storageKey, String(collapsed));
+    });
+
+    revealBtn.addEventListener("click", function () {
+        syncTickerState(false);
+        localStorage.setItem(storageKey, "false");
+    });
 }

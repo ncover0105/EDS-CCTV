@@ -107,37 +107,44 @@ window.SSE_MQTT = (function () {
         }
     }
 
-    // TEST 
     function showEmergencyToastr(camName, msg, boundaryNum) {
-        const box = document.querySelector(".notification");
+        const box = document.getElementById("emergencyNotification");
+        const title = document.getElementById("emergencyNotificationTitle");
+        const message = document.getElementById("emergencyNotificationMessage");
+        const timeEl = document.getElementById("emergencyNotificationTime");
         const overlay = document.getElementById("emergencyOverlay");
-        if (!box) return;
+        if (!box || !title || !message) return;
 
         const hideNotification = () => {
-            box.classList.remove("show");
+            box.classList.remove("is-visible");
             box.setAttribute("aria-hidden", "true");
-            overlay?.classList.remove("active");
+            overlay?.classList.remove("active", "is-animating");
             clearTimeout(box.__timer);
         };
 
-        document.getElementById("notification-title").innerText =
-            `${camName}\n위험구역 출입 발생`;
+        title.innerText = camName;
+        message.innerText = msg;
+        if (timeEl) timeEl.innerText = new Date().toLocaleTimeString("ko-KR");
 
-        document.getElementById("notification-message").innerText = msg;
-
+        box.onclick = null;
         box.setAttribute("aria-hidden", "false");
-        box.classList.add("show");
+        box.classList.add("is-visible");
 
-        // ===== 기존 타이머 제거 후 5초 타이머 설정 =====
         clearTimeout(box.__timer);
-        box.__timer = setTimeout(() => {
-            hideNotification();
-        }, 5000);
 
-        box.onclick = () => {
+        const bindBtn = (id, handler) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const next = el.cloneNode(true);
+            el.parentNode.replaceChild(next, el);
+            next.addEventListener("click", handler);
+        };
+
+        bindBtn("emergencyNotificationClose", () => hideNotification());
+        bindBtn("emergencyNotificationBroadcast", () => {
             window.openBroadcastModal(camName, boundaryNum);
             hideNotification();
-        };
+        });
     }
 
     // Confirm Modal Helper
@@ -158,6 +165,6 @@ window.SSE_MQTT = (function () {
         new bootstrap.Modal(modalEl).show();
     }
 
-    return { connect };
+    return { connect, showEmergencyToastr };
 
 })();

@@ -295,7 +295,7 @@
                     <div class="sb-hd">
                         <span class="sb-hd-title">
                             <i class="fa-solid fa-satellite" style="opacity:.6;font-size:9px;"></i>
-                            레이더 영상
+                            날씨 영상
                         </span>
                         <div class="sb-radar-toggle">
                             <button class="toggle-btn active" onclick="Weather.switchRadarType('radar', this)">
@@ -385,53 +385,32 @@
             </div>
         </div>
 
-        <!-- Section: 알림 -->
-        <div class="notification notification-danger" id="customNotification">
-            <div class="notification-icon">
+        <!-- Section: 출입 이벤트 알림 -->
+        <div class="emergency-notification" id="emergencyNotification" aria-hidden="true">
+            <div class="en-warn-icon">
                 <i class="bi bi-exclamation-triangle-fill"></i>
             </div>
-            <div class="notification-content">
-                <div id="notification-title" class="notification-title"></div>
-                <div id="notification-message" class="notification-message"></div>
+            <div class="en-badge">
+                <i class="bi bi-shield-exclamation"></i>
+                <span>출입 이벤트</span>
+                <span class="en-timestamp" id="emergencyNotificationTime"></span>
+            </div>
+            <div class="en-cam-row">
+                <i class="bi bi-camera-video-fill"></i>
+                <span id="emergencyNotificationTitle"></span>
+            </div>
+            <div class="en-msg-row" id="emergencyNotificationMessage"></div>
+            <div class="en-footer">
+                <button type="button" class="en-btn-dismiss" id="emergencyNotificationClose">닫기</button>
+                <button type="button" class="en-btn-broadcast" id="emergencyNotificationBroadcast">
+                    <i class="bi bi-broadcast-pin"></i>
+                    방송 발령
+                </button>
             </div>
         </div>
         <!-- Section: Emergency Screen Overlay -->
-        <div id="emergencyOverlay" class="emergency-overlay" aria-hidden="true"></div>
-        <!-- Deprecated: overlay effect -->
+        <div class="emergency-overlay" id="emergencyOverlay" aria-hidden="true"></div>
 
-        <!-- Deprecated: notimodal.js -->
-        <script>
-            (function () {
-                const storageKey = "homeTickerCollapsed";
-                const body = document.body;
-                const toggleBtn = document.getElementById("tickerToggleBtn");
-                const revealBtn = document.getElementById("tickerRevealBtn");
-
-                if (!toggleBtn || !revealBtn) {
-                    return;
-                }
-
-                function syncTickerState(collapsed) {
-                    body.classList.toggle("ticker-collapsed", collapsed);
-                    toggleBtn.setAttribute("aria-label", collapsed ? "하단 특보 바 다시 보기" : "하단 특보 바 숨기기");
-                    toggleBtn.setAttribute("title", collapsed ? "하단 특보 바 다시 보기" : "하단 특보 바 숨기기");
-                    revealBtn.setAttribute("aria-hidden", collapsed ? "false" : "true");
-                }
-
-                syncTickerState(localStorage.getItem(storageKey) === "true");
-
-                toggleBtn.addEventListener("click", function () {
-                    const collapsed = !body.classList.contains("ticker-collapsed");
-                    syncTickerState(collapsed);
-                    localStorage.setItem(storageKey, String(collapsed));
-                });
-
-                revealBtn.addEventListener("click", function () {
-                    syncTickerState(false);
-                    localStorage.setItem(storageKey, "false");
-                });
-            })();
-        </script>
     </div>
 </body>
 

@@ -46,6 +46,7 @@ window.TtsManageModal = {
         selectedId: null,
         mode: "create",
         statusConfirmResolve: null,
+        statusTimer: null,
     },
 
     els() {
@@ -119,10 +120,17 @@ window.TtsManageModal = {
         el.statusClose?.classList.remove("d-none");
     },
 
-    showStatus(message, type = "info") {
+    clearStatusTimer() {
+        if (!this.state.statusTimer) return;
+        clearTimeout(this.state.statusTimer);
+        this.state.statusTimer = null;
+    },
+
+    showStatus(message, type = "info", timeoutMs = 3200) {
         const el = this.els();
         if (!el.status || !el.statusText) return;
 
+        this.clearStatusTimer();
         this.clearStatusActions();
 
         el.status.classList.remove("d-none", "is-success", "is-warning", "is-danger", "is-info");
@@ -138,9 +146,17 @@ window.TtsManageModal = {
             };
             el.statusIcon.className = `bi ${iconMap[type] ?? iconMap.info} bc-inline-status-icon`;
         }
+
+        if (timeoutMs > 0) {
+            this.state.statusTimer = setTimeout(() => {
+                this.state.statusTimer = null;
+                this.hideStatus();
+            }, timeoutMs);
+        }
     },
 
     hideStatus() {
+        this.clearStatusTimer();
         this.clearStatusActions();
         this.els().status?.classList.add("d-none");
     },
@@ -151,7 +167,7 @@ window.TtsManageModal = {
             return Promise.resolve(window.confirm(message));
         }
 
-        this.showStatus(message, type);
+        this.showStatus(message, type, 0);
         el.statusActions.classList.remove("d-none");
         el.statusClose?.classList.add("d-none");
 
