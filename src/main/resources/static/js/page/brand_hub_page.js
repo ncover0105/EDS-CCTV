@@ -1,44 +1,48 @@
 document.addEventListener("DOMContentLoaded", function () {
-    var speakerCountEl = document.getElementById("brandSpeakerCount");
-    var speakerListCountEl = document.getElementById("brandSpeakerListCount");
-    var speakerListEl = document.getElementById("brandSpeakerList");
 
-    var cctvCountEl = document.getElementById("brandCctvCount");
-    var cctvListCountEl = document.getElementById("brandCctvListCount");
-    var cctvPickerEl = document.getElementById("brandCctvPicker");
+    // ── DOM refs ──────────────────────────────────────────
+    var elClock          = document.getElementById("opsClock");
+    var elShiftEvent     = document.getElementById("opsShiftEventCount");
+    var elChipCctvOff    = document.getElementById("opsChipCctvOff");
+    var elShiftCctvOff   = document.getElementById("opsShiftCctvOff");
+    var elChipSpkOff     = document.getElementById("opsChipSpkOff");
+    var elShiftSpkOff    = document.getElementById("opsShiftSpkOff");
 
-    var emergencyCountEl = document.getElementById("brandEmergencyCount");
-    var emergencyListCountEl = document.getElementById("brandEmergencyListCount");
-    var emergencyListEl = document.getElementById("brandEmergencyList");
-    var broadcastCountEl = document.getElementById("brandBroadcastCount");
-    var broadcastListCountEl = document.getElementById("brandBroadcastListCount");
-    var broadcastListEl = document.getElementById("brandBroadcastList");
+    var elSpeakerCount   = document.getElementById("brandSpeakerCount");
+    var elSpeakerListCnt = document.getElementById("brandSpeakerListCount");
+    var elSpeakerList    = document.getElementById("brandSpeakerList");
 
-    var nameEl = document.getElementById("brandSelectedCctvName");
-    var addressEl = document.getElementById("brandSelectedCctvAddress");
-    var codeEl = document.getElementById("brandSelectedCctvCode");
-    var portEl = document.getElementById("brandSelectedCctvPort");
-    var coordEl = document.getElementById("brandSelectedCctvCoord");
-    var statusEl = document.getElementById("brandSelectedCctvStatus");
+    var elCctvCount      = document.getElementById("brandCctvCount");
+    var elCctvPicker     = document.getElementById("brandCctvPicker");
+
+    var elEventListCnt   = document.getElementById("brandEmergencyListCount");
+    var elEventTotal     = document.getElementById("brandEmergencyCount");
+    var elEventFt        = document.getElementById("opsEmergencyFt");
+    var elEventList      = document.getElementById("brandEmergencyList");
+    var elZoneBars       = document.getElementById("opsZoneBars");
+    var elHourlyBars     = document.getElementById("opsHourlyBars");
+
+    var elBcCount        = document.getElementById("brandBroadcastCount");
+    var elBcList         = document.getElementById("brandBroadcastList");
+
+    var elCctvHourly     = document.getElementById("opsCctvHourly");
+    var elCsSumTotal     = document.getElementById("opsCsSumTotal");
+    var elCsSumPeak      = document.getElementById("opsCsSumPeak");
+    var elCsSumZone      = document.getElementById("opsCsSumZone");
+
+    // alertCode → 표시명 맵 (API 로드 전 기본값)
+    var alertMap = {};
+
+    // 현재 선택된 CCTV
     var selectedCctv = null;
 
-    function getValue(value, fallback) {
-        return value === null || value === undefined || value === "" ? fallback : value;
+    // ── 유틸 ─────────────────────────────────────────────
+    function getValue(v, fb) {
+        return (v === null || v === undefined || v === "") ? fb : v;
     }
 
-    function fmtTime(value) {
-        if (!value) return "-";
-        var date = new Date(value);
-        if (isNaN(date.getTime())) return "-";
-        return date.toLocaleTimeString("ko-KR", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false
-        });
-    }
-
-    function escapeHtml(value) {
-        return String(getValue(value, ""))
+    function escapeHtml(v) {
+        return String(getValue(v, ""))
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
@@ -46,326 +50,452 @@ document.addEventListener("DOMContentLoaded", function () {
             .replace(/'/g, "&#39;");
     }
 
-    function createEmptyItem(icon, title, subtitle, side) {
-        return [
-            '<div class="brand-list-item">',
-            '  <div class="brand-list-icon"><i class="bi ' + escapeHtml(icon) + '"></i></div>',
-            '  <div class="brand-list-main">',
-            '    <strong>' + escapeHtml(title) + '</strong>',
-            '    <span>' + escapeHtml(subtitle) + '</span>',
-            '  </div>',
-            '</div>'
-        ].join("");
+    // "yyyy-MM-dd HH:mm:ss" → "HH:mm"
+    function fmtShortTime(v) {
+        if (!v || v === "-") return "--:--";
+        var m = v.match(/(\d{2}:\d{2}):/);
+        return m ? m[1] : v.substring(0, 5);
     }
 
-    function createEmergencyItem(item) {
-        var dailyTarget = 100;
-        var hasItem = !!item;
-        var zoneLabel = hasItem ? (getValue(item.boundaryNum, "-") + "번 구역") : "-번 구역";
-        var count = hasItem ? Number(getValue(item.count, 0)) : 0;
-        var width = count > 0 ? Math.min(100, Math.max(8, Math.round((count / dailyTarget) * 100))) : 0;
-        var countText = count + " / " + dailyTarget + "건";
-
-        return [
-            '<div class="brand-emergency-item">',
-            '  <div class="brand-emergency-main">',
-            '    <div class="brand-emergency-head">',
-            '      <strong class="brand-emergency-title">' + escapeHtml(zoneLabel) + '</strong>',
-            '      <span class="brand-emergency-count">' + escapeHtml(String(count)) + '건</span>',
-            '    </div>',
-            '    <div class="brand-emergency-bar">',
-            '      <div class="brand-emergency-bar-fill" style="width: ' + escapeHtml(String(width)) + '%;"></div>',
-            '    </div>',
-            '    <div class="brand-emergency-foot">',
-            '      <span class="brand-emergency-side-label">오늘 기준</span>',
-            '      <span class="brand-emergency-side-value">' + escapeHtml(countText) + '</span>',
-            '    </div>',
-            '  </div>',
-            '</div>'
-        ].join("");
+    // "yyyy-MM-dd HH:mm:ss" → 시(0~23)
+    function extractHour(v) {
+        if (!v || v === "-") return null;
+        var m = v.match(/\s(\d{2}):/);
+        return m ? parseInt(m[1], 10) : null;
     }
 
-    function getCctvButtons() {
-        return Array.prototype.slice.call(document.querySelectorAll(".brand-cctv-option"));
+    function isCctvOnline(statusCam) {
+        var s = String(getValue(statusCam, "")).toUpperCase();
+        return s === "01" || s === "Y" || s === "1";
     }
 
+    function isSpeakerOnline(connectStatus) {
+        return Number(getValue(connectStatus, -1)) === 0;
+    }
+
+    function alertLabel(code) {
+        if (!code || code === "-") return "이벤트";
+        return alertMap[code] || code;
+    }
+
+    function set(el, text) {
+        if (el) el.textContent = String(text);
+    }
+
+    // ── 시계 ─────────────────────────────────────────────
+    function startClock() {
+        if (!elClock) return;
+        function tick() {
+            elClock.textContent = new Date().toLocaleTimeString("ko-KR", {
+                hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
+            });
+        }
+        tick();
+        setInterval(tick, 1000);
+    }
+
+    // ── HTTP ─────────────────────────────────────────────
+    function loadJson(url) {
+        return fetch(url, { headers: { "Accept": "application/json" } })
+            .then(function (r) {
+                if (!r.ok) throw new Error(url + " " + r.status);
+                return r.json();
+            });
+    }
+
+    function safeLoad(url, fb) {
+        return loadJson(url).catch(function () { return fb; });
+    }
+
+    // ── CCTV 스트리밍 ────────────────────────────────────
     function normalizeCctvForStream(cctv) {
         if (!cctv) return null;
-
-        var rawStatus = String(getValue(cctv.statusCam, "")).toUpperCase();
-        var streamStatus = (rawStatus === "01" || rawStatus === "Y" || rawStatus === "1") ? "1" : "0";
-
+        var raw = String(getValue(cctv.statusCam, "")).toUpperCase();
         return {
             locationCode: getValue(cctv.locationCode, ""),
-            cctvCode: getValue(cctv.cctvCode, ""),
-            name: getValue(cctv.name, getValue(cctv.cctvCode, "CCTV")),
-            address: getValue(cctv.address, "-"),
-            wsPort: getValue(cctv.wsPort, "-"),
-            latitude: getValue(cctv.latitude, "-"),
-            longitude: getValue(cctv.longitude, "-"),
-            statusCam: rawStatus,
-            status: streamStatus,
+            cctvCode:     getValue(cctv.cctvCode, ""),
+            name:         getValue(cctv.name, getValue(cctv.cctvCode, "CCTV")),
+            address:      getValue(cctv.address, "-"),
+            wsPort:       getValue(cctv.wsPort, "-"),
+            latitude:     getValue(cctv.latitude, "-"),
+            longitude:    getValue(cctv.longitude, "-"),
+            statusCam:    raw,
+            status:       isCctvOnline(raw) ? "1" : "0",
             mountpointId: getValue(cctv.mountpointId, null),
-            videoPort: getValue(cctv.videoPort, null),
-            rtspUrl: getValue(cctv.rtspUrl, null)
+            videoPort:    getValue(cctv.videoPort, null),
+            rtspUrl:      getValue(cctv.rtspUrl, null)
         };
     }
 
-    function renderSelectedCctvPanel(cctv) {
-        if (nameEl) nameEl.textContent = cctv ? getValue(cctv.name, "-") : "-";
-        if (addressEl) addressEl.textContent = cctv ? getValue(cctv.address, "-") : "-";
-        if (codeEl) codeEl.textContent = cctv ? getValue(cctv.cctvCode, "-") : "-";
-        if (portEl) portEl.textContent = cctv ? getValue(cctv.wsPort, "-") : "-";
-        if (coordEl) coordEl.textContent = cctv ? (getValue(cctv.latitude, "-") + ", " + getValue(cctv.longitude, "-")) : "-";
-        if (statusEl) {
-            if (!cctv) {
-                statusEl.textContent = "-";
-            } else {
-                statusEl.textContent = (String(getValue(cctv.statusCam, "")).toUpperCase() === "01" || String(getValue(cctv.statusCam, "")).toUpperCase() === "Y")
-                    ? "정상"
-                    : "확인";
-            }
-        }
-    }
-
-    function connectSelectedCctv(cctv) {
-        if (window.CCTVJanus) {
-            window.CCTVJanus.destroy();
-        }
-        if (window.CCTVLayout) {
-            window.CCTVLayout.destroy();
-        }
-
-        if (!cctv) {
-            selectedCctv = null;
-            renderSelectedCctvPanel(null);
-            return;
-        }
-
+    function connectStream(cctv) {
+        if (window.CCTVJanus)  window.CCTVJanus.destroy();
+        if (window.CCTVLayout) window.CCTVLayout.destroy();
+        if (!cctv) { selectedCctv = null; return; }
         selectedCctv = normalizeCctvForStream(cctv);
-        renderSelectedCctvPanel(selectedCctv);
-
-        if (!window.CCTVLayout || !window.CCTVJanus) {
-            return;
-        }
-
+        if (!window.CCTVLayout || !window.CCTVJanus) return;
         window.CCTVLayout.init([selectedCctv]);
         window.CCTVLayout.renderGrid(1);
         window.CCTVJanus.initSignaling([selectedCctv]);
     }
 
-    function applySelectedCctv(button) {
-        var buttons = getCctvButtons();
-        buttons.forEach(function (item) {
-            item.classList.remove("is-active");
-        });
+    function getCamTabs() {
+        return Array.prototype.slice.call(
+            document.querySelectorAll("#brandCctvPicker .ops-cam-tab")
+        );
+    }
 
-        if (!button) return;
-        button.classList.add("is-active");
-
-        connectSelectedCctv({
-            name: button.getAttribute("data-name"),
-            address: button.getAttribute("data-address"),
-            cctvCode: button.getAttribute("data-code"),
-            wsPort: button.getAttribute("data-port"),
-            mountpointId: button.getAttribute("data-mountpoint-id"),
-            videoPort: button.getAttribute("data-video-port"),
-            rtspUrl: button.getAttribute("data-rtsp-url"),
-            latitude: button.getAttribute("data-latitude"),
-            longitude: button.getAttribute("data-longitude"),
-            statusCam: button.getAttribute("data-status-code"),
-            locationCode: button.getAttribute("data-location-code")
+    function applyTab(btn) {
+        getCamTabs().forEach(function (t) { t.classList.remove("is-active"); });
+        if (!btn) return;
+        btn.classList.add("is-active");
+        connectStream({
+            name:         btn.getAttribute("data-name"),
+            address:      btn.getAttribute("data-address"),
+            cctvCode:     btn.getAttribute("data-code"),
+            wsPort:       btn.getAttribute("data-port"),
+            mountpointId: btn.getAttribute("data-mountpoint-id"),
+            videoPort:    btn.getAttribute("data-video-port"),
+            rtspUrl:      btn.getAttribute("data-rtsp-url"),
+            latitude:     btn.getAttribute("data-latitude"),
+            longitude:    btn.getAttribute("data-longitude"),
+            statusCam:    btn.getAttribute("data-status-code"),
+            locationCode: btn.getAttribute("data-location-code")
         });
     }
 
-    function bindCctvButtons() {
-        var buttons = getCctvButtons();
-        buttons.forEach(function (button) {
-            button.addEventListener("click", function () {
-                applySelectedCctv(button);
-            });
+    function bindCamTabs() {
+        var tabs = getCamTabs();
+        tabs.forEach(function (btn) {
+            btn.addEventListener("click", function () { applyTab(btn); });
         });
-
-        if (buttons.length) {
-            var active = buttons.filter(function (button) {
-                return button.classList.contains("is-active");
-            })[0] || buttons[0];
-            applySelectedCctv(active);
+        if (tabs.length) {
+            var active = tabs.filter(function (t) {
+                return t.classList.contains("is-active");
+            })[0] || tabs[0];
+            applyTab(active);
         }
     }
 
-    function renderSpeakers(speakers) {
-        var list = Array.isArray(speakers) ? speakers : [];
-        var online = list.filter(function (speaker) {
-            return Number(getValue(speaker.connectStatus, -1)) === 0;
-        }).length;
+    // ── 렌더: CCTV 탭 ────────────────────────────────────
+    function renderCctvTabs(list) {
+        list = Array.isArray(list) ? list : [];
+        var online = list.filter(function (c) { return isCctvOnline(c.statusCam); }).length;
+        var offline = list.length - online;
 
-        if (speakerCountEl) speakerCountEl.textContent = String(list.length);
-        if (speakerListCountEl) speakerListCountEl.textContent = list.length + " 대";
-        if (!speakerListEl) return;
+        set(elCctvCount, list.length);
+
+        // 헤더 shift chip 업데이트
+        if (elShiftCctvOff) set(elShiftCctvOff, offline);
+        if (elChipCctvOff) elChipCctvOff.style.display = offline > 0 ? "" : "none";
+
+        if (!elCctvPicker) return;
 
         if (!list.length) {
-            speakerListEl.innerHTML = createEmptyItem("bi-megaphone-fill", "데이터 없음", "스피커 목록", "-");
+            elCctvPicker.innerHTML = '<button type="button" class="ops-cam-tab">데이터 없음</button>';
+            connectStream(null);
             return;
         }
 
-        speakerListEl.innerHTML = list.map(function (speaker) {
-            var speakerTitle = getValue(speaker.speakerName, "스피커");
-            var speakerId = getValue(speaker.speakerId, "-");
+        elCctvPicker.innerHTML = list.map(function (c, i) {
+            var ok   = isCctvOnline(c.statusCam) ? "1" : "0";
+            var name = getValue(c.name, getValue(c.cctvCode, "CCTV"));
             return [
-                '<div class="brand-list-item">',
-                '  <div class="brand-list-icon"><i class="bi bi-megaphone-fill"></i></div>',
-                '  <div class="brand-list-main">',
-                '    <strong>' + escapeHtml(speakerTitle) + '</strong>',
-                '    <span>' + escapeHtml(speakerId) + '</span>',
-                '  </div>',
-                '</div>'
-            ].join("");
-        }).join("");
-    }
-
-    function renderCctvs(cctvs) {
-        var list = Array.isArray(cctvs) ? cctvs : [];
-        var normal = list.filter(function (cctv) {
-            var status = String(getValue(cctv.statusCam, "")).toUpperCase();
-            return status === "01" || status === "Y";
-        }).length;
-
-        if (cctvCountEl) cctvCountEl.textContent = String(list.length);
-        if (cctvListCountEl) cctvListCountEl.textContent = list.length + " 채널";
-        if (!cctvPickerEl) return;
-
-        if (!list.length) {
-            cctvPickerEl.innerHTML = '<button type="button" class="brand-cctv-option is-active">데이터 없음</button>';
-            applySelectedCctv(null);
-            return;
-        }
-
-        cctvPickerEl.innerHTML = list.map(function (cctv, index) {
-            var status = String(getValue(cctv.statusCam, "")).toUpperCase();
-            var statusText = status === "01" || status === "Y" ? "정상" : "확인";
-            var coord = getValue(cctv.latitude, "-") + ", " + getValue(cctv.longitude, "-");
-            return [
-                '<button type="button" class="brand-cctv-option' + (index === 0 ? ' is-active' : '') + '"',
-                ' data-name="' + escapeHtml(getValue(cctv.name, getValue(cctv.cctvCode, "CCTV"))) + '"',
-                ' data-address="' + escapeHtml(getValue(cctv.address, "-")) + '"',
-                ' data-code="' + escapeHtml(getValue(cctv.cctvCode, "-")) + '"',
-                ' data-port="' + escapeHtml(getValue(cctv.wsPort, "-")) + '"',
-                ' data-coord="' + escapeHtml(coord) + '"',
-                ' data-mountpoint-id="' + escapeHtml(getValue(cctv.mountpointId, "")) + '"',
-                ' data-video-port="' + escapeHtml(getValue(cctv.videoPort, "")) + '"',
-                ' data-rtsp-url="' + escapeHtml(getValue(cctv.rtspUrl, "")) + '"',
-                ' data-latitude="' + escapeHtml(getValue(cctv.latitude, "-")) + '"',
-                ' data-longitude="' + escapeHtml(getValue(cctv.longitude, "-")) + '"',
-                ' data-status-code="' + escapeHtml(getValue(cctv.statusCam, "")) + '"',
-                ' data-location-code="' + escapeHtml(getValue(cctv.locationCode, "")) + '"',
-                ' data-status="' + escapeHtml(statusText) + '">',
-                escapeHtml(getValue(cctv.name, getValue(cctv.cctvCode, "CCTV"))),
+                '<button type="button"',
+                ' class="ops-cam-tab' + (i === 0 ? ' is-active' : '') + '"',
+                ' data-ok="' + ok + '"',
+                ' data-name="' + escapeHtml(name) + '"',
+                ' data-address="' + escapeHtml(getValue(c.address, "-")) + '"',
+                ' data-code="' + escapeHtml(getValue(c.cctvCode, "")) + '"',
+                ' data-port="' + escapeHtml(getValue(c.wsPort, "-")) + '"',
+                ' data-mountpoint-id="' + escapeHtml(getValue(c.mountpointId, "")) + '"',
+                ' data-video-port="' + escapeHtml(getValue(c.videoPort, "")) + '"',
+                ' data-rtsp-url="' + escapeHtml(getValue(c.rtspUrl, "")) + '"',
+                ' data-latitude="' + escapeHtml(getValue(c.latitude, "-")) + '"',
+                ' data-longitude="' + escapeHtml(getValue(c.longitude, "-")) + '"',
+                ' data-status-code="' + escapeHtml(getValue(c.statusCam, "")) + '"',
+                ' data-location-code="' + escapeHtml(getValue(c.locationCode, "")) + '"',
+                ' title="' + escapeHtml(name) + (ok === "0" ? " (오프라인)" : "") + '">',
+                escapeHtml(name),
                 '</button>'
             ].join("");
         }).join("");
 
-        bindCctvButtons();
+        bindCamTabs();
     }
 
-    function renderEmergencies(payload) {
-        var items = payload && Array.isArray(payload.items) ? payload.items : [];
-        var totalCount = payload && payload.totalCount !== undefined ? payload.totalCount : items.length;
-        var grouped = {
-            "1": { boundaryNum: 1, count: 0 },
-            "2": { boundaryNum: 2, count: 0 },
-            "3": { boundaryNum: 3, count: 0 },
-            "4": { boundaryNum: 4, count: 0 }
-        };
-        var orderedItems;
+    // ── 렌더: 스피커 도트 ────────────────────────────────
+    function renderSpeakerDots(list) {
+        list = Array.isArray(list) ? list : [];
+        var online  = list.filter(function (s) { return isSpeakerOnline(s.connectStatus); }).length;
+        var offline = list.length - online;
 
-        if (emergencyCountEl) emergencyCountEl.textContent = String(totalCount);
-        if (emergencyListCountEl) emergencyListCountEl.textContent = totalCount + " 건";
-        if (!emergencyListEl) return;
+        set(elSpeakerCount, list.length);
+        set(elSpeakerListCnt, list.length + "대");
 
-        items.forEach(function (log) {
-            var key = String(getValue(log && log.boundaryNum, "-"));
-            if (grouped[key]) {
-                grouped[key].count += 1;
-            }
-        });
+        if (elShiftSpkOff) set(elShiftSpkOff, offline);
+        if (elChipSpkOff)  elChipSpkOff.style.display = offline > 0 ? "" : "none";
 
-        orderedItems = ["1", "2", "3", "4"].map(function (key) {
-            return grouped[key];
-        });
-
-        emergencyListEl.innerHTML = orderedItems.map(function (item) {
-            return createEmergencyItem(item);
-        }).join("");
-    }
-
-    function renderBroadcasts(items) {
-        var list = Array.isArray(items) ? items : [];
-
-        if (broadcastCountEl) broadcastCountEl.textContent = String(list.length);
-        if (broadcastListCountEl) broadcastListCountEl.textContent = list.length + " 건";
-        if (!broadcastListEl) return;
+        if (!elSpeakerList) return;
 
         if (!list.length) {
-            broadcastListEl.innerHTML = createEmptyItem("bi-broadcast-pin", "데이터 없음", "방송이력", "-");
+            elSpeakerList.innerHTML = '<span style="font-size:11px;color:#334155;">장비 없음</span>';
             return;
         }
 
-        broadcastListEl.innerHTML = list.slice(0, 6).map(function (item) {
-            var commandText = getValue(item.commandCode, "-");
-            var statusText = String(getValue(item.status, "")) === "1" ? "성공" : "실패";
+        elSpeakerList.innerHTML = list.map(function (s) {
+            var status = isSpeakerOnline(s.connectStatus) ? "on" : "off";
+            var label  = String(getValue(s.speakerName, getValue(s.speakerId, "-")));
+            var abbr   = label.replace(/[^A-Za-z0-9가-힣]/g, "").substring(0, 2) || "S";
             return [
-                '<div class="brand-list-item">',
-                '  <div class="brand-list-icon"><i class="bi bi-broadcast-pin"></i></div>',
-                '  <div class="brand-list-main">',
-                '    <strong>' + escapeHtml(getValue(item.deviceId, "방송")) + '</strong>',
-                '    <span>' + escapeHtml(commandText + " · " + statusText + " · " + fmtTime(item.createdAt)) + '</span>',
-                '  </div>',
+                '<div class="ops-spk-dot" data-status="' + status + '"',
+                ' title="' + escapeHtml(label) + ' (' + (status === "on" ? "온라인" : "오프라인") + ')">',
+                escapeHtml(abbr),
                 '</div>'
             ].join("");
         }).join("");
     }
 
-    function loadJson(url) {
-        return fetch(url, {
-            headers: { "Accept": "application/json" }
-        }).then(function (response) {
-            if (!response.ok) {
-                throw new Error(url + " " + response.status);
-            }
-            return response.json();
-        });
+    // ── 렌더: 이벤트 타임라인 ───────────────────────────
+    function renderEventTimeline(items, totalCount, isFlash) {
+        items = Array.isArray(items) ? items : [];
+        totalCount = totalCount || items.length;
+
+        set(elEventListCnt, totalCount + "건");
+        set(elEventTotal,   totalCount + "건");
+        set(elEventFt,      totalCount);
+        if (elShiftEvent) set(elShiftEvent, totalCount);
+
+        if (!elEventList) return;
+
+        if (!items.length) {
+            elEventList.innerHTML =
+                '<div style="padding:12px 0;text-align:center;font-size:11px;color:#334155;">오늘 이벤트 없음</div>';
+            return;
+        }
+
+        var html = items.slice(0, 60).map(function (item, idx) {
+            var time    = fmtShortTime(getValue(item.inpDttm, "-"));
+            var zone    = item.boundaryNum ? item.boundaryNum + "구역" : "미지정";
+            var type    = alertLabel(getValue(item.alertCode, "-"));
+            var camName = getValue(item.cctvName, getValue(item.cctvCode, "-"));
+            var isNew   = isFlash && idx === 0 ? " ops-ev--new" : "";
+            return [
+                '<div class="ops-ev' + isNew + '">',
+                '  <div class="ops-ev-t">' + escapeHtml(time) + '</div>',
+                '  <div class="ops-ev-info">',
+                '    <div class="ops-ev-row">',
+                '      <span class="ops-ev-zone">' + escapeHtml(zone) + '</span>',
+                '      <span class="ops-ev-type">' + escapeHtml(type) + '</span>',
+                '    </div>',
+                '    <span class="ops-ev-cam">' + escapeHtml(camName) + '</span>',
+                '  </div>',
+                '</div>'
+            ].join("");
+        }).join("");
+
+        elEventList.innerHTML = html;
     }
 
-    function safeLoad(url, fallback) {
-        return loadJson(url).catch(function () {
-            return fallback;
+    // ── 렌더: 구역별 도넛 차트 ──────────────────────────
+    function renderZoneBars(items) {
+        if (!elZoneBars) return;
+        var zoneColors = ["", "#f97316", "#3b82f6", "#22c55e", "#a855f7"];
+        var zoneCounts = [0, 0, 0, 0, 0];
+        var unassigned = 0;
+        items.forEach(function (item) {
+            var z = item.boundaryNum != null ? Number(item.boundaryNum) : 0;
+            if (z >= 1 && z <= 4) zoneCounts[z]++;
+            else unassigned++;
         });
+
+        var total = items.length || 1;
+        var segments = [];
+        var acc = 0;
+        [1, 2, 3, 4].forEach(function (z) {
+            var pct = (zoneCounts[z] / total) * 100;
+            if (pct > 0) {
+                segments.push(zoneColors[z] + " " + acc.toFixed(1) + "% " + (acc + pct).toFixed(1) + "%");
+                acc += pct;
+            }
+        });
+        if (unassigned > 0) {
+            var upct = (unassigned / total) * 100;
+            segments.push("#64748b " + acc.toFixed(1) + "% " + (acc + upct).toFixed(1) + "%");
+        }
+
+        var gradient = segments.length > 0
+            ? "conic-gradient(" + segments.join(", ") + ")"
+            : "conic-gradient(rgba(255,255,255,0.08) 0% 100%)";
+
+        var legendHtml = [1, 2, 3, 4].map(function (z) {
+            return [
+                '<div class="ops-donut-item">',
+                '<span class="ops-donut-dot" style="background:' + zoneColors[z] + '"></span>',
+                '<span>' + z + '구역</span>',
+                '<strong>' + zoneCounts[z] + '</strong>',
+                '</div>'
+            ].join("");
+        }).join("");
+        if (unassigned > 0) {
+            legendHtml += [
+                '<div class="ops-donut-item">',
+                '<span class="ops-donut-dot" style="background:#64748b"></span>',
+                '<span>미지정</span>',
+                '<strong>' + unassigned + '</strong>',
+                '</div>'
+            ].join("");
+        }
+
+        elZoneBars.innerHTML =
+            '<div class="ops-donut-ring" style="background:' + gradient + '"></div>' +
+            '<div class="ops-donut-legend">' + legendHtml + '</div>';
     }
+
+    // ── 렌더: CCTV 차트 행 (통계 요약 + 24h 바) ─────────
+    function renderCctvStats(items) {
+        items = Array.isArray(items) ? items : [];
+        if (elCsSumTotal) set(elCsSumTotal, items.length);
+
+        var hours = new Array(24).fill(0);
+        items.forEach(function (item) {
+            var h = extractHour(getValue(item.inpDttm, null));
+            if (h !== null) hours[h]++;
+        });
+
+        var max = Math.max.apply(null, hours);
+        var peakH = max > 0 ? hours.indexOf(max) : null;
+        if (elCsSumPeak) set(elCsSumPeak, peakH !== null ? peakH + "시" : "-");
+
+        var zCounts = [0, 0, 0, 0, 0];
+        items.forEach(function (item) {
+            var z = item.boundaryNum != null ? Number(item.boundaryNum) : 0;
+            if (z >= 1 && z <= 4) zCounts[z]++;
+        });
+        var topZ = null, topV = 0;
+        [1, 2, 3, 4].forEach(function (z) {
+            if (zCounts[z] > topV) { topV = zCounts[z]; topZ = z; }
+        });
+        if (elCsSumZone) set(elCsSumZone, topZ ? topZ + "구역" : "-");
+
+        if (!elCctvHourly) return;
+        var nowH = new Date().getHours();
+        var BAR_H = 38;
+        elCctvHourly.innerHTML = hours.map(function (cnt, h) {
+            var px  = max > 0 ? Math.max(1, Math.round((cnt / max) * BAR_H)) : 1;
+            var cls = h === nowH ? " is-now" : (cnt === max && max > 0 ? " is-hot" : "");
+            return '<div class="ops-cctv-h-bar' + cls + '" style="height:' + px + 'px" title="' + h + "시 " + cnt + '건"></div>';
+        }).join("");
+    }
+
+    // ── 렌더: 시간대별 스파크라인 ───────────────────────
+    function renderHourlyBars(items) {
+        if (!elHourlyBars) return;
+        var hours = new Array(24).fill(0);
+        items.forEach(function (item) {
+            var h = extractHour(getValue(item.inpDttm, null));
+            if (h !== null) hours[h]++;
+        });
+
+        var nowHour = new Date().getHours();
+        var max = Math.max.apply(null, hours) || 1;
+        var BAR_H = 28; // px
+
+        elHourlyBars.innerHTML = hours.map(function (cnt, h) {
+            var px   = Math.max(2, Math.round((cnt / max) * BAR_H));
+            var cls  = h === nowHour ? " is-now" : (cnt === max && max > 0 ? " is-hot" : "");
+            return '<div class="ops-h-bar' + cls + '" style="height:' + px + 'px" title="' + h + '시 ' + cnt + '건"></div>';
+        }).join("");
+    }
+
+    // ── 렌더: 방송이력 (footer) ──────────────────────────
+    function renderBroadcastFoot(list) {
+        list = Array.isArray(list) ? list : [];
+        set(elBcCount, list.length);
+        if (!elBcList) return;
+
+        if (!list.length) {
+            elBcList.innerHTML = '<span class="ops-bc-entry"><i class="bi bi-soundwave"></i><span>방송이력 없음</span></span>';
+            return;
+        }
+
+        elBcList.innerHTML = list.slice(0, 3).map(function (item) {
+            var dev    = getValue(item.deviceId, "-");
+            var status = String(getValue(item.status, "")) === "1" ? "✓" : "✗";
+            var t      = fmtShortTime(item.createdAt);
+            return [
+                '<span class="ops-bc-entry">',
+                '  <i class="bi bi-broadcast-pin"></i>',
+                '  <span>' + escapeHtml(dev) + ' ' + status + ' ' + escapeHtml(t) + '</span>',
+                '</span>'
+            ].join("");
+        }).join("");
+    }
+
+    // ── 이벤트 데이터 통합 처리 ──────────────────────────
+    function handleEmergencyData(payload, isFlash) {
+        var items = payload && Array.isArray(payload.items) ? payload.items : [];
+        var total = payload && payload.totalCount !== undefined ? payload.totalCount : items.length;
+        renderEventTimeline(items, total, isFlash);
+        renderZoneBars(items);
+        renderHourlyBars(items);
+        renderCctvStats(items);
+    }
+
+    // ── SSE 실시간 수신 ──────────────────────────────────
+    var refreshTimer = null;
+
+    function scheduleRefresh() {
+        if (refreshTimer) clearTimeout(refreshTimer);
+        refreshTimer = setTimeout(function () {
+            safeLoad("/menu/situation/emergency/search?page=1&size=200",
+                     { items: [], totalCount: 0 })
+                .then(function (data) { handleEmergencyData(data, true); });
+        }, 400);
+    }
+
+    function connectSSE() {
+        var es = new EventSource("/api/events");
+        es.onmessage = function (e) {
+            try {
+                var data = JSON.parse(e.data);
+                if (data.topic === "send/emergency" || data.topic === "cctv/req") {
+                    scheduleRefresh();
+                }
+            } catch (_) {}
+        };
+        es.onerror = function () {
+            es.close();
+            setTimeout(connectSSE, 5000);
+        };
+    }
+
+    // ── 초기 로드 ────────────────────────────────────────
+    startClock();
+    connectSSE();
+
+    // alertCode 맵 선(先) 로드 (이벤트 표시명에 사용)
+    safeLoad("/api/alerts", {}).then(function (m) { alertMap = m || {}; });
 
     Promise.all([
         safeLoad("/api/btype/query/config/speakers", []),
         safeLoad("/api/cctv/list", []),
-        safeLoad("/menu/situation/emergency/search?page=1&size=50", { items: [], totalCount: 0 }),
+        safeLoad("/menu/situation/emergency/search?page=1&size=200",
+                 { items: [], totalCount: 0 }),
         safeLoad("/api/spk/web/alert-logs/latest", [])
-    ]).then(function (results) {
-        renderSpeakers(results[0]);
-        renderCctvs(results[1]);
-        renderEmergencies(results[2]);
-        renderBroadcasts(results[3]);
+    ]).then(function (r) {
+        renderSpeakerDots(r[0]);
+        renderCctvTabs(r[1]);
+        handleEmergencyData(r[2], false);
+        renderBroadcastFoot(r[3]);
     }).catch(function () {
-        renderSpeakers([]);
-        renderCctvs([]);
-        renderEmergencies({ items: [], totalCount: 0 });
-        renderBroadcasts([]);
+        renderSpeakerDots([]);
+        renderCctvTabs([]);
+        handleEmergencyData({ items: [], totalCount: 0 }, false);
+        renderBroadcastFoot([]);
     });
 
     window.addEventListener("beforeunload", function () {
-        if (window.CCTVJanus) {
-            window.CCTVJanus.destroy();
-        }
-        if (window.CCTVLayout) {
-            window.CCTVLayout.destroy();
-        }
+        if (window.CCTVJanus)  window.CCTVJanus.destroy();
+        if (window.CCTVLayout) window.CCTVLayout.destroy();
     });
 });

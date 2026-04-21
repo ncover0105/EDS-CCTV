@@ -31,6 +31,29 @@ window.CCTVJanus = (function () {
         return age < DISPLAY_PENDING_GRACE_MS;
     }
 
+    function getCameraLabel(cam, fallbackKey) {
+        return cam?.name || cam?.cctvCode || String(fallbackKey || cam?.mountpointId || "unknown");
+    }
+
+    function reportStreamSuccess(cam, fallbackKey) {
+        const label = getCameraLabel(cam, fallbackKey);
+        if (cam) {
+            if (cam.__streamLogState === "success") return;
+            cam.__streamLogState = "success";
+        }
+        console.log(`[스트리밍 성공] ${label}`);
+    }
+
+    function reportStreamFailure(cam, fallbackKey, reason) {
+        const label = getCameraLabel(cam, fallbackKey);
+        const message = reason ? `[스트리밍 실패] ${label} - ${reason}` : `[스트리밍 실패] ${label}`;
+        if (cam) {
+            if (cam.__streamLogState === message) return;
+            cam.__streamLogState = message;
+        }
+        console.error(message);
+    }
+
     function cleanupHiddenHandles(targetCams) {
         const allowedKeys = new Set(
             (targetCams || [])
@@ -72,7 +95,6 @@ window.CCTVJanus = (function () {
         // (강제 destroy하면 서버 mountpoint도 영향받을 수 있음)
         janus = null;
 
-        console.log("[CCTVJanus] destroy() 완료");
     }
 
 
@@ -93,30 +115,24 @@ window.CCTVJanus = (function () {
     // ------------------------------
     async function initSignaling(cameras) {
         Janus.init({
-            debug: "all",
+            debug: false,
             callback: () => {
                 janus = new Janus({
                     server: janusServerUrl,
                     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
                     iceTransportPolicy: "all",
                     success: async () => {
-                        console.log("Janus 연결 성공");
-
                         const targetCams = getTargetCameras(cameras);
                         const validCams = targetCams.filter(cam => toPositiveInt(cam?.mountpointId) != null);
-                        const skipped = targetCams.length - validCams.length;
-                        if (skipped > 0) {
-                            console.warn(`mountpointId가 유효하지 않은 CCTV ${skipped}건은 watch를 건너뜁니다.`);
-                        }
+                        targetCams
+                            .filter(cam => toPositiveInt(cam?.mountpointId) == null)
+                            .forEach(cam => reportStreamFailure(cam, cam?.cctvCode, "mountpointId 없음"));
 
                         cleanupHiddenHandles(validCams);
                         Promise.all(validCams.map(cam => initJanusCam(cam)))
-                            .then(() => console.log("카메라 초기화 성공"))
-                            .catch(err => console.error("카메라 초기화 오류:", err));
+                            .catch(() => { });
                     },
-                    error: err => {
-                        console.error("Janus 연결 실패:", err);
-                    }
+                    error: () => { }
                 });
             }
         });
@@ -128,10 +144,7 @@ window.CCTVJanus = (function () {
     async function initJanusCam(cam, opts = {}) {
         const watchId = toPositiveInt(opts.watchId ?? cam?.mountpointId);
         if (watchId == null) {
-            console.warn("유효하지 않은 mountpointId로 watch를 건너뜁니다:", {
-                cctvCode: cam?.cctvCode,
-                mountpointId: cam?.mountpointId,
-            });
+            reportStreamFailure(cam, opts.key, "mountpointId 없음");
             return;
         }
 
@@ -143,7 +156,6 @@ window.CCTVJanus = (function () {
         cam.__streamDisplayStartedAt = startedAt;
         cam.__streamTraceStartedAt = startedAt;
         cam.__streamUiState = "connecting";
-        console.log(`[stream][${key}] init 시작 cam=${cam?.name ?? cam?.cctvCode} watchId=${watchId}`);
 
         // placeholder 강제는 grid용만( fullscreen은 건드리지 않음 )
         if (!opts.skipPrepareReconnect) {
@@ -168,7 +180,6 @@ window.CCTVJanus = (function () {
                     handle = h;
                     pluginHandles[key] = h;
                     h._started = false;
-                    console.log(`[stream][${key}] attach 성공 +${Date.now() - startedAt}ms`);
 
                     // ICE 상태 모니터링 추가
                     const checkIce = setInterval(() => {
@@ -176,7 +187,7 @@ window.CCTVJanus = (function () {
                         if (!pc) return;
                         const state = pc.iceConnectionState;
                         if (state === "failed" || state === "disconnected") {
-                            console.warn(`[key=${key}] ICE ${state} → 재연결 시도`);
+                            reportStreamFailure(cam, key, `ICE ${state}`);
                             clearInterval(checkIce);
                             if (!opts.key?.startsWith("fs-")) {
                                 // window.CCTVLayout?.scheduleReconnect?.(cam, key);
@@ -188,25 +199,21 @@ window.CCTVJanus = (function () {
                     h._iceInterval = checkIce;
 
                     setTimeout(() => {
-                        console.log(`[stream][${key}] watch 요청 id=${watchId} +${Date.now() - startedAt}ms`);
                         h.send({ message: { request: "watch", id: watchId } });
                         resolve();
                     }, 100);
                 },
 
-                error: err => {
-                    console.error(`attach 실패(key=${key}, id=${watchId}):`, err);
+                error: () => {
+                    reportStreamFailure(cam, key, "attach 실패");
                     resolve();
                 },
 
                 onmessage: (msg, jsep) => {
                     if (!handle) return;
-                    if (jsep) {
-                        console.log(`[stream][${key}] jsep 수신 type=${jsep.type} +${Date.now() - startedAt}ms`);
-                    }
 
                     if (msg.error) {
-                        console.error(`[key=${key}, id=${watchId}] 서버 오류:`, msg.error);
+                        reportStreamFailure(cam, key, msg.error || "서버 오류");
                         return;
                     }
 
@@ -216,10 +223,9 @@ window.CCTVJanus = (function () {
                             jsep,
                             media: { audioRecv: false, audioSend: false, videoRecv: true, videoSend: false },
                             success: ans => {
-                                console.log(`[stream][${key}] createAnswer 성공, start 전송 +${Date.now() - startedAt}ms`);
                                 handle.send({ message: { request: "start" }, jsep: ans });
                             },
-                            error: err => console.error(`[key=${key}, id=${watchId}] createAnswer 실패:`, err)
+                            error: () => reportStreamFailure(cam, key, "응답 생성 실패")
                         });
                     }
                 },
@@ -234,7 +240,7 @@ window.CCTVJanus = (function () {
                         cam.__janusConnecting = false;
                         cam.__janusLastConnectedAt = Date.now();
                         cam.__streamUiState = "connecting";
-                        console.log(`[stream][${key}] remote video track 수신 mid=${mid} readyState=${track.readyState} +${Date.now() - startedAt}ms`);
+                        reportStreamSuccess(cam, key);
 
                         // fullscreen용이면 opts.onStream으로 전달
                         if (typeof opts.onStream === "function") {
@@ -247,16 +253,17 @@ window.CCTVJanus = (function () {
                         cam.__janusConnecting = false;
                         cam.__streamDisplayPending = false;
                         cam.__streamUiState = "disconnected";
+                        reportStreamFailure(cam, key, "원격 비디오 종료");
                         if (typeof opts.onOff === "function") opts.onOff();
                         else CCTVLayout.showPlaceholder(cam);
                     }
                 },
 
                 oncleanup: () => {
-                    console.log(`cleanup: key=${key}, id=${watchId}`);
                     cam.__janusConnecting = false;
                     cam.__streamDisplayPending = false;
                     cam.__streamUiState = "disconnected";
+                    reportStreamFailure(cam, key, "세션 정리");
                     delete pluginHandles[key];
                     if (typeof opts.onCleanup === "function") {
                         opts.onCleanup();
@@ -275,7 +282,6 @@ window.CCTVJanus = (function () {
     async function reconnectAll(cameras) {
         // Janus 세션이 아직 없으면 최초 연결부터
         if (!janus) {
-            console.warn("janus 세션 없음 → initSignaling부터 실행");
             return initSignaling(cameras);
         }
 
@@ -288,13 +294,12 @@ window.CCTVJanus = (function () {
                 continue;
             }
             if (isDisplayPending(cam)) {
-                console.log(`[reconnectAll] ${cam.name} 화면 표시 대기 중이라 재연결 건너뜀`);
                 continue;
             }
             try {
                 await initJanusCam(cam); // 내부에서 stop/detach 후 watch 재시작함
             } catch (e) {
-                console.error("전체 재연결 중 오류:", cam?.mountpointId, e);
+                reportStreamFailure(cam, cam?.mountpointId, "재연결 실패");
             }
         }
         // console.log("전체 재연결 완료");
@@ -304,29 +309,23 @@ window.CCTVJanus = (function () {
         // key: mountpointId 또는 cctvCode
         const cam = cameras.find(c => String(c.mountpointId) === String(key) || String(c.cctvCode) === String(key));
         if (!cam) {
-            console.warn("재연결 대상 카메라를 찾을 수 없음:", key);
             return;
         }
 
         const now = Date.now();
         if (isDisplayPending(cam)) {
-            const waitMs = DISPLAY_PENDING_GRACE_MS - (now - (cam.__streamDisplayStartedAt || now));
-            console.log(`[reconnectOne] ${cam.name} 화면 표시 대기 중, ${waitMs}ms 동안 재연결 보류`);
             return;
         }
         const connectAge = now - (cam.__janusConnectStartedAt || 0);
         if (cam.__janusConnecting && connectAge < CONNECT_GRACE_MS) {
-            console.log(`[reconnectOne] ${cam.name} 아직 연결 시도 중, ${CONNECT_GRACE_MS - connectAge}ms 대기`);
             return;
         }
         const lastAttemptAge = now - (cam.__janusLastReconnectAt || 0);
         if (lastAttemptAge < RECONNECT_COOLDOWN_MS) {
-            console.log(`[reconnectOne] ${cam.name} 재시도 쿨다운 중, ${RECONNECT_COOLDOWN_MS - lastAttemptAge}ms 대기`);
             return;
         }
 
         if (!janus) {
-            console.warn("janus 세션 없음 → initSignaling부터 실행");
             return initSignaling(cameras);
         }
 
@@ -334,15 +333,13 @@ window.CCTVJanus = (function () {
         try {
             cam.__janusLastReconnectAt = now;
             await initJanusCam(cam);
-            // console.log("선택 재연결 완료:", cam.mountpointId);
         } catch (e) {
-            // console.error("선택 재연결 실패:", cam.mountpointId, e);
+            reportStreamFailure(cam, cam?.mountpointId, "재연결 실패");
         }
     }
 
     async function openFullscreenHigh(cam) {
         if (!janus) {
-            console.warn("janus 세션 없음");
             return;
         }
 
@@ -357,7 +354,7 @@ window.CCTVJanus = (function () {
         const chosenUrl = defUrl;
 
         if (!chosenMp || !chosenUrl) {
-            console.warn("[openFullscreenHigh] blocked (no mp/url)", cam?.name, chosenMp, chosenUrl);
+            reportStreamFailure(cam, cam?.mountpointId, "fullscreen 소스 없음");
             window.CCTVLayout?.showFullscreenPlaceholder?.(cam);
             return;
         }

@@ -140,69 +140,6 @@
   border-radius: 0 0 10px 10px;
 }
 
-.map-device-topbar {
-  position: absolute;
-  top: 15px;
-  left: 15px;
-  max-width: calc(100% - 290px);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  z-index: 999;
-  padding: 8px 10px;
-  border-radius: 999px;
-  background: rgba(16, 24, 32, 0.78);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(10px);
-}
-
-.map-device-total {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 28px;
-  padding: 0 4px;
-}
-
-.map-device-total-dot {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  box-shadow: 0 0 10px currentColor;
-}
-
-.map-device-total.is-cctv .map-device-total-dot {
-  color: #378ADD;
-  background: #378ADD;
-}
-
-.map-device-total.is-speaker .map-device-total-dot {
-  color: #639922;
-  background: #639922;
-}
-
-.map-device-total-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: rgba(245, 251, 255, 0.82);
-  letter-spacing: 0.02em;
-}
-
-.map-device-total-value {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  color: #f5fbff;
-  font-size: 12px;
-  line-height: 1;
-  font-weight: 800;
-}
-
 .camera-status-summary {
   position: absolute;
   right: 15px;
@@ -251,7 +188,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 13px 12px 13px 16px;
+  padding: 10px 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   background: rgba(255, 255, 255, 0.025);
   flex-shrink: 0;
@@ -260,7 +197,7 @@
 .css-panel-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  flex: 1;
   min-width: 0;
 }
 
@@ -362,6 +299,13 @@
   padding: 10px 12px 6px;
 }
 
+.css-panel-title .device-filter-tabs {
+  width: 100%;
+  padding: 0;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
 .device-filter-tab {
   display: inline-flex;
   align-items: center;
@@ -378,6 +322,11 @@
   transition: all 0.16s ease;
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+.css-panel-title .device-filter-tab {
+  min-height: 30px;
+  padding: 6px 10px;
 }
 
 .device-filter-tab i {
@@ -423,7 +372,7 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
-  padding: 6px 10px 12px;
+  padding: 10px 10px 12px;
   max-height: 280px;
   overflow-y: auto;
 }
@@ -562,33 +511,12 @@
 }
 
 @media (max-width: 1200px) {
-  .map-device-topbar {
-    max-width: calc(100% - 290px);
-  }
-
   .camera-status-summary {
     width: 240px;
   }
 }
 
 @media (max-width: 960px) {
-  .map-device-topbar {
-    max-width: calc(100% - 260px);
-    gap: 6px;
-    padding: 7px 8px;
-  }
-
-  .map-device-total {
-    gap: 6px;
-    min-height: 26px;
-    padding: 0 2px;
-  }
-
-  .map-device-total-label,
-  .map-device-total-value {
-    font-size: 11px;
-  }
-
   .camera-status-summary {
     right: 12px;
     top: 12px;
@@ -622,10 +550,6 @@
     left: 12px;
     right: auto;
     bottom: 12px;
-  }
-
-  .map-device-topbar {
-    display: none;
   }
 
   .camera-status-summary {

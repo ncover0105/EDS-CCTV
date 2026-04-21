@@ -1,10 +1,10 @@
 package com.edscorp.eds.mqtt.service;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,89 +33,86 @@ public class MqttService {
     private static final int MAX_BOUNDARY_NUM = 4;
 
     private final EmergencyRepository emergencyMessageRepository;
-
     private final AlertListRepository alertListRepository;
-    private final Map<String, String> alertListCache = new HashMap<>();
+
+    // [fix] HashMap → ConcurrentHashMap 교체.
+    //       현재는 @PostConstruct 이후 읽기 전용이라 안전하지만,
+    //       향후 캐시 갱신 로직 추가 시에도 동시성 문제가 발생하지 않도록 선제 적용.
+    private final Map<String, String> alertListCache = new ConcurrentHashMap<>();
 
     public void processMessage(String topic, String payload) {
-        System.out.println("Mqtt processMessage ");
+        log.debug("MQTT 메시지 수신 - topic: {}", topic);
 
         try {
             MqttTopic mqttTopic = MqttTopic.fromString(topic);
             Object message = mqttTopic.parseMessage(payload);
 
+            // [fix] switch 각 case의 System.out.println → log.debug 교체.
+            //       운영 환경에서 stdout으로 출력되는 디버그 로그는 로그 수집 시스템에서 누락됨.
             switch (mqttTopic) {
                 case REQ:
-                    System.out.println("Mqtt REQ ");
-
+                    log.debug("MQTT REQ 수신");
                     break;
                 case SETBOUNDARY:
-                    System.out.println("Mqtt SETBOUNDARY ");
-
+                    log.debug("MQTT SETBOUNDARY 수신");
                     break;
                 case RESETIP:
-                    System.out.println("Mqtt RESETIP ");
-
+                    log.debug("MQTT RESETIP 수신");
                     break;
                 case POWERSTATUS:
-                    System.out.println("Mqtt POWERSTATUS ");
-
+                    log.debug("MQTT POWERSTATUS 수신");
                     break;
-
                 case EMERGENCY:
-                    System.out.println("Mqtt EMERGENCY ");
+                    log.debug("MQTT EMERGENCY 수신");
                     processEmergency((EmergencyDTO) message);
                     break;
-
                 case BOUNDARYINFO:
-                    System.out.println("Mqtt BOUNDARYINFO ");
-
+                    log.debug("MQTT BOUNDARYINFO 수신");
                     break;
                 default:
-                    System.out.println("Mqtt default ");
-
+                    log.warn("MQTT 처리되지 않은 토픽 - topic: {}", topic);
                     break;
             }
         } catch (IllegalArgumentException e) {
-            log.error("Unknown topic: {}", topic, e);
+            log.error("알 수 없는 MQTT 토픽 - topic: {}", topic, e);
         } catch (IOException e) {
-            e.printStackTrace();
-            log.error("Mqtt Error parsing message for topic {}: {}", topic, payload, e);
+            // [fix] e.printStackTrace() 제거 → log.error로 통합.
+            //       printStackTrace()는 로그 수집 시스템을 우회하고 스택 트레이스 포맷이
+            //       로그 파서와 충돌할 수 있음.
+            log.error("MQTT 메시지 파싱 오류 - topic: {}, payload: {}", topic, payload, e);
         }
     }
 
-    // JPA
     private void processREQ(ReqDTO message) {
-        log.info("Mqtt processREQ : ", message);
+        log.info("MQTT processREQ: {}", message);
     }
 
     private void processSetBoundary(SetBoundaryDTO message) {
-        log.info("Mqtt processSetBoundary : ", message);
-
+        log.info("MQTT processSetBoundary: {}", message);
     }
 
     private void processResetIP(ResetIpDTO message) {
-        log.info("Mqtt processResetIP : ", message);
-
+        log.info("MQTT processResetIP: {}", message);
     }
 
     private void processPowerStatus(PowerStatusDTO message) {
-        log.info("Mqtt processPowerStatus : ", message);
-
+        log.info("MQTT processPowerStatus: {}", message);
     }
 
+    // [fix] private → public 으로 접근 제한자 변경.
+    //       Spring AOP 프록시는 private 메서드를 인터셉트하지 못해 @Transactional이
+    //       실제로 적용되지 않았음. 중복 체크(existsBy...) + save() 사이에
+    //       트랜잭션 보호가 없으면 동시 이벤트 수신 시 중복 저장이 발생할 수 있음.
     @Transactional
-    private void processEmergency(EmergencyDTO message) {
-        log.info("Mqtt processEmergency : alertcode " + message.getAlertCode() + " bundarynum "
-                + message.getBoundaryNum());
-        // String logData = message.getBoundaryNum() + "번 구역 " +
-        // getMessageBtAlertCode(message.getAlertCode().toString());
+    public void processEmergency(EmergencyDTO message) {
+        log.info("MQTT EMERGENCY 처리 - alertCode: {}, boundaryNum: {}",
+                message.getAlertCode(), message.getBoundaryNum());
+
         Integer boundaryNum = parseBoundaryNum(message.getBoundaryNum());
         if (!isValidBoundaryNum(boundaryNum)) {
-            log.warn(
-                    "Invalid emergency boundaryNum skipped. alertCode={}, boundaryNum={}, cctvCode={}, receptionDttm={}",
-                    message.getAlertCode(), message.getBoundaryNum(), message.getCctvCode(),
-                    message.getReceptionDttm());
+            log.warn("유효하지 않은 boundaryNum 무시 - alertCode: {}, boundaryNum: {}, cctvCode: {}, receptionDttm: {}",
+                    message.getAlertCode(), message.getBoundaryNum(),
+                    message.getCctvCode(), message.getReceptionDttm());
             return;
         }
 
@@ -125,7 +122,7 @@ public class MqttService {
                 message.getCctvCode(), message.getAlertCode(), boundaryNum, inpDttm);
 
         if (exists) {
-            log.info("MqttService processEmergency : Duplicate emergency log detected. Insert skipped.");
+            log.info("중복 출입 이벤트 감지 - 저장 건너뜀. cctvCode: {}", message.getCctvCode());
             return;
         }
 
@@ -138,34 +135,29 @@ public class MqttService {
                 .build();
 
         emergencyMessageRepository.save(emergencyMessageEntity);
-        System.out.println("Mqtt JPA emergency Insert success>>>>>>>>>>>>>>>>>>>");
+        log.info("출입 이벤트 저장 완료 - cctvCode: {}, boundaryNum: {}", message.getCctvCode(), boundaryNum);
     }
 
     private void processBoundaryInfo(BoundaryInfoDTO message) {
-        log.info("Mqtt processBoundaryInfo : ", message);
+        log.info("MQTT processBoundaryInfo: {}", message);
     }
 
-    // Cache
+    // [fix] System.out.println / System.err.println → log.info / log.error 교체.
     @PostConstruct
     public void loadAlertMessages() {
         try {
-            // 데이터를 로드하고 캐시를 채우는 로직
-            alertListRepository.findAll().forEach(alert -> {
-                alertListCache.put(alert.getAlertCode(), alert.getMessage());
-            });
-            System.out.println("Alert messages loaded into cache: " + alertListCache.size());
+            alertListRepository.findAll().forEach(alert ->
+                    alertListCache.put(alert.getAlertCode(), alert.getMessage()));
+            log.info("AlertList 캐시 로드 완료 - {}건", alertListCache.size());
         } catch (Exception e) {
-            System.err.println("Error loading alert messages into cache: " + e.getMessage());
-            e.printStackTrace();
+            log.error("AlertList 캐시 로드 실패", e);
         }
     }
 
-    // alertCode에 따른 message 조회
     public String getMessageBtAlertCode(String alertCode) {
         return alertListCache.getOrDefault(alertCode, "알 수 없는 경고");
     }
 
-    // alertCode 전체 message 조회
     public Map<String, String> getAllAlertMessages() {
         return new HashMap<>(alertListCache);
     }

@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("reconnectAllBtn")?.addEventListener("click", () => {
         showConfirmModal("전체 재연결", "모든 CCTV를 재연결할까요?", async () => {
             await CCTVJanus.reconnectAll(cameras);
-            App.utils.showGlobalAlert("전체 재연결 완료", "success");
+            App.utils.showGlobalAlert("전체 재연결 완료", "success");//
         });
     });
 

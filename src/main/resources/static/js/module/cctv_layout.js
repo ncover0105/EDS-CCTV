@@ -17,9 +17,23 @@ window.CCTVLayout = (function () {
      * ============================ */
     const DEBUG = false;
 
-    function log(action, detail = "") {
+    function log(level, action, detail = "") {
+        const prefix = `[CCTVLayout] ${action}`;
+        if (level === "debug") {
+            if (!DEBUG) return;
+            console.debug(prefix, detail);
+            return;
+        }
+        if (level === "warn") {
+            console.warn(prefix, detail);
+            return;
+        }
+        if (level === "error") {
+            console.error(prefix, detail);
+            return;
+        }
         if (!DEBUG) return;
-        console.debug(`[CCTVLayout] ${action}`, detail);
+        console.log(prefix, detail);
     }
 
     /* ============================
@@ -115,7 +129,7 @@ window.CCTVLayout = (function () {
     }
 
     function renderGrid(layout) {
-        log("renderGrid()", `layout = ${layout}`);
+        log("debug", "renderGrid()", `layout = ${layout}`);
         if (layout !== 1) {
             focusedCamIndex = 0;
         }
@@ -173,7 +187,7 @@ window.CCTVLayout = (function () {
         if (currentLayout === 1) camIndex = focusedCamIndex;
 
         if (camIndex >= cameras.length) {
-            log("createFeed()", `index=${index} → 빈 슬롯`);
+            log("debug", "createFeed()", `index=${index} → 빈 슬롯`);
             feed.innerHTML = emptySlotHtml();
             return feed;
         }
@@ -187,7 +201,7 @@ window.CCTVLayout = (function () {
         const cam = cameras[camIndex];
 
         if (cam.__streamBlocked || !cam.mountpointId) {
-            log("createFeed()", `스트리밍 차단: ${cam.name} (used=${cam.__streamUsed})`);
+            log("debug", "createFeed()", `스트리밍 차단: ${cam.name} (used=${cam.__streamUsed})`);
             feed.innerHTML = emptySlotHtml();
             // 식별용 dataset은 남겨도 됨
             feed.dataset.cctvCode = cam.cctvCode || "";
@@ -442,7 +456,7 @@ window.CCTVLayout = (function () {
                 await CCTVJanus.reconnectOne(cameras, cam.mountpointId);
                 App.utils.showGlobalAlert(`${cam.name} 재연결 완료`, "success");
             } catch (err) {
-                console.error("reconnectOne error", err);
+                log("error", "reconnectOne error", err);
                 App.utils.showGlobalAlert(`${cam.name} 재연결 실패`, "danger");
             }
         });
@@ -575,7 +589,7 @@ window.CCTVLayout = (function () {
         const fullscreenContent = fullscreenView.querySelector('.fullscreen-content');
 
         if (fullscreenView.classList.contains('active')) {
-            console.warn("[showFullscreen] 이미 전체화면 상태");
+            log("warn", "showFullscreen", "이미 전체화면 상태");
             return;
         }
 
@@ -614,7 +628,7 @@ window.CCTVLayout = (function () {
         originalParent = null;
         originalElement = null;
 
-        log("전체화면 종료 완료(기존 방식)");
+        log("debug", "전체화면 종료 완료(기존 방식)");
     }
 
     /* ============================
@@ -624,7 +638,7 @@ window.CCTVLayout = (function () {
         const online = cameras.filter(c => isCameraOnline(c)).length;
         const offline = cameras.length - online;
 
-        log("updateStatusCounts()", `online=${online}, offline=${offline}`);
+        log("debug", "updateStatusCounts()", `online=${online}, offline=${offline}`);
 
         document.getElementById("online-count").textContent = online;
         document.getElementById("warning-count").textContent = 0;
@@ -657,7 +671,7 @@ window.CCTVLayout = (function () {
     }
 
     function showPlaceholder(cam, opts = {}) {
-        log("showPlaceholder()", cam?.name);
+        log("debug", "showPlaceholder()", cam?.name);
         cam.__streamDisplayPending = false;
 
         const video = document.getElementById(`video-${cam.mountpointId}`);
@@ -726,7 +740,10 @@ window.CCTVLayout = (function () {
         });
 
         if (!res.ok) {
-            console.warn("[reportStatusCam] failed:", res.status, await res.text().catch(() => ""));
+            log("warn", "reportStatusCam failed", {
+                status: res.status,
+                body: await res.text().catch(() => "")
+            });
         }
     }
 
@@ -747,7 +764,7 @@ window.CCTVLayout = (function () {
 
         // 둘 중 하나라도 없으면 스트리밍 요청 막기
         if (!chosenMp || !chosenUrl) {
-            console.warn("[switchCamToHighAndReconnect] blocked (no mp/url)", {
+            log("warn", "switchCamToHighAndReconnect blocked", {
                 name: cam?.name, chosenMp, chosenUrl
             });
             CCTVLayout.showPlaceholder(cam);
@@ -767,7 +784,7 @@ window.CCTVLayout = (function () {
      *   스트림 연결
      * ============================ */
     function attachStreamToVideo(cam, stream) {
-        log("attachStreamToVideo()", cam.name);
+        log("debug", "attachStreamToVideo()", cam.name);
         const traceStartedAt = cam?.__streamTraceStartedAt || Date.now();
 
         const videoEl =
@@ -779,7 +796,7 @@ window.CCTVLayout = (function () {
             document.getElementById(`placeholder-${cam.mountpointId}`); // fallback
 
         if (!videoEl) {
-            console.error("Video element 없음:", {
+            log("error", "Video element 없음", {
                 expectedCctvCode: cam.cctvCode,
                 mountpointId: cam.mountpointId,
             });
@@ -797,7 +814,7 @@ window.CCTVLayout = (function () {
         videoEl.srcObject = stream;
         videoEl._traceStartedAt = traceStartedAt;
         videoEl._traceKey = String(cam.mountpointId);
-        console.log(`[stream][${cam.mountpointId}] video srcObject 할당 tracks=${stream.getTracks().length} +${Date.now() - traceStartedAt}ms`);
+        log("debug", "stream srcObject assigned", `key=${cam.mountpointId} tracks=${stream.getTracks().length} +${Date.now() - traceStartedAt}ms`);
 
 
         if (!videoEl.dataset.statusBound) {
@@ -805,18 +822,18 @@ window.CCTVLayout = (function () {
 
             videoEl.addEventListener("loadedmetadata", () => {
                 const elapsed = Date.now() - (videoEl._traceStartedAt || Date.now());
-                console.log(`[stream][${videoEl._traceKey}] loadedmetadata readyState=${videoEl.readyState} +${elapsed}ms`);
+                log("debug", "stream loadedmetadata", `key=${videoEl._traceKey} readyState=${videoEl.readyState} +${elapsed}ms`);
             });
 
             videoEl.addEventListener("canplay", () => {
                 const elapsed = Date.now() - (videoEl._traceStartedAt || Date.now());
-                console.log(`[stream][${videoEl._traceKey}] canplay readyState=${videoEl.readyState} +${elapsed}ms`);
+                log("debug", "stream canplay", `key=${videoEl._traceKey} readyState=${videoEl.readyState} +${elapsed}ms`);
             });
 
             videoEl.addEventListener("playing", () => {
-                log("video playing (confirmed)", cam.name);
+                log("debug", "video playing (confirmed)", cam.name);
                 const elapsed = Date.now() - (videoEl._traceStartedAt || Date.now());
-                console.log(`[stream][${videoEl._traceKey}] playing currentTime=${videoEl.currentTime} +${elapsed}ms`);
+                log("debug", "stream playing", `key=${videoEl._traceKey} currentTime=${videoEl.currentTime} +${elapsed}ms`);
                 cam.__janusConnecting = false;
                 cam.__streamDisplayPending = false;
                 cam.__streamDisplayedAt = Date.now();
@@ -841,14 +858,14 @@ window.CCTVLayout = (function () {
                 if (!videoEl._stallTimer) {
                     videoEl._stallTimer = setTimeout(() => {
                         videoEl._stallTimer = null;
-                        console.warn(`[stalled] ${cam.name} → 자동 재연결`);
+                        log("warn", "stalled auto reconnect", cam.name);
                         scheduleReconnect(cam, String(cam.mountpointId), 5000);
                     }, 3000);
                 }
             };
 
             const failHard = () => {
-                log("video not playable (ended/error)", cam.name);
+                log("debug", "video not playable (ended/error)", cam.name);
                 cam.__streamUiState = isCameraOnline(cam) ? "disconnected" : "offline";
                 showPlaceholder(cam);
             };
@@ -862,17 +879,17 @@ window.CCTVLayout = (function () {
 
         videoEl.play()
             .then(() => {
-                log("영상 재생 성공", cam.name);
+                log("debug", "영상 재생 성공", cam.name);
                 const elapsed = Date.now() - (videoEl._traceStartedAt || Date.now());
-                console.log(`[stream][${videoEl._traceKey}] play() resolved +${elapsed}ms`);
+                log("debug", "stream play resolved", `key=${videoEl._traceKey} +${elapsed}ms`);
             }).catch(err => {
-                console.warn("자동 재생 실패:", err);
+                log("warn", "자동 재생 실패", err);
             });
 
         stream.getTracks()
             .forEach(track => {
                 track.onended = () => {
-                    log("track.onended", cam.name);
+                    log("debug", "track.onended", cam.name);
                     cam.__streamUiState = isCameraOnline(cam) ? "disconnected" : "offline";
                     showPlaceholder(cam);
                 };
@@ -892,7 +909,7 @@ window.CCTVLayout = (function () {
             if (current === lastTime) {
                 frozenCount++;
                 if (frozenCount >= 3) { // 9초 연속 동결
-                    console.warn(`[Watchdog] ${cam.name} 영상 동결 감지 → 재연결`);
+                    log("warn", "watchdog reconnect", cam.name);
                     clearInterval(timer);
                     videoEl._watchdog = null;
                     scheduleReconnect(cam, String(cam.mountpointId), 8000);
@@ -916,17 +933,17 @@ window.CCTVLayout = (function () {
         const graceLeft = cam?.__janusConnecting ? Math.max(0, 15000 - connectAge) : 0;
         const effectiveDelay = Math.max(delayMs, graceLeft + 1000);
 
-        console.log(`[scheduleReconnect] key=${key}, ${effectiveDelay}ms 후 재연결 예약`);
+        log("debug", "scheduleReconnect", `key=${key}, ${effectiveDelay}ms 후 재연결 예약`);
         reconnectTimers[key] = setTimeout(async () => {
             delete reconnectTimers[key];
             if (!window.CCTVJanus?.reconnectOne) {
-                console.warn("[scheduleReconnect] CCTVJanus.reconnectOne 없음, 무시");
+                log("warn", "scheduleReconnect", "CCTVJanus.reconnectOne 없음, 무시");
                 return;
             }
             try {
                 await window.CCTVJanus.reconnectOne(cameras, cam.mountpointId);
             } catch (e) {
-                console.error("[scheduleReconnect] 실패:", key, e);
+                log("error", "scheduleReconnect 실패", { key, error: e });
             }
         }, effectiveDelay);
     }
@@ -980,7 +997,7 @@ window.CCTVLayout = (function () {
             closeFullscreen();
         }
 
-        log("cctv destroy");
+        log("debug", "cctv destroy");
     }
 
     return {

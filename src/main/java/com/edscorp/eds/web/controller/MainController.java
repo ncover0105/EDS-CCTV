@@ -25,7 +25,7 @@ public class MainController {
 
     @GetMapping("/main")
     public String showMainPage(Model model) {
-        log.info("MainController : " + cameraCache.getCameras());
+        // log.info("MainController : " + cameraCache.getCameras());
 
         SystemSetting systemSetting = systemSettingService.getSetting();
 

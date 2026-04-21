@@ -679,12 +679,6 @@ function updateFilterCounts() {
     if (allEl) allEl.textContent = total;
     if (cctvEl) cctvEl.textContent = cctvCount;
     if (speakerEl) speakerEl.textContent = speakerCount;
-
-    // 상단 토픽바 카운트도 동기화 (topbar 잔류 시)
-    const cctvTotalEl = document.getElementById("cctvTotalCount");
-    const speakerTotalEl = document.getElementById("speakerTotalCount");
-    if (cctvTotalEl) cctvTotalEl.textContent = cctvCount;
-    if (speakerTotalEl) speakerTotalEl.textContent = speakerCount;
 }
 
 function updateStatusSummary() {

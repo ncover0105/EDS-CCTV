@@ -8,6 +8,61 @@ window.Logs = (function () {
     let logs = [];
     let logContainer = null;
     let emptyMessage = null;
+    let emptyMessageTitle = null;
+    let emptyMessageDesc = null;
+    let currentDateKey = null;
+    let midnightReloadTimer = null;
+
+    const EMPTY_MESSAGE_COPY = {
+        empty: {
+            title: "아직 수신된 출입기록이 없습니다",
+            desc: "새로운 출입 이벤트가 발생하면 표시됩니다."
+        },
+        error: {
+            title: "출입기록을 불러오지 못했습니다",
+            desc: "잠시 후 다시 시도해 주세요."
+        }
+    };
+
+    function getTodayKey() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    }
+
+    function clearMidnightReloadTimer() {
+        if (!midnightReloadTimer) return;
+        clearTimeout(midnightReloadTimer);
+        midnightReloadTimer = null;
+    }
+
+    function scheduleMidnightReload() {
+        clearMidnightReloadTimer();
+
+        const now = new Date();
+        const nextMidnight = new Date(now);
+        nextMidnight.setHours(24, 0, 0, 0);
+
+        midnightReloadTimer = setTimeout(async () => {
+            await reloadIfDateChanged();
+            scheduleMidnightReload();
+        }, Math.max(nextMidnight.getTime() - now.getTime(), 1000));
+    }
+
+    async function reloadIfDateChanged() {
+        const todayKey = getTodayKey();
+        if (currentDateKey === todayKey) return;
+        await load();
+    }
+
+    function handleVisibilityChange() {
+        if (document.visibilityState !== "visible") return;
+        reloadIfDateChanged().catch(err => {
+            console.error("날짜 변경 후 로그 재조회 오류:", err);
+        });
+    }
 
     /* -----------------------------------------
         초기화
@@ -15,6 +70,8 @@ window.Logs = (function () {
     function init() {
         logContainer = document.getElementById("logContainer");
         emptyMessage = document.getElementById("emptyLogMessage");
+        emptyMessageTitle = emptyMessage?.querySelector("strong") || null;
+        emptyMessageDesc = emptyMessage?.querySelector("p") || null;
 
         if (!logContainer || !emptyMessage) {
             console.warn("Logs.init(): 요소를 찾을 수 없습니다.");
@@ -22,6 +79,8 @@ window.Logs = (function () {
         }
 
         load();
+        scheduleMidnightReload();
+        document.addEventListener("visibilitychange", handleVisibilityChange);
     }
 
     /* -----------------------------------------
@@ -37,16 +96,45 @@ window.Logs = (function () {
                 cameraName: getCameraNameByCode(log.cctvCode)
             }));
 
-            render();
+            currentDateKey = getTodayKey();
+
+            render("default");
         } catch (err) {
             console.error("로그 불러오기 오류:", err);
+            logs = [];
+            render("error");
         }
     }
 
     /* -----------------------------------------
-        화면 렌더링
+        단일 로그 아이템 DOM 생성
     ----------------------------------------- */
-    function render() {
+    function createLogItem(log) {
+        const item = document.createElement("div");
+        item.className = `log-item log-boundary-${Number(log.boundaryNum)}`;
+        item.dataset.boundary = log.boundaryNum;
+
+        item.innerHTML = `
+            <div class="tl-meta">
+                <span class="tl-cam">[${escapeHtml(log.cameraName)}]</span>
+                <span class="tl-time">${escapeHtml(formatDisplayTime(log.inpDttm))}</span>
+            </div>
+            <div class="tl-msg">${escapeHtml(log.log)}</div>
+        `;
+
+        item.onclick = () => {
+            if (typeof window.openBroadcastModal === "function") {
+                window.openBroadcastModal(log.cameraName, log.boundaryNum);
+            }
+        };
+
+        return item;
+    }
+
+    /* -----------------------------------------
+        화면 렌더링 (초기 로드 / 에러 상태용 전체 렌더)
+    ----------------------------------------- */
+    function render(state = "default") {
         if (!logContainer) return;
 
         const logBody = logContainer.parentElement;
@@ -58,6 +146,7 @@ window.Logs = (function () {
                 logBody.classList.add("is-empty");
             }
             logContainer.classList.add("d-none");
+            setEmptyMessageCopy(state === "error" ? "error" : "empty");
             emptyMessage.classList.remove("d-none");
             updateLogCount(0);
 
@@ -70,44 +159,43 @@ window.Logs = (function () {
         emptyMessage.classList.add("d-none");
         logContainer.classList.remove("d-none");
 
-        logs.slice(0, 50).forEach(log => {
-            const item = document.createElement("div");
-            item.className = `log-item log-boundary-${Number(log.boundaryNum)}`;
-            item.dataset.boundary = log.boundaryNum;
-
-            item.innerHTML = `
-                <div class="d-flex justify-content-between">
-                    <strong class="mb-2">[${log.cameraName}]</strong>
-                    <small class="text-muted" style="opacity: 0.7;">${log.inpDttm}</small>
-                </div>
-                <div style="font-size: 0.75rem; opacity: 0.7;">${log.log}</div>
-            `;
-
-            // item.innerHTML = `
-            //     <strong style="color: #FF0000;">[${log.cameraName}]</strong>
-            //     <div>${log.log}</div>
-            //     <div class="log-time text-muted">${log.inpDttm}</div>
-            // `;
-
-            // item.onclick = () => {
-            //     App.utils.confirm(
-            //         "발령",
-            //         `${log.boundaryNum}번 구역에 발령을 송출할까요?`,
-            //         () => Speakers.playLocal(`in_${log.boundaryNum}`)
-            //     );
-            // };
-
-            item.onclick = () => {
-                if (typeof window.openBroadcastModal === "function") {
-                    window.openBroadcastModal(log.cameraName, log.boundaryNum);
-                }
-            };
-
-
-            logContainer.appendChild(item);
-        });
+        // [perf] DocumentFragment으로 일괄 삽입 — 개별 appendChild 대비 reflow 1회로 감소
+        const fragment = document.createDocumentFragment();
+        logs.slice(0, 50).forEach(log => fragment.appendChild(createLogItem(log)));
+        logContainer.appendChild(fragment);
 
         updateLogCount(logs.length);
+    }
+
+    function setEmptyMessageCopy(type = "empty") {
+        const copy = EMPTY_MESSAGE_COPY[type] || EMPTY_MESSAGE_COPY.empty;
+        if (emptyMessageTitle) emptyMessageTitle.textContent = copy.title;
+        if (emptyMessageDesc) emptyMessageDesc.textContent = copy.desc;
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    function formatDisplayTime(value) {
+        if (!value) return "";
+
+        const str = String(value).trim();
+        const match = str.match(/(\d{2}):(\d{2})(?::\d{2})?$/);
+        if (match) return `${match[1]}:${match[2]}`;
+
+        const normalized = str.replace(" ", "T");
+        const date = new Date(normalized);
+        if (Number.isNaN(date.getTime())) return str;
+
+        const hours = String(date.getHours()).padStart(2, "0");
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+        return `${hours}:${minutes}`;
     }
 
 
@@ -121,16 +209,32 @@ window.Logs = (function () {
         새로운 로그 추가 (SSE / WebSocket)
     ----------------------------------------- */
     function add(log) {
-        logs.unshift({
+        const newLog = {
             ...log,
             cameraName: getCameraNameByCode(log.cctvCode)
-        });
+        };
+        logs.unshift(newLog);
 
-        render();
+        // [perf] 첫 항목 추가 시에만 empty→non-empty 전환을 위해 전체 렌더 사용
+        if (logs.length === 1) {
+            render("default");
+            return;
+        }
+
+        // [perf] 이후 추가는 신규 항목 1개만 prepend — 기존 50개 DOM 파괴+재생성 방지
+        logContainer.prepend(createLogItem(newLog));
+
+        // 표시 상한(50개) 초과 시 마지막 DOM 노드와 배열 항목 동시 제거
+        if (logs.length > 50) {
+            logs.pop();
+            const last = logContainer.lastElementChild;
+            if (last) last.remove();
+        }
+
+        updateLogCount(logs.length);
     }
 
     /* ----------------------------------------- */
-    return { init, add };
+    return { init, add, reload: load, reloadIfDateChanged };
 
 })();
-
