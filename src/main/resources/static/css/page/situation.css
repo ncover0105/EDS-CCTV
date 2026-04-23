@@ -1206,6 +1206,7 @@ select.sit-input {
 }
 
 .sit-hist-status-bar--filters {
+    --sit-filter-control-height: 32px;
     gap: 8px 10px;
     flex-wrap: wrap;
     padding-block: 8px;
@@ -1218,10 +1219,10 @@ select.sit-input {
     gap: 6px;
     flex-wrap: nowrap;
     min-height: 28px;
-    padding: 4px 8px;
+    /* padding: 4px 8px;
     background: rgba(255, 255, 255, 0.025);
     border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: var(--r-sm);
+    border-radius: var(--r-sm); */
 }
 
 .sit-hist-filter-group--full {
@@ -1239,7 +1240,7 @@ select.sit-input {
     display: flex;
     align-items: center;
     gap: 6px;
-    margin-left: auto;
+    /* margin-left: auto; */
 }
 
 .sit-hist-status-bar .form-label {
@@ -1255,7 +1256,7 @@ select.sit-input {
 
 .sit-hist-status-bar .form-control,
 .sit-hist-status-bar .form-select {
-    height: 28px;
+    height: var(--sit-filter-control-height);
     width: auto;
     max-width: 100%;
     padding-top: 2px;
@@ -1264,6 +1265,7 @@ select.sit-input {
     border-color: rgba(255, 255, 255, 0.08);
     border-radius: 6px;
     font-size: 12px;
+    box-sizing: border-box;
 }
 
 .sit-hist-status-bar input[type="datetime-local"] {
@@ -1272,14 +1274,24 @@ select.sit-input {
 
 .sit-hist-status-bar .form-select {
     min-width: 96px;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: var(--app-select-chevron, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23aeb9c7' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.8' d='M3.5 5.5 8 10l4.5-4.5'/%3E%3C/svg%3E"));
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px 12px;
+    padding-right: 30px;
+    cursor: pointer;
 }
 
 .sit-hist-status-bar .btn-soft {
     flex-shrink: 0;
+    justify-content: center;
     white-space: nowrap;
-    min-height: 28px;
+    height: var(--sit-filter-control-height);
     padding: 4px 10px;
     font-size: 12px;
+    box-sizing: border-box;
 }
 
 .sit-hist-stat {
@@ -2291,8 +2303,15 @@ select.sit-input {
     padding: 8px 14px;
     background: var(--bg-surface);
     border-bottom: 1px solid var(--border-subtle);
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    background-clip: padding-box;
     gap: 12px;
     flex-wrap: wrap;
+}
+
+.sit-stats-section.is-collapsed .sit-stats-header {
+    border-bottom-color: transparent;
+    border-radius: var(--r-lg);
 }
 
 .sit-stats-title {
@@ -2515,6 +2534,12 @@ select.sit-input {
 }
 
 @media (max-width: 900px) {
+
+    .sit-stats-section,
+    .sit-stats-header {
+        overflow: visible;
+    }
+
     .situation-shell {
         height: auto;
         min-height: 100vh;
@@ -2560,6 +2585,20 @@ select.sit-input {
         display: none;
     }
 
+    .sit-hist-surface--special .sit-hist-table-wrap--special {
+        overflow: hidden;
+        background: var(--bg-panel);
+        /* border: 1px solid var(--border-soft);
+        border-radius: var(--r-lg); */
+    }
+
+    .sit-hist-surface--special .sit-hist-table-wrap--special .table-responsive {
+        display: block;
+        overflow-x: auto;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
     .situation-timeline {
         display: block;
         flex: 0 0 auto;
@@ -2592,9 +2631,13 @@ select.sit-input {
     }
 
     .sit-stats-dropdown-menu {
+        position: absolute;
+        top: calc(100% + 6px);
         left: 0;
         right: auto;
-        min-width: min(280px, calc(100vw - 48px));
+        z-index: 1200;
+        min-width: 220px;
+        max-width: calc(100vw - 24px);
     }
 
     .sit-stats-grid {

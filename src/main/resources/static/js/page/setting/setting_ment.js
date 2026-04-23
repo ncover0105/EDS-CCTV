@@ -185,10 +185,9 @@
             <div class="ment-card-aside">
                 <span class="status-badge ${isUse ? "status-success" : "status-primary"}">
                     ${isUse
-                        ? `<i class="bi bi-check-circle-fill"></i><span>사용</span>`
-                        : `<i class="bi bi-x-circle-fill"></i><span>미사용</span>`}
+                    ? `<i class="bi bi-check-circle-fill"></i><span>사용</span>`
+                    : `<i class="bi bi-x-circle-fill"></i><span>미사용</span>`}
                 </span>
-                <span class="ment-card-no">${no}</span>
             </div>`;
 
             const cb = card.querySelector('input[name="selectedIds"]');

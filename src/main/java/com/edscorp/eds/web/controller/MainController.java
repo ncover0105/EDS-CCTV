@@ -40,8 +40,10 @@ public class MainController {
 
     @GetMapping("/brand")
     public String showBrandHubPage(Model model) {
+        SystemSetting systemSetting = systemSettingService.getSetting();
         model.addAttribute("title", "안전재난프로그램");
         model.addAttribute("currentPage", "brand");
+        model.addAttribute("mapApiKey", systemSetting.getMapApiKey());
         return "page/brandHubPage";
     }
 

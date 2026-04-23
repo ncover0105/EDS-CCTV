@@ -218,10 +218,9 @@ function showTab(btnId) {
     tab.setAttribute("aria-selected", "false");
   });
 
-  // 모든 pane에서 active, show, display 제거
+  // 모든 pane에서 active/show 제거 후 CSS가 표시 상태를 관리한다.
   modal.querySelectorAll(".sp-tab-pane").forEach(pane => {
     pane.classList.remove("active", "show");
-    pane.style.display = "none";  // CSS 우선순위 무시!
   });
 
   // 클릭한 탭 버튼 활성화
@@ -238,8 +237,6 @@ function showTab(btnId) {
   }
 
   pane.classList.add("active", "show");
-  pane.style.setProperty("display", "flex", "important");
-
 }
 
 function hideTypeAreas() {

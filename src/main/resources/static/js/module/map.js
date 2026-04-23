@@ -17,8 +17,9 @@ let currentDeviceFilter = 'all'; // 'all' | 'cctv' | 'speaker'
 
 let initialCenter = null;
 let initialZoom = 18;
-const minZoom = 13;
-const maxZoom = 18;
+const minZoom = 12;
+const maxZoom = 20;
+const labelMinZoom = 18;
 
 const ICONS = {
     cctv: (accentColor) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -35,7 +36,7 @@ const ICONS = {
 
 const COLORS = {
     cctv: "#378ADD",
-    speaker: "#639922",
+    speaker: "#378ADD",
     offline: "#A32D2D"
 };
 
@@ -45,24 +46,27 @@ function getMarkerColor(type, status) {
     return status === "offline" ? COLORS.offline : (COLORS[type] || COLORS.cctv);
 }
 
+function isCctvOperationalStatus(rawStatus) {
+    const s = String(rawStatus ?? "").trim().toUpperCase();
+    return s === "1" || s === "01" || s === "Y";
+}
+
 function createMarkerSvg(type, status) {
     const color = getMarkerColor(type, status);
     const iconFactory = ICONS[type] || ICONS.cctv;
     const innerIcon = iconFactory(color);
 
-    return `
-    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38" fill="none">
+    // 뱃지(32×32 rounded) + callout 삼각형 (tip y=39)
+    // 전체 viewBox 32×40
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40" fill="none">
         <defs>
-            <filter id="markerShadow" x="-45%" y="-35%" width="190%" height="210%">
-                <feDropShadow dx="0" dy="3" stdDeviation="3.2" flood-color="#000000" flood-opacity="0.18"/>
+            <filter id="ms" x="-40%" y="-30%" width="180%" height="200%">
+                <feDropShadow dx="0" dy="2" stdDeviation="2.8" flood-color="#000" flood-opacity="0.28"/>
             </filter>
         </defs>
-        <rect x="0" y="0" width="30" height="30" rx="10" fill="${color}" filter="url(#markerShadow)"/>
-        <g transform="translate(6 6)">
-            ${innerIcon}
-        </g>
-        <ellipse cx="15" cy="34.5" rx="5.5" ry="2.3" fill="#000000" fill-opacity="0.12"/>
-        <circle cx="15" cy="35" r="2.4" fill="${color}" fill-opacity="0.42"/>
+        <path d="M9 0 H23 Q32 0 32 9 V23 Q32 32 23 32 H19 L16 39 L13 32 H9 Q0 32 0 23 V9 Q0 0 9 0 Z"
+              fill="${color}" filter="url(#ms)" stroke="rgba(255,255,255,0.22)" stroke-width="1.2"/>
+        <g transform="translate(7 7)">${innerIcon}</g>
     </svg>`;
 }
 
@@ -73,7 +77,8 @@ function createMarkerIcon(type, status, scale) {
     return new ol.style.Icon({
         src,
         scale,
-        anchor: [0.5, 0.1],
+        // 하단 callout 꼭짓점(y≈39/40)이 지도 좌표에 정렬
+        anchor: [0.5, 0.975],
         anchorXUnits: "fraction",
         anchorYUnits: "fraction"
     });
@@ -115,7 +120,7 @@ async function loadMapData() {
                 name: c.name || c.cctvCode,
                 lat: Number(lat),
                 lng: Number(lng),
-                status: c.statusCam == "1" ? "online" : "offline",
+                status: isCctvOperationalStatus(c.statusProc ?? c.statusCam) ? "online" : "offline",
                 type: "cctv"
             });
         });
@@ -135,6 +140,7 @@ async function loadMapData() {
             gpsData.push({
                 id: String(s.speakerId || s.speakerKey || s.speakerName || `speaker-${idx}`),
                 name: s.speakerName || s.speakerId || s.speakerKey,
+                locationName: s.locationName || s.description || s.speakerName || s.speakerId || s.speakerKey,
                 lat: Number(lat),
                 lng: Number(lng),
                 status: s.connectStatus === 0 ? "online" : "offline",
@@ -148,7 +154,11 @@ async function loadMapData() {
         }
         updateStatusSummary();
 
-        initVWorldMap();
+        if (vworldMap) {
+            refreshMap();
+        } else {
+            initVWorldMap();
+        }
 
     } catch (err) {
         console.error("loadMapData ERROR:", err);
@@ -221,8 +231,10 @@ function initVWorldMap() {
         target: 'map',
         layers: [
             new ol.layer.Tile({
+                preload: Infinity,
                 source: new ol.source.XYZ({
-                    url: `https://api.vworld.kr/req/wmts/1.0.0/${mapApiKey}/Satellite/{z}/{y}/{x}.jpeg`
+                    url: `https://api.vworld.kr/req/wmts/1.0.0/${mapApiKey}/Satellite/{z}/{y}/{x}.jpeg`,
+                    transition: 0
                 })
             })
         ],
@@ -236,6 +248,10 @@ function initVWorldMap() {
 
     addMarkers();
     setTimeout(fitMap, 300);
+
+    // 허브 페이지에서 맵 인스턴스를 참조할 수 있도록 노출
+    window._olMapRef = vworldMap;
+    document.dispatchEvent(new CustomEvent('olmapready', { detail: { map: vworldMap } }));
 }
 
 
@@ -294,17 +310,36 @@ function markerStyleFunction(feature, resolution) {
     // 현재 줌 레벨 구하기
     const zoom = vworldMap.getView().getZoom();
     const zoomKey = Math.round(zoom * 10) / 10;
+    const showLabel = zoom >= labelMinZoom;
+    const labelText = String(data.name || "");
 
     const scale = 0.74 + ((zoom - 13) * 0.064);
 
-    const cacheKey = `${data.type}:${data.status}:${zoomKey}`;
+    const cacheKey = showLabel
+        ? `${data.type}:${data.status}:${zoomKey}:label:${labelText}`
+        : `${data.type}:${data.status}:${zoomKey}:plain`;
     if (markerStyleCache.has(cacheKey)) {
         return markerStyleCache.get(cacheKey);
     }
 
-    const style = new ol.style.Style({
+    const styleOptions = {
         image: createMarkerIcon(data.type, data.status, scale)
-    });
+    };
+
+    if (showLabel) {
+        styleOptions.text = new ol.style.Text({
+            text: labelText,
+            offsetY: 10,
+            font: '600 12px "Malgun Gothic", "Apple SD Gothic Neo", sans-serif',
+            fill: new ol.style.Fill({ color: "#f8fafc" }),
+            stroke: new ol.style.Stroke({ color: "rgba(15, 23, 42, 0.92)", width: 3 }),
+            textAlign: "center",
+            textBaseline: "top",
+            overflow: true
+        });
+    }
+
+    const style = new ol.style.Style(styleOptions);
 
     markerStyleCache.set(cacheKey, style);
     return style;
@@ -337,24 +372,76 @@ function ensureMapPopup() {
         popupEl.innerHTML = `
             <button type="button" class="map-device-popup-close" aria-label="팝업 닫기">&times;</button>
             <div class="map-device-popup-header">
-                <div class="map-device-popup-label">장치 정보</div>
-                <div class="map-device-popup-name" id="mapDevicePopupName">-</div>
+                <div class="map-device-popup-headline">
+                    <div class="map-device-popup-icon" id="mapDevicePopupIcon">
+                        <i class="bi bi-cpu"></i>
+                    </div>
+                    <div class="map-device-popup-header-copy">
+                        <div class="map-device-popup-name" id="mapDevicePopupName">-</div>
+                    </div>
+                </div>
             </div>
             <div class="map-device-popup-body">
-                <div class="map-device-popup-row">
-                    <span class="map-device-popup-key">종류</span>
-                    <span class="map-device-popup-type" id="mapDevicePopupType">-</span>
+                <div class="map-device-popup-data-grid">
+                    <div class="map-device-popup-data-card">
+                        <div class="map-device-popup-status-card" id="mapDevicePopupStatusCard">
+                            <div class="map-device-popup-status-icon" id="mapDevicePopupStatusIcon">
+                                <i class="bi bi-activity"></i>
+                            </div>
+                            <div class="map-device-popup-status-copy">
+                                <div class="map-device-popup-data-label">연결 상태</div>
+                                <div class="map-device-popup-status-title" id="mapDevicePopupStatus">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="map-device-popup-data-card">
+                        <div class="map-device-popup-location-row">
+                            <div class="map-device-popup-location-icon">
+                                <i class="bi bi-geo-alt-fill"></i>
+                            </div>
+                            <div class="map-device-popup-location-copy">
+                                <div class="map-device-popup-data-label">위치</div>
+                                <div class="map-device-popup-data-value" id="mapDevicePopupLocation">-</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="map-device-popup-row">
-                    <span class="map-device-popup-key">상태</span>
-                    <span class="map-device-popup-status" id="mapDevicePopupStatus">-</span>
-                </div>
+            </div>
+            <div class="map-device-popup-actions">
+                <button type="button" class="map-device-popup-action-btn map-device-popup-action-btn--ghost"
+                        id="mapDevicePopupControlBtn">
+                    <i class="bi bi-sliders"></i>
+                    <span>설정</span>
+                </button>
+                <button type="button" class="map-device-popup-action-btn" id="mapDevicePopupBroadcastBtn">
+                    <i class="bi bi-broadcast-pin"></i>
+                    <span>방송</span>
+                </button>
             </div>
         `;
 
         mapEl.appendChild(popupEl);
 
         popupEl.querySelector(".map-device-popup-close")?.addEventListener("click", hideMapPopup);
+        popupEl.querySelector("#mapDevicePopupControlBtn")?.addEventListener("click", function () {
+            if (!activePopupData || activePopupData.type !== "speaker") return;
+
+            const modalEl = document.getElementById("speaker_setting_modal");
+            if (!modalEl || typeof bootstrap === "undefined") return;
+
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        });
+        popupEl.querySelector("#mapDevicePopupBroadcastBtn")?.addEventListener("click", function () {
+            if (!activePopupData || activePopupData.type !== "speaker") return;
+
+            window._broadcastHintCamera = activePopupData.name || "";
+            const modalEl = document.getElementById("speaker_broadcast_modal");
+            if (!modalEl || typeof bootstrap === "undefined") return;
+
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        });
     }
 }
 
@@ -365,15 +452,58 @@ function showMapPopup(data, coordinate) {
     activePopupCoordinate = coordinate;
     activePopupData = data;
 
-    const typeText = data.type === "speaker" ? "스피커" : "CCTV";
-    const statusText = data.status === "online" ? "정상" : "오프라인";
+    const isSpeaker = data.type === "speaker";
+    const statusText = isSpeaker
+        ? (data.status === "online" ? "정상 연결" : "오프라인")
+        : (data.status === "online" ? "정상" : "오프라인");
+    const iconEl = popupEl.querySelector("#mapDevicePopupIcon");
+    const locationEl = popupEl.querySelector("#mapDevicePopupLocation");
     const statusEl = popupEl.querySelector("#mapDevicePopupStatus");
+    const statusCardEl = popupEl.querySelector("#mapDevicePopupStatusCard");
+    const statusIconEl = popupEl.querySelector("#mapDevicePopupStatusIcon");
+    const controlBtn = popupEl.querySelector("#mapDevicePopupControlBtn");
+    const broadcastBtn = popupEl.querySelector("#mapDevicePopupBroadcastBtn");
 
+    popupEl.classList.remove("is-speaker", "is-cctv");
+    popupEl.classList.add(isSpeaker ? "is-speaker" : "is-cctv");
     popupEl.querySelector("#mapDevicePopupName").textContent = data.name || "-";
-    popupEl.querySelector("#mapDevicePopupType").textContent = typeText;
     statusEl.textContent = statusText;
     statusEl.classList.remove("is-online", "is-offline");
     statusEl.classList.add(data.status === "online" ? "is-online" : "is-offline");
+    if (statusCardEl) {
+        statusCardEl.classList.remove("is-online", "is-offline");
+        statusCardEl.classList.add(data.status === "online" ? "is-online" : "is-offline");
+    }
+    if (iconEl) {
+        iconEl.innerHTML = isSpeaker
+            ? '<i class="bi bi-megaphone-fill"></i>'
+            : '<i class="bi bi-camera-video-fill"></i>';
+    }
+    if (statusIconEl) {
+        statusIconEl.innerHTML = data.status === "online"
+            ? `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <circle cx="6" cy="12" r="2.2" fill="currentColor"></circle>
+                    <circle cx="18" cy="7" r="2.2" fill="currentColor"></circle>
+                    <circle cx="18" cy="17" r="2.2" fill="currentColor"></circle>
+                    <path d="M8.3 11.1 15.7 7.9M8.3 12.9l7.4 3.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                </svg>`
+            : `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <circle cx="6" cy="12" r="2.2" fill="currentColor"></circle>
+                    <circle cx="18" cy="7" r="2.2" fill="currentColor"></circle>
+                    <circle cx="18" cy="17" r="2.2" fill="currentColor"></circle>
+                    <path d="M8.3 11.1 15.7 7.9M8.3 12.9l7.4 3.2" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.28"></path>
+                    <path d="M7 17 17 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path>
+                </svg>`;
+    }
+    if (locationEl) {
+        locationEl.textContent = data.locationName || data.name || "-";
+    }
+    if (controlBtn) {
+        controlBtn.style.display = isSpeaker ? "inline-flex" : "none";
+    }
+    if (broadcastBtn) {
+        broadcastBtn.style.display = isSpeaker ? "inline-flex" : "none";
+    }
 
     popupEl.style.display = "block";
     repositionMapPopup();
@@ -540,91 +670,56 @@ function bindStatusListEvents() {
 
 
 /* ============================================================
-    5) Tooltip, Click 이벤트 동일 유지
+    5) Hover Cursor / Click 이벤트
 ============================================================ */
 function handlePointerMove(evt) {
-    const tooltip = document.getElementById('mapTooltip');
-    if (!tooltip) return;
+    if (!vworldMap) return;
 
     const mapContainer = vworldMap.getTargetElement();
-    const feature = vworldMap.forEachFeatureAtPixel(evt.pixel, f => f);
+    if (!mapContainer) return;
 
-    if (!feature) {
-        tooltip.classList.add('d-none');
-        tooltip.classList.remove('above');
-        mapContainer.style.cursor = 'default';
-        return;
-    }
+    const feature = vworldMap.forEachFeatureAtPixel(
+        evt.pixel,
+        f => f,
+        { hitTolerance: 8 }
+    );
 
-    const data = feature.get('gpsData');
-    const coord = feature.getGeometry().getCoordinates();
-    const screen = vworldMap.getPixelFromCoordinate(coord);
-
-    const safeStatus = data.status === "online" ? "online" : "offline";
-    const typeText = data.type === "speaker" ? "스피커" : "CCTV";
-
-    tooltip.innerHTML = `
-        <div class="tooltip-header"><strong>${escapeHtml(data.name)}</strong></div>
-        <div class="status-badge ${safeStatus}">${escapeHtml(safeStatus)}</div>
-        <div class="tooltip-meta">${escapeHtml(typeText)}</div>
-    `;
-
-    const pos = adjustTooltipPosition(tooltip, screen[0], screen[1], mapContainer.clientWidth, mapContainer.clientHeight);
-
-    tooltip.style.left = `${pos.x}px`;
-    tooltip.style.top = `${pos.y}px`;
-    tooltip.classList.toggle('above', pos.arrowPos === 'bottom');
-    tooltip.classList.remove('d-none');
-
-    mapContainer.style.cursor = 'pointer';
-}
-
-function adjustTooltipPosition(tooltip, x, y, containerWidth, containerHeight) {
-    const tooltipRect = tooltip.getBoundingClientRect();
-    const offset = 25;
-    const topOffset = 60;
-    const leftOffset = 5;
-    const padding = 10;
-
-    let finalX = x - tooltipRect.width / 2 - leftOffset;
-    let finalY = y + offset;
-
-    let arrowPos = 'top';
-
-    if (finalX + tooltipRect.width + padding > containerWidth) {
-        finalX = containerWidth - tooltipRect.width - padding;
-    }
-
-    if (finalX < padding) {
-        finalX = padding;
-    }
-
-    if (y + tooltipRect.height + offset + padding > containerHeight) {
-        finalY = y - tooltipRect.height - topOffset;
-        arrowPos = 'bottom';
-    }
-
-    if (finalY < padding) {
-        finalY = y + offset;
-        arrowPos = 'top';
-    }
-
-    return { x: finalX, y: finalY, arrowPos };
+    mapContainer.style.cursor = feature ? 'pointer' : 'default';
 }
 
 /* ============================================================
-    6) 클릭 → Offcanvas
+    6) 클릭 → Offcanvas (또는 허브 페이지 훅)
 ============================================================ */
 function handleSingleClick(evt) {
-    const feature = vworldMap.forEachFeatureAtPixel(evt.pixel, f => f);
-    if (!feature) {
+    const features = [];
+    vworldMap.forEachFeatureAtPixel(
+        evt.pixel,
+        f => {
+            features.push(f);
+            return false;
+        },
+        { hitTolerance: 8 }
+    );
+
+    if (!features.length) {
         hideMapPopup();
+        if (typeof window.onHubMapClick === 'function') window.onHubMapClick(null, null, null);
         return;
     }
 
-    const data = feature.get("gpsData");
+    const feature = features.find(f => !!f.get("gpsData")) || features.find(f => !!f.get("eventData"));
+    if (!feature) return;
+
+    const gpsData = feature.get("gpsData");
     const coordinate = feature.getGeometry().getCoordinates();
-    showMapPopup(data, coordinate);
+
+    // 허브 페이지가 클릭을 완전히 가져감
+    if (typeof window.onHubMapClick === 'function') {
+        window.onHubMapClick(gpsData || null, coordinate, feature);
+        return;
+    }
+
+    if (gpsData) showMapPopup(gpsData, coordinate);
 }
 
 /* ============================================================
@@ -737,3 +832,6 @@ window.addEventListener('resize', () => {
 window.showMapView = showMapView;
 window.showCCTVView = showCCTVView;
 window.refreshMap = refreshMap;
+window.loadMapData = loadMapData;
+window.showMapPopup = showMapPopup;
+window.hideMapPopup = hideMapPopup;

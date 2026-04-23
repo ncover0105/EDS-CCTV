@@ -334,6 +334,16 @@
     return document.getElementById('sitStatsBody')?.classList.contains('is-collapsed') ?? false;
   }
 
+  function syncStatsCollapsedState() {
+    const statsSection = document.getElementById('sitStatsSection');
+    const statsBody = document.getElementById('sitStatsBody');
+    if (!statsSection || !statsBody) return false;
+
+    const collapsed = statsBody.classList.contains('is-collapsed');
+    statsSection.classList.toggle('is-collapsed', collapsed);
+    return collapsed;
+  }
+
   let latestStatsData = {
     daily: [],
     trend: [],
@@ -646,8 +656,12 @@
     const collapseBtn = document.getElementById('statsCollapseBtn');
     const statsBody = document.getElementById('sitStatsBody');
     if (collapseBtn && statsBody) {
+      const initialCollapsed = syncStatsCollapsedState();
+      collapseBtn.querySelector('i').className = initialCollapsed ? 'bi bi-chevron-down' : 'bi bi-chevron-up';
+
       collapseBtn.addEventListener('click', () => {
         const collapsed = statsBody.classList.toggle('is-collapsed');
+        syncStatsCollapsedState();
         collapseBtn.querySelector('i').className = collapsed ? 'bi bi-chevron-down' : 'bi bi-chevron-up';
         if (collapsed) {
           destroyAllCharts();

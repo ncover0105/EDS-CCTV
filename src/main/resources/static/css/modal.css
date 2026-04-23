@@ -813,6 +813,15 @@
     box-shadow: 0 0 0 3px rgba(59, 110, 246, .1);
 }
 
+.speaker-modal .m-select:focus-visible,
+.speaker-modal .m-textarea:focus-visible,
+.speaker-modal .m-btn:focus-visible,
+.speaker-modal .close-btn:focus-visible,
+.speaker-modal .panel-action-btn:focus-visible {
+    outline: 2px solid var(--m-primary);
+    outline-offset: 2px;
+}
+
 .speaker-modal .m-select:disabled,
 .speaker-modal .m-textarea:disabled {
     cursor: not-allowed;
@@ -2214,6 +2223,12 @@
 #speaker_setting_modal .sp-select:focus {
     border-color: var(--blue);
     box-shadow: 0 0 0 3px var(--blue-a);
+}
+
+#speaker_setting_modal .sp-input:focus-visible,
+#speaker_setting_modal .sp-select:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
 }
 
 #speaker_setting_modal .sp-select {

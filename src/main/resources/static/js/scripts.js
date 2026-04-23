@@ -126,11 +126,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // 저장 및 발령 버튼 이벤트
-    document.querySelector('.btn-primary').addEventListener('click', function () {
-        App.utils.showGlobalAlert('설정이 저장되었습니다.', 'success');
-    });
-
     // updateRangeValue('volumeRange', 'volumeValue');
     // generateRandomSpeakers();
 

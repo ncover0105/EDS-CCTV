@@ -5,319 +5,577 @@
 <head>
     <meta charset="UTF-8">
     <title th:text="${title}">안전재난프로그램</title>
-    <link rel="stylesheet" href="css/cctv-placeholder.css">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@7.4.0/ol.css" />
+    <script src="https://cdn.jsdelivr.net/npm/ol@7.4.0/dist/ol.js"></script>
+
+    <link rel="stylesheet" th:href="@{/css/map.css}" />
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var mapApiKey = /*[[${mapApiKey}]]*/ "";
+        /*]]>*/
+    </script>
+
     <style>
-        /* ── 디자인 토큰 ─────────────────────────────────── */
         :root {
-            --bg:          #06090f;
-            --bg-card:     #0d1521;
-            --border:      rgba(255, 255, 255, 0.08);
-            --border-dim:  rgba(255, 255, 255, 0.05);
-            --txt:         #e2e8f0;
-            --txt-muted:   #475569;
-            --txt-dim:     #334155;
-            --accent:      #3b82f6;
-            --accent-glow: rgba(59, 130, 246, 0.2);
-            --danger:      #ef4444;
-            --danger-bg:   rgba(239, 68, 68, 0.12);
-            --safe:        #22c55e;
-            --r:           10px;
+            --bg: #06090f;
+            --bg-card: #0d1521;
+            --bg-card-2: #101827;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-dim: rgba(255, 255, 255, 0.05);
+            --txt: #e2e8f0;
+            --txt-muted: #94a3b8;
+            --txt-dim: #64748b;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.18);
+            --danger: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.12);
+            --safe: #22c55e;
+            --hub-body-gap: 16px;
+            --hub-map-height-xl: 760px;
         }
 
-        /* ── 전체 레이아웃 ───────────────────────────────── */
-        .ops-dash {
+        .map-hub {
             height: calc(100vh - 56px);
-            display: grid;
-            grid-template-rows: 44px 1fr 40px;
-            background: var(--bg);
-            color: var(--txt);
             overflow: hidden;
+            background:
+                radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 24%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)),
+                var(--bg);
+            color: var(--txt);
             font-size: 12px;
         }
 
-        /* ── 헤더 ────────────────────────────────────────── */
-        .ops-hd {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 0 14px;
-            border-bottom: 1px solid var(--border-dim);
-            background: rgba(255, 255, 255, 0.02);
-            overflow: hidden;
+        .hub-shell {
+            height: 100%;
+            min-height: 0;
+            padding-bottom: 12px;
+            box-sizing: border-box;
         }
 
-        .ops-hd-status {
+        /* .hub-toolbar {
+            border-bottom: 1px solid var(--border-dim);
+            background: rgba(255, 255, 255, 0.02);
+        } */
+
+        .hub-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-height: 44px;
+            padding: 0 14px;
+        }
+
+        .hub-bar-status {
             display: flex;
             align-items: center;
             gap: 6px;
-            flex: 1;
-            overflow: hidden;
+            flex: 1 1 auto;
+            flex-wrap: wrap;
             min-width: 0;
         }
 
-        .ops-chip {
+        .hub-chip {
             display: inline-flex;
             align-items: center;
             gap: 5px;
             padding: 3px 10px;
             border-radius: 999px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--txt-muted);
             font-size: 11px;
             font-weight: 700;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
-            color: var(--txt-muted);
             white-space: nowrap;
-            flex-shrink: 0;
         }
 
-        .ops-chip strong { color: var(--txt); }
+        .hub-chip strong {
+            color: var(--txt);
+        }
 
-        .ops-chip--warn {
+        .hub-chip--warn {
             background: var(--danger-bg);
             border-color: rgba(239, 68, 68, 0.3);
             color: #fca5a5;
         }
 
-        .ops-chip--warn strong { color: #fca5a5; }
-
-        .ops-hd-actions {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            flex-shrink: 0;
+        .hub-chip--warn strong {
+            color: #fca5a5;
         }
 
-        .ops-btn {
+        .hub-bar-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .hub-btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 5px;
-            height: 30px;
+            min-height: 30px;
             padding: 0 11px;
             border-radius: 8px;
             border: 1px solid var(--border);
             font-size: 11px;
             font-weight: 700;
-            cursor: pointer;
-            white-space: nowrap;
             text-decoration: none;
-            transition: background .15s, transform .1s;
+            white-space: nowrap;
+            transition: background .15s, transform .1s, border-color .15s;
         }
 
-        .ops-btn--ghost {
+        .hub-btn--ghost {
             background: rgba(255, 255, 255, 0.04);
             color: var(--txt-muted);
         }
 
-        .ops-btn--ghost:hover {
+        .hub-btn--ghost:hover {
             background: rgba(255, 255, 255, 0.09);
             color: var(--txt);
         }
 
-        .ops-btn--urgent {
+        .hub-btn--urgent {
             background: linear-gradient(135deg, #dc2626, #c2410c);
             color: #fff;
             border-color: rgba(239, 68, 68, 0.4);
-            box-shadow: 0 0 12px rgba(220, 38, 38, 0.28);
+            box-shadow: 0 0 8px rgba(220, 38, 38, 0.2);
+        }
+
+        .hub-btn--urgent:hover {
+            transform: translateY(-1px);
+        }
+
+        .hub-btn--urgent.has-event {
+            box-shadow: 0 0 12px rgba(220, 38, 38, 0.45);
             animation: urgentPulse 2.5s ease-in-out infinite;
         }
 
-        .ops-btn--urgent:hover { transform: translateY(-1px); }
-
         @keyframes urgentPulse {
-            0%, 100% { box-shadow: 0 0 12px rgba(220, 38, 38, 0.28); }
-            50%       { box-shadow: 0 0 22px rgba(220, 38, 38, 0.6); }
+
+            0%,
+            100% {
+                box-shadow: 0 0 12px rgba(220, 38, 38, 0.28);
+            }
+
+            50% {
+                box-shadow: 0 0 22px rgba(220, 38, 38, 0.6);
+            }
         }
 
-        /* ── 메인 2-컬럼 ─────────────────────────────────── */
-        .ops-body {
-            display: grid;
-            grid-template-columns: 3fr 2fr;
+        .hub-body {
+            flex: 1 1 auto;
             min-height: 0;
-            overflow: hidden;
+            --bs-gutter-x: var(--hub-body-gap);
+            --bs-gutter-y: var(--hub-body-gap);
+            padding-bottom: 4px;
         }
 
-        /* ── CCTV 컬럼 ───────────────────────────────────── */
-        .ops-cctv-col {
-            display: grid;
-            grid-template-rows: 1fr 72px auto;
+        .hub-map-section,
+        .hub-panel {
             min-height: 0;
-            border-right: 1px solid var(--border-dim);
         }
 
-        .ops-cctv-view {
-            min-height: 0;
-            background: #000;
+        .hub-map-card {
             position: relative;
+            min-height: 0;
+            height: 100%;
             overflow: hidden;
+            background: #000;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: 0 22px 42px rgba(0, 0, 0, 0.28);
         }
 
-        /* CCTVLayout 스코프 오버라이드 */
-        .ops-cctv-view .cctv-grid     { width: 100%; height: 100%; padding: 0; }
-        .ops-cctv-view .cctv-feed     { width: 100%; height: 100%; border-radius: 0; }
-        .ops-cctv-view .cctv-controls { display: none; }
-        .ops-cctv-view .cctv-label    { left: 10px; right: 10px; bottom: 10px; }
-        .ops-cctv-view .cctv-name     { font-size: 13px; }
-
-        /* 통계 차트 행 */
-        .ops-cctv-info {
-            display: grid;
-            grid-template-columns: 130px 1fr;
-            align-items: center;
-            gap: 12px;
-            padding: 5px 14px 5px 10px;
-            border-top: 1px solid var(--border-dim);
-            background: rgba(255, 255, 255, 0.012);
+        .hub-map-actions {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            z-index: 30;
+            display: flex;
+            gap: 8px;
         }
 
-        .ops-cs-pills {
+        .hub-map-legend {
+            position: absolute;
+            left: 14px;
+            bottom: 14px;
+            z-index: 28;
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 10px;
+            min-width: 172px;
+            padding: 12px 13px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(6, 9, 15, 0.82);
+            box-shadow: 0 16px 34px rgba(0, 0, 0, 0.34);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
-        .ops-cs-pill {
+        .hub-map-legend-title {
+            margin: 0;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #cbd5e1;
+        }
+
+        .hub-map-legend-list {
+            display: grid;
+            gap: 8px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .hub-map-legend-item {
+            display: grid;
+            grid-template-columns: 12px minmax(0, 1fr);
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hub-map-legend-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--txt-muted);
+            line-height: 1.3;
+        }
+
+        .hub-map-legend-chip {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
+        }
+
+        .hub-map-legend-chip.is-normal {
+            background: #378add;
+        }
+
+        .hub-map-legend-chip.is-offline {
+            background: #a32d2d;
+        }
+
+        .hub-map-actions .css-action-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(6, 9, 15, 0.82);
+            color: #f8fafc;
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .hub-map-actions .css-action-btn:hover {
+            background: rgba(59, 130, 246, 0.18);
+            border-color: rgba(96, 165, 250, 0.45);
+            color: #ffffff;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.42);
+        }
+
+        .hub-map-actions .css-action-btn i {
+            font-size: 15px;
+        }
+
+        #map {
+            position: absolute;
+            inset: 0;
+        }
+
+        #mapTooltip {
+            position: absolute;
+            z-index: 120;
+            pointer-events: none;
+        }
+
+        .cctv-mini-popup {
+            position: absolute;
+            z-index: 200;
+            width: min(360px, calc(100vw - 32px));
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.13);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
+            transform: translate(-50%, calc(-100% - 18px));
+            pointer-events: auto;
+        }
+
+        .cctv-mini-popup::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid var(--bg-card);
+        }
+
+        .cctv-mini-popup-hd {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 8px 10px 7px;
+            border-bottom: 1px solid var(--border-dim);
+        }
+
+        .cctv-mini-popup-title-area {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+        }
+
+        .cctv-mini-popup-status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            background: var(--txt-dim);
+        }
+
+        .cctv-mini-popup-status-dot.is-online {
+            background: var(--safe);
+        }
+
+        .cctv-mini-popup-status-dot.is-offline {
+            background: var(--danger);
+        }
+
+        .cctv-mini-popup-name {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--txt);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .cctv-mini-popup-close {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 7px;
+            border: none;
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--txt-muted);
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background .15s;
+        }
+
+        .cctv-mini-popup-close:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: var(--txt);
+        }
+
+        .cctv-mini-popup-close i {
+            font-size: 14px;
+            line-height: 1;
+        }
+
+        .cctv-mini-popup-video-wrap {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #000;
+            overflow: hidden;
+        }
+
+        .cctv-mini-popup-video-wrap video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        .cctv-mini-popup-loading,
+        .cctv-mini-popup-error {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--txt-muted);
+        }
+
+        .cctv-mini-popup-loading {
+            background: linear-gradient(180deg, rgba(4, 6, 10, 0.78), rgba(4, 6, 10, 0.9));
+            text-align: center;
+        }
+
+        .cctv-mini-popup-loading-message {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cctv-mini-popup-loading .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        .cctv-mini-popup-loading .status-dot.ok {
+            background: #22c55e;
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.14);
+        }
+
+        .cctv-mini-popup-loading .status-dot.bad {
+            background: #ef4444;
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.14);
+        }
+
+        .cctv-mini-popup-loading .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 999px;
+        }
+
+        .cctv-mini-popup-loading-text {
+            color: #cbd5e1;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+
+        .cctv-mini-popup-error i {
+            font-size: 22px;
+            color: var(--txt-dim);
+        }
+
+        .cctv-mini-popup-info {
+            padding: 7px 10px;
+            border-top: 1px solid var(--border-dim);
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            margin: 0;
+        }
+
+        .cctv-mini-popup-info-row {
             display: flex;
             align-items: baseline;
             gap: 6px;
         }
 
-        .ops-cs-val {
-            font-size: 16px;
-            font-weight: 800;
-            color: var(--txt);
-            font-variant-numeric: tabular-nums;
-            line-height: 1;
-        }
-
-        .ops-cs-lbl {
+        .cctv-mini-popup-info-key {
             font-size: 10px;
-            color: var(--txt-muted);
-        }
-
-        .ops-cs-chart-wrap {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            height: 100%;
-            padding: 4px 0 3px;
-        }
-
-        .ops-cs-chart {
-            display: flex;
-            align-items: flex-end;
-            gap: 1px;
-            flex: 1;
-            min-width: 0;
-        }
-
-        .ops-cs-bar {
-            flex: 1;
-            min-width: 1px;
-            border-radius: 2px 2px 0 0;
-            background: rgba(59, 130, 246, 0.25);
-            min-height: 1px;
-            transition: height .3s ease;
-        }
-
-        .ops-cs-bar.is-now { background: rgba(96, 165, 250, 0.75); }
-        .ops-cs-bar.is-hot { background: rgba(249, 115, 22, 0.6); }
-
-        .ops-cs-labels {
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .ops-cs-labels span {
-            font-size: 9px;
             color: var(--txt-dim);
+            white-space: nowrap;
+            min-width: 28px;
         }
 
-        /* 카메라 탭 바 */
-        .ops-cam-rail {
+        .cctv-mini-popup-info-val {
+            margin: 0;
+            font-size: 11px;
+            color: var(--txt-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .cctv-mini-popup-event-type {
+            padding: 1px 7px;
+            border-radius: 999px;
+            background: var(--danger-bg);
+            color: #fca5a5;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .cctv-mini-popup-actions {
             display: flex;
             gap: 5px;
-            padding: 6px 10px;
-            background: rgba(255, 255, 255, 0.018);
+            padding: 6px 8px;
             border-top: 1px solid var(--border-dim);
-            overflow-x: auto;
-            flex-shrink: 0;
-            scrollbar-width: thin;
-            scrollbar-color: rgba(148, 163, 184, 0.2) transparent;
+            background: rgba(255, 255, 255, 0.015);
         }
 
-        .ops-cam-rail::-webkit-scrollbar       { height: 3px; }
-        .ops-cam-rail::-webkit-scrollbar-thumb { border-radius: 999px; background: rgba(148, 163, 184, 0.2); }
-
-        .ops-cam-tab {
-            flex-shrink: 0;
+        .cctv-mini-popup-action-btn {
+            flex: 1;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
-            height: 26px;
-            padding: 0 10px;
-            border-radius: 6px;
+            justify-content: center;
+            gap: 4px;
+            height: 30px;
+            border-radius: 7px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--txt-muted);
             font-size: 11px;
             font-weight: 700;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid var(--border);
-            color: var(--txt-muted);
             cursor: pointer;
-            white-space: nowrap;
-            transition: background .15s, border-color .15s, color .15s;
+            transition: background .15s, color .15s;
         }
 
-        .ops-cam-tab::before {
-            content: "";
-            width: 5px;
-            height: 5px;
-            border-radius: 50%;
-            background: var(--txt-dim);
-            flex-shrink: 0;
+        .cctv-mini-popup-action-btn:hover {
+            background: rgba(255, 255, 255, 0.09);
+            color: var(--txt);
         }
 
-        .ops-cam-tab[data-ok="1"]::before { background: var(--safe); }
-        .ops-cam-tab[data-ok="0"]::before { background: var(--danger); }
-
-        .ops-cam-tab.is-active,
-        .ops-cam-tab:hover {
-            background: var(--accent-glow);
-            border-color: rgba(96, 165, 250, 0.35);
-            color: #eff6ff;
-        }
-
-        /* ── 사이드 컬럼 ─────────────────────────────────── */
-        .ops-side-col {
-            display: grid;
-            grid-template-rows: 1fr 152px 120px;
-            min-height: 0;
-            overflow: hidden;
-            padding: 6px;
-            gap: 5px;
-            background: var(--bg);
-        }
-
-        /* 공통 카드 */
-        .ops-card {
-            display: grid;
-            grid-template-rows: 34px 1fr;
+        .hub-card {
+            display: flex;
+            flex-direction: column;
             min-height: 0;
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: var(--r);
+            border-radius: 16px;
             overflow: hidden;
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.2);
         }
 
-        .ops-card-hd {
+        .hub-card--event {
+            min-height: clamp(280px, 42vh, 560px);
+        }
+
+        .hub-card--equip {
+            min-height: 210px;
+        }
+
+        .hub-card--bc {
+            min-height: 180px;
+        }
+
+        .hub-card-hd {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 12px;
+            gap: 10px;
+            min-height: 50px;
+            padding: 10px 14px;
             border-bottom: 1px solid var(--border-dim);
-            flex-shrink: 0;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015));
         }
 
-        .ops-card-title {
+        .hub-card-title {
+            margin: 0;
             font-size: 10px;
             font-weight: 800;
             color: var(--txt-muted);
@@ -325,7 +583,7 @@
             letter-spacing: 0.07em;
         }
 
-        .ops-badge {
+        .hub-badge {
             display: inline-flex;
             align-items: center;
             padding: 2px 8px;
@@ -334,76 +592,146 @@
             font-weight: 800;
         }
 
-        .ops-badge--alert {
+        .hub-badge--alert {
             background: var(--danger-bg);
             color: #fca5a5;
         }
 
-        .ops-meta {
+        .hub-meta {
             font-size: 11px;
             color: var(--txt-dim);
         }
 
-        /* 이벤트 리스트 */
-        .ops-event-body {
-            overflow-y: auto;
+        .hub-event-body,
+        .hub-equip-body,
+        .hub-bc-body {
             min-height: 0;
-            padding: 5px 8px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+
+        .hub-event-body {
+            padding: 8px;
             display: flex;
             flex-direction: column;
-            gap: 3px;
-            scrollbar-width: thin;
+            gap: 6px;
             scrollbar-color: rgba(148, 163, 184, 0.15) transparent;
         }
 
-        .ops-event-body::-webkit-scrollbar       { width: 3px; }
-        .ops-event-body::-webkit-scrollbar-thumb { border-radius: 999px; background: rgba(148, 163, 184, 0.15); }
+        .hub-event-body::-webkit-scrollbar,
+        .hub-equip-body::-webkit-scrollbar,
+        .hub-bc-body::-webkit-scrollbar {
+            width: 3px;
+        }
 
-        .ops-ev {
-            display: grid;
-            grid-template-columns: 32px 1fr;
+        .hub-event-body::-webkit-scrollbar-thumb,
+        .hub-equip-body::-webkit-scrollbar-thumb,
+        .hub-bc-body::-webkit-scrollbar-thumb {
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.15);
+        }
+
+        /* ── 타임라인 이벤트 목록 ── */
+        .hub-tl-item {
+            display: flex;
+            align-items: stretch;
+            gap: 10px;
+            padding: 0;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .hub-tl-track {
+            display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 8px;
-            padding: 6px 9px;
-            border-radius: 7px;
-            background: rgba(255, 255, 255, 0.025);
-            border: 1px solid var(--border-dim);
             flex-shrink: 0;
+            width: 16px;
+            padding-top: 4px;
         }
 
-        .ops-ev--new { animation: evFlash 1.4s ease-out forwards; }
-
-        @keyframes evFlash {
-            0%   { background: rgba(239, 68, 68, 0.18); border-color: rgba(239, 68, 68, 0.36); }
-            100% { background: rgba(255, 255, 255, 0.025); border-color: var(--border-dim); }
+        .hub-tl-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ef4444;
+            border: 2px solid rgba(239, 68, 68, 0.35);
+            flex-shrink: 0;
+            transition: background .2s, box-shadow .2s;
         }
 
-        .ops-ev-t {
+        .hub-tl-line {
+            flex: 1;
+            width: 2px;
+            background: rgba(255, 255, 255, 0.07);
+            margin-top: 4px;
+            min-height: 12px;
+            border-radius: 1px;
+        }
+
+        .hub-tl-item:last-child .hub-tl-line {
+            display: none;
+        }
+
+        .hub-tl-content {
+            flex: 1;
+            min-width: 0;
+            padding: 4px 6px 10px 0;
+            border-bottom: 1px solid var(--border-dim);
+            transition: opacity .15s;
+        }
+
+        .hub-tl-item:last-child .hub-tl-content {
+            border-bottom: none;
+        }
+
+        .hub-tl-item:hover .hub-tl-dot {
+            background: #f87171;
+        }
+
+        .hub-tl-content:hover {
+            opacity: 0.85;
+        }
+
+        .hub-tl-meta {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 3px;
+        }
+
+        .hub-tl-main {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            min-width: 0;
+        }
+
+        .hub-tl-meta .hub-ev-quick {
+            display: flex;
+            margin-left: auto;
+        }
+
+        .hub-ev-t {
             font-size: 11px;
             font-weight: 800;
             color: var(--txt-muted);
             font-variant-numeric: tabular-nums;
-            text-align: center;
             line-height: 1.25;
+            white-space: nowrap;
         }
 
-        .ops-ev-info { min-width: 0; }
-
-        .ops-ev-row {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            min-width: 0;
-        }
-
-        .ops-ev-zone {
+        .hub-ev-zone {
             font-size: 12px;
             font-weight: 800;
             color: #f1f5f9;
             white-space: nowrap;
         }
 
-        .ops-ev-type {
+        .hub-ev-type {
             padding: 1px 6px;
             border-radius: 999px;
             font-size: 10px;
@@ -414,9 +742,7 @@
             flex-shrink: 0;
         }
 
-        .ops-ev-cam {
-            display: block;
-            margin-top: 1px;
+        .hub-ev-cam {
             font-size: 10px;
             color: var(--txt-dim);
             white-space: nowrap;
@@ -424,328 +750,483 @@
             text-overflow: ellipsis;
         }
 
-        /* 구역 도넛 차트 */
-        .ops-donut-area {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 14px;
-            padding: 4px 12px;
-            min-height: 0;
-        }
-
-        .ops-donut-ring {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            flex-shrink: 0;
-            position: relative;
-        }
-
-        .ops-donut-ring::after {
-            content: '';
-            position: absolute;
-            inset: 21px;
-            border-radius: 50%;
-            background: var(--bg-card);
-        }
-
-        .ops-donut-legend {
+        .hub-equip-body {
+            padding: 10px;
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 8px;
+            scrollbar-color: rgba(148, 163, 184, 0.12) transparent;
         }
 
-        .ops-donut-item {
-            display: flex;
+        .hub-dev-item {
+            display: grid;
+            grid-template-columns: 18px minmax(0, 1fr) auto;
             align-items: center;
-            gap: 6px;
-            font-size: 10px;
-            color: var(--txt-muted);
-            white-space: nowrap;
-            min-width: 86px;
+            gap: 10px;
+            min-height: 42px;
+            padding: 9px 12px;
+            border-radius: 10px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.02));
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            transition: background .15s, border-color .15s, transform .15s, box-shadow .15s;
         }
 
-        .ops-donut-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 2px;
-            flex-shrink: 0;
+        .hub-dev-item[data-cctv-code]:hover {
+            background: var(--accent-glow);
+            border-color: rgba(96, 165, 250, 0.28);
+            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.2);
+            transform: translateY(-1px);
         }
 
-        .ops-donut-item strong {
-            font-weight: 800;
-            color: #94a3b8;
-            margin-left: auto;
-            padding-left: 4px;
-        }
-
-        /* 스피커 상태 */
-        .ops-spk-body {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            padding: 6px 10px;
-            align-content: flex-start;
-            overflow: hidden;
-            min-height: 0;
-        }
-
-        .ops-spk-dot {
-            width: 30px;
-            height: 30px;
-            border-radius: 7px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 800;
-            border: 1px solid var(--border);
-            background: rgba(255, 255, 255, 0.04);
-            color: var(--txt-dim);
+        div.hub-dev-item {
             cursor: default;
         }
 
-        .ops-spk-dot[data-status="on"] {
-            background: rgba(34, 197, 94, 0.1);
-            border-color: rgba(74, 222, 128, 0.25);
+        .hub-dev-icon {
+            font-size: 15px;
+            flex-shrink: 0;
+            justify-self: center;
+        }
+
+        .hub-dev-icon.is-on {
+            color: var(--safe);
+        }
+
+        .hub-dev-icon.is-off {
+            color: var(--danger);
+        }
+
+        .hub-dev-name {
+            flex: 1;
+            font-size: 12px;
+            font-weight: 600;
+            color: #dbe6f3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.35;
+        }
+
+        .hub-dev-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 42px;
+            min-height: 24px;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 0 8px;
+            border-radius: 999px;
+            flex-shrink: 0;
+            letter-spacing: 0.02em;
+        }
+
+        .hub-dev-badge.is-on {
+            background: rgba(34, 197, 94, 0.12);
             color: #86efac;
         }
 
-        .ops-spk-dot[data-status="off"] {
-            background: rgba(239, 68, 68, 0.09);
-            border-color: rgba(248, 113, 113, 0.2);
+        .hub-dev-badge.is-off {
+            background: var(--danger-bg);
             color: #fca5a5;
         }
 
-        /* ── 하단 상태바 ─────────────────────────────────── */
-        .ops-ft {
+        .hub-bc-body {
+            padding: 8px;
             display: flex;
-            align-items: center;
-            padding: 0 14px;
-            border-top: 1px solid var(--border-dim);
-            background: rgba(255, 255, 255, 0.012);
-            overflow: hidden;
+            flex-direction: column;
+            gap: 6px;
         }
 
-        .ops-ft-stats {
+        .hub-bc-item {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 6px;
+            padding: 4px 6px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .hub-bc-icon {
+            color: var(--accent);
+            font-size: 11px;
             flex-shrink: 0;
         }
 
-        .ops-ft-stat {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 10px;
-            color: var(--txt-dim);
+        .hub-bc-name {
+            flex: 1;
+            font-size: 11px;
+            color: var(--txt-muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
             white-space: nowrap;
         }
 
-        .ops-ft-stat i        { font-size: 11px; }
-        .ops-ft-stat strong   { font-size: 13px; font-weight: 800; color: #cbd5e1; }
-        .ops-ft-stat--alert i,
-        .ops-ft-stat--alert   { color: #f87171; }
-        .ops-ft-stat--alert strong { color: #fca5a5; }
-
-        .ops-ft-sep {
-            width: 1px;
-            height: 16px;
-            background: var(--border-dim);
-            margin: 0 12px;
+        .hub-bc-status {
+            font-size: 11px;
+            font-weight: 800;
             flex-shrink: 0;
         }
 
-        .ops-ft-bc {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-shrink: 0;
-            overflow: hidden;
+        .hub-bc-status.is-ok {
+            color: var(--safe);
         }
 
-        .ops-bc-entry {
-            display: flex;
-            align-items: center;
-            gap: 4px;
+        .hub-bc-status.is-fail {
+            color: var(--danger);
+        }
+
+        .hub-bc-time {
             font-size: 10px;
             color: var(--txt-dim);
-            white-space: nowrap;
+            flex-shrink: 0;
+            font-variant-numeric: tabular-nums;
         }
 
-        .ops-bc-entry i    { color: var(--accent); font-size: 11px; }
-        .ops-bc-entry span { color: var(--txt-muted); }
-
-        /* ── 반응형 ──────────────────────────────────────── */
-        @media (max-width: 1200px) {
-            .ops-body     { grid-template-columns: 3fr 2fr; }
-            .ops-side-col { grid-template-rows: 1fr 140px 110px; }
+        .hub-empty {
+            padding: 12px 0;
+            text-align: center;
+            font-size: 11px;
+            color: var(--txt-dim);
         }
 
-        @media (max-width: 900px) {
-            .ops-dash {
-                height: auto;
-                overflow-y: auto;
-                grid-template-rows: 44px auto 40px;
+        .cctv-mini-popup.is-below {
+            transform: translate(-50%, 18px);
+        }
+
+        .cctv-mini-popup.is-below::after {
+            bottom: auto;
+            top: -8px;
+            border-top: none;
+            border-bottom: 8px solid var(--bg-card);
+        }
+
+        .hub-ev-quick {
+            gap: 3px;
+            flex-shrink: 0;
+        }
+
+        .hub-ev-q-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--txt-muted);
+            cursor: pointer;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background .12s, color .12s;
+        }
+
+        .hub-ev-q-btn:hover {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        #opsChipCctvOff,
+        #opsChipSpkOff {
+            cursor: pointer;
+            transition: background .15s;
+        }
+
+        #opsChipCctvOff:hover,
+        #opsChipSpkOff:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        @media (max-width: 1199.98px) {
+            .hub-map-card {
+                min-height: 420px;
             }
-            .ops-body        { grid-template-columns: 1fr; }
-            .ops-cctv-col    { height: 50vw; min-height: 260px; }
-            .ops-side-col    { grid-template-rows: 280px 140px 110px; }
-            .ops-cctv-info   { display: none; }
-            .ops-ft-bc       { display: none; }
+        }
+
+        @media (min-width: 1200px) {
+            .hub-body {
+                height: calc(100% - 4px);
+                align-items: stretch;
+            }
+
+            .hub-body>.hub-map-section {
+                min-width: 0;
+                overflow: hidden;
+            }
+
+            .hub-body>.hub-panel {
+                height: 100%;
+            }
+
+            .hub-map-card {
+                height: min(100%, var(--hub-map-height-xl));
+                min-height: 0;
+            }
+
+            .hub-panel>.row {
+                height: 100%;
+                flex-direction: column;
+                flex-wrap: nowrap;
+            }
+
+            .hub-panel>.row>div:first-child {
+                flex: 1 1 0;
+                min-height: 0;
+            }
+
+            .hub-panel>.row>div:nth-child(2) {
+                flex: 0 0 28%;
+                min-height: 0;
+            }
+
+            .hub-panel>.row>div:nth-child(3) {
+                flex: 0 0 24%;
+                min-height: 0;
+            }
+
+            .hub-card--event,
+            .hub-card--equip,
+            .hub-card--bc {
+                min-height: 0;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .hub-shell {
+                height: auto;
+                min-height: 0;
+                overflow-y: auto;
+            }
+
+            .hub-bar {
+                min-height: auto;
+                padding: 8px 10px;
+            }
+
+            .hub-bar-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .hub-btn {
+                min-height: 34px;
+                padding: 0 9px;
+            }
+
+            .hub-map-card {
+                min-height: 340px;
+            }
+
+            .hub-map-legend {
+                left: 10px;
+                right: 10px;
+                bottom: 10px;
+                min-width: 0;
+                padding: 10px 11px;
+            }
+
+            .hub-card--event,
+            .hub-card--equip,
+            .hub-card--bc {
+                min-height: 180px;
+            }
+
+            .cctv-mini-popup {
+                width: min(360px, calc(100vw - 20px));
+            }
         }
     </style>
+
     <script src="/js/ui/modal_speaker_setting.js?v=1"></script>
     <script src="/js/ui/modal_speaker_broadcast.js?v=1"></script>
 </head>
 
 <body>
     <div layout:fragment="content">
-        <main class="ops-dash">
+        <main class="map-hub">
+            <div class="container-fluid px-2 px-lg-3 py-3 hub-shell d-flex flex-column gap-3">
 
-            <!-- 헤더: 운영 상태 + 액션 -->
-            <header class="ops-hd">
-                <div class="ops-hd-status">
-                    <span class="ops-chip">
-                        <i class="bi bi-exclamation-circle"></i>
-                        이벤트 <strong id="opsShiftEventCount">0</strong>건
-                    </span>
-                    <span class="ops-chip ops-chip--warn" id="opsChipCctvOff" style="display:none">
-                        <i class="bi bi-camera-video-off-fill"></i>
-                        CCTV오프 <strong id="opsShiftCctvOff">0</strong>대
-                    </span>
-                    <span class="ops-chip ops-chip--warn" id="opsChipSpkOff" style="display:none">
-                        <i class="bi bi-speaker-fill"></i>
-                        스피커오프 <strong id="opsShiftSpkOff">0</strong>대
-                    </span>
+                <header class="hub-toolbar">
+                    <div class="hub-bar">
+                        <div class="hub-bar-status">
+                            <span class="hub-chip hub-chip--warn badge rounded-pill" id="opsChipCctvOff"
+                                style="display:none">
+                                <i class="bi bi-camera-video-off-fill" aria-hidden="true"></i>
+                                CCTV 이상 <strong id="opsShiftCctvOff">0</strong>대
+                            </span>
+                            <span class="hub-chip hub-chip--warn badge rounded-pill" id="opsChipSpkOff"
+                                style="display:none">
+                                <i class="bi bi-speaker-fill" aria-hidden="true"></i>
+                                스피커 이상 <strong id="opsShiftSpkOff">0</strong>대
+                            </span>
+                        </div>
+
+                        <nav class="hub-bar-actions" aria-label="페이지 액션">
+                            <button type="button" class="hub-btn hub-btn--urgent btn" data-bs-toggle="modal"
+                                data-bs-target="#speaker_broadcast_modal">
+                                <i class="bi bi-broadcast-pin" aria-hidden="true"></i>
+                                <span>긴급방송</span>
+                            </button>
+                            <button type="button" class="hub-btn hub-btn--ghost btn" data-bs-toggle="modal"
+                                data-bs-target="#speaker_setting_modal" aria-label="스피커 설정">
+                                <i class="bi bi-sliders" aria-hidden="true"></i>
+                                <span class="d-none d-sm-inline">설정</span>
+                            </button>
+                            <a class="hub-btn hub-btn--ghost btn" th:href="@{/menu/equipment2}" title="장비관리"
+                                aria-label="장비관리">
+                                <i class="bi bi-tools" aria-hidden="true"></i>
+                                <span class="d-none d-sm-inline">장비관리</span>
+                            </a>
+                            <a class="hub-btn hub-btn--ghost btn" th:href="@{/main}" title="상황판" aria-label="상황판으로 이동">
+                                <i class="bi bi-grid-1x2" aria-hidden="true"></i>
+                                <span class="d-none d-sm-inline">상황판</span>
+                            </a>
+                        </nav>
+                    </div>
+                </header>
+
+                <div class="hub-body row g-3 flex-grow-1">
+
+                    <section class="hub-map-section col-12 col-xl-8" aria-label="CCTV 지도">
+                        <div class="hub-map-card card border-0 h-100">
+                            <div class="hub-map-actions">
+                                <button type="button" class="css-action-btn btn btn-dark" id="hubRefreshMapBtn"
+                                    aria-label="지도 새로고침">
+                                    <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+                                </button>
+                            </div>
+
+                            <section class="hub-map-legend" aria-label="지도 범례">
+                                <h2 class="hub-map-legend-title">범례</h2>
+                                <ul class="hub-map-legend-list">
+                                    <li class="hub-map-legend-item">
+                                        <span class="hub-map-legend-chip is-normal" aria-hidden="true"></span>
+                                        <span class="hub-map-legend-label">장비 정상</span>
+                                    </li>
+                                    <li class="hub-map-legend-item">
+                                        <span class="hub-map-legend-chip is-offline" aria-hidden="true"></span>
+                                        <span class="hub-map-legend-label">장비 오프라인</span>
+                                    </li>
+                                </ul>
+                            </section>
+
+                            <div id="map"></div>
+                            <div id="mapTooltip" class="d-none"></div>
+
+                            <div id="cctvMiniPopup" class="cctv-mini-popup" style="display:none" role="dialog"
+                                aria-modal="true" aria-labelledby="cctvPopupName">
+                                <div class="cctv-mini-popup-hd">
+                                    <div class="cctv-mini-popup-title-area">
+                                        <span class="cctv-mini-popup-status-dot" id="cctvPopupDot"
+                                            aria-hidden="true"></span>
+                                        <span class="cctv-mini-popup-name" id="cctvPopupName">-</span>
+                                    </div>
+                                    <button type="button" class="cctv-mini-popup-close" id="cctvPopupClose"
+                                        aria-label="팝업 닫기">
+                                        <i class="bi bi-x" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+
+                                <div class="cctv-mini-popup-video-wrap">
+                                    <video id="cctvPopupVideo" autoplay muted playsinline aria-label="CCTV 영상"></video>
+                                    <div class="cctv-mini-popup-loading" id="cctvPopupLoading" aria-live="polite">
+                                        <div class="cctv-mini-popup-loading-message">
+                                            <span class="badge" id="cctvPopupLoadingBadge">
+                                                <span class="status-dot ok" id="cctvPopupLoadingDot"
+                                                    aria-hidden="true"></span>
+                                                <span id="cctvPopupLoadingState">정상</span>
+                                            </span>
+                                            <span class="cctv-mini-popup-loading-text" id="cctvPopupLoadingText">영상 연결
+                                                중...</span>
+                                        </div>
+                                    </div>
+                                    <div class="cctv-mini-popup-error" id="cctvPopupError" style="display:none">
+                                        <i class="bi bi-camera-video-off" aria-hidden="true"></i>
+                                        <span>영상 없음</span>
+                                    </div>
+                                </div>
+
+                                <dl class="cctv-mini-popup-info">
+                                    <div class="cctv-mini-popup-info-row">
+                                        <dt class="cctv-mini-popup-info-key">상태</dt>
+                                        <dd class="cctv-mini-popup-info-val" id="cctvPopupStatus">-</dd>
+                                    </div>
+                                    <div class="cctv-mini-popup-info-row">
+                                        <dt class="cctv-mini-popup-info-key">위치</dt>
+                                        <dd class="cctv-mini-popup-info-val" id="cctvPopupAddress">-</dd>
+                                    </div>
+                                    <div class="cctv-mini-popup-info-row" id="cctvPopupEventRow" style="display:none">
+                                        <dt class="cctv-mini-popup-info-key">이벤트</dt>
+                                        <dd class="cctv-mini-popup-info-val cctv-mini-popup-event-type"
+                                            id="cctvPopupEventType">-</dd>
+                                    </div>
+                                </dl>
+
+                                <div class="cctv-mini-popup-actions">
+                                    <button type="button" class="cctv-mini-popup-action-btn" data-bs-toggle="modal"
+                                        data-bs-target="#speaker_broadcast_modal">
+                                        <i class="bi bi-broadcast-pin" aria-hidden="true"></i> 방송
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <aside class="hub-panel col-12 col-xl-4" aria-label="운영 패널">
+                        <div class="row g-3 h-100">
+                            <div class="col-12">
+                                <section class="hub-card hub-card--event card border-0 h-100"
+                                    aria-labelledby="cardTitleEvents">
+                                    <div class="hub-card-hd card-header border-0">
+                                        <h2 class="hub-card-title" id="cardTitleEvents">실시간 이벤트</h2>
+                                        <span class="hub-badge hub-badge--alert" id="hubEventCount"
+                                            aria-live="polite">0건</span>
+                                    </div>
+                                    <div class="hub-event-body hub-tl card-body" id="hubEventList" role="log"
+                                        aria-live="polite" aria-label="이벤트 목록">
+                                        <div class="hub-empty">데이터 로딩 중...</div>
+                                    </div>
+                                </section>
+                            </div>
+
+                            <div class="col-12 col-md-6 col-xl-12">
+                                <section class="hub-card hub-card--equip card border-0 h-100"
+                                    aria-labelledby="cardTitleEquip">
+                                    <div class="hub-card-hd card-header border-0">
+                                        <h2 class="hub-card-title" id="cardTitleEquip">장비 현황</h2>
+                                        <span class="hub-meta" id="hubEquipMeta" aria-live="polite">-</span>
+                                    </div>
+                                    <div class="hub-equip-body card-body" id="hubEquipBody"></div>
+                                </section>
+                            </div>
+
+                            <div class="col-12 col-md-6 col-xl-12">
+                                <section class="hub-card hub-card--bc card border-0 h-100"
+                                    aria-labelledby="cardTitleBc">
+                                    <div class="hub-card-hd card-header border-0">
+                                        <h2 class="hub-card-title" id="cardTitleBc">방송 이력</h2>
+                                        <span class="hub-meta" id="hubBcCount" aria-live="polite">0건</span>
+                                    </div>
+                                    <div class="hub-bc-body card-body" id="hubBcList"></div>
+                                </section>
+                            </div>
+                        </div>
+                    </aside>
                 </div>
-                <div class="ops-hd-actions">
-                    <button type="button" class="ops-btn ops-btn--urgent"
-                            data-bs-toggle="modal" data-bs-target="#speaker_broadcast_modal">
-                        <i class="bi bi-broadcast-pin"></i> 긴급방송
-                    </button>
-                    <button type="button" class="ops-btn ops-btn--ghost"
-                            data-bs-toggle="modal" data-bs-target="#speaker_setting_modal">
-                        <i class="bi bi-sliders"></i>
-                    </button>
-                    <a class="ops-btn ops-btn--ghost" th:href="@{/menu/equipment2}" title="장비관리">
-                        <i class="bi bi-tools"></i>
-                    </a>
-                    <a class="ops-btn ops-btn--ghost" th:href="@{/main}" title="상황판">
-                        <i class="bi bi-grid-1x2"></i>
-                    </a>
-                </div>
-            </header>
-
-            <!-- 메인 -->
-            <div class="ops-body">
-
-                <!-- CCTV 컬럼 -->
-                <section class="ops-cctv-col">
-                    <div id="cctv-container" class="ops-cctv-view"></div>
-
-                    <!-- 통계 요약 + 24시간 이벤트 히트맵 -->
-                    <div class="ops-cctv-info">
-                        <div class="ops-cs-pills">
-                            <div class="ops-cs-pill">
-                                <span class="ops-cs-val" id="opsCsSumTotal">0</span>
-                                <span class="ops-cs-lbl">오늘 이벤트</span>
-                            </div>
-                            <div class="ops-cs-pill">
-                                <span class="ops-cs-val" id="opsCsSumPeak">-</span>
-                                <span class="ops-cs-lbl">피크</span>
-                            </div>
-                            <div class="ops-cs-pill">
-                                <span class="ops-cs-val" id="opsCsSumZone">-</span>
-                                <span class="ops-cs-lbl">주요구역</span>
-                            </div>
-                        </div>
-                        <div class="ops-cs-chart-wrap">
-                            <div class="ops-cs-chart" id="opsCctvHourly"></div>
-                            <div class="ops-cs-labels">
-                                <span>0시</span><span>6시</span><span>12시</span><span>18시</span><span>23시</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 카메라 탭 바 -->
-                    <nav class="ops-cam-rail" id="brandCctvPicker">
-                        <button type="button" class="ops-cam-tab is-active">로딩 중</button>
-                    </nav>
-                </section>
-
-                <!-- 사이드 컬럼 -->
-                <aside class="ops-side-col">
-
-                    <!-- 이벤트 카드 -->
-                    <div class="ops-card">
-                        <div class="ops-card-hd">
-                            <span class="ops-card-title">실시간 이벤트</span>
-                            <span class="ops-badge ops-badge--alert" id="brandEmergencyListCount">0건</span>
-                        </div>
-                        <div class="ops-event-body" id="brandEmergencyList"></div>
-                    </div>
-
-                    <!-- 구역 현황 카드 -->
-                    <div class="ops-card">
-                        <div class="ops-card-hd">
-                            <span class="ops-card-title">구역별 현황</span>
-                            <span class="ops-meta" id="brandEmergencyCount">오늘 0건</span>
-                        </div>
-                        <div class="ops-donut-area" id="opsZoneBars"></div>
-                    </div>
-
-                    <!-- 스피커 카드 -->
-                    <div class="ops-card">
-                        <div class="ops-card-hd">
-                            <span class="ops-card-title">스피커</span>
-                            <span class="ops-meta" id="brandSpeakerListCount">0대</span>
-                        </div>
-                        <div class="ops-spk-body" id="brandSpeakerList"></div>
-                    </div>
-
-                </aside>
             </div>
-
-            <!-- 하단 상태바 -->
-            <footer class="ops-ft">
-                <div class="ops-ft-stats">
-                    <div class="ops-ft-stat">
-                        <i class="bi bi-megaphone-fill"></i>
-                        <strong id="brandSpeakerCount">0</strong>
-                        <span>스피커</span>
-                    </div>
-                    <div class="ops-ft-stat">
-                        <i class="bi bi-camera-video-fill"></i>
-                        <strong id="brandCctvCount">0</strong>
-                        <span>CCTV</span>
-                    </div>
-                    <div class="ops-ft-stat ops-ft-stat--alert">
-                        <i class="bi bi-exclamation-circle-fill"></i>
-                        <strong id="opsEmergencyFt">0</strong>
-                        <span>이벤트</span>
-                    </div>
-                    <div class="ops-ft-stat">
-                        <i class="bi bi-soundwave"></i>
-                        <strong id="brandBroadcastCount">0</strong>
-                        <span>방송</span>
-                    </div>
-                </div>
-                <div class="ops-ft-sep"></div>
-                <div class="ops-ft-bc" id="brandBroadcastList"></div>
-            </footer>
 
         </main>
 
-        <!-- 하위 호환 숨김 ID -->
-        <span id="brandCctvListCount"      style="display:none"></span>
-        <span id="brandBroadcastListCount" style="display:none"></span>
+        <span id="brandCctvListCount" hidden></span>
+        <span id="brandBroadcastListCount" hidden></span>
 
         <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
         <script th:src="@{/js/module/janus.js}"></script>
-        <script th:src="@{/js/module/cctv_layout.js}"></script>
+        <script th:src="@{/js/module/map.js}"></script>
         <script th:src="@{/js/module/cctv_janus.js}"></script>
         <script th:src="@{/js/page/brand_hub_page.js}"></script>
     </div>

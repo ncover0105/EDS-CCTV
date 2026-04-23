@@ -229,9 +229,7 @@
     const btn = document.getElementById('specialSearchBtn');
     if (!btn) return;
     btn.disabled = isLoading;
-    btn.innerHTML = isLoading
-      ? '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>검색 중'
-      : '<i class="bi bi-search me-1"></i>검색';
+    btn.innerHTML = '<i class="bi bi-search me-1"></i>검색';
   }
 
   async function fetchSpecialJson(url, signal) {

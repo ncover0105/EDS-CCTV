@@ -98,10 +98,45 @@ window.CCTVJanus = (function () {
     }
 
 
+    // ── 팝업/단일 카메라용 연결 (Janus 미초기화 시 자동 초기화) ──────
+    async function connectSingle(cam, opts = {}) {
+        if (!janus) {
+            await new Promise((resolve) => {
+                Janus.init({
+                    debug: false,
+                    callback: () => {
+                        janus = new Janus({
+                            server: janusServerUrl,
+                            iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+                            iceTransportPolicy: 'all',
+                            success: resolve,
+                            error: () => resolve()
+                        });
+                    }
+                });
+            });
+        }
+        if (!janus) {
+            if (typeof opts.onCleanup === 'function') opts.onCleanup();
+            return;
+        }
+        return initJanusCam(cam, opts);
+    }
+
+    function disconnectSingle(key) {
+        const h = pluginHandles[key];
+        if (!h) return;
+        try { h.send({ message: { request: 'stop' } }); } catch (e) { }
+        try { h.detach(); } catch (e) { }
+        delete pluginHandles[key];
+    }
+
     // 외부에서 접근 필요한 값 공개
     const exports = {
         initSignaling,
         initJanusCam,
+        connectSingle,
+        disconnectSingle,
         pluginHandles,
         reconnectAll,
         reconnectOne,

@@ -818,7 +818,10 @@ window.SpecialReport = (function () {
 
         showLine(lineEl, emptyEl);
         tickerItemsCache = [{
-            text: `${regionName} - ${wrnName}${lvlNum ? " " + (LVL_LABEL[lvlNum] || "") : ""}${cmdName ? " " + cmdName : ""}`.trim(),
+            text: [
+                `${regionName} - ${wrnName}${lvlNum ? " " + (LVL_LABEL[lvlNum] || "") : ""}${cmdName ? " " + cmdName : ""}`.trim(),
+                timeText ? `발령 ${timeText}` : ""
+            ].filter(Boolean).join(" · "),
             level: getTickerLevelByLvl(lvlNum)
         }];
         renderTicker(tickerItemsCache);
