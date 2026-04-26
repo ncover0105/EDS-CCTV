@@ -18,7 +18,6 @@ public interface CctvRepository extends JpaRepository<CctvEntity, CctvId> {
 
         Optional<CctvEntity> findByLocationCodeAndCctvCode(String locationCode, String cctvCode);
 
-        // (주의) cctvCode 단독은 복수일 수 있으니 List가 안전
         List<CctvEntity> findAllByCctvCode(String cctvCode);
 
         List<CctvEntity> findAllByCctvCodeIn(Collection<String> cctvCodes);
@@ -39,5 +38,50 @@ public interface CctvRepository extends JpaRepository<CctvEntity, CctvId> {
         int updateStatusProc(@Param("locationCode") String locationCode,
                         @Param("cctvCode") String cctvCode,
                         @Param("statusProc") String statusProc);
+
+        @Modifying(clearAutomatically = true, flushAutomatically = true)
+        @Transactional
+        @Query("""
+                        update CctvEntity c
+                           set c.name = :name,
+                               c.address = :address,
+                               c.id = :id,
+                               c.password = :password,
+                               c.type = :type,
+                               c.wsPort = :wsPort,
+                               c.latitude = :latitude,
+                               c.longitude = :longitude,
+                               c.rtspUrl = :rtspUrl,
+                               c.mountpointId = :mountpointId,
+                               c.videoPort = :videoPort,
+                               c.lowStream.rtspUrl = :lowRtspUrl,
+                               c.lowStream.mountpointId = :lowMountpointId,
+                               c.lowStream.videoPort = :lowVideoPort,
+                               c.highStream.rtspUrl = :highRtspUrl,
+                               c.highStream.mountpointId = :highMountpointId,
+                               c.highStream.videoPort = :highVideoPort
+                         where c.locationCode = :locationCode
+                           and c.cctvCode = :cctvCode
+                        """)
+        int updateCctvConfig(
+                        @Param("locationCode") String locationCode,
+                        @Param("cctvCode") String cctvCode,
+                        @Param("name") String name,
+                        @Param("address") String address,
+                        @Param("id") String id,
+                        @Param("password") String password,
+                        @Param("type") String type,
+                        @Param("wsPort") String wsPort,
+                        @Param("latitude") String latitude,
+                        @Param("longitude") String longitude,
+                        @Param("rtspUrl") String rtspUrl,
+                        @Param("mountpointId") Integer mountpointId,
+                        @Param("videoPort") Integer videoPort,
+                        @Param("lowRtspUrl") String lowRtspUrl,
+                        @Param("lowMountpointId") Integer lowMountpointId,
+                        @Param("lowVideoPort") Integer lowVideoPort,
+                        @Param("highRtspUrl") String highRtspUrl,
+                        @Param("highMountpointId") Integer highMountpointId,
+                        @Param("highVideoPort") Integer highVideoPort);
 
 }

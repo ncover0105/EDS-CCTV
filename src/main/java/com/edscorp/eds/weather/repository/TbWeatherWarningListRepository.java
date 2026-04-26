@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -27,7 +28,6 @@ public interface TbWeatherWarningListRepository extends JpaRepository<TbWeatherW
                     :end IS NULL OR STR_TO_DATE(TM_IN, '%Y%m%d%H%i') <= :end
                 )
             ORDER BY TM_IN DESC
-            LIMIT :limit
             """, nativeQuery = true)
     List<TbWeatherWarningList> search(
             @Param("stn") String stn,
@@ -37,7 +37,7 @@ public interface TbWeatherWarningListRepository extends JpaRepository<TbWeatherW
             @Param("regId") String regId,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end,
-            @Param("limit") int limit);
+            Pageable pageable);
 
     boolean existsByIdStnAndIdRegIdAndIdWrnAndTmFcAndTmEfAndLvlAndCmd(
             String stn,

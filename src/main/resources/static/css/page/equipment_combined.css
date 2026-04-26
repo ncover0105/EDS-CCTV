@@ -6757,45 +6757,142 @@ select.eq-input option {
     white-space: nowrap;
 }
 
-/* Tab button container */
 .broadcast-pane .bcp-tab-btns {
-    display: flex;
-    gap: 1px;
-    background: rgba(0, 0, 0, 0.35);
-    border-radius: 8px;
-    padding: 3px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: grid;
+    gap: 8px;
 }
 
-/* Override bc-choice-btn inside tab container */
+.broadcast-pane .bcp-tab-group:first-child .bcp-tab-btns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.broadcast-pane .bcp-tab-group:last-child .bcp-tab-btns {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .broadcast-pane .bcp-tab-btns .bc-choice-btn.bcp-tab {
-    padding: 4px 11px !important;
-    border-radius: 6px !important;
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    min-height: 58px !important;
+    width: 100% !important;
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
     font-size: 11px !important;
-    font-weight: 500 !important;
-    color: rgba(255, 255, 255, 0.36) !important;
-    background: transparent !important;
-    border: none !important;
+    font-weight: 600 !important;
+    color: rgba(255, 255, 255, 0.72) !important;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+        rgba(10, 15, 24, 0.72) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.03),
+        0 10px 20px rgba(0, 0, 0, 0.16) !important;
     cursor: pointer !important;
-    transition: all 0.14s !important;
-    white-space: nowrap !important;
-    line-height: 1.5 !important;
+    transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease, color 0.16s ease !important;
+    white-space: normal !important;
+    line-height: 1.25 !important;
     letter-spacing: 0.01em !important;
+    text-align: left !important;
+}
+
+.broadcast-pane .bcp-tab-btns .bc-choice-btn.bcp-tab::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(var(--accent-rgb, 59, 130, 246), 0.16), transparent 58%);
+    opacity: 0;
+    transition: opacity 0.16s ease;
+    pointer-events: none;
+}
+
+.broadcast-pane .bcp-tab-btns .bc-choice-btn.bcp-tab>i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.82);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.broadcast-pane .bcp-tab-copy {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 3px;
+}
+
+.broadcast-pane .bcp-tab-title {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: #eef2ff;
+}
+
+.broadcast-pane .bcp-tab-desc {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.46);
 }
 
 .broadcast-pane .bcp-tab-btns .bc-choice-btn.bcp-tab:hover {
-    color: rgba(255, 255, 255, 0.65) !important;
-    background: rgba(255, 255, 255, 0.06) !important;
+    transform: translateY(-1px) !important;
+    color: rgba(255, 255, 255, 0.94) !important;
+    border-color: rgba(var(--accent-rgb, 59, 130, 246), 0.26) !important;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
+        rgba(14, 22, 34, 0.88) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 14px 26px rgba(0, 0, 0, 0.22) !important;
+}
+
+.broadcast-pane .bcp-tab-btns .bc-choice-btn.bcp-tab:hover::after {
+    opacity: 0.65;
 }
 
 .broadcast-pane .bcp-tab-btns .bc-choice-btn.bcp-tab.is-active {
     color: #fff !important;
     background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.02)),
-        rgba(37, 99, 235, 0.38) !important;
+        linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.03)),
+        linear-gradient(135deg, rgba(var(--accent-rgb, 59, 130, 246), 0.40), rgba(var(--accent-rgb, 59, 130, 246), 0.16)) !important;
+    border-color: rgba(var(--accent-rgb, 59, 130, 246), 0.42) !important;
     box-shadow:
-        inset 0 0 0 1px rgba(147, 197, 253, 0.24),
-        0 1px 2px rgba(0, 0, 0, 0.22) !important;
+        inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+        0 14px 28px rgba(var(--accent-rgb, 59, 130, 246), 0.18),
+        0 0 0 1px rgba(var(--accent-rgb, 59, 130, 246), 0.16) !important;
+}
+
+.broadcast-pane .bcp-tab-btns .bc-choice-btn.bcp-tab.is-active::after {
+    opacity: 1;
+}
+
+.broadcast-pane .bcp-tab-btns .bc-choice-btn.bcp-tab.is-active>i {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.16);
+}
+
+.broadcast-pane .bcp-tab-btns .bc-choice-btn.bcp-tab.is-active .bcp-tab-title {
+    color: #ffffff;
+}
+
+.broadcast-pane .bcp-tab-btns .bc-choice-btn.bcp-tab.is-active .bcp-tab-desc {
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.broadcast-pane .bcp-tab-btns .bc-choice-btn.bcp-tab.is-default-loading {
+    opacity: 0.6;
+    pointer-events: none;
 }
 
 /* ─────────────────────────────────────────
@@ -7378,6 +7475,16 @@ select.eq-input option {
 
     .broadcast-pane .bc-tts-manage-btn {
         width: 100%;
+    }
+
+    .broadcast-pane .bcp-tab-group:first-child .bcp-tab-btns,
+    .broadcast-pane .bcp-tab-group:last-child .bcp-tab-btns {
+        grid-template-columns: 1fr;
+    }
+
+    .broadcast-pane .bcp-tab-btns .bc-choice-btn.bcp-tab {
+        min-height: 54px !important;
+        padding: 10px 11px !important;
     }
 
     .broadcast-pane .bc-exec-col {

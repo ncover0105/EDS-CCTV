@@ -177,48 +177,45 @@ public class CctvManagementService {
 
     @Transactional
     public CctvEntity update(String locationCode, String cctvCode, CctvUpdateRequest req) {
-        CctvEntity e = cctvRepository.findByLocationCodeAndCctvCode(locationCode, cctvCode)
+        CctvEntity existing = cctvRepository.findByLocationCodeAndCctvCode(locationCode, cctvCode)
                 .orElseThrow(() -> new IllegalArgumentException("CCTV not found: " + locationCode + "/" + cctvCode));
 
-        e.setName(req.getName());
-        e.setAddress(req.getAddress());
-        e.setId(req.getId());
+        String password = hasText(req.getPassword()) ? req.getPassword() : existing.getPassword();
+        String lowRtspUrl = hasText(req.getLowRtspUrl()) ? req.getLowRtspUrl() : null;
+        Integer lowMountpointId = lowRtspUrl != null ? req.getLowMountpointId() : null;
+        Integer lowVideoPort = lowRtspUrl != null ? req.getLowVideoPort() : null;
+        String highRtspUrl = hasText(req.getHighRtspUrl()) ? req.getHighRtspUrl() : null;
+        Integer highMountpointId = highRtspUrl != null ? req.getHighMountpointId() : null;
+        Integer highVideoPort = highRtspUrl != null ? req.getHighVideoPort() : null;
 
-        if (hasText(req.getPassword())) {
-            e.setPassword(req.getPassword());
-        }
+        int updated = cctvRepository.updateCctvConfig(
+                locationCode,
+                cctvCode,
+                req.getName(),
+                req.getAddress(),
+                req.getId(),
+                password,
+                req.getType(),
+                req.getWsPort(),
+                req.getLatitude(),
+                req.getLongitude(),
+                req.getRtspUrl(),
+                req.getMountpointId(),
+                req.getVideoPort(),
+                lowRtspUrl,
+                lowMountpointId,
+                lowVideoPort,
+                highRtspUrl,
+                highMountpointId,
+                highVideoPort);
 
-        e.setType(req.getType());
-        e.setWsPort(req.getWsPort());
-        e.setLatitude(req.getLatitude());
-        e.setLongitude(req.getLongitude());
-        e.setRtspUrl(req.getRtspUrl());
-        e.setMountpointId(req.getMountpointId());
-        e.setVideoPort(req.getVideoPort());
-
-        // CctvStream VO로 low/high 업데이트
-        if (hasText(req.getLowRtspUrl())) {
-            CctvStream low = e.getLowStream() != null ? e.getLowStream() : new CctvStream();
-            low.setRtspUrl(req.getLowRtspUrl());
-            low.setMountpointId(req.getLowMountpointId());
-            low.setVideoPort(req.getLowVideoPort());
-            e.setLowStream(low);
-        } else {
-            e.setLowStream(null); // URL 없으면 스트림 제거
-        }
-
-        if (hasText(req.getHighRtspUrl())) {
-            CctvStream high = e.getHighStream() != null ? e.getHighStream() : new CctvStream();
-            high.setRtspUrl(req.getHighRtspUrl());
-            high.setMountpointId(req.getHighMountpointId());
-            high.setVideoPort(req.getHighVideoPort());
-            e.setHighStream(high);
-        } else {
-            e.setHighStream(null);
+        if (updated == 0) {
+            throw new IllegalArgumentException("CCTV not found: " + locationCode + "/" + cctvCode);
         }
 
         refreshCache();
-        return e;
+        return cctvRepository.findByLocationCodeAndCctvCode(locationCode, cctvCode)
+                .orElseThrow(() -> new IllegalArgumentException("CCTV not found after update: " + locationCode + "/" + cctvCode));
     }
 
     @Transactional

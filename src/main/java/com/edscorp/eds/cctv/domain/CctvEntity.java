@@ -10,6 +10,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.DynamicUpdate;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,6 +19,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "tb_cctv_list")
 @IdClass(CctvId.class)
+@DynamicUpdate
 public class CctvEntity {
 
     @Id

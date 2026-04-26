@@ -23,6 +23,8 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -112,6 +114,7 @@ public class WeatherController {
 
             @RequestParam(name = "limit", defaultValue = "300") int limit) {
         int safeLimit = Math.min(Math.max(limit, 1), 1000);
+        Pageable pageable = PageRequest.of(0, safeLimit);
 
         // 선택: 공백이면 null 처리 (native query의 :param IS NULL 조건을 살리기 위함)
         stn = emptyToNull(stn);
@@ -122,8 +125,7 @@ public class WeatherController {
 
         return tbWeatherWarningListRepository.search(
                 stn, wrn, lvl, cmd, regId,
-                start, end,
-                safeLimit);
+                start, end, pageable);
     }
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
