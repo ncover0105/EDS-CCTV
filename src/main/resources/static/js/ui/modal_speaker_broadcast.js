@@ -194,7 +194,8 @@ function getBroadcastDefaultsFromSystemSetting(setting) {
     return {
         // SystemSetting: 0=실제, 1=시험 / 현재 방송 UI: 1=실제, 0=시험
         mode: mode === 1 ? "0" : "1",
-        broadcastType: type === "saved" ? "2" : "1"
+        broadcastType: type === "saved" ? "2" : "1",
+        priority: "3"
     };
 }
 
@@ -662,9 +663,11 @@ const BroadcastModal = {
         getPanelPrefixes().forEach(prefix => {
             setVal(`${prefix}_mode`, this.systemDefaults.mode);
             setVal(`${prefix}_broadcast_type`, this.systemDefaults.broadcastType);
+            setVal(`${prefix}_priority`, this.systemDefaults.priority ?? "3");
             setVal(`${prefix}_disaster`, "");
             this.syncRadioGroup(`${prefix}_mode_radio`, this.systemDefaults.mode);
             this.syncRadioGroup(`${prefix}_type_radio`, this.systemDefaults.broadcastType);
+            this.syncRadioGroup(`${prefix}_priority_radio`, this.systemDefaults.priority ?? "3");
             this.clearTtsFields(prefix);
         });
 
@@ -1044,6 +1047,16 @@ const BroadcastModal = {
                         ?.dispatchEvent(new Event("change", { bubbles: true }));
                 });
             });
+
+            document.querySelectorAll(`input[name="${prefix}_priority_radio"]`).forEach(radio => {
+                radio.addEventListener("change", () => {
+                    setVal(`${prefix}_priority`, radio.value);
+                    document.getElementById(`${prefix}_priority`)
+                        ?.dispatchEvent(new Event("change", { bubbles: true }));
+                });
+            });
+
+            this.syncRadioGroup(`${prefix}_priority_radio`, document.getElementById(`${prefix}_priority`)?.value ?? "3");
         });
 
     }

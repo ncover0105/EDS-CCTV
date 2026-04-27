@@ -97,7 +97,7 @@
 
                     <!-- 방송 모드 & 카테고리 — 탭 스타일 -->
                     <div class="bcp-tabs-section is-default-pending">
-                        <div class="bcp-tab-group">
+                        <div class="bcp-tab-group bcp-tab-group--mode">
                             <span class="bcp-tab-lbl">방송 모드</span>
                             <div class="bcp-tab-btns">
                                 <button type="button" class="bc-choice-btn bcp-tab" data-target="bc_mode"
@@ -118,7 +118,7 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="bcp-tab-group">
+                        <div class="bcp-tab-group bcp-tab-group--type">
                             <span class="bcp-tab-lbl">방송 유형</span>
                             <div class="bcp-tab-btns">
                                 <button type="button" class="bc-choice-btn bcp-tab" data-target="bc_broadcast_type"
@@ -147,6 +147,43 @@
                                 </button>
                             </div>
                         </div>
+                        <div class="bcp-tab-group bcp-tab-group--priority">
+                            <span class="bcp-tab-lbl">우선순위</span>
+                            <div class="bcp-tab-btns">
+                                <button type="button" class="bc-choice-btn bcp-tab" data-target="bc_priority"
+                                    data-value="0">
+                                    <i class="bi bi-dash-circle" aria-hidden="true"></i>
+                                    <span class="bcp-tab-copy">
+                                        <span class="bcp-tab-title">없음</span>
+                                        <span class="bcp-tab-desc">일반 방송 수준</span>
+                                    </span>
+                                </button>
+                                <button type="button" class="bc-choice-btn bcp-tab" data-target="bc_priority"
+                                    data-value="1">
+                                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                    <span class="bcp-tab-copy">
+                                        <span class="bcp-tab-title">주의</span>
+                                        <span class="bcp-tab-desc">낮은 단계 안내</span>
+                                    </span>
+                                </button>
+                                <button type="button" class="bc-choice-btn bcp-tab" data-target="bc_priority"
+                                    data-value="2">
+                                    <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                                    <span class="bcp-tab-copy">
+                                        <span class="bcp-tab-title">경계</span>
+                                        <span class="bcp-tab-desc">대응 준비 강조</span>
+                                    </span>
+                                </button>
+                                <button type="button" class="bc-choice-btn bcp-tab" data-target="bc_priority"
+                                    data-value="3">
+                                    <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                                    <span class="bcp-tab-copy">
+                                        <span class="bcp-tab-title">위험</span>
+                                        <span class="bcp-tab-desc">긴급 전파 우선</span>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- 입력 영역 -->
@@ -162,10 +199,16 @@
                                 <div class="bc-tts-select-shell">
                                     <i class="bi bi-chat-left-text bc-tts-select-icon" aria-hidden="true"></i>
                                     <div class="bc-tts-select-copy">
-                                        <select id="bc_tts_list" class="form-select-dark form-select-sm"
-                                            aria-label="TTS 프리셋 선택">
-                                            <option value="">직접 입력</option>
-                                        </select>
+                                        <span class="bc-tts-select-meta">Template Select</span>
+                                        <div class="bc-tts-select-frame">
+                                            <select id="bc_tts_list" class="form-select-dark form-select-sm"
+                                                aria-label="TTS 프리셋 선택">
+                                                <option value="">직접 입력</option>
+                                            </select>
+                                            <span class="bc-tts-select-caret" aria-hidden="true">
+                                                <i class="bi bi-chevron-expand"></i>
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                                 <button type="button" class="bc-tts-manage-btn" id="bc_open_tts_manage">

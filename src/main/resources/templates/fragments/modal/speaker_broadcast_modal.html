@@ -126,6 +126,34 @@
                             </select>
                         </div>
 
+                        <div class="m-card">
+                            <div class="m-card-title">우선순위</div>
+                            <div class="m-radio-group">
+                                <label class="m-radio-option">
+                                    <input type="radio" name="b_bc_priority_radio" value="0">
+                                    <span class="m-radio-label"><i class="bi bi-dash-circle me-1"></i> 없음</span>
+                                </label>
+                                <label class="m-radio-option">
+                                    <input type="radio" name="b_bc_priority_radio" value="1">
+                                    <span class="m-radio-label"><i class="bi bi-info-circle me-1"></i> 주의</span>
+                                </label>
+                                <label class="m-radio-option">
+                                    <input type="radio" name="b_bc_priority_radio" value="2">
+                                    <span class="m-radio-label"><i class="bi bi-exclamation-circle me-1"></i> 경계</span>
+                                </label>
+                                <label class="m-radio-option">
+                                    <input type="radio" name="b_bc_priority_radio" value="3" checked>
+                                    <span class="m-radio-label"><i class="bi bi-exclamation-triangle me-1"></i> 위험</span>
+                                </label>
+                            </div>
+                            <select id="b_bc_priority" class="d-none">
+                                <option value="0">없음</option>
+                                <option value="1">주의</option>
+                                <option value="2">경계</option>
+                                <option value="3" selected>위험</option>
+                            </select>
+                        </div>
+
                         <!-- 재난 선택 -->
                         <div class="m-card">
                             <div class="m-card-title">재난 메시지</div>
@@ -196,12 +224,6 @@
                             <select id="b_bc_alert_type">
                                 <option value="0" selected>CFW</option>
                                 <option value="1">ACL</option>
-                            </select>
-                            <select id="b_bc_priority">
-                                <option value="0">없음</option>
-                                <option value="1">주의</option>
-                                <option value="2">경계</option>
-                                <option value="3" selected>위험</option>
                             </select>
                             <select id="b_bc_scope">
                                 <option value="1">시/도</option>

@@ -1,0 +1,527 @@
+package com.edscorp.eds.speaker.secondary.typeb.service;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+
+import com.edscorp.eds.speaker.secondary.domain.SpkWebAlertLogEntity;
+import com.edscorp.eds.speaker.secondary.service.SpkWebAlertLogQueryService;
+import com.edscorp.eds.speaker.secondary.typeb.domain.SpkDisaster;
+import com.edscorp.eds.speaker.secondary.typeb.dto.BTypeActionRequest;
+import com.edscorp.eds.speaker.secondary.typeb.dto.BTypeAlertRequest;
+import com.edscorp.eds.speaker.secondary.typeb.repository.SpkDisasterRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@ToString
+public class BTypeCommandService {
+
+    private final RestTemplate restTemplate;
+    private final SpkDisasterRepository spkDisasterRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    // private static final String PLAYRADIO_URL =
+    // "http://localhost:3000/playradio";
+    // @Value("${playradio.url:http://127.0.0.1:3000/playradio}")
+    @Value("${playradio.url:http://192.168.0.42:3000/playradio}")
+
+    private String playRadioUrl;
+
+    private final SpkWebAlertLogQueryService spkWebAlertLogQueryService;
+
+    private String getCurrentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated())
+            return null;
+
+        Object principal = auth.getPrincipal();
+        if (principal instanceof UserDetails ud)
+            return ud.getUsername();
+        if (principal instanceof String s) {
+            // 보통 "anonymousUser"가 올 수 있음
+            return "anonymousUser".equalsIgnoreCase(s) ? null : s;
+        }
+        return null;
+    }
+
+    /**
+     * 데몬 서버로 실제 명령 전송
+     */
+    private String sendToPlayRadio(String deviceId, String clientIp,
+            String commandCode, String argument, String password) {
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("id", deviceId);
+        payload.put("ip", clientIp);
+        payload.put("commandCode", commandCode);
+        payload.put("argument", argument);
+
+        // 비밀번호가 제공된 경우에만 페이로드에 포함
+        if (password != null && !password.isBlank()) {
+            payload.put("password", password);
+        }
+
+        log.info("[B-Type SEND] id={}, ip={}, commandCode={}, argument={}, password={}",
+                deviceId, clientIp, commandCode, argument, password);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(
+                    playRadioUrl, entity, String.class);
+
+            log.info("[B-Type RESP] status={}, body={}",
+                    response.getStatusCode(), response.getBody());
+
+            return response.getBody(); // 데몬 응답 바디 반환
+
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            // 필요한 경우 상위 서비스/컨트롤러로 그대로 던지기
+            throw e;
+
+        } catch (RestClientException e) {
+
+            // 네트워크 단절/타임아웃 등 비정상 오류
+            log.error("[B-Type ERROR] RestTemplate 통신 오류: {}", e.getMessage());
+            throw e;
+        }
+    }
+
+    // =========================
+    // 발령 (JS sendAlert 포팅)
+    // =========================
+    public void sendAlert(BTypeAlertRequest req, HttpServletRequest httpReq) throws Exception {
+        String clientIp = (httpReq != null && httpReq.getRemoteAddr() != null)
+                ? httpReq.getRemoteAddr()
+                : "127.0.0.1";
+        String userId = getCurrentUserId();
+        sendAlert(req, clientIp, userId);
+    }
+
+    // 스케줄러/내부 호출용
+    public void sendAlert(BTypeAlertRequest req, String clientIp, String userId) throws Exception {
+        List<String> targetDeviceIds = resolveAlertDeviceIds(req);
+        if (targetDeviceIds.isEmpty()) {
+            throw new IllegalArgumentException("발령 대상 deviceId가 없습니다.");
+        }
+
+        List<String> failedDeviceIds = new ArrayList<>();
+
+        for (String deviceId : targetDeviceIds) {
+            try {
+                sendSingleAlert(req, deviceId, clientIp, userId);
+            } catch (Exception e) {
+                failedDeviceIds.add(deviceId);
+                log.error("[BTYPE ALERT] deviceId={} 전송 실패", deviceId, e);
+            }
+        }
+
+        if (!failedDeviceIds.isEmpty()) {
+            throw new RuntimeException("일부 장비 발령 실패: " + failedDeviceIds);
+        }
+    }
+
+    private List<String> resolveAlertDeviceIds(BTypeAlertRequest req) {
+        if (req == null) {
+            return List.of();
+        }
+
+        List<String> deviceIds = req.getDeviceIds();
+        if (deviceIds != null && !deviceIds.isEmpty()) {
+            return deviceIds.stream()
+                    .map(id -> id == null ? "" : id.trim())
+                    .filter(id -> !id.isEmpty())
+                    .collect(Collectors.toList());
+        }
+
+        String deviceId = req.getDeviceId();
+        if (deviceId == null || deviceId.isBlank()) {
+            return List.of();
+        }
+
+        return List.of(deviceId.trim());
+    }
+
+    private void sendSingleAlert(BTypeAlertRequest req, String deviceId, String clientIp, String userId)
+            throws Exception {
+        final String commandCode = "41";
+
+        log.info("[BTYPE ALERT] request received");
+        log.info("[BTYPE ALERT] deviceId        = {}", deviceId);
+        log.info("[BTYPE ALERT] alertMode       = {}", req.getAlertMode());
+        log.info("[BTYPE ALERT] disasterCode    = {}", req.getDisasterCode());
+        log.info("[BTYPE ALERT] alertKind       = {}", req.getAlertKind());
+        log.info("[BTYPE ALERT] alertRange      = {}", req.getAlertRange());
+        log.info("[BTYPE ALERT] alertPriority   = {}", req.getAlertPriority());
+        log.info("[BTYPE ALERT] ttsMessage      = {}", req.getTtsMessage());
+
+        if (req.getAlertMode() == null
+                || req.getDisasterCode() == null
+                || req.getAlertKind() == null
+                || req.getAlertRange() == null) {
+            throw new IllegalArgumentException("필수 발령 필드가 누락되었습니다.");
+        }
+
+        Integer requestedPriority = req.getAlertPriority();
+        int alertPriority = requestedPriority != null ? requestedPriority : 3;
+        String alertStoCd = "000";
+        String alertSirenCd = "000";
+        String alertTTSmessage = req.getTtsMessage();
+        int alertKind = req.getAlertKind();
+
+        if (alertKind == 1) {
+            // TTS만 사용하는 경우 (그대로 사용)
+        } else if (alertKind == 2 || alertKind == 3) {
+            // 재난 코드 기반 방송
+            SpkDisaster disaster = spkDisasterRepository
+                    .findByDstCode(req.getDisasterCode())
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid disasterCode: " + req.getDisasterCode()));
+
+            if (requestedPriority == null && disaster.getDstPriority() != null) {
+                alertPriority = disaster.getDstPriority();
+            } else if (requestedPriority == null) {
+                throw new IllegalArgumentException(
+                        "dst_priority not found for disasterCode: " + req.getDisasterCode());
+            }
+
+            if (disaster.getDstSirenCode() != null && disaster.getDstCode() != null) {
+                String dstSirenCode = disaster.getDstSirenCode();
+                // String dstStoCd = disaster.getDstCode();
+                String dstStoCd = disaster.getDstStoCode();
+                String dstStoMsg = disaster.getDstStoreMsg();
+
+                if ("000".equals(dstStoCd)) {
+                    alertTTSmessage = (dstStoMsg != null ? dstStoMsg : "");
+                    alertKind = 1;
+                } else {
+                    alertTTSmessage = dstSirenCode + dstStoCd + dstSirenCode;
+                }
+
+                alertStoCd = dstStoCd;
+                alertSirenCd = dstSirenCode;
+            } else {
+                throw new IllegalArgumentException(
+                        "Incomplete disasterData fields for disasterCode: " + req.getDisasterCode());
+            }
+        } else {
+            throw new IllegalArgumentException("Unsupported alertKind: " + alertKind);
+        }
+
+        // argument JSON 생성 (JS 구조 그대로)
+        Map<String, Object> argumentJson = new HashMap<>();
+        argumentJson.put("alertMode", req.getAlertMode());
+        argumentJson.put("resultMedia", 1);
+        argumentJson.put("disasterCode", req.getDisasterCode());
+        argumentJson.put("alertKind", alertKind);
+        argumentJson.put("alertRange", req.getAlertRange());
+        argumentJson.put("alertPriority", alertPriority);
+        argumentJson.put("ttsMessage", alertTTSmessage);
+        argumentJson.put("alertStoCd", alertStoCd);
+        argumentJson.put("alertSirenCd", alertSirenCd);
+
+        String argumentStr = objectMapper.writeValueAsString(argumentJson);
+
+        if (clientIp == null || clientIp.isBlank()) {
+            clientIp = "127.0.0.1";
+        }
+        if (userId == null || userId.isBlank()) {
+            userId = "system";
+        }
+
+        if (alertTTSmessage == null)
+            alertTTSmessage = "";
+
+        SpkWebAlertLogEntity alertLog = SpkWebAlertLogEntity.builder()
+                .deviceId(deviceId)
+                .userId(userId)
+                .commandCode(commandCode)
+                .alertMode(req.getAlertMode())
+                .disasterCode(req.getDisasterCode())
+                .alertKind(alertKind)
+                .alertRange(req.getAlertRange())
+                .alertPriority(alertPriority)
+                .ttsMessage(alertTTSmessage)
+                .alertStoCd(alertStoCd)
+                .alertSirenCd(alertSirenCd)
+                .clientIp(clientIp)
+                .build();
+
+        try {
+            // 실제 전송 (비밀번호가 없으면 기본값 1234 적용)
+            String password = req.getPassword();
+            if (password == null || password.isBlank()) {
+                password = "1234";
+            }
+            sendToPlayRadio(deviceId, clientIp, commandCode, argumentStr, password);
+
+            alertLog.setStatus((byte) 1);
+        } catch (Exception e) {
+            alertLog.setStatus((byte) 0);
+            throw e;
+        } finally {
+            try {
+                log.info("[WEB ALERT LOG] before save json={}", objectMapper.writeValueAsString(alertLog));
+            } catch (Exception ignore) {
+                log.info("[WEB ALERT LOG] before save (toString)={}", alertLog);
+            }
+            spkWebAlertLogQueryService.save(alertLog);
+        }
+    }
+
+    private SpkWebAlertLogEntity buildBgmActionLog(
+            String speakerId,
+            String userId,
+            String clientIp,
+            String commandCode,
+            String bgmReqType) {
+
+        return SpkWebAlertLogEntity.builder()
+                .deviceId(speakerId)
+                .userId((userId == null || userId.isBlank()) ? "system" : userId)
+                .commandCode(commandCode)
+                .bgmReqType(bgmReqType)
+                .alertMode(0)
+                .disasterCode("BGM")
+                .alertKind(0)
+                .alertRange(0)
+                .alertPriority(0)
+                .ttsMessage("")
+                .alertStoCd("000")
+                .alertSirenCd("000")
+                .clientIp((clientIp == null || clientIp.isBlank()) ? "127.0.0.1" : clientIp)
+                .build();
+    }
+
+    // =========================
+    // 스피커 제어 (JS handleSpeakerAction 포팅)
+    // =========================
+    public List<String> handleSpeakerAction(BTypeActionRequest req, HttpServletRequest httpReq) {
+
+        List<String> speakerIds = req.getSpeakerIds();
+        if (speakerIds == null || speakerIds.isEmpty()) {
+            throw new IllegalArgumentException("선택된 스피커가 없습니다.");
+        }
+
+        String action = req.getAction();
+        String extraParam = req.getExtraParam() == null ? "" : req.getExtraParam();
+
+        log.info("[handleSpeakerAction] action={}, extraParam={}", action, extraParam);
+        // Local IP
+        String clientIp = (httpReq != null && httpReq.getRemoteAddr() != null)
+                ? httpReq.getRemoteAddr()
+                : "127.0.0.1";
+        String userId = getCurrentUserId();
+
+        String commandCode;
+        String argument;
+
+        // 각 버튼의 action에 맞는 commandCode와 argument 설정
+        switch (action) {
+            case "time": // 시간 동기화 (발신)
+                commandCode = "4f";
+                argument = "00000000";
+                break;
+            case "status": // 상태 조회 (발신)
+                commandCode = "43";
+                argument = "";
+                break;
+            case "reset": // 스피커 재부팅 (발신)
+                commandCode = "4d";
+                argument = "01";
+                break;
+            case "getSpeakerSettings": // 설정 조회 (발신)
+                commandCode = "45";
+                argument = "00";
+                break;
+            case "getVolume": // 볼륨 조회 (발신)
+                commandCode = "45";
+                argument = "01";
+                break;
+            case "getSpeakerUsage": // 스피커 사용 상태 조회 (발신)
+                commandCode = "45";
+                argument = "02";
+                break;
+            case "getSpeakerIP": // IP 조회 (발신)
+                commandCode = "45";
+                argument = "04";
+                break;
+            case "getSpeakerID": // 스피커 ID 조회 (발신)
+                commandCode = "45";
+                argument = "05";
+                break;
+            case "getBGMFolder": // BGM 폴더 설정 조회 (발신)
+                commandCode = "45";
+                argument = "06";
+                break;
+            case "getBGMStatus": // BGM 상태 조회 (발신)
+                commandCode = "45";
+                argument = "07";
+                break;
+            case "getInputVolume": // 입력 볼륨 조회 (발신)
+                commandCode = "45";
+                argument = "08";
+                break;
+            case "getTTSSpeed": // TTS 설정 조회 (발신)
+                commandCode = "45";
+                argument = "09";
+                break;
+            case "getPollingTime": // 폴링 시간 조회 (발신)
+                commandCode = "45";
+                argument = "0a";
+                break;
+            case "getAudioMode": // 음원 모드 조회 (발신)
+                commandCode = "45";
+                argument = "0b";
+                break;
+            case "getFMSettings": // FM 설정 조회 (발신)
+                commandCode = "45";
+                argument = "0c";
+                break;
+
+            case "bgmOn": // BGM ON
+                commandCode = "47";
+                argument = "0701";
+                break;
+            case "bgmOff": // BGM OFF
+                commandCode = "47";
+                argument = "0700";
+                break;
+
+            case "insSpeakerSettings": // 스피커 설정값 저장 (발신)
+                commandCode = "46";
+                argument = "00";
+                break;
+            case "insBgmVolume": // 스피커 볼륨값 설정 (발신)
+                commandCode = "46";
+                argument = "0100" + extraParam;
+                break;
+            case "insAlertVolume": // 스피커 볼륨값 설정 (발신)
+                commandCode = "46";
+                argument = "0101" + extraParam;
+                break;
+            case "ins_channels": // 스피커 사용 설정 설정 (발신)
+                commandCode = "46";
+                argument = "02" + extraParam;
+                break;
+            case "ins_ServerIP": // 스피커 IP 설정 설정 (발신)
+                commandCode = "46";
+                argument = "04" + extraParam;
+                break;
+            case "ins_speakerid": // 스피커 ID 설정 설정 (발신)
+                commandCode = "46";
+                argument = "05" + extraParam;
+                break;
+            case "ins_BGMFolderNo": // BGM 폴더 설정 설정 (발신)
+                commandCode = "46";
+                argument = "06" + extraParam;
+                break;
+            case "insBGMStatus": // BGM 상태 설정 (발신)
+                commandCode = "46";
+                argument = "07" + extraParam;
+                break;
+            case "ins_BGM_IN_VOL": // 입력 볼륨 설정 (발신)
+                commandCode = "46";
+                argument = "0800" + extraParam;
+                break;
+            case "ins_STO_IN_VOL": // 입력 볼륨 설정 (발신)
+                commandCode = "46";
+                argument = "0801" + extraParam;
+                break;
+            case "ins_TTS_IN_VOL": // 입력 볼륨 설정 (발신)
+                commandCode = "46";
+                argument = "0802" + extraParam;
+                break;
+            case "ins_TTS_Pitch": // TTS 스피치 값 설정 (발신)
+                commandCode = "46";
+                argument = "0900" + extraParam;
+                break;
+            case "ins_TTS_Speed": // TTS 속도 값 설정 (발신)
+                commandCode = "46";
+                argument = "0901" + extraParam;
+                break;
+            case "ins_PollingCheckTime": // 폴링 시간 설정 (발신)
+                commandCode = "46";
+                argument = "0a" + extraParam;
+                break;
+            case "insAudioMode": // 음원 모드 설정 (발신)
+                commandCode = "46";
+                argument = "0b" + extraParam;
+                break;
+            case "insFMSettings": // FM 설정 (발신)
+                commandCode = "46";
+                argument = "0c" + extraParam;
+                break;
+            default:
+                throw new IllegalArgumentException("지원되지 않는 작업입니다: " + action); // 잘못된 action 처리
+        }
+        boolean isBgmAction = "bgmOn".equals(action) || "bgmOff".equals(action);
+        String bgmReqType = "bgmOn".equals(action) ? "01" : "bgmOff".equals(action) ? "00" : null;
+        List<String> failedSpeakerIds = new ArrayList<>();
+
+        List<String> responses = new ArrayList<>();
+
+        // 선택된 각 스피커에 대해 데몬서버로 명령 전송
+        for (String speakerId : speakerIds) {
+            SpkWebAlertLogEntity actionLog = isBgmAction
+                    ? buildBgmActionLog(speakerId, userId, clientIp, commandCode, bgmReqType)
+                    : null;
+
+            String password = req.getPassword();
+            // 특정 액션(BGM On/Off, 상태조회)일 때 비밀번호가 비어있으면 1234 기본값 적용
+            if ("status".equals(action) || isBgmAction) {
+                if (password == null || password.isBlank()) {
+                    password = "1234";
+                }
+            }
+
+            try {
+                String resp = sendToPlayRadio(speakerId, clientIp, commandCode, argument, password);
+                responses.add(resp);
+
+                if (actionLog != null) {
+                    actionLog.setStatus((byte) 1);
+                }
+            } catch (Exception e) {
+                failedSpeakerIds.add(speakerId);
+                if (actionLog != null) {
+                    actionLog.setStatus((byte) 0);
+                }
+                log.error("[BTYPE ACTION] speakerId={} action={} 전송 실패", speakerId, action, e);
+            } finally {
+                if (actionLog != null) {
+                    spkWebAlertLogQueryService.save(actionLog);
+                }
+            }
+        }
+
+        if (!failedSpeakerIds.isEmpty()) {
+            // 일부 실패하더라도 응답 목록은 반환하도록 함 (필요 시 예외 처리)
+            throw new RuntimeException("장비 제어 실패: " + failedSpeakerIds);
+        }
+
+        return responses;
+    }
+
+}

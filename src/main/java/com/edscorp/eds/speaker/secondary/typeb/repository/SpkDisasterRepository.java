@@ -1,0 +1,21 @@
+package com.edscorp.eds.speaker.secondary.typeb.repository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.edscorp.eds.speaker.secondary.typeb.domain.SpkDisaster;
+
+public interface SpkDisasterRepository extends JpaRepository<SpkDisaster, String> {
+
+    Optional<SpkDisaster> findByDstCode(String dstCode);
+
+    // 사용 중인 재난 코드 조회 (예: Y)
+    List<SpkDisaster> findByDstUseFlag(String useFlag);
+
+    // 이름 포함 검색
+    List<SpkDisaster> findByDstNameContaining(String keyword);
+
+}

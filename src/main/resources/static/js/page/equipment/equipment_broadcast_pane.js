@@ -49,7 +49,8 @@
         return {
             // SystemSetting: 0=실제, 1=시험 / 현재 방송 UI: 1=실제, 0=시험
             mode: mode === 1 ? "0" : "1",
-            broadcastType: type === "saved" ? "2" : "1"
+            broadcastType: type === "saved" ? "2" : "1",
+            priority: "3"
         };
     }
 
@@ -102,17 +103,21 @@
     function ensureBroadcastChoiceStateInputs() {
         const modeEl = ensureChoiceStateInput("bc_mode", broadcastSystemDefaults.mode);
         const typeEl = ensureChoiceStateInput("bc_broadcast_type", broadcastSystemDefaults.broadcastType);
+        const priorityEl = ensureChoiceStateInput("bc_priority", broadcastSystemDefaults.priority ?? "3");
         if (!modeEl.value) modeEl.value = broadcastSystemDefaults.mode;
         if (!typeEl.value) typeEl.value = broadcastSystemDefaults.broadcastType;
-        return { modeEl, typeEl };
+        if (!priorityEl.value) priorityEl.value = broadcastSystemDefaults.priority ?? "3";
+        return { modeEl, typeEl, priorityEl };
     }
 
     function applyBroadcastSystemDefaults() {
-        const { modeEl, typeEl } = ensureBroadcastChoiceStateInputs();
+        const { modeEl, typeEl, priorityEl } = ensureBroadcastChoiceStateInputs();
         modeEl.value = broadcastSystemDefaults.mode;
         typeEl.value = broadcastSystemDefaults.broadcastType;
+        priorityEl.value = broadcastSystemDefaults.priority ?? "3";
         syncChoiceButtons("bc_mode");
         syncChoiceButtons("bc_broadcast_type");
+        syncChoiceButtons("bc_priority");
         updateCustomMessageAreaVisibility();
         setBroadcastDefaultsPending(false);
     }
@@ -1569,6 +1574,7 @@
             await renderBroadcastTypes();
             bindChoiceButtonGroup("bc_mode");
             bindChoiceButtonGroup("bc_broadcast_type");
+            bindChoiceButtonGroup("bc_priority");
             bindBroadcastTypeSelector();
             applyBroadcastSystemDefaults();
             bindDisasterSelector();

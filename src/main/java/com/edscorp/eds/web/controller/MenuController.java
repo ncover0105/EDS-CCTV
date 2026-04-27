@@ -16,11 +16,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.edscorp.eds.cctv.service.CctvManagementService;
 import com.edscorp.eds.mqtt.dto.EmergencyLogRowDTO;
 import com.edscorp.eds.mqtt.service.EmergencyService;
-import com.edscorp.eds.speaker.domain.SpeakerStatusEntity;
-import com.edscorp.eds.speaker.service.SpeakerService;
-import com.edscorp.eds.speaker.typeb.domain.SpkDisaster;
-import com.edscorp.eds.speaker.typeb.service.SpkConfigService;
-import com.edscorp.eds.speaker.typeb.service.SpkDisasterService;
+import com.edscorp.eds.speaker.secondary.domain.SpeakerStatusEntity;
+import com.edscorp.eds.speaker.secondary.service.SpeakerService;
+import com.edscorp.eds.speaker.secondary.typeb.domain.SpkDisaster;
+import com.edscorp.eds.speaker.secondary.typeb.service.SpkConfigService;
+import com.edscorp.eds.speaker.secondary.typeb.service.SpkDisasterService;
 import com.edscorp.eds.user.entity.UserEntity;
 import com.edscorp.eds.user.service.UserService;
 
