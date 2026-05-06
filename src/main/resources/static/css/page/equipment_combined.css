@@ -7634,3 +7634,432 @@ select.eq-input option {
         gap: var(--sp-xl) !important;
     }
 }
+
+/* ============================================
+   Broadcast Pane - Priority UX Refresh
+   ============================================ */
+.broadcast-pane .broadcast-topbar {
+    align-items: center;
+    gap: 12px;
+}
+
+.broadcast-pane .broadcast-title-text p strong {
+    color: #93c5fd;
+    font-weight: 800;
+}
+
+.broadcast-pane .bcp-tabs-section {
+    gap: 10px;
+}
+
+.broadcast-pane .bcp-tab-group {
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+}
+
+.broadcast-pane .bcp-tab-lbl {
+    margin-bottom: 0;
+    color: rgba(203, 213, 225, 0.56);
+}
+
+.broadcast-pane .bcp-tab-btns .bc-choice-btn.bcp-tab {
+    min-height: 42px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    padding: 8px 10px !important;
+    border-radius: 9px !important;
+    text-align: center !important;
+}
+
+.broadcast-pane .bcp-tab-btns .bc-choice-btn.bcp-tab>i {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    font-size: 12px;
+}
+
+.broadcast-pane .bcp-tab-copy {
+    gap: 0;
+}
+
+.broadcast-pane .bcp-tab-title {
+    font-size: 12px;
+}
+
+.broadcast-pane .bcp-tab-desc {
+    display: none;
+}
+
+.broadcast-pane .bcp-tab-btns .bc-choice-btn.bcp-tab[data-target="bc_priority"][data-value="0"] {
+    --accent-rgb: 148, 163, 184;
+}
+
+.broadcast-pane .bcp-tab-btns .bc-choice-btn.bcp-tab[data-target="bc_priority"][data-value="1"] {
+    --accent-rgb: 234, 179, 8;
+}
+
+.broadcast-pane .bcp-tab-btns .bc-choice-btn.bcp-tab[data-target="bc_priority"][data-value="2"] {
+    --accent-rgb: 249, 115, 22;
+}
+
+.broadcast-pane .bcp-tab-btns .bc-choice-btn.bcp-tab[data-target="bc_priority"][data-value="3"] {
+    --accent-rgb: 239, 68, 68;
+}
+
+.broadcast-pane .bcp-exec-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 12px;
+    background:
+        linear-gradient(180deg, rgba(15, 23, 42, 0.82), rgba(15, 23, 42, 0.54)),
+        rgba(2, 6, 23, 0.28);
+}
+
+.broadcast-pane .bcp-summary-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    color: rgba(226, 232, 240, 0.78);
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.broadcast-pane .bcp-summary-head strong {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 22px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: rgba(59, 130, 246, 0.14);
+    color: #bfdbfe;
+    font-size: 10px;
+}
+
+.broadcast-pane .bcp-summary-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+    margin: 0;
+}
+
+.broadcast-pane .bcp-summary-list>div {
+    min-width: 0;
+    padding: 8px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.045);
+}
+
+.broadcast-pane .bcp-summary-list dt {
+    margin: 0 0 4px;
+    color: rgba(148, 163, 184, 0.78);
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.broadcast-pane .bcp-summary-list dd {
+    margin: 0;
+    color: rgba(248, 250, 252, 0.92);
+    font-size: 12px;
+    font-weight: 800;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.broadcast-pane .bcp-summary-message {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+    padding-top: 2px;
+}
+
+.broadcast-pane .bcp-summary-message span {
+    color: rgba(148, 163, 184, 0.78);
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.broadcast-pane .bcp-summary-message p {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    min-height: 48px;
+    max-height: 64px;
+    margin: 0;
+    overflow: hidden;
+    color: rgba(226, 232, 240, 0.82);
+    font-size: 12px;
+    line-height: 1.45;
+    word-break: break-word;
+}
+
+.broadcast-pane .bcp-ctrl-launch {
+    order: 2;
+}
+
+.broadcast-pane .bcp-ctrl-body>.bcp-ctrl-row:not(.bcp-ctrl-launch) {
+    order: 3;
+}
+
+.broadcast-pane .bcp-ctrl-row+.bcp-ctrl-row {
+    padding-top: 0;
+    border-top: 0;
+}
+
+.broadcast-pane .bcp-launch-btn {
+    min-height: 54px;
+    border-radius: 10px;
+    font-size: 15px;
+}
+
+@media (max-width: 768px) {
+    .broadcast-pane .bcp-tab-group {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+        gap: 6px;
+    }
+
+    .broadcast-pane .bcp-tab-lbl {
+        white-space: normal;
+    }
+
+}
+
+/* ============================================
+   Broadcast Log Timeline
+   ============================================ */
+.broadcast-pane .bcp-log-scroll {
+    padding: 12px 10px 12px 14px;
+}
+
+.broadcast-pane .bcp-log-list {
+    position: relative;
+    gap: 0;
+    padding-left: 18px;
+}
+
+.broadcast-pane .bcp-log-list::before {
+    content: '';
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 5px;
+    width: 1px;
+    background: linear-gradient(180deg,
+            rgba(96, 165, 250, 0.52),
+            rgba(148, 163, 184, 0.18));
+}
+
+.broadcast-pane .bc-log-card {
+    position: relative;
+    margin: 0 0 12px;
+    padding: 10px 11px;
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.58);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    box-shadow: none;
+}
+
+.broadcast-pane .bc-log-card::before {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: -18px;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: #94a3b8;
+    border: 2px solid rgba(6, 10, 18, 0.96);
+    box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.16);
+}
+
+.broadcast-pane .bc-log-card.status-ok::before {
+    background: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.16);
+}
+
+.broadcast-pane .bc-log-card.status-err::before {
+    background: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18);
+}
+
+.broadcast-pane .bc-log-card:hover {
+    background: rgba(30, 41, 59, 0.72);
+    border-color: rgba(148, 163, 184, 0.24);
+    box-shadow: none;
+}
+
+.broadcast-pane .bc-log-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.broadcast-pane .bc-log-time {
+    color: rgba(203, 213, 225, 0.72);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
+
+.broadcast-pane .bc-log-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 20px;
+    padding: 0 7px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 900;
+}
+
+.broadcast-pane .bc-log-badge.status-ok {
+    color: #bbf7d0;
+    background: rgba(22, 101, 52, 0.28);
+    border: 1px solid rgba(34, 197, 94, 0.24);
+}
+
+.broadcast-pane .bc-log-badge.status-err {
+    color: #fecaca;
+    background: rgba(127, 29, 29, 0.32);
+    border: 1px solid rgba(248, 113, 113, 0.26);
+}
+
+.broadcast-pane .bc-log-badge.status-none {
+    color: #cbd5e1;
+    background: rgba(100, 116, 139, 0.22);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.broadcast-pane .bc-log-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.broadcast-pane .bc-log-main-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    min-width: 0;
+}
+
+.broadcast-pane .bc-log-kind,
+.broadcast-pane .bc-log-device {
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    padding: 0 7px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.broadcast-pane .bc-log-content {
+    color: rgba(226, 232, 240, 0.84);
+    font-size: 11.5px;
+    line-height: 1.45;
+    word-break: break-word;
+}
+
+/* ============================================
+   Broadcast TTS Picker Compact Refresh
+   ============================================ */
+.broadcast-pane .bc-tts-picker--compact {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 7px 8px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.44);
+}
+
+.broadcast-pane .bc-tts-label {
+    margin: 0;
+    color: rgba(203, 213, 225, 0.74);
+    font-size: 11px;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.broadcast-pane .bc-tts-picker--compact .bc-tts-select-frame {
+    min-height: 34px;
+    padding: 0 10px 0 12px;
+    border-color: rgba(148, 163, 184, 0.18);
+    border-radius: 8px;
+    background: rgba(2, 6, 23, 0.34);
+}
+
+.broadcast-pane .bc-tts-picker--compact #bc_tts_list.form-select-dark {
+    height: 34px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.broadcast-pane .bc-tts-picker--compact .bc-tts-select-caret {
+    right: 8px;
+    width: 18px;
+    height: 18px;
+    color: rgba(191, 219, 254, 0.9);
+    background: rgba(59, 130, 246, 0.12);
+}
+
+.broadcast-pane .bc-tts-picker--compact .bc-tts-manage-btn {
+    min-width: 64px;
+    min-height: 34px;
+    padding: 0 10px;
+    border-radius: 8px;
+    color: rgba(226, 232, 240, 0.78);
+    background: rgba(255, 255, 255, 0.045);
+}
+
+@media (max-width: 768px) {
+    .broadcast-pane .bc-tts-picker--compact {
+        grid-template-columns: 1fr auto;
+    }
+
+    .broadcast-pane .bc-tts-label {
+        grid-column: 1 / -1;
+    }
+}
+
+/* ============================================
+   Broadcast Pipeline Minimum Height Scroll Guard
+   ============================================ */
+@media (min-width: 768px) {
+    .broadcast-pane .bc-pipeline {
+        grid-template-rows: minmax(560px, 1fr) !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        align-content: start !important;
+    }
+
+    .broadcast-pane .bc-target-col,
+    .broadcast-pane .bc-compose-col,
+    .broadcast-pane .bc-exec-col {
+        min-height: 560px !important;
+    }
+}
+
+@media (min-width: 768px) and (max-height: 720px) {
+    .broadcast-pane .bc-pipeline {
+        grid-template-rows: minmax(800px, 1fr) !important;
+        height: 100% !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+}

@@ -10,8 +10,8 @@
                     <i class="bi bi-broadcast"></i>
                 </div>
                 <div class="broadcast-title-text">
-                    <h3>방송 관리</h3>
-                    <p id="broadcastCountText">실시간 방송 제어 시스템</p>
+                    <h3>방송 실행</h3>
+                    <p id="broadcastCountText">선택 대상 <strong id="broadcastHeaderTargetCount">0</strong>대</p>
                 </div>
             </div>
 
@@ -195,25 +195,20 @@
                                 <span>메시지 작성</span>
                                 <span class="bcp-hint">방송할 내용을 직접 입력하세요.</span>
                             </div>
-                            <div class="bc-tts-picker">
-                                <div class="bc-tts-select-shell">
-                                    <i class="bi bi-chat-left-text bc-tts-select-icon" aria-hidden="true"></i>
-                                    <div class="bc-tts-select-copy">
-                                        <span class="bc-tts-select-meta">Template Select</span>
-                                        <div class="bc-tts-select-frame">
-                                            <select id="bc_tts_list" class="form-select-dark form-select-sm"
-                                                aria-label="TTS 프리셋 선택">
-                                                <option value="">직접 입력</option>
-                                            </select>
-                                            <span class="bc-tts-select-caret" aria-hidden="true">
-                                                <i class="bi bi-chevron-expand"></i>
-                                            </span>
-                                        </div>
-                                    </div>
+                            <div class="bc-tts-picker bc-tts-picker--compact">
+                                <label class="bc-tts-label" for="bc_tts_list">TTS 프리셋</label>
+                                <div class="bc-tts-select-frame">
+                                    <select id="bc_tts_list" class="form-select-dark form-select-sm"
+                                        aria-label="TTS 프리셋 선택">
+                                        <option value="">직접 입력</option>
+                                    </select>
+                                    <span class="bc-tts-select-caret" aria-hidden="true">
+                                        <i class="bi bi-chevron-expand"></i>
+                                    </span>
                                 </div>
                                 <button type="button" class="bc-tts-manage-btn" id="bc_open_tts_manage">
                                     <i class="bi bi-sliders" aria-hidden="true"></i>
-                                    <span>TTS 관리</span>
+                                    <span>관리</span>
                                 </button>
                             </div>
                             <textarea class="bcp-textarea" id="customMessageText" maxlength="1000"
@@ -272,6 +267,34 @@
                         </div>
                     </div>
                     <div class="bcp-ctrl-body">
+                        <div class="bcp-exec-summary" aria-label="실행 전 확인">
+                            <div class="bcp-summary-head">
+                                <span>실행 전 확인</span>
+                                <strong id="bcSummaryReadyState">대기</strong>
+                            </div>
+                            <dl class="bcp-summary-list">
+                                <div>
+                                    <dt>대상</dt>
+                                    <dd id="bcSummaryTarget">0대</dd>
+                                </div>
+                                <div>
+                                    <dt>모드</dt>
+                                    <dd id="bcSummaryMode">-</dd>
+                                </div>
+                                <div>
+                                    <dt>유형</dt>
+                                    <dd id="bcSummaryType">-</dd>
+                                </div>
+                                <div>
+                                    <dt>우선순위</dt>
+                                    <dd id="bcSummaryPriority">-</dd>
+                                </div>
+                            </dl>
+                            <div class="bcp-summary-message">
+                                <span>메시지</span>
+                                <p id="bcSummaryMessage">방송 내용을 구성하세요.</p>
+                            </div>
+                        </div>
                         <!-- 음원 제어 -->
                         <div class="bcp-ctrl-row">
                             <div class="bcp-ctrl-lbl">

@@ -428,6 +428,7 @@
         document.querySelectorAll(`.bc-choice-btn[data-target='${selectId}']`).forEach((btn) => {
             btn.classList.toggle("is-active", String(btn.dataset.value ?? "") === value);
         });
+        syncBroadcastExecutionSummary();
     }
 
     function bindChoiceButtonGroup(selectId) {
@@ -643,6 +644,48 @@
         syncBroadcastPhaseState();
     }
 
+    function getChoiceButtonLabel(selectId) {
+        const value = String(document.getElementById(selectId)?.value ?? "");
+        const activeBtn = document.querySelector(`.bc-choice-btn[data-target='${selectId}'][data-value='${value}']`);
+        const title = activeBtn?.querySelector(".bcp-tab-title")?.textContent;
+        return String(title ?? "").trim() || "-";
+    }
+
+    function getBroadcastSummaryMessage() {
+        if (isTtsBroadcastMode()) {
+            const text = String(document.getElementById("customMessageText")?.value ?? "").trim();
+            const templateText = document.getElementById("bc_tts_list")?.selectedOptions?.[0]?.textContent?.trim();
+            if (text) return text;
+            if (templateText && templateText !== "직접 입력") return templateText;
+            return "방송 내용을 구성하세요.";
+        }
+
+        const disasterName = getDisasterNameByCode(window.selectedBroadcastType);
+        return disasterName && disasterName !== "-" ? disasterName : "저장 메시지를 선택하세요.";
+    }
+
+    function setTextById(id, text) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    }
+
+    function syncBroadcastExecutionSummary() {
+        const selectedCount = getSelectedSpeakerCodes().length;
+        const hasSelection = selectedCount > 0;
+        const hasMessage = isBroadcastMessageConfigured();
+        const isReady = hasSelection && hasMessage;
+        const readyText = isReady ? "실행 가능" : "대기";
+
+        setTextById("broadcastHeaderTargetCount", String(selectedCount));
+        setTextById("bcSummaryTarget", `${selectedCount}대`);
+        setTextById("bcSummaryMode", getChoiceButtonLabel("bc_mode"));
+        setTextById("bcSummaryType", getChoiceButtonLabel("bc_broadcast_type"));
+        setTextById("bcSummaryPriority", getChoiceButtonLabel("bc_priority"));
+        setTextById("bcSummaryReadyState", readyText);
+        setTextById("bcSummaryMessage", getBroadcastSummaryMessage());
+
+    }
+
     function getPhase3Presentation(hasSelection, isConfigured) {
         if (!hasSelection || !isConfigured) {
             return { icon: "3", stateText: "대기", stateClass: "" };
@@ -690,6 +733,7 @@
         }
         if (phase3Icon) phase3Icon.textContent = phase3Presentation.icon;
         if (phase3State) phase3State.textContent = phase3Presentation.stateText;
+        syncBroadcastExecutionSummary();
     }
 
     function isTtsBroadcastMode() {
@@ -1417,7 +1461,7 @@
             : (displayKind === "1" && row?.ttsMessage ? row.ttsMessage : `재난: ${disasterName}`);
 
         return `
-            <div class="bc-log-card">
+            <div class="bc-log-card ${statusClass}">
                 <div class="bc-log-card-header">
                     <span class="bc-log-time">${escapeHtml(ts)}</span>
                     <span class="bc-log-badge ${statusClass}">${escapeHtml(statusText)}</span>
