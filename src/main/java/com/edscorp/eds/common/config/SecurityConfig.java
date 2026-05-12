@@ -20,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -77,17 +78,22 @@ public class SecurityConfig {
 
                 .headers(headers -> headers.frameOptions(frame -> frame.disable()))
 
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        .invalidSessionUrl("/login?expired=true")
+                        .sessionFixation(sessionFixation -> sessionFixation.changeSessionId())
+                        .maximumSessions(10)
+                        .expiredUrl("/login?expired=true"))
 
                 .authorizeHttpRequests(authz -> authz
-                        // ✅ 1) 누구나 접근
+                        // 로그인 없이 접근 가능한 경로
                         .requestMatchers(PUBLIC_URLS).permitAll()
 
-                        // ✅ 2) "권한 변경"은 관리자만
+                        // 관리자 권한이 필요한 경로
                         .requestMatchers(HttpMethod.PUT, "/api/users/*/role").hasRole("MANAGER")
                         .requestMatchers(HttpMethod.POST, "/api/settings").hasRole("MANAGER")
 
-                        // ✅ 3) 나머지 USER 영역은 USER/MANAGER 모두 허용
+                        // 일반 사용자/관리자 모두 접근 가능한 경로
                         .requestMatchers(USER_URLS).hasAnyRole("USER", "MANAGER")
 
                         .anyRequest().authenticated())
@@ -108,7 +114,9 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .permitAll()
-                        .logoutSuccessUrl("/login"));
+                        .logoutSuccessUrl("/login")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID"));
 
         return http.build();
     }
@@ -149,6 +157,12 @@ public class SecurityConfig {
         writer.write(json);
         writer.flush();
     };
+
+    // 세션 이벤트 리스너 등록 (세션 만료 감지 등)
+    @Bean
+    public HttpSessionEventPublisher httpSessionEventPublisher() {
+        return new HttpSessionEventPublisher();
+    }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)

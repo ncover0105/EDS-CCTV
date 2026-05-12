@@ -431,12 +431,23 @@ async function loadTodayLatestDisasterOneLine() {
 }
 
 function loadSavedLayout(defaultValue = 4) {
+    if (isMobileCctvViewport()) return 1;
+
     const v = parseInt(localStorage.getItem(LAYOUT_STORAGE_KEY), 10);
     return [1, 4, 9, 16].includes(v) ? v : defaultValue;
 }
 
 function saveLayout(layout) {
+    if (isMobileCctvViewport()) {
+        localStorage.setItem(LAYOUT_STORAGE_KEY, "1");
+        return;
+    }
+
     localStorage.setItem(LAYOUT_STORAGE_KEY, String(layout));
+}
+
+function isMobileCctvViewport() {
+    return window.matchMedia?.("(max-width: 767.98px)")?.matches || window.innerWidth <= 767;
 }
 
 function toggleDropdown(button) {
@@ -479,22 +490,23 @@ function applyLayoutState() {
 }
 
 function selectLayout(itemEl) {
-    const layout = parseInt(itemEl.getAttribute("data-layout"), 10);
+    const layout = isMobileCctvViewport() ? 1 : parseInt(itemEl.getAttribute("data-layout"), 10);
     if (!layout) return;
+    const menu = itemEl.closest(".dropdown-menu");
+    const selectedItem = menu?.querySelector(`.dropdown-item[data-layout="${layout}"]`) || itemEl;
 
     // 상태 저장
     currentLayout = layout;
     saveLayout(layout);
 
     // 라벨 변경
-    const label = itemEl.querySelector("span:last-child")?.textContent?.trim() || "";
+    const label = selectedItem.querySelector("span:last-child")?.textContent?.trim() || "";
     const selectedLabelEl = document.getElementById("selected-layout");
     if (selectedLabelEl && label) selectedLabelEl.textContent = label;
 
     // selected 표시 업데이트
-    const menu = itemEl.closest(".dropdown-menu");
     menu?.querySelectorAll(".dropdown-item").forEach(el => el.classList.remove("selected"));
-    itemEl.classList.add("selected");
+    selectedItem.classList.add("selected");
 
     // 그리드 레이아웃 변경
     window.CCTVLayout?.renderGrid(layout);

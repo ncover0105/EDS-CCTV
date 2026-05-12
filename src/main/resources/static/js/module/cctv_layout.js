@@ -129,6 +129,7 @@ window.CCTVLayout = (function () {
     }
 
     function renderGrid(layout) {
+        layout = normalizeLayoutForViewport(layout);
         log("debug", "renderGrid()", `layout = ${layout}`);
         if (layout !== 1) {
             focusedCamIndex = 0;
@@ -158,6 +159,11 @@ window.CCTVLayout = (function () {
         getVisibleCameras().forEach(cam => {
             syncVisibilityByMountId(cam.mountpointId);
         });
+    }
+
+    function normalizeLayoutForViewport(layout) {
+        const isMobile = window.matchMedia?.("(max-width: 767.98px)")?.matches || window.innerWidth <= 767;
+        return isMobile ? 1 : layout;
     }
 
     function getVisibleCameras() {
@@ -528,6 +534,7 @@ window.CCTVLayout = (function () {
 
         if (currentLayout === 1) {
             renderGrid(1);
+            window.CCTVJanus?.reconnectAll?.(cameras);
         }
     }
 

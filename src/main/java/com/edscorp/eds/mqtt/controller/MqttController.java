@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
@@ -20,7 +19,6 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.edscorp.eds.mqtt.domain.EmergencyEntity;
 import com.edscorp.eds.mqtt.dto.MqttMessageEvent;
-import com.edscorp.eds.mqtt.repository.AlertListRepository;
 import com.edscorp.eds.mqtt.repository.EmergencyRepository;
 import com.edscorp.eds.mqtt.service.MqttService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -47,14 +45,11 @@ public class MqttController {
 
     private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
 
-    private final ApplicationEventPublisher eventPublisher;
-
     // [fix] new ObjectMapper() 직접 생성 제거 → Spring 빈 주입.
     //       직접 생성 시 JavaTimeModule 등 Spring이 등록하는 모듈이 적용되지 않아
     //       LocalDateTime 등 직렬화가 깨질 수 있음.
     private final ObjectMapper objectMapper;
     private final EmergencyRepository emergencyRepository;
-    private final AlertListRepository alertListRepository;
     private final MqttService mqttService;
 
     // 실시간 메시지를 받기 위한 엔드포인트
@@ -110,10 +105,6 @@ public class MqttController {
             return;
         }
 
-        // [fix] completeWithError() + deadEmitters 이중 제거 패턴 제거.
-        //       completeWithError()는 onError 콜백을 즉시 호출해 emitters.remove()가
-        //       먼저 실행되므로 이후 removeAll은 이중 처리가 됨.
-        //       send 실패 시 직접 remove하는 것으로 단순화.
         for (SseEmitter emitter : emitters) {
             try {
                 emitter.send(SseEmitter.event().data(jsonString));

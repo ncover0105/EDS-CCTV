@@ -1,14 +1,10 @@
 package com.edscorp.eds.common.config;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.core.MessageProducer;
 import org.springframework.integration.mqtt.core.DefaultMqttPahoClientFactory;
@@ -19,24 +15,14 @@ import org.springframework.integration.mqtt.support.MqttHeaders;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
 
-import com.edscorp.eds.common.util.Util;
-import com.edscorp.eds.mqtt.dto.MqttMessageEvent;
 import com.edscorp.eds.mqtt.model.MqttTopic;
-import com.edscorp.eds.mqtt.service.MqttService;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.edscorp.eds.mqtt.service.MqttCctvMessageService;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @RequiredArgsConstructor
-@Slf4j
 public class MqttConfig {
-    private static final int MIN_BOUNDARY_NUM = 1;
-    private static final int MAX_BOUNDARY_NUM = 4;
-
     // private final String BROKER_URL = "tcp://localhost:1883";
     // private final String CLIENT_ID = "mqttClient";
     // private final String USERNAME = "edscorp";
@@ -60,13 +46,7 @@ public class MqttConfig {
     @Value("${mqtt.password}")
     private String PASSWORD;
 
-    private final ApplicationEventPublisher eventPublisher;
-
-    private Set<String> processedMessages = new HashSet<>();
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-    private final MqttService mqttService;
+    private final MqttCctvMessageService mqttCctvMessageService;
 
     @Bean
     public MqttPahoClientFactory mqttClientFactory() {
@@ -114,50 +94,7 @@ public class MqttConfig {
         return message -> {
             String topic = message.getHeaders().get(MqttHeaders.RECEIVED_TOPIC).toString();
             String payload = message.getPayload().toString();
-            System.out.println("MqttConfig Received message: " + " from topic: " + topic);
-            // eventPublisher.publishEvent(new MqttMessageEvent(topic, payload)); // 메시지를
-            // 클라이언트로 전달
-            // JPA
-            System.out.println("mqtt emergency log >>>>>>>>>>>>>>>>>>> ");
-            if (topic.equals("send/emergency")) {
-                try {
-                    JsonNode jsonMessage = objectMapper.readTree(payload);
-                    String alertCode = jsonMessage.get("alertCode").asText();
-                    int boundaryNum = jsonMessage.get("boundaryNum").asInt();
-                    if (!isValidBoundaryNum(boundaryNum)) {
-                        log.warn("Invalid emergency boundaryNum received. topic={}, boundaryNum={}, payload={}",
-                                topic, boundaryNum, payload);
-                        return;
-                    }
-                    String receptionDttm = jsonMessage.get("receptionDttm").asText();
-                    String formatDttm = Util.parseReceptionDttm(receptionDttm);
-                    String logData = "";
-                    log.info("mqtt formatDttm : " + formatDttm);
-                    // JSON에 log 필드 추가
-                    if (alertCode.equals("001") || alertCode.equals("002")) {
-                        logData = mqttService.getMessageBtAlertCode(alertCode);
-                    } else {
-                        logData = boundaryNum + "번 " + mqttService.getMessageBtAlertCode(alertCode);
-                    }
-                    ObjectNode updatedMessage = (ObjectNode) jsonMessage;
-                    updatedMessage.put("log", logData); // log 값 추가
-                    updatedMessage.put("receptionDttm", formatDttm);
-
-                    mqttService.processMessage(topic, updatedMessage.toString());
-                    eventPublisher.publishEvent(new MqttMessageEvent(topic, updatedMessage.toString()));
-
-                } catch (Exception e) {
-                    System.out.println("JPA emergency error : " + e.getMessage());
-                    e.printStackTrace();
-                }
-            } else {
-                // 기본 Topic 전달
-                eventPublisher.publishEvent(new MqttMessageEvent(topic, payload)); // 메시지를 클라이언트로 전달
-            }
+            mqttCctvMessageService.handle(topic, payload);
         };
-    }
-
-    private boolean isValidBoundaryNum(int boundaryNum) {
-        return boundaryNum >= MIN_BOUNDARY_NUM && boundaryNum <= MAX_BOUNDARY_NUM;
     }
 }
